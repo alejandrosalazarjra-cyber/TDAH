@@ -186,12 +186,33 @@ jobs:
           cp index.html android/app/src/main/assets/index.html
           test -s android/app/src/main/assets/index.html
 
-      - name: Compilar APK instalable
+      - name: Preparar firma permanente de distribución
+        shell: bash
+        env:
+          NS_SIGNING_KEY_B64: ${{ secrets.NS_SIGNING_KEY_B64 }}
+          NS_SIGNING_PASSWORD: ${{ secrets.NS_SIGNING_PASSWORD }}
+          NS_SIGNING_ALIAS: ${{ secrets.NS_SIGNING_ALIAS }}
+        run: |
+          set -euo pipefail
+          if [ -z "$NS_SIGNING_KEY_B64" ] || [ -z "$NS_SIGNING_PASSWORD" ] || [ -z "$NS_SIGNING_ALIAS" ]; then
+            echo "::error::Falta firma permanente. Abre un Codespace y ejecuta bash scripts/setup-signing.sh UNA sola vez. No publiques APK debug como actualización."
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/ns-signing"
+          printf '%s' "$NS_SIGNING_KEY_B64" | base64 -d > "$RUNNER_TEMP/ns-signing/neurosync-release.jks"
+          chmod 600 "$RUNNER_TEMP/ns-signing/neurosync-release.jks"
+          echo "NS_KEYSTORE_FILE=$RUNNER_TEMP/ns-signing/neurosync-release.jks" >> "$GITHUB_ENV"
+          echo "Firma permanente cargada desde GitHub Secrets; la clave no se publica"
+
+      - name: Compilar APK instalable de distribución
         working-directory: android
         shell: bash
+        env:
+          NS_SIGNING_PASSWORD: ${{ secrets.NS_SIGNING_PASSWORD }}
+          NS_SIGNING_ALIAS: ${{ secrets.NS_SIGNING_ALIAS }}
         run: |
           set -o pipefail
-          gradle --no-daemon --stacktrace --warning-mode all assembleDebug 2>&1 | tee "$RUNNER_TEMP/neurosync-gradle.log"
+          gradle --no-daemon --stacktrace --warning-mode all assembleRelease 2>&1 | tee "$RUNNER_TEMP/neurosync-gradle.log"
 
       - name: Guardar registro de errores de compilación
         if: failure()
@@ -202,27 +223,42 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-      - name: Verificar que el APK sea instalable
+      - name: Verificar versión, código real, firma y contenido APK
         shell: bash
         run: |
           set -euo pipefail
-          APK="android/app/build/outputs/apk/debug/app-debug.apk"
-          test -s "$APK" || { echo "::error::No se generó app-debug.apk"; exit 1; }
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+          test -s "$APK" || { echo "::error::No se generó app-release.apk"; exit 1; }
           unzip -t "$APK" >/dev/null
-          test -f "$ANDROID_HOME/build-tools/35.0.0/aapt" || { echo "::error::Falta aapt del SDK Android 35"; exit 1; }
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee /tmp/neurosync-apk-info.txt
-          grep -q "package: name='com.neurosync.familia'" /tmp/neurosync-apk-info.txt
-          BYTES=$(stat -c%s "$APK")
-          echo "APK descomprimido: $BYTES bytes"
-          sha256sum "$APK" | tee /tmp/neurosync-apk-sha256.txt
+          grep -q "package: name='com.neurosync.familia' versionCode='10' versionName='10.0.0'" /tmp/neurosync-apk-info.txt
+          python3 - <<'PY'
+          import hashlib,zipfile
+          from pathlib import Path
+          apk=Path('android/app/build/outputs/apk/release/app-release.apk')
+          source=Path('index.html').read_bytes()
+          with zipfile.ZipFile(apk) as archive:
+              packaged=archive.read('assets/index.html')
+              assert packaged==source, 'APK NO contiene el index.html actual'
+              dex=b''.join(archive.read(n) for n in archive.namelist()
+                 if n.startswith('classes') and n.endswith('.dex'))
+          for feature in (b'AlarmChallengeStore',b'AlarmRingActivity',b'SessionVault',
+                          b'FocusLauncherActivity'):
+              assert feature in dex, f'Clase Android ausente en APK: {feature!r}'
+          for feature in (b'view-habits',b'setAlarmChallenge',b'buildInfo',
+                          b'quick-capture-form'):
+              assert feature in packaged, f'Nueva funci\xc3\xb3n ausente: {feature!r}'
+          print('VERIFICADO: APK contiene la interfaz y las clases de esta versión')
+          print('SHA256 index.html empaquetado:',hashlib.sha256(packaged).hexdigest())
+          print('Tamaño APK real:',apk.stat().st_size,'bytes')
+          PY
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK" | tee /tmp/neurosync-signature.txt
-          echo "Firma Android verificada; el peso del APK no demuestra seguridad"
-          echo "APK generado, ZIP íntegro y paquete Android correcto"
+          sha256sum "$APK" | tee /tmp/neurosync-apk-sha256.txt
 
-      - name: Publicar APK para descarga
+      - name: Publicar solo APK con firma permanente
         uses: actions/upload-artifact@v4
         with:
-          name: NeuroSync-Familia-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: NeuroSync-Familia-Firmada
+          path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 30
