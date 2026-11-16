@@ -74,7 +74,29 @@ var day=function(d){var x=d||new Date();return x.getFullYear()+'-'+('0'+(x.getMo
 var blank=function(){return {tasks:[],packs:[],alarms:[],pet:{xp:0,food:0,feeds:0}}};
 function say(msg){var e=by('notice');e.textContent=msg;e.classList.remove('hidden');clearTimeout(say.timer);say.timer=setTimeout(function(){e.classList.add('hidden')},3400)}
 function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
-function load(){try{var d=JSON.parse(localStorage.getItem(localKey()));return d&&Array.isArray(d.tasks)&&Array.isArray(d.packs)&&Array.isArray(d.alarms)?d:blank()}catch(e){return blank()}}
+function load(){
+try{var saved=JSON.parse(localStorage.getItem(localKey()));if(saved&&Array.isArray(saved.tasks)&&Array.isArray(saved.packs)&&Array.isArray(saved.alarms))return saved;}catch(e){}
+var fresh=blank();
+if(session&&session.role==='admin'){
+ try{
+  var old=JSON.parse(localStorage.getItem('neuroSyncDB'));
+  if(old&&Array.isArray(old.tasks)){old.tasks.forEach(function(t){
+   fresh.tasks.push({id:'legacy_'+t.id,title:t.text||'Tarea anterior',owner:session.username,date:t.date||day(),time:t.time||'',repeat:'none',doneDates:t.done?[t.date||day()]:[],updatedAt:stamp()});
+  })}
+  if(old&&old.mascot){fresh.pet.xp=Number(old.mascot.xp)||0;fresh.pet.food=Math.max(0,Number(old.mascot.xp)||0);}
+ }catch(e){}
+ try{
+  var family=JSON.parse(localStorage.getItem('neuroSyncFamilyV1'));
+  if(family){
+   (family.tasks||[]).forEach(function(t){
+     fresh.tasks.push({id:'oldfamily_'+t.id,title:t.title||'Actividad familiar',owner:t.owner==='yo'?session.username:(t.owner==='mama'?'mama':t.owner==='hermano'?'hermano':'todos'),date:t.date||day(),time:t.time||'',repeat:t.repeat||'none',doneDates:t.doneDates||[],steps:t.steps||[],stepDates:t.stepDates||{},updatedAt:stamp()});
+   });
+   (family.packs||[]).forEach(function(b){fresh.packs.push({id:'oldbag_'+b.id,place:b.place,owner:session.username,items:b.items||[],checked:b.checked||{},updatedAt:stamp()})});
+  }
+ }catch(e){}
+}
+localStorage.setItem(localKey(),JSON.stringify(fresh));return fresh;
+}
 function save(){localStorage.setItem(localKey(),JSON.stringify(model));by('sync-status').textContent='Cambios guardados';if(nat&&nat.syncFamily){setTimeout(sync,350)}}
 function active(list){return list.filter(function(t){return !t.deleted})}
 function owned(t){return session.role==='admin'||t.owner===session.username||t.owner==='todos'}
