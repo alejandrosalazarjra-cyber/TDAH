@@ -260,6 +260,10 @@ public final class MainActivity extends Activity {
     @JavascriptInterface public boolean testAlarm(){
       return AlarmReceiver.schedule(MainActivity.this,"test_neurosync","Prueba de alarma",System.currentTimeMillis()+60000L,false);
     }
+    @JavascriptInterface public boolean scheduleAlarmRepeat(String id,String title,long when,String repeat){
+      try{return AlarmReceiver.scheduleRepeat(MainActivity.this,id,title,when,repeat);}
+      catch(Exception e){return false;}
+    }
     @JavascriptInterface public boolean scheduleAlarm(String id,String title,long when,boolean daily){
       try{return AlarmReceiver.schedule(MainActivity.this,id,title,when,daily);}
       catch(Exception e){return false;}
