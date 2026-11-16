@@ -337,17 +337,29 @@ public final class MainActivity extends Activity {
     }
     @JavascriptInterface public void openSystemClock(){
       runOnUiThread(()->{
-        try{
-          Intent i=new Intent(android.provider.AlarmClock.ACTION_SET_ALARM);
-          i.putExtra(android.provider.AlarmClock.EXTRA_MESSAGE,"NeuroSync");
-          i.putExtra(android.provider.AlarmClock.EXTRA_SKIP_UI,false);
-          startActivity(i);
-        }catch(Exception e){
-          new AlertDialog.Builder(MainActivity.this).setMessage(
-           "No se encontró una aplicación de reloj compatible. Instala Reloj de Google para elegir música de YouTube Music si está disponible.")
-           .setPositiveButton("Aceptar",null).show();
+        // ACTION_SET_ALARM no es compatible con todas las apps de reloj/OEM.
+        // Abrimos la app real antes de mostrar el mensaje de error.
+        Intent[] choices=new Intent[]{
+          getPackageManager().getLaunchIntentForPackage("com.google.android.deskclock"),
+          new Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS),
+          new Intent(android.provider.AlarmClock.ACTION_SET_ALARM)
+            .putExtra(android.provider.AlarmClock.EXTRA_MESSAGE,"NeuroSync")
+            .putExtra(android.provider.AlarmClock.EXTRA_SKIP_UI,false)
+        };
+        for(Intent intent:choices){
+          if(intent==null)continue;
+          try{
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);return;
+          }catch(Exception ignored){}
         }
+        new AlertDialog.Builder(MainActivity.this).setTitle("Abrir Reloj")
+          .setMessage("Android no permitió abrir una app de reloj desde NeuroSync. Abre Reloj de Google manualmente, elige una alarma y selecciona YouTube Music como sonido.")
+          .setPositiveButton("Entendido",null).show();
       });
+    }
+    @JavascriptInterface public void setAlarmChallenge(String id,String challenge){
+      AlarmChallengeStore.set(MainActivity.this,id,challenge);
     }
     @JavascriptInterface public void openMinimalHome(){
       runOnUiThread(()->startActivity(new Intent(MainActivity.this,FocusLauncherActivity.class)));
