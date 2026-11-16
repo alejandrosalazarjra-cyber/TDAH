@@ -261,7 +261,15 @@ by('setup-lan').onclick=function(){
  try{var result=JSON.parse(nat.configureRemote(host));say(result.message||result.error||'Error')}
  catch(e){say('No se pudo configurar la conexión')}
 };
-by('configure-network').onclick=function(){if(nat&&nat.configureHost){var r=JSON.parse(nat.configureHost());say(r.message||'Configurado')}else say('Función exclusiva de APK')};
+by('configure-network').onclick=function(){
+ if(!nat){say('Configura el servidor desde la APK Android');return}
+ var choice=confirm('¿Quieres conectar esta cuenta al servidor por internet? Aceptar: internet. Cancelar: conservar configuración actual.');
+ if(!choice)return;
+ var url=prompt('Dirección HTTPS del servidor familiar (Cloudflare Workers)');
+ if(!url)return;
+ try{var result=JSON.parse(nat.configureCloud(url));say(result.message||result.error||'Sin cambios')}
+ catch(e){say('No se pudo configurar el servidor')}
+};
 by('password-form').onsubmit=function(e){e.preventDefault();if(!nat||!nat.changePassword){say('Cambia contraseñas desde el APK Android');return}try{var r=JSON.parse(nat.changePassword(by('current-pass').value,by('new-pass').value));say(r.ok?'Contraseña actualizada':(r.error||'Error'));if(r.ok)by('password-form').reset()}catch(err){say('No se pudo cambiar la contraseña')}};
 function logout(){syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
 by('logout').onclick=logout;by('avatar').onclick=function(){if(confirm('¿Cerrar sesión de esta cuenta?'))logout()};
