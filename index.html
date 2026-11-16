@@ -45,6 +45,7 @@
      <div class="card"><div class="between"><h2>En qué concentrarme</h2><button class="btn secondary" data-open="task">+ Nueva tarea</button></div><div id="home-tasks"></div></div>
     </div>
     <div class="stack">
+     <div class="card"><div class="between"><h2>Inicio minimalista de Android</h2><span class="chip">Nuevo</span></div><p class="hint">Sustituye voluntariamente la pantalla de inicio de tu celular. Incluye aplicaciones, favoritos, reloj y acceso a tareas. Puedes volver al inicio original cuando quieras.</p><button type="button" class="btn" id="open-minimal-home">Abrir y configurar pantalla de inicio</button></div>
      <div class="card"><h2>Hoy, paso a paso</h2><div id="daily-summary" class="muted small"></div><div class="progress" style="margin:13px 0"><div id="daily-bar" style="width:0%"></div></div><p class="hint">Avanzar también incluye descansar. Puedes dividir cualquier tarea en pasos pequeños.</p></div>
      <div class="card"><div class="between"><h2>Próximas alarmas</h2><button class="btn secondary" data-view="alarms">Ver</button></div><div id="home-alarms"></div></div>
      <div class="card"><h2>Recordatorio antes de salir</h2><div id="home-bags"></div><button class="btn secondary" data-view="bags">Ver mis listas</button></div>
@@ -228,6 +229,10 @@ by('alarm-clock-music').onclick=function(){
 };
 document.addEventListener('visibilitychange',function(){if(!document.hidden)checkAlarmPermissions()});
 checkAlarmPermissions();
+by('open-minimal-home').onclick=function(){
+ if(nat&&nat.openMinimalHome)nat.openMinimalHome();
+ else say('Disponible cuando instales la APK Android');
+};
 by('pet-feed').onclick=function(){if(model.pet.food<20){say('Necesitas completar tareas para conseguir 20 puntos');return}model.pet.food-=20;model.pet.xp+=15;model.pet.feeds++;save();render();say('🍎 ¡Tu mascota comió y ganó experiencia!')};
 var syncing=false;
 window.neuroSyncOnSync=function(payload,requestingUser){
