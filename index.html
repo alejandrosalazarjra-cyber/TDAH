@@ -130,7 +130,87 @@ function owned(t){return session.role==='admin'||t.owner===session.username||t.o
 function mark(t){t.updatedAt=stamp();return t}
 function allTasks(){return active(model.tasks).filter(owned).sort(function(a,b){return (a.date||'').localeCompare(b.date||'')||(a.time||'').localeCompare(b.time||'')})}
 function taskDone(t){if(t.repeat==='daily')return (t.doneDates||[]).indexOf(day())!==-1;if(t.repeat==='weekly')return (t.doneDates||[]).indexOf(day())!==-1;return (t.doneDates||[]).indexOf(t.date)!==-1}
-function todayTask(t){if(t.date>day())return false;if(t.repeat==='daily')return true;if(t.repeat==='weekly')return new Date(t.date+'T12:00').getDay()===new Date().getDay();return t.date===day()}
+function todayTask(t){if(t.inbox||t.date>day())return false;if(t.repeat==='daily')return true;if(t.repeat==='weekly')return new Date(t.date+'T12:00').getDay()===new Date().getDay();return t.date===day()}
+function priorityScore(t){return t.priority==='high'?0:t.priority==='low'?2:1}
+function actionable(){
+ return allTasks().filter(function(t){return !t.inbox&&!taskDone(t)&&todayTask(t)})
+   .sort(function(a,b){return priorityScore(a)-priorityScore(b)||(a.time||'99:99').localeCompare(b.time||'99:99')})
+}
+function nextStep(t){
+ var k=t.repeat==='none'?t.date:day(),done=(t.stepDates&&t.stepDates[k])||[];
+ var list=t.steps||[];
+ for(var i=0;i<list.length;i++)if(done.indexOf(i)<0)return {label:list[i],index:i};
+ return {label:'Completar la actividad',index:-1};
+}
+function renderFocus(){
+ var target=allTasks().find(function(t){return t.id===model.focusId&&!t.inbox&&!taskDone(t)});
+ if(!target)target=actionable()[0];
+ var area=by('next-action');
+ if(!target){area.innerHTML='<div class="empty">No hay tareas para hoy. Puedes descansar o capturar una idea.</div>';by('focus-indicator').textContent='Al día';return}
+ model.focusId=target.id;
+ var step=nextStep(target);
+ by('focus-indicator').textContent=target.energy==='low'?'Poca energía':target.priority==='high'?'Importante':'Paso a paso';
+ area.innerHTML='<div class="task-title" style="font-size:18px;margin:6px 0">'+esc(target.title)+'</div>'+
+ '<p class="muted" style="margin:7px 0 13px">Siguiente paso: '+esc(step.label)+'</p>'+
+ '<div class="row"><button class="btn" id="focus-complete" type="button">'+(step.index<0?'Terminar tarea':'Completar este paso')+'</button>'+
+ '<button class="btn ghost" id="focus-other" type="button">Cambiar tarea</button></div>';
+ by('focus-complete').onclick=function(){
+  var key=target.repeat==='none'?target.date:day();
+  if(step.index>=0){
+   target.stepDates=target.stepDates||{};
+   var done=target.stepDates[key]||[];
+   if(done.indexOf(step.index)<0)done.push(step.index);
+   target.stepDates[key]=done;
+  }else{
+   target.doneDates=target.doneDates||[];
+   if(target.doneDates.indexOf(key)<0){target.doneDates.push(key);model.pet.food+=10;model.pet.xp+=10}
+   model.focusId=null;
+  }
+  mark(target);save();render();
+ };
+ by('focus-other').onclick=function(){
+  var choices=actionable();if(choices.length<2){say('Solo tienes una tarea para hoy');return}
+  var index=choices.findIndex(function(t){return t.id===target.id});
+  model.focusId=choices[(index+1)%choices.length].id;
+  save();render();
+ };
+}
+function renderInbox(){
+ var rows=allTasks().filter(function(t){return t.inbox&&!taskDone(t)});
+ by('inbox-count').textContent=rows.length+' capturas';
+ var root=by('inbox-list');root.replaceChildren();
+ if(!rows.length){root.innerHTML='<div class="empty">Tu bandeja está vacía. Apunta una idea cuando aparezca.</div>';return}
+ rows.forEach(function(t){
+  var item=document.createElement('div');item.className='list-row';
+  item.innerHTML='<div class="between"><b>'+esc(t.title)+'</b><button class="btn secondary" type="button">Planear hoy</button></div>';
+  item.querySelector('button').onclick=function(){t.inbox=false;t.date=day();t.priority='normal';mark(t);save();render();say('La añadí a tus tareas de hoy')};
+  root.append(item);
+ });
+}
+var focusTimer=null;
+function refreshFocusClock(){
+ var el=by('focus-clock');if(!session||!model||!el)return;
+ var end=Number(model.focusUntil)||0;
+ var left=Math.max(0,Math.ceil((end-Date.now())/1000));
+ el.textContent=left?Math.floor(left/60)+':'+('0'+left%60).slice(-2)+' · Solo empieza':"Un inicio pequeño es suficiente.";
+ by('focus-five').textContent=left?'Detener temporizador':'Comenzar 5 minutos';
+ if(!left&&end){model.focusUntil=0;localStorage.setItem(localKey(),JSON.stringify(model))}
+}
+by('focus-five').onclick=function(){
+ model.focusUntil=Number(model.focusUntil)>Date.now()?0:Date.now()+5*60000;
+ save();refreshFocusClock();
+ if(model.focusUntil){say('Cinco minutos para dar el primer paso. Puedes parar cuando quieras.')}
+};
+focusTimer=setInterval(refreshFocusClock,1000);
+by('quick-capture-form').onsubmit=function(event){
+ event.preventDefault();
+ if(!session)return;
+ var input=by('quick-capture-input'),title=input.value.trim();
+ if(!title)return;
+ model.tasks.push({id:uid(),title:title,owner:session.username,inbox:true,
+   date:day(),repeat:'none',priority:'normal',energy:'low',steps:[],doneDates:[],updatedAt:stamp()});
+ input.value='';save();render();say('Anotado. No tienes que hacerlo ahora.');
+};
 function taskItem(t){var yes=taskDone(t),el=document.createElement('div');el.className='task'+(yes?' done':'');var meta=esc(t.date)+(t.time?' · '+esc(t.time):'')+' · '+esc(t.owner||'Yo')+(t.repeat&&t.repeat!=='none'?' · '+(t.repeat==='daily'?'Diaria':'Semanal'):'');
 el.innerHTML='<input type="checkbox" aria-label="Completar tarea" '+(yes?'checked':'')+'><div class="task-main"><div class="task-title">'+esc(t.title)+'</div><div class="task-meta">'+meta+'</div></div><button class="iconbtn" aria-label="Eliminar tarea">×</button>';
 el.querySelector('input').onchange=function(e){var k=t.repeat==='none'?t.date:day();t.doneDates=t.doneDates||[];if(e.target.checked){if(t.doneDates.indexOf(k)<0){t.doneDates.push(k);model.pet.food+=10;model.pet.xp+=10;say('¡Buen trabajo! +10 puntos para tu mascota 🐣')}}else{t.doneDates=t.doneDates.filter(function(v){return v!==k})}mark(t);save();render()};
@@ -150,18 +230,18 @@ function fill(id,items,renderer,empty){var el=by(id);el.replaceChildren();if(!it
 function render(){
 if(!session)return;
 var tasks=allTasks(),current=tasks.filter(todayTask),completed=current.filter(taskDone).length;
-by('stat-today').textContent=completed;by('stat-pending').textContent=tasks.filter(function(t){return !taskDone(t)}).length;by('stat-food').textContent=model.pet.food;
-if(nat&&nat.updateWidget){try{nat.updateWidget(tasks.filter(function(t){return !taskDone(t)}).length)}catch(e){}}
+by('stat-today').textContent=completed;by('stat-pending').textContent=tasks.filter(function(t){return !t.inbox&&!taskDone(t)}).length;by('stat-food').textContent=model.pet.food;
+if(nat&&nat.updateWidget){try{nat.updateWidget(tasks.filter(function(t){return !t.inbox&&!taskDone(t)}).length)}catch(e){}}
 var phases=['🥚','🐣','🐥','🦊','🐉'];var p=Math.min(4,Math.floor((model.pet.xp||0)/70));
 by('pet-face').textContent=phases[p];by('pet-level').textContent='Nivel '+(p+1);by('pet-headline').textContent=p===0?'Cada paso te hace crecer.':p>=3?'¡Mira cuánto has crecido!':'Tu compañero está evolucionando.';
 by('pet-detail').textContent='Tienes '+model.pet.food+' puntos. Completa tus tareas y aliméntalo para evolucionar.';
 by('daily-summary').textContent='Completaste '+completed+' de '+current.length+' actividades de hoy';
 by('daily-bar').style.width=(current.length?Math.round(100*completed/current.length):0)+'%';
-fill('home-tasks',current.filter(function(t){return !taskDone(t)}).slice(0,5),taskItem,'Tu día está al día. ¡Bien hecho!');
-fill('tasks-list',tasks.filter(function(t){return filter==='all'||(filter==='done'?taskDone(t):!taskDone(t))}),taskItem,'No hay tareas en esta categoría.');
+fill('home-tasks',actionable().slice(0,3),taskItem,'Tu día está al día. ¡Bien hecho!');
+fill('tasks-list',tasks.filter(function(t){return !t.inbox&&(filter==='all'||(filter==='done'?taskDone(t):!taskDone(t)))}),taskItem,'No hay tareas en esta categoría.');
 fill('home-alarms',active(model.alarms).filter(owned).slice(0,3),alarmItem,'No tienes alarmas próximas');
 fill('home-bags',active(model.packs).filter(owned).slice(0,2),miniBag,'Aún no tienes listas');
-renderCalendar();renderBags();renderAlarms();if(session.role==='admin')renderUsers();
+renderFocus();renderInbox();refreshFocusClock();renderCalendar();renderBags();renderAlarms();if(session.role==='admin')renderUsers();
 }
 function miniBag(b){var e=document.createElement('div');e.className='list-row';e.innerHTML='<b>'+esc(b.place)+'</b><div class="task-meta">'+(b.items||[]).length+' cosas por llevar</div>';return e}
 function bagItem(b){var e=document.createElement('div');e.className='list-row';e.innerHTML='<div class="between"><b>🎒 '+esc(b.place)+'</b><button class="iconbtn" aria-label="Eliminar lista">×</button></div><div class="bag-checks"></div><button class="btn secondary" style="margin-top:8px">Reiniciar lista</button>';
