@@ -62,9 +62,13 @@ if main:
 
 if launcher:
     for method in ("chooseAppLimit", "showUsageReport", "chooseFocusHours", "chooseDefaultHome",
-                   "openNeuroSync", "delayLaunch"):
+                   "openNeuroSync", "delayLaunch", "chooseFocusSession", "focusRemaining"):
         if not re.search(r"\b"+re.escape(method)+r"\s*\(", launcher):
             issues.append(f"Missing launcher feature {method}")
+    for feature in ("focus_session_until", "daily_budget", "app_limit_", "mindful_delay",
+                    "Settings.ACTION_USAGE_ACCESS_SETTINGS"):
+        if feature not in launcher:
+            issues.append(f"Missing focus feature: {feature}")
     if "Intent.ACTION_DIAL" not in launcher:
         issues.append("Launcher must retain access to phone dialer")
     if "Settings.ACTION_HOME_SETTINGS" not in launcher:
