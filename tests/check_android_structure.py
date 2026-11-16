@@ -21,6 +21,7 @@ manifest_text = require_file(ANDROID / "AndroidManifest.xml")
 launcher = require_file(JAVA / "FocusLauncherActivity.java")
 main = require_file(JAVA / "MainActivity.java")
 alarm = require_file(JAVA / "AlarmReceiver.java")
+audio = require_file(JAVA / "AlarmAudioService.java")
 filter_service = require_file(JAVA / "FocusNotificationListener.java")
 for name in ("AccountStore.java", "AlarmRingActivity.java", "TodayWidget.java", "SyncService.java"):
     require_file(JAVA / name)
@@ -42,6 +43,8 @@ if manifest_text:
         services = {s.get(NS+"name") for s in tree.findall(".//service")}
         if ".FocusNotificationListener" not in services:
             issues.append("Notification listener not declared")
+        if ".AlarmAudioService" not in services:
+            issues.append("Alarm sound foreground service not declared")
         if ".SyncService" not in services:
             issues.append("Family sync service not declared")
         if len(tree.findall("queries")) != 1:
@@ -76,6 +79,10 @@ if launcher:
 
 if filter_service and ("CATEGORY_ALARM" not in filter_service or "CATEGORY_CALL" not in filter_service):
     issues.append("Notification filter needs call and alarm exclusions")
+if audio and ("startForeground" not in audio or "USAGE_ALARM" not in audio):
+    issues.append("AlarmAudioService must start foreground audio using alarm stream")
+if alarm and "AlarmAudioService.start" not in alarm:
+    issues.append("AlarmReceiver must start sound automatically on alarm firing")
 if alarm and "setFullScreenIntent" not in alarm:
     issues.append("AlarmReceiver missing full-screen alarm notification")
 
