@@ -42,18 +42,27 @@ async function dispatch(req,env){
    if(!constantEq(env.BOOTSTRAP_SECRET,secret))return fail('No autorizado',403);
    const exists=await db.prepare('SELECT COUNT(*) AS total FROM users').first();
    if(exists.total>0)return fail('El administrador ya está registrado',409);
-   const username=String(payload.username||'').toLowerCase(),password=payload.password;
-   if(!safeUser(username)||typeof password!=='string'||password.length<12||password.length>128)return fail('Datos iniciales inválidos');
+   const username='administrador',password=payload.password;
+   if(typeof password!=='string'||password.length<12||password.length>128)return fail('Contraseña inicial demasiado corta');
    await createUser(db,username,password,'admin');
    return json({ok:true});
  }
  if(path==='/login'){
    const username=String(payload.username||'').toLowerCase(),password=payload.password;
    if(!safeUser(username)||typeof password!=='string'||password.length>128)return fail('Credenciales incorrectas',401);
+   const ip=(req.headers.get('cf-connecting-ip')||'sin-ip').slice(0,64);
+   const limitKey=await digest(ip+':'+username);
+   const limit=await db.prepare('SELECT fails,expires_at FROM login_limits WHERE key=?').bind(limitKey).first();
+   if(limit && limit.expires_at>Date.now() && limit.fails>=5)return fail('Demasiados intentos. Prueba más tarde.',429);
    const u=await db.prepare('SELECT * FROM users WHERE username=? AND active=1').bind(username).first();
-   if(!u)return fail('Credenciales incorrectas',401);
-   const test=await derive(password,u.pass_salt);
-   if(!constantEq(test,u.pass_hash))return fail('Credenciales incorrectas',401);
+   const valid=!!u&&constantEq(await derive(password,u.pass_salt),u.pass_hash);
+   if(!valid){
+      const count=limit&&limit.expires_at>Date.now()?limit.fails+1:1;
+      await db.prepare('INSERT INTO login_limits(key,fails,expires_at) VALUES(?,?,?) ON CONFLICT(key) DO UPDATE SET fails=excluded.fails,expires_at=excluded.expires_at')
+        .bind(limitKey,count,Date.now()+15*60000).run();
+      return fail('Credenciales incorrectas',401);
+   }
+   await db.prepare('DELETE FROM login_limits WHERE key=?').bind(limitKey).run();
    const token=randomHex(32);const hash=await digest(token);
    await db.prepare('INSERT INTO sessions(token_hash,username,expires_at) VALUES (?,?,?)').bind(hash,username,Date.now()+7*86400000).run();
    return json({ok:true,token,user:{username:u.username,role:u.role,active:true}});
