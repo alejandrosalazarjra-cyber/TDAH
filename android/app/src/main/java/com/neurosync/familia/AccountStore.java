@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.concurrent.ConcurrentHashMap;
+import java.security.MessageDigest;
 
 /** Gestión local de cuentas en el servidor principal. Nunca almacena contraseñas en claro.
  * admin1234 es exclusivamente la clave inicial para configurar el sistema;
@@ -66,6 +67,29 @@ public final class AccountStore {
     return new JSONObject().put("username",user).put("role",role).put("salt",salt)
       .put("hash",hash(password,salt)).put("active",true);
   }
+  private static SharedPreferences sessions(Context ctx){
+    return ctx.getSharedPreferences("ns_local_session_index",Context.MODE_PRIVATE);
+  }
+  private static String tokenHash(String token)throws Exception{
+    byte[] dig=MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8));
+    return Base64.encodeToString(dig,Base64.NO_WRAP);
+  }
+  public static void revoke(Context ctx,String token){
+    try{
+      String username=TOKENS.remove(token);
+      if(username==null){
+        JSONObject user=identity(ctx,token);
+        username=user==null?null:user.optString("username");
+      }
+      if(username!=null){
+        String hash=sessions(ctx).getString("token_"+username,"");
+        if(MessageDigest.isEqual(hash.getBytes(StandardCharsets.UTF_8),
+          tokenHash(token).getBytes(StandardCharsets.UTF_8))){
+          sessions(ctx).edit().remove("token_"+username).apply();
+        }
+      }
+    }catch(Exception ignored){}
+  }
   private static JSONObject find(JSONArray users,String username){
     for(int i=0;i<users.length();i++){JSONObject u=users.optJSONObject(i);if(u!=null&&username.equals(u.optString("username")))return u;}return null;
   }
@@ -86,6 +110,7 @@ public final class AccountStore {
         }
         clearAttempts(c,name);
         String token=random(32);TOKENS.put(token,name);
+        sessions(c).edit().putString("token_"+name,tokenHash(token)).commit();
         return new JSONObject().put("ok",true).put("token",token).put("user",publicUser(found))
           .put("mustChangePassword",defaultAdminPassword(found));
       }
@@ -98,6 +123,20 @@ public final class AccountStore {
     try{
       if(token==null||token.length()<30)return null;
       String username=TOKENS.get(token);
+      if(username==null){
+        JSONArray all=users(c);
+        String hashed=tokenHash(token);
+        for(int i=0;i<all.length();i++){
+          JSONObject candidate=all.optJSONObject(i);
+          if(candidate==null)continue;
+          String check=sessions(c).getString("token_"+candidate.optString("username"),"");
+          if(!check.isEmpty()&&MessageDigest.isEqual(check.getBytes(StandardCharsets.UTF_8),
+            hashed.getBytes(StandardCharsets.UTF_8))){
+            username=candidate.optString("username");
+            TOKENS.put(token,username);break;
+          }
+        }
+      }
       if(username==null)return null;
       JSONObject user=find(users(c),username);
       return user!=null&&user.optBoolean("active")?publicUser(user):null;
@@ -142,6 +181,7 @@ public final class AccountStore {
         prefs(c).edit().putString("users",all.toString()).commit();
         final String userName=user.optString("username");
         TOKENS.entrySet().removeIf(entry->userName.equals(entry.getValue()));
+        sessions(c).edit().remove("token_"+userName).commit();
         return new JSONObject().put("ok",true);
       }
     }catch(Exception e){return fail("No se pudo cambiar la contraseña");}
