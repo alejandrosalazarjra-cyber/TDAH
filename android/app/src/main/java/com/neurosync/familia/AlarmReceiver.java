@@ -65,6 +65,7 @@ public final class AlarmReceiver extends BroadcastReceiver {
   manager(ctx).cancel(pending(ctx,id));
   manager(ctx).cancel(pendingSnooze(ctx,id));
   ctx.getSharedPreferences("ns_alarms",0).edit().remove(PREFIX+id).apply();
+  AlarmChallengeStore.remove(ctx,id);
   ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id.hashCode());
  }
  public static void dismiss(Context ctx,String id){
@@ -117,7 +118,11 @@ public final class AlarmReceiver extends BroadcastReceiver {
  @Override public void onReceive(Context ctx,Intent intent){
   if(intent==null)return;
   if(Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction()) || AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED.equals(intent.getAction())){restore(ctx);return;}
-  if(DISMISS.equals(intent.getAction())){dismiss(ctx,intent.getStringExtra("id"));return;}
+  if(DISMISS.equals(intent.getAction())){
+    String alarmId=intent.getStringExtra("id");
+    if("none".equals(AlarmChallengeStore.get(ctx,alarmId)))dismiss(ctx,alarmId);
+    return;
+  }
   if(POSTPONE.equals(intent.getAction())){snooze(ctx,intent.getStringExtra("id"),5);return;}
   if(!FIRE.equals(intent.getAction())&&!SNOOZE.equals(intent.getAction()))return;
   String id=intent.getStringExtra("id");if(id==null)return;
@@ -134,7 +139,7 @@ public final class AlarmReceiver extends BroadcastReceiver {
       PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
    PendingIntent snoozePending=PendingIntent.getBroadcast(ctx,id.hashCode()^0x35353535,snoozeAction,
       PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
-   Notification notice=new Notification.Builder(ctx,CHANNEL)
+   Notification.Builder builder=new Notification.Builder(ctx,CHANNEL)
     .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
     .setContentTitle("⏰ "+title)
     .setContentText("Pulsa para detener o posponer")
@@ -142,9 +147,12 @@ public final class AlarmReceiver extends BroadcastReceiver {
     .setPriority(Notification.PRIORITY_MAX)
     .setVisibility(Notification.VISIBILITY_PUBLIC)
     .setAutoCancel(false).setOngoing(true)
-    .addAction(android.R.drawable.ic_media_pause,"Detener",stopPending)
     .addAction(android.R.drawable.ic_menu_recent_history,"Posponer",snoozePending)
-    .setContentIntent(full).setFullScreenIntent(full,true).build();
+    .setContentIntent(full).setFullScreenIntent(full,true);
+   if("none".equals(AlarmChallengeStore.get(ctx,id))){
+     builder.addAction(android.R.drawable.ic_media_pause,"Detener",stopPending);
+   }
+   Notification notice=builder.build();
    ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).notify(id.hashCode(),notice);
    try{AlarmAudioService.start(ctx,id,title);}
    catch(Exception e){android.util.Log.e("NeuroSync","No se pudo iniciar audio en segundo plano",e);}
