@@ -1,5 +1,31 @@
 # NeuroSync Familia — Android
 
+## NeuroSync 10.0 — diagnóstico de instalación y firma real
+
+**Hallazgo verificado:** se descargaron las APK de GitHub Actions #49 y #50. Ambas contenían clases Android y HTML nuevos, pero las firmas eran diferentes:
+- APK 8: certificado SHA-256 `f8e0e7f1967fcfe7849c33993b61fc2688524b22bd97c87b6f2e628d460de867`.
+- APK 9: certificado SHA-256 `bef4ae4574370e4e591e4690c2428add3d49f1a4f296798cd1db8792f3c121a7`.
+
+Android no permite actualizar una aplicación instalada con el mismo paquete y otra firma. Hasta ahora GitHub generaba una nueva firma de depuración en cada ejecución, por lo que las nuevas funciones podían existir en el APK descargado sin llegar a la instalación anterior.
+
+**Prueba segura de la versión nueva:** GitHub ahora genera `NeuroSync-10-PRUEBA-INDEPENDIENTE`. Se instala al lado de la aplicación existente y muestra como nombre **NeuroSync PRUEBA 10**, con paquete `com.neurosync.familia.preview`. No comparte cuentas, tareas ni datos con la app anterior. Sirve exclusivamente para comprobar visualmente el diseño, las funciones y los permisos sin borrar información.
+
+**Versión visible:** la pantalla de acceso y Mi día muestran la versión obtenida del paquete Android realmente instalado, y Mi día incluye accesos directos a los desafíos de alarma y al progreso privado. El instalador se verifica contra el HTML exacto y contra las clases incluidas en el APK, no solo contra archivos del repositorio.
+
+### Firma estable para actualizaciones definitivas
+
+Una única vez, desde el terminal de un GitHub Codespace autenticado en el repositorio, ejecuta:
+
+```bash
+bash scripts/setup-signing.sh
+```
+
+El script crea una llave privada de distribución y guarda sus credenciales como secretos cifrados de GitHub. Nunca publica la llave en el repositorio. Descarga **una copia de respaldo privada** de los archivos que el script crea en `signing/` antes de cerrar el Codespace; perderlos impide recuperar la firma.
+
+Después ejecuta manualmente **Compilar APK NeuroSync**. Con los secretos presentes, GitHub publicará `NeuroSync-Familia-Firmada` (`app-release.apk`) con una firma estable. Las siguientes versiones firmadas con la misma llave podrán actualizarse normalmente. **La primera migración desde una APK debug anterior requiere exportar las tareas, desinstalar la APK vieja, instalar la release y restaurar el respaldo**; la nueva firma no puede conservar automáticamente los datos de la app que se desinstala.
+
+No instales las APK de prueba o depuración para uso familiar permanente. Las credenciales de firma son tan importantes como un documento privado de identidad de la aplicación.
+
 ## NeuroSync 9.0 — Reloj, desafíos y contador personal
 
 **Reloj de Google:** la opción de música intenta abrir el paquete `com.google.android.deskclock`, después la lista general de alarmas (`ACTION_SHOW_ALARMS`) y, finalmente, la acción para crear alarma. Estas opciones dependen del sistema y del fabricante. **Elegir una canción de YouTube Music requiere la integración dentro de Reloj de Google y una suscripción Premium para canciones concretas**. La alarma con música de Google Clock es distinta de las alarmas nativas de NeuroSync: no es posible combinar automáticamente ambas mediante esa integración.
