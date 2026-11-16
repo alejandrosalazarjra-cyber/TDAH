@@ -52,16 +52,24 @@ public final class FocusLauncherActivity extends Activity {
     LinearLayout l=new LinearLayout(this);l.setGravity(Gravity.CENTER_VERTICAL);l.setOrientation(LinearLayout.HORIZONTAL);return l;
   }
   private TextView text(String contents,float size,int color,boolean bold){
-    TextView t=new TextView(this);t.setText(contents);t.setTextSize(size);t.setTextColor(color);
+    TextView t=new TextView(this);
+    t.setText(contents);t.setTextSize(size);t.setTextColor(color);
     t.setIncludeFontPadding(true);
-    if(bold)t.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
+    t.setTypeface(Typeface.create("sans-serif",bold?Typeface.BOLD:Typeface.NORMAL));
+    t.setBreakStrategy(android.text.Layout.BREAK_STRATEGY_HIGH_QUALITY);
     return t;
   }
   private void pad(View v,int x,int y){v.setPadding(dp(x),dp(y),dp(x),dp(y));}
   private TextView action(String value,Runnable click){
-    TextView t=text(value,16,WHITE,false);
-    pad(t,12,13);t.setBackgroundColor(CARD);t.setGravity(Gravity.CENTER);
-    if(click!=null)t.setOnClickListener(v->click.run());return t;
+    TextView t=text(value,14,WHITE,false);
+    pad(t,12,11);
+    t.setBackgroundColor(CARD);
+    t.setMinHeight(dp(46));
+    t.setGravity(Gravity.CENTER);
+    t.setMaxLines(2);
+    t.setEllipsize(android.text.TextUtils.TruncateAt.END);
+    if(click!=null)t.setOnClickListener(v->click.run());
+    return t;
   }
   private View gap(int height){View v=new View(this);v.setLayoutParams(new LinearLayout.LayoutParams(1,dp(height)));return v;}
   private View line(){View v=new View(this);v.setBackgroundColor(0xFF44464C);v.setLayoutParams(new LinearLayout.LayoutParams(-1,dp(1)));return v;}
@@ -160,56 +168,67 @@ public final class FocusLauncherActivity extends Activity {
   }
   private void renderHome(){
     if(drawer)return;
-    LinearLayout body=vertical();body.setBackgroundColor(BLACK);pad(body,23,24);
+    LinearLayout body=vertical();
+    body.setBackgroundColor(BLACK);
+    pad(body,18,16);
     LinearLayout head=horizontal();
-    TextView brand=text("NEUROSYNC  /  INICIO",12,MUTED,true);
+    TextView brand=text("NEUROSYNC  ·  INICIO",11,MUTED,true);
+    brand.setSingleLine(true);
     head.addView(brand,new LinearLayout.LayoutParams(0,-2,1));
-    TextView settings=action("⚙",this::showSettings);head.addView(settings);body.addView(head);
-    body.addView(gap(50));
-    Date now=new Date();
-    TextView clock=text(new SimpleDateFormat("HH:mm",Locale.getDefault()).format(now),66,WHITE,false);
-    clock.setGravity(Gravity.CENTER_HORIZONTAL);
-    body.addView(clock);
-    TextView date=text(new SimpleDateFormat("EEEE, d 'de' MMMM",new Locale("es","CO")).format(now),17,MUTED,false);
-    date.setGravity(Gravity.CENTER_HORIZONTAL);body.addView(date);
-    body.addView(gap(26));
-    int pending= getSharedPreferences("ns_widget",0).getInt("pending",0);
-    TextView progress=text("☑  "+pending+" tareas por completar",15,WHITE,false);
-    progress.setGravity(Gravity.CENTER);pad(progress,14,18);progress.setBackgroundColor(CARD);body.addView(progress);
-    progress.setOnClickListener(v->openNeuroSync());
-    body.addView(gap(14));
-    long focus=focusRemaining();
-    TextView focusSession=action(focus>0
-      ? "◷  Concentración: "+((focus+59999)/60000)+" min restantes · Terminar"
-      : "◷  Iniciar sesión de concentración",this::chooseFocusSession);
-    body.addView(focusSession);
+    TextView settings=action("⚙",this::showSettings);
+    settings.setMinWidth(dp(46));head.addView(settings);body.addView(head);
     body.addView(gap(28));
-    TextView favoriteTitle=text("ACCESOS FAVORITOS",12,MUTED,true);body.addView(favoriteTitle);body.addView(gap(11));
+    Date now=new Date();
+    TextView clock=text(new SimpleDateFormat("HH:mm",Locale.getDefault()).format(now),56,WHITE,false);
+    clock.setGravity(Gravity.CENTER);clock.setSingleLine(true);
+    body.addView(clock);
+    TextView date=text(new SimpleDateFormat("EEEE, d 'de' MMMM",new Locale("es","CO")).format(now),14,MUTED,false);
+    date.setGravity(Gravity.CENTER);date.setMaxLines(2);
+    body.addView(date);
+    body.addView(gap(24));
+    int pending=getSharedPreferences("ns_widget",0).getInt("pending",0);
+    TextView progress=action("☑  "+pending+" tareas pendientes",this::openNeuroSync);
+    body.addView(progress);
+    body.addView(gap(8));
+    long focus=focusRemaining();
+    TextView session=action(focus>0?
+       "◷  Concentración: "+((focus+59999)/60000)+" min":"◷  Iniciar concentración",this::chooseFocusSession);
+    body.addView(session);
+    body.addView(gap(22));
+    TextView favoriteTitle=text("FAVORITAS",11,MUTED,true);
+    body.addView(favoriteTitle);body.addView(gap(7));
     int count=0;
-    for(AppEntry a:apps){
-      if(favorites.contains(a.packageName)){addHomeApp(body,a);count++;if(count>=7)break;}
+    for(AppEntry app:apps){
+      if(favorites.contains(app.packageName)){
+        addHomeApp(body,app);
+        if(++count>=6)break;
+      }
     }
     if(count==0){
-      TextView tip=text("Mantén pulsada una aplicación en la lista para añadirla aquí.",14,MUTED,false);
-      pad(tip,0,6);body.addView(tip);
+      TextView tip=text("Elige tus aplicaciones favoritas desde la lista.",12,MUTED,false);
+      pad(tip,0,5);tip.setMaxLines(2);body.addView(tip);
     }
-    body.addView(gap(12));body.addView(line());body.addView(gap(18));
-    TextView drawerButton=action("☷  Buscar todas las aplicaciones",this::showDrawer);
-    drawerButton.setGravity(Gravity.CENTER);body.addView(drawerButton);body.addView(gap(16));
-    TextView tasks=action("✓  Abrir mi organización y horarios",this::openNeuroSync);body.addView(tasks);
-    body.addView(gap(22));
-    LinearLayout foot=horizontal();foot.setGravity(Gravity.CENTER);
-    TextView phone=action("☎  Teléfono",()->launchIntent(new Intent(Intent.ACTION_DIAL)));foot.addView(phone);
-    foot.addView(new View(this),new LinearLayout.LayoutParams(dp(16),1));
-    TextView camera=action("◉  Cámara",()->launchIntent(new Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA)));foot.addView(camera);
-    body.addView(foot);
-    body.addView(gap(25));
-    TextView footer=text("Desliza para ver aplicaciones  ·  Mantén pulsado para elegir favoritas",11,MUTED,false);
+    body.addView(gap(18));body.addView(line());body.addView(gap(12));
+    body.addView(action("⌕  Buscar aplicaciones",this::showDrawer));
+    body.addView(gap(8));
+    body.addView(action("✓  Agenda y tareas",this::openNeuroSync));
+    body.addView(gap(16));
+    LinearLayout shortcuts=horizontal();
+    shortcuts.setGravity(Gravity.CENTER);
+    TextView phone=action("☎  Teléfono",()->launchIntent(new Intent(Intent.ACTION_DIAL)));
+    shortcuts.addView(phone,new LinearLayout.LayoutParams(0,dp(48),1));
+    shortcuts.addView(new View(this),new LinearLayout.LayoutParams(dp(10),1));
+    TextView camera=action("◎  Cámara",()->launchIntent(new Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA)));
+    shortcuts.addView(camera,new LinearLayout.LayoutParams(0,dp(48),1));
+    body.addView(shortcuts);
+    body.addView(gap(16));
+    TextView footer=text("Desliza para abrir tus aplicaciones",11,MUTED,false);
     footer.setGravity(Gravity.CENTER);body.addView(footer);
     showContent(body);
   }
   private void addHomeApp(LinearLayout container,AppEntry entry){
-    TextView item=text("•  "+entry.title,22,WHITE,false);pad(item,8,13);
+    TextView item=text("•  "+entry.title,18,WHITE,false);pad(item,8,10);
+    item.setMaxLines(1);item.setEllipsize(android.text.TextUtils.TruncateAt.END);
     item.setOnClickListener(v->openEntry(entry));
     item.setOnLongClickListener(v->{showEntryOptions(entry);return true;});
     container.addView(item);
@@ -225,7 +244,7 @@ public final class FocusLauncherActivity extends Activity {
     heading.addView(title);wrapper.addView(heading);wrapper.addView(gap(16));
     search=new EditText(this);search.setSingleLine(true);search.setTextColor(WHITE);
     search.setHintTextColor(MUTED);search.setHint("Buscar aplicación...");
-    search.setTextSize(17);search.setBackgroundColor(CARD);pad(search,15,13);
+    search.setTextSize(15);search.setBackgroundColor(CARD);pad(search,14,11);
     wrapper.addView(search);
     page=vertical();page.setPadding(0,dp(12),0,dp(80));
     ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.addView(page);
@@ -247,7 +266,8 @@ public final class FocusLauncherActivity extends Activity {
       if(!entry.title.toLowerCase(Locale.getDefault()).contains(q))continue;
       LinearLayout row=horizontal();
       String star=favorites.contains(entry.packageName)?"★ ":"";
-      TextView name=text(star+entry.title,19,WHITE,false);pad(name,12,14);
+      TextView name=text(star+entry.title,16,WHITE,false);pad(name,10,11);
+      name.setSingleLine(true);name.setEllipsize(android.text.TextUtils.TruncateAt.END);
       row.addView(name,new LinearLayout.LayoutParams(0,-2,1));
       TextView controls=text("⋮",22,MUTED,true);pad(controls,15,10);
       controls.setOnClickListener(v->showEntryOptions(entry));
@@ -467,7 +487,7 @@ public final class FocusLauncherActivity extends Activity {
   }
   private void showSettings(){
     drawer=true;
-    LinearLayout view=vertical();pad(view,20,22);
+    LinearLayout view=vertical();pad(view,16,17);
     TextView back=action("‹  Volver a inicio",()->{drawer=false;renderHome();});view.addView(back);
     view.addView(gap(30));view.addView(text("Mi inicio minimalista",25,WHITE,true));view.addView(gap(14));
     TextView explain=text("Puedes usar NeuroSync como pantalla de inicio sin perder el acceso a otras aplicaciones ni las llamadas de emergencia. Android te permitirá regresar a tu launcher anterior desde Ajustes.",14,MUTED,false);
