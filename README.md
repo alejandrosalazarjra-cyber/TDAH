@@ -2,6 +2,20 @@
 
 Aplicación de organización familiar en Android. **No utiliza Netlify ni necesita Google Play.**
 
+## Inicio minimalista opcional de Android (v4.0)
+
+La aplicación incluye un **launcher** nativo con estilo original inspirado en la reducción de distracciones: fondo negro, letras blancas, reloj grande, fecha, resumen de tareas, favoritos, lista completa de apps instaladas y búsqueda. No se instala como una capa de bloqueo ni sustituye el PIN, huella o pantalla de seguridad de Android.
+
+**Activación:**
+1. En NeuroSync, abre **Mi día → Abrir y configurar pantalla de inicio**.
+2. En el launcher abre **⚙ → Elegir inicio predeterminado**.
+3. Android te mostrará el diálogo oficial para elegir NeuroSync como aplicación de inicio. Confirma solo si quieres ese cambio.
+4. Para volver al launcher original de OPPO, abre **⚙ → Volver al inicio original** y selecciona el inicio de tu fabricante en aplicaciones predeterminadas.
+
+**Funciones de concentración implementadas:** pausa opcional antes de abrir una app (3, 5 o 10 segundos), horarios sencillos con un aviso previo, favoritos y consulta local de tiempo de uso con permiso voluntario del sistema. Estas funciones no bloquean otras apps a nivel de Android.
+
+**Pendientes:** bloqueo real con límites de tiempo, filtrado de notificaciones, restricción de videos cortos, escala de grises de aplicaciones de terceros, carpetas, gestos y permisos de accesibilidad. No se han activado silenciosamente. El usuario debe poder cancelar o desactivar cualquier restricción; las llamadas, emergencias y ajustes esenciales deben seguir accesibles.
+
 ## Funciones disponibles en el código
 - Interfaz móvil responsive con tareas, pasos, repeticiones y mascota evolutiva.
 - Acceso por cuentas individuales: administrador, miembros familiares.
@@ -32,7 +46,7 @@ La carpeta `cloud/` contiene un backend HTTPS con cuentas, sesiones, controles d
 La cuenta del administrador gestiona miembros y tareas. En esta modalidad Cloudflare es la base central; no se depende de que el teléfono del administrador funcione como servidor. Los dispositivos conservan datos localmente y reintentan sincronizar cuando se abre o utiliza la aplicación y mientras está abierta. **No se promete sincronización instantánea con la aplicación completamente cerrada.**
 
 ## Limitaciones y seguridad
-- La APK debe **compilarse y probarse** en celulares reales; haber guardado código no demuestra que funcionen todas las alarmas ni todos los fabricantes.
+- La APK v4 debe **compilarse y probarse** en celulares reales; haber guardado código no demuestra que funcionen todas las alarmas ni todos los fabricantes.
 - Android puede negar pantallas completas, restringir precisión de alarmas, ahorrar batería o retrasar notificaciones. Hay alternativas cuando los permisos no están disponibles.
 - No usa permisos para bloquear el desbloqueo del sistema. Android requiere un modelo especial de administración del dispositivo para ciertas restricciones, que no debe simularse con una pantalla superpuesta.
 - Las contraseñas no se almacenan en texto plano en el backend. La contraseña inicial local es temporal.
