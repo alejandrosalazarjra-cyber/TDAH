@@ -13,7 +13,7 @@ public final class AlarmReceiver extends BroadcastReceiver {
   private static final String CHANNEL="neurosync_reminders";
   private static final String PREFIX="alarm_";
   private static final String ACTION_REMIND="com.neurosync.familia.REMIND";
-  private AlarmReceiver(){}
+  public AlarmReceiver(){}
   private static PendingIntent pending(Context ctx,String id){
     Intent intent=new Intent(ctx,AlarmReceiver.class).setAction(ACTION_REMIND).putExtra("id",id);
     return PendingIntent.getBroadcast(ctx,id.hashCode(),intent,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
