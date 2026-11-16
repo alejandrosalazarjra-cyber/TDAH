@@ -55,7 +55,9 @@
   <section class="view" id="view-calendar"><div class="grid"><div class="card"><div class="between"><button class="btn ghost" id="prev-month">‹</button><h2 id="month-title" style="margin:0"></h2><button class="btn ghost" id="next-month">›</button></div><div class="calendar-grid" id="calendar" style="margin-top:20px"></div></div><div class="card"><h2 id="selected-title">Actividades del día</h2><div id="day-tasks"></div><button class="btn secondary" data-open="task">+ Agregar</button></div></div></section>
   <section class="view" id="view-bags"><div class="card"><div class="between"><h2>Listas para salir</h2><button class="btn" data-open="bag">+ Nueva lista</button></div><p class="muted small">Prepara lo que llevarás al gimnasio, al trabajo, al estudio o a cualquier destino.</p><div id="bags-list"></div></div></section>
   <section class="view" id="view-alarms"><div class="card"><div class="between"><h2>Alarmas y recordatorios</h2><button class="btn" data-open="alarm">+ Crear alarma</button></div><p class="muted small">En Android, la aplicación programa notificaciones del sistema. Puedes crear alarmas para una fecha o repetirlas diariamente.</p><div class="card" style="background:#f6f8ff;box-shadow:none;margin:14px 0"><h3>Configurar alarma</h3><p class="hint" id="alarm-permission-status">Verifica los permisos de Android.</p><div class="row"><button type="button" class="btn secondary" id="alarm-permissions">Activar permisos</button><button type="button" class="btn ghost" id="alarm-test">Probar en 1 minuto</button><button type="button" class="btn ghost" id="alarm-clock-music">Música en Reloj</button><button type="button" class="btn ghost" id="alarm-local-sound">Elegir sonido del celular</button></div><p class="hint">La selección de canciones de YouTube Music se hace en Reloj de Google, no dentro de NeuroSync.</p></div><div id="alarms-list"></div></div></section>
-  <section class="view" id="view-admin"><div class="grid"><div class="stack"><div class="card"><div class="between"><h2>Miembros de la familia</h2><button class="btn" data-open="user">+ Crear cuenta</button></div><p class="muted small">Cada persona tiene su propio usuario. Las actividades se asignan por responsable.</p><div id="users-list"></div></div><div class="card"><h2>Flujos de trabajo</h2><p class="small muted">Crea una tarea recurrente y asígnala a un miembro. Puedes añadir subtareas, horario y fecha.</p><button class="btn secondary" data-open="task">+ Crear flujo / tarea</button></div></div><div class="stack"><div class="card"><h2>Seguridad</h2><p class="muted small">Cambia la contraseña inicial del administrador. Usa una diferente para cada persona.</p><form id="password-form" class="stack" style="gap:10px"><label class="field">Contraseña actual<input id="current-pass" type="password" required></label><label class="field">Contraseña nueva (mín. 10 caracteres)<input id="new-pass" type="password" minlength="10" required></label><button class="btn" type="submit">Cambiar contraseña</button></form></div><div class="card"><h2>Teléfono principal</h2><p class="muted small">La sincronización por internet usa una base central en Cloudflare cuando esté activada. Tu cuenta controla miembros y tareas; no necesitas Netlify, Tailscale ni Play Store.</p><button class="btn secondary" id="configure-network">Configurar conexión</button></div></div></div></section>
+  <section class="view" id="view-admin"><div class="grid"><div class="stack"><div class="card"><div class="between"><h2>Miembros de la familia</h2><button class="btn" data-open="user">+ Crear cuenta</button></div><p class="muted small">Cada persona tiene su propio usuario. Las actividades se asignan por responsable.</p><div id="users-list"></div></div><div class="card"><h2>Flujos de trabajo</h2><p class="small muted">Crea una tarea recurrente y asígnala a un miembro. Puedes añadir subtareas, horario y fecha.</p><button class="btn secondary" data-open="task">+ Crear flujo / tarea</button></div></div><div class="stack"><div class="card"><h2>Respaldo personal</h2>
+<p class="hint">Guarda y recupera tus tareas, listas, alarmas y progreso de mascota antes de reinstalar una APK.</p>
+<div class="row"><button class="btn secondary" type="button" id="backup-export">Exportar respaldo</button><button class="btn ghost" type="button" id="backup-import">Importar respaldo</button></div></div><div class="card"><h2>Seguridad</h2><p class="muted small">Cambia la contraseña inicial del administrador. Usa una diferente para cada persona.</p><form id="password-form" class="stack" style="gap:10px"><label class="field">Contraseña actual<input id="current-pass" type="password" required></label><label class="field">Contraseña nueva (mín. 10 caracteres)<input id="new-pass" type="password" minlength="10" required></label><button class="btn" type="submit">Cambiar contraseña</button></form></div><div class="card"><h2>Teléfono principal</h2><p class="muted small">La sincronización por internet usa una base central en Cloudflare cuando esté activada. Tu cuenta controla miembros y tareas; no necesitas Netlify, Tailscale ni Play Store.</p><button class="btn secondary" id="configure-network">Configurar conexión</button></div></div></div></section>
  </main>
  <nav class="nav-mobile" aria-label="Navegación">
   <button class="active" data-view="home"><span>⌂</span>Hoy</button><button data-view="tasks"><span>☑</span>Tareas</button><button data-view="calendar"><span>▦</span>Agenda</button><button data-view="bags"><span>▣</span>Listas</button><button data-view="alarms"><span>◷</span>Alarmas</button><button class="admin-only" data-view="admin"><span>♙</span>Admin</button>
@@ -286,6 +288,41 @@ by('configure-network').onclick=function(){
  catch(e){say('No se pudo configurar el servidor')}
 };
 by('password-form').onsubmit=function(e){e.preventDefault();if(!nat||!nat.changePassword){say('Cambia contraseñas desde el APK Android');return}try{var r=JSON.parse(nat.changePassword(by('current-pass').value,by('new-pass').value));say(r.ok?'Contraseña actualizada. Inicia sesión de nuevo.':(r.error||'Error'));if(r.ok){by('password-form').reset();setTimeout(logout,1100)}}catch(err){say('No se pudo cambiar la contraseña')}};
+window.neuroBackupMessage=function(message){say(message)};
+window.neuroImportData=function(raw){
+ try{
+  var restored=JSON.parse(raw);
+  if(!Array.isArray(restored.tasks)||!Array.isArray(restored.packs)||!Array.isArray(restored.alarms))throw Error('Formato inválido');
+  if(!confirm('¿Importar este respaldo en la cuenta '+session.username+'? Se combinarán las actividades con las actuales.'))return;
+  for(var kind of ['tasks','packs','alarms']){
+    var items=new Map((model[kind]||[]).map(function(row){return [row.id,row]}));
+    restored[kind].slice(0,2000).forEach(function(row){
+      if(!row||typeof row.id!=='string'||typeof row.owner!=='string')return;
+      if(session.role!=='admin'&&row.owner!==session.username)return;
+      var old=items.get(row.id);
+      if(!old||(+row.updatedAt||0)>(+old.updatedAt||0))items.set(row.id,row);
+    });
+    model[kind]=Array.from(items.values());
+  }
+  if(restored.pet&&typeof restored.pet==='object')model.pet=restored.pet;
+  save();render();say('Respaldo importado correctamente');
+ }catch(e){say('No se pudo importar este respaldo')}
+};
+by('backup-export').onclick=function(){
+ if(!session||!model)return;
+ var data=JSON.stringify({tasks:model.tasks,packs:model.packs,alarms:model.alarms,pet:model.pet});
+ if(nat&&nat.exportBackup)nat.exportBackup(data);
+ else{
+  var blob=new Blob([data],{type:'application/json'});
+  var url=URL.createObjectURL(blob),link=document.createElement('a');
+  link.href=url;link.download='NeuroSync-respaldo.json';link.click();
+  setTimeout(function(){URL.revokeObjectURL(url)},1000);
+ }
+};
+by('backup-import').onclick=function(){
+ if(nat&&nat.importBackup)nat.importBackup();
+ else say('La restauración mediante archivos está disponible en la APK Android');
+};
 function logout(){syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
 by('logout').onclick=logout;by('avatar').onclick=function(){if(confirm('¿Cerrar sesión de esta cuenta?'))logout()};
 document.addEventListener('visibilitychange',function(){if(!document.hidden)sync()});setInterval(sync,60000);
