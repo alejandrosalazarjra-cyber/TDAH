@@ -154,7 +154,6 @@ var list=by('users-list');if(!list)return;
 if(!nat||!nat.getUsers){list.innerHTML='<p class="hint">Las cuentas familiares requieren instalar la APK Android y activar el celular principal.</p>';return}
 try{var data=JSON.parse(nat.getUsers());if(!data.ok){list.textContent=data.error||'No disponible';return}
 list.replaceChildren();data.users.forEach(function(u){var d=document.createElement('div');d.className='profile-line';d.innerHTML='<span><b>'+esc(u.username)+'</b><br><small class="muted">'+(u.role==='admin'?'Administrador':'Miembro')+'</small></span><span class="chip">'+(u.active?'Activo':'Inactivo')+'</span>';list.append(d)})}catch(e){list.textContent='No se pudo obtener la lista de miembros'}}
-}
 function show(view){if(view==='admin'&&session.role!=='admin')return;document.querySelectorAll('.view').forEach(function(v){v.classList.toggle('active',v.id==='view-'+view)});document.querySelectorAll('[data-view]').forEach(function(b){b.classList.toggle('active',b.dataset.view===view)});by('page-title').textContent=labels[view];render()}
 document.querySelectorAll('[data-view]').forEach(function(b){b.addEventListener('click',function(){show(b.dataset.view)})});
 by('prev-month').onclick=function(){month=new Date(month.getFullYear(),month.getMonth()-1,1);renderCalendar()};by('next-month').onclick=function(){month=new Date(month.getFullYear(),month.getMonth()+1,1);renderCalendar()};
