@@ -206,6 +206,9 @@ public final class MainActivity extends Activity {
         }
       });
     }
+    @JavascriptInterface public void updateWidget(int pending){
+      TodayWidget.refresh(MainActivity.this,Math.max(0,Math.min(pending,9999)));
+    }
     @JavascriptInterface public boolean testAlarm(){
       return AlarmReceiver.schedule(MainActivity.this,"test_neurosync","Prueba de alarma",System.currentTimeMillis()+60000L,false);
     }
