@@ -10,7 +10,7 @@ Aplicación de organización familiar en Android. **No utiliza Netlify ni necesi
 - Sonido personalizado seleccionando un archivo de audio local del dispositivo.
 - Acceso a Reloj de Google para configurar música de YouTube Music **dentro de Reloj**, no como reproducción directa desde NeuroSync.
 - Widget **NeuroSync · Mi día** en el menú de widgets de la pantalla principal.
-- Respaldo local por dispositivo: las tareas usan almacenamiento de WebView; no desinstales sin conservar tus datos.
+- Respaldo y restauración desde Administración con el selector de archivos de Android. Los datos se guardan localmente; exporta antes de reinstalar. Los archivos de respaldo no están cifrados: guárdalos en un lugar privado.
 - Sincronización familiar: red local / Tailscale opcional o **servidor HTTPS Cloudflare Workers + D1**, preparado en `cloud/`.
 
 ## Primer uso Android
@@ -20,7 +20,8 @@ Aplicación de organización familiar en Android. **No utiliza Netlify ni necesi
 4. Si prefieres sincronización entre celulares solo con internet: publica antes el servidor de `cloud/`, usa **Conectar por internet** con la URL HTTPS y accede con el administrador creado al inicializar el servidor en Cloudflare (contraseña fuerte, nunca `admin1234`).
 5. Crea cuentas para mamá y hermano desde Administración. En sus teléfonos solo tendrán que instalar el APK y escribir la misma URL del servicio y sus credenciales.
 6. En Alarmas, pulsa **Activar permisos** y concede los permisos necesarios. Puede requerir pulsarlo nuevamente para cada permiso especial. Programa una **prueba para dentro de un minuto**.
-7. Para el widget: mantén pulsada una zona vacía de la pantalla de inicio → Widgets → NeuroSync · Mi día → Añadir.
+7. Antes de desinstalar una versión, abre Administración → Respaldo personal → Exportar respaldo.
+8. Para el widget: mantén pulsada una zona vacía de la pantalla de inicio → Widgets → NeuroSync · Mi día → Añadir.
 
 ## YouTube Music
 La integración oficial con música de YouTube Music está disponible dentro de **Reloj de Google** (según disponibilidad y tipo de suscripción); NeuroSync abre Reloj para seleccionar la alarma y su música. Las alarmas propias de NeuroSync no pueden reproducir directamente pistas protegidas por YouTube Music. También puedes elegir un **archivo local** como sonido de NeuroSync.
