@@ -70,8 +70,9 @@ public final class SyncService extends Service {
       }
       int length;try{length=Integer.parseInt(lengthRaw);}catch(Exception e){length=-1;}
       if(length<0||length>500000){reply(s,413,"{\"error\":\"Contenido demasiado grande\"}");return;}
-      byte[] content=in.readNBytes(length);
-      if(content.length!=length){reply(s,400,"{}");return;}
+      byte[] content=new byte[length];int read=0;
+      while(read<length){int count=in.read(content,read,length-read);if(count<0)break;read+=count;}
+      if(read!=length){reply(s,400,"{}");return;}
       JSONObject incoming=new JSONObject(new String(content,StandardCharsets.UTF_8));
       JSONObject result=SyncStore.merge(this,incoming);
       reply(s,200,result.toString());
