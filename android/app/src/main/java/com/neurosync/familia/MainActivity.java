@@ -24,8 +24,35 @@ public final class MainActivity extends Activity {
   private final ExecutorService networkWorker=Executors.newSingleThreadExecutor();
   private volatile String sessionToken="";
   private volatile JSONObject sessionUser=null;
+  private String currentMode(){return getPreferences(0).getString("mode","");}
+  private String currentEndpoint(){
+    String mode=currentMode();
+    if("cloud".equals(mode))return getPreferences(0).getString("cloud","");
+    if("client".equals(mode))return getPreferences(0).getString("server","");
+    return "host";
+  }
+  private void restoreNativeSession(){
+    JSONObject saved=SessionVault.restore(this,currentMode(),currentEndpoint());
+    if(saved==null)return;
+    String token=saved.optString("token","");
+    JSONObject user=saved.optJSONObject("user");
+    if(token.length()<30||user==null)return;
+    if(localHost()){
+      JSONObject actual=AccountStore.identity(this,token);
+      if(actual==null){SessionVault.clear(this);return;}
+      user=actual;
+    }
+    sessionToken=token;
+    sessionUser=user;
+  }
+  private void forgetNativeSession(){
+    if(localHost()&&!sessionToken.isEmpty())AccountStore.revoke(this,sessionToken);
+    SessionVault.clear(this);
+    sessionUser=null;sessionToken="";
+  }
   @Override public void onCreate(Bundle state){
     super.onCreate(state);
+    restoreNativeSession();
     getWindow().setStatusBarColor(Color.rgb(246,248,252));
     getWindow().setNavigationBarColor(Color.rgb(255,255,255));
     getWindow().getDecorView().setSystemUiVisibility(android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
@@ -215,16 +242,16 @@ public final class MainActivity extends Activity {
   public final class NativeBridge {
     @JavascriptInterface public String configureHost(){
       if(!localHost()){
+        forgetNativeSession();
         getPreferences(0).edit().putString("mode","host").remove("server").apply();
-        sessionToken="";sessionUser=null;
       }
       startServer();
       return success("Celular principal activo. Comparte la IP privada de Tailscale con tu familia.").toString();
     }
     @JavascriptInterface public String configureRemote(String ip){
       if(!validPrivateIp(ip))return AccountStore.fail("Usa la IP privada de Tailscale (100.x.x.x) o Wi-Fi").toString();
+      forgetNativeSession();
       getPreferences(0).edit().putString("mode","client").putString("server",ip).apply();
-      sessionToken="";sessionUser=null;
       runOnUiThread(()->stopService(new Intent(MainActivity.this,SyncService.class)));
       return success("Conectado al servidor "+ip+". Inicia sesión con tu usuario familiar.").toString();
     }
@@ -232,8 +259,8 @@ public final class MainActivity extends Activity {
       if(base==null)return AccountStore.fail("Dirección vacía").toString();
       String url=base.trim().replaceAll("/+$","");
       if(!validCloudUrl(url))return AccountStore.fail("Escribe una dirección HTTPS válida del servidor familiar").toString();
+      forgetNativeSession();
       getPreferences(0).edit().putString("mode","cloud").putString("cloud",url).apply();
-      sessionToken="";sessionUser=null;
       runOnUiThread(()->stopService(new Intent(MainActivity.this,SyncService.class)));
       return success("Servidor en internet configurado. Inicia sesión con tu cuenta familiar.").toString();
     }
@@ -245,17 +272,29 @@ public final class MainActivity extends Activity {
       if(result.optBoolean("ok")){
         sessionToken=result.optString("token","");
         sessionUser=result.optJSONObject("user");
+        SessionVault.save(MainActivity.this,sessionToken,sessionUser,currentMode(),currentEndpoint());
         // El aviso de contraseña inicial se gestiona en la interfaz.
         result.remove("token"); // El secreto de sesión permanece exclusivamente en Java.
       }
       return result.toString();
+    }
+    @JavascriptInterface public String restoreSession(){
+      try{
+        if(sessionUser==null||sessionToken.isEmpty())return AccountStore.fail("No hay sesión guardada").toString();
+        if(localHost() && AccountStore.identity(MainActivity.this,sessionToken)==null){
+          forgetNativeSession();return AccountStore.fail("Sesión local revocada").toString();
+        }
+        return new JSONObject().put("ok",true).put("user",sessionUser).toString();
+      }catch(Exception e){return AccountStore.fail("No se pudo restaurar la sesión").toString();}
     }
     @JavascriptInterface public String getUsers(){return call("/users",new JSONObject()).toString();}
     @JavascriptInterface public String createAccount(String username,String password){
       return call("/create-user",payload("username",username,"password",password)).toString();
     }
     @JavascriptInterface public String changePassword(String current,String next){
-      return call("/change-password",payload("current",current,"next",next)).toString();
+      JSONObject response=call("/change-password",payload("current",current,"next",next));
+      if(response.optBoolean("ok"))forgetNativeSession();
+      return response.toString();
     }
     @JavascriptInterface public String syncFamily(String json){
       try{
@@ -373,7 +412,7 @@ public final class MainActivity extends Activity {
       catch(Exception e){return false;}
     }
     @JavascriptInterface public void cancelAlarm(String id){AlarmReceiver.cancel(MainActivity.this,id);}
-    @JavascriptInterface public void logout(){sessionUser=null;sessionToken="";}
+    @JavascriptInterface public void logout(){forgetNativeSession();}
   }
   @Override public void onBackPressed(){
     if(web.canGoBack())web.goBack();else new AlertDialog.Builder(this).setMessage("¿Cerrar NeuroSync?")
