@@ -138,6 +138,18 @@ jobs:
         working-directory: android
         run: gradle --no-daemon --stacktrace assembleDebug
 
+      - name: Verificar que el APK sea instalable
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK" || { echo "::error::No se generó app-debug.apk"; exit 1; }
+          unzip -t "$APK" >/dev/null
+          test -f "$ANDROID_HOME/build-tools/35.0.0/aapt" || { echo "::error::Falta aapt del SDK Android 35"; exit 1; }
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee /tmp/neurosync-apk-info.txt
+          grep -q "package: name='com.neurosync.familia'" /tmp/neurosync-apk-info.txt
+          echo "APK generado, ZIP íntegro y paquete Android correcto"
+
       - name: Publicar APK para descarga
         uses: actions/upload-artifact@v4
         with:
