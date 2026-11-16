@@ -175,7 +175,7 @@ if(kind==='task'){
  var task={id:uid(),title:title,owner:values.owner||session.username,date:values.date||day(),time:values.time||'',repeat:values.repeat||'none',steps:(values.steps||'').split(';').map(function(s){return s.trim()}).filter(Boolean),doneDates:[],updatedAt:stamp()};
  model.tasks.push(task);
  if(task.time){
-  var reminder={id:'task_'+task.id,title:task.title,date:task.date,time:task.time,daily:task.repeat==='daily',owner:task.owner,updatedAt:stamp()};
+  var reminder={id:'task_'+task.id,title:task.title,date:task.date,time:task.time,daily:task.repeat==='daily',repeat:task.repeat,owner:task.owner,updatedAt:stamp()};
   model.alarms.push(reminder);
   if(reminder.owner===session.username||reminder.owner==='todos')scheduleAlarm(reminder);
  }
@@ -187,7 +187,17 @@ save();closeModal();render();say('Guardado correctamente')};
 function closeModal(){by('modal').classList.add('hidden')}
 by('close-modal').onclick=closeModal;by('modal').onclick=function(e){if(e.target===by('modal'))closeModal()};
 document.querySelectorAll('[data-open]').forEach(function(b){b.onclick=function(){openModal(b.dataset.open)}});
-function scheduleAlarm(a){if(!nat||!nat.scheduleAlarm)return;var when=new Date(a.date+'T'+a.time+':00').getTime();if(a.daily&&when<Date.now())when+=86400000;try{nat.scheduleAlarm(a.id,a.title,when,a.daily)}catch(e){say('La alarma no se pudo programar')}}
+function scheduleAlarm(a){
+ if(!nat||!nat.scheduleAlarm)return;
+ var when=new Date(a.date+'T'+a.time+':00').getTime();
+ var repeat=a.repeat|| (a.daily?'daily':'none');
+ if(repeat==='weekly')while(when<Date.now())when+=7*86400000;
+ else if(repeat==='daily')while(when<Date.now())when+=86400000;
+ try{
+  var ok=nat.scheduleAlarmRepeat?nat.scheduleAlarmRepeat(a.id,a.title,when,repeat):nat.scheduleAlarm(a.id,a.title,when,repeat==='daily');
+  if(!ok)say('No se pudo programar la alarma: revisa la fecha y los permisos');
+ }catch(e){say('Error al programar alarma')}
+}
 function checkAlarmPermissions(){
  var status=by('alarm-permission-status');
  if(!status)return;
