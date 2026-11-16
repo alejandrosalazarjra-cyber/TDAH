@@ -102,9 +102,12 @@ public final class MainActivity extends Activity {
   });}
   public final class NativeBridge {
     @JavascriptInterface public String configureHost(){
-      getPreferences(0).edit().putString("mode","host").remove("server").apply();
-      sessionToken="";sessionUser=null;startServer();
-      return success("Celular principal activado. Usa el usuario administrador y cambia la clave inicial.").toString();
+      if(!localHost()){
+        getPreferences(0).edit().putString("mode","host").remove("server").apply();
+        sessionToken="";sessionUser=null;
+      }
+      startServer();
+      return success("Celular principal activo. Comparte la IP privada de Tailscale con tu familia.").toString();
     }
     @JavascriptInterface public String configureRemote(String ip){
       if(!validPrivateIp(ip))return AccountStore.fail("Usa la IP privada de Tailscale (100.x.x.x) o Wi-Fi").toString();
