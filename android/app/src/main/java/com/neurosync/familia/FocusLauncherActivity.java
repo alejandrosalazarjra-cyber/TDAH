@@ -139,6 +139,27 @@ public final class FocusLauncherActivity extends Activity {
     scroll.addView(content,new ScrollView.LayoutParams(-1,-2));
     root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
   }
+  private long focusRemaining(){
+    long until=preferences.getLong("focus_session_until",0);
+    return Math.max(0,until-System.currentTimeMillis());
+  }
+  private void chooseFocusSession(){
+    if(focusRemaining()>0){
+      new AlertDialog.Builder(this).setTitle("Sesión en curso")
+        .setMessage("Todavía tienes "+(focusRemaining()+59999)/60000+" minutos. ¿Quieres terminar la sesión?")
+        .setPositiveButton("Terminar",(d,w)->{preferences.edit().remove("focus_session_until").apply();renderHome();})
+        .setNegativeButton("Continuar",null).show();
+      return;
+    }
+    final String[] options={"15 minutos","25 minutos","45 minutos","60 minutos"};
+    final int[] minutes={15,25,45,60};
+    new AlertDialog.Builder(this).setTitle("Iniciar concentración")
+      .setItems(options,(d,index)->{
+        long until=System.currentTimeMillis()+minutes[index]*60000L;
+        preferences.edit().putLong("focus_session_until",until).apply();
+        renderHome();
+      }).setNegativeButton("Cancelar",null).show();
+  }
   private void renderHome(){
     if(drawer)return;
     LinearLayout body=vertical();body.setBackgroundColor(BLACK);pad(body,23,24);
@@ -158,6 +179,12 @@ public final class FocusLauncherActivity extends Activity {
     TextView progress=text("☑  "+pending+" tareas por completar",15,WHITE,false);
     progress.setGravity(Gravity.CENTER);pad(progress,14,18);progress.setBackgroundColor(CARD);body.addView(progress);
     progress.setOnClickListener(v->openNeuroSync());
+    body.addView(gap(14));
+    long focus=focusRemaining();
+    TextView focusSession=action(focus>0
+      ? "◷  Concentración: "+((focus+59999)/60000)+" min restantes · Terminar"
+      : "◷  Iniciar sesión de concentración",this::chooseFocusSession);
+    body.addView(focusSession);
     body.addView(gap(28));
     TextView favoriteTitle=text("ACCESOS FAVORITOS",12,MUTED,true);body.addView(favoriteTitle);body.addView(gap(11));
     int count=0;
@@ -275,6 +302,7 @@ public final class FocusLauncherActivity extends Activity {
     return info==null?0:info.getTotalTimeInForeground()/60000;
   }
   private boolean focusIsActive(){
+    if(focusRemaining()>0)return true;
     if(!focusEnabled)return false;
     if(focusStart==focusEnd)return true;
     Calendar now=Calendar.getInstance();int minute=now.get(Calendar.HOUR_OF_DAY)*60+now.get(Calendar.MINUTE);
@@ -441,6 +469,7 @@ public final class FocusLauncherActivity extends Activity {
     view.addView(explain);view.addView(gap(24));
     view.addView(action("✓  Elegir NeuroSync como pantalla de inicio",this::chooseDefaultHome));view.addView(gap(13));
     view.addView(action("⌂  Abrir agenda y organización",this::openNeuroSync));view.addView(gap(13));
+    view.addView(action("◷  Gestionar sesión de concentración",this::chooseFocusSession));view.addView(gap(13));
     TextView pause=action(focusEnabled?"Pausa consciente: activada":"Pausa consciente: desactivada",()->{
       focusEnabled=!focusEnabled;persist();showSettings();
     });
