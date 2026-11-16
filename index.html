@@ -18,6 +18,7 @@
    <label class="field">Contraseña<input id="login-pass" type="password" autocomplete="current-password" required placeholder="Tu contraseña"></label>
   </div><button type="submit" class="btn" style="width:100%">Iniciar sesión</button>
   <p id="login-error" class="hint" role="alert" style="color:#c04455;margin:12px 0 0"></p>
+  <p id="login-build" class="hint" style="text-align:center;margin-top:10px">Versión de la aplicación: verificando…</p>
   <div class="row" style="margin-top:17px;justify-content:center">
    <button class="btn secondary" id="setup-host" type="button">📱 Soy el administrador</button>
    <button class="btn ghost" id="setup-client" type="button">🌐 Conectar por internet</button><button class="btn ghost" id="setup-lan" type="button">📱 Red local avanzada</button>
@@ -36,13 +37,22 @@
   <div class="sidebar-bottom"><button id="logout" class="btn ghost" style="width:100%">Salir de la cuenta</button></div>
  </aside>
  <main class="main">
-  <header class="top"><div><h1 id="page-title">Mi día</h1><div class="sub" id="greeting">Organiza tus próximos pasos</div></div>
+  <header class="top"><div><h1 id="page-title">Mi día</h1><div class="sub" id="greeting">Organiza tus próximos pasos</div>
+  <div class="hint" id="installed-build" aria-live="polite">Comprobando versión instalada…</div></div>
    <div class="top-right"><span class="sync-state" id="sync-status">Guardado local</span><button id="sync-btn" class="btn secondary" aria-label="Sincronizar">↻</button><button class="avatar" id="avatar" type="button" aria-label="Cerrar sesión de mi cuenta" title="Mi cuenta">A</button></div></header>
   <section class="view active" id="view-home">
    <div class="grid">
     <div class="stack">
      <div class="card hero"><div><span class="chip">TU COMPAÑERO</span><h2 style="margin-top:12px" id="pet-headline">Cada pequeño paso cuenta.</h2><p class="muted" id="pet-detail">Completa tareas para alimentar y evolucionar a tu mascota.</p><div class="row"><button class="btn" id="pet-feed">🍎 Dar comida · 20 puntos</button><span class="chip" id="pet-level">Nivel 1</span></div></div><div class="pet" id="pet-face" aria-label="Mascota evolutiva">🥚</div></div>
      <div class="stats"><div class="stat"><strong id="stat-today">0</strong><span>Hechas hoy</span></div><div class="stat"><strong id="stat-pending">0</strong><span>Pendientes</span></div><div class="stat"><strong id="stat-food">0</strong><span>Puntos para comida</span></div></div>
+     <div class="card" style="border:1px solid var(--border);background:var(--paper)">
+       <div class="between"><h2>Accesos a funciones</h2><span id="feature-status" class="chip">Versión en revisión</span></div>
+       <div class="row">
+        <button type="button" class="btn secondary" id="jump-challenge">Alarmas con retos</button>
+        <button type="button" class="btn secondary" id="jump-progress">Progreso privado</button>
+       </div>
+       <p class="hint">Si estas funciones no aparecen, comprueba el número de versión que se muestra arriba.</p>
+     </div>
      <div class="card" id="quick-capture-card">
       <div class="between"><h2>Vacía tu mente</h2><span class="chip">Captura rápida</span></div>
       <p class="hint">Escribe lo que te preocupa recordar. No necesitas organizarlo todavía.</p>
@@ -550,6 +560,19 @@ by('streak-reset').onclick=function(){
  data.started=day();localStorage.setItem(streakKey(),JSON.stringify(data));
  renderStreak();say('Nuevo comienzo registrado');
 };
+function updateInstalledBuild(){
+ var label='Versión no identificada';
+ if(nat&&nat.buildInfo)try{
+  var info=JSON.parse(nat.buildInfo());
+  if(info.version&&info.code)label='NeuroSync '+info.version+' · compilación '+info.code;
+ }catch(e){}
+ by('login-build').textContent=label;
+ by('installed-build').textContent=label;
+ by('feature-status').textContent=label;
+}
+by('jump-challenge').onclick=function(){show('alarms');say('Crea una alarma y elige el desafío para detenerla')};
+by('jump-progress').onclick=function(){show('habits')};
+updateInstalledBuild();
 function logout(){syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
 by('logout').onclick=logout;by('avatar').onclick=function(){if(confirm('¿Cerrar sesión de esta cuenta?'))logout()};
 document.addEventListener('visibilitychange',function(){if(!document.hidden){sync();refreshFocusClock()}});setInterval(sync,60000);
