@@ -131,6 +131,14 @@ jobs:
           python3 tests/check_android_structure.py
           python3 - <<'PY'
           from pathlib import Path
+          src=Path("index.html").read_text(encoding="utf-8")
+          for required in ("id=\"view-habits\"", "streakKey()", "streak-days",
+                           "setAlarmChallenge", "Resolver 3 sumas", "Tocar 12 veces"):
+              assert required in src, f"No se encontró función NeuroSync 9.0: {required}"
+          print("Contador privado y desafíos de alarma presentes")
+          PY
+          python3 - <<'PY'
+          from pathlib import Path
           src=Path('index.html').read_text(encoding='utf-8')
           assert 'nat.restoreSession()' in src, 'No se restaura sesión al abrir NeuroSync'
           for feature in ('quick-capture-form','inbox-list','next-action','focus-five',
@@ -156,6 +164,8 @@ jobs:
           grep -q 'AlarmAudioService.start' android/app/src/main/java/com/neurosync/familia/AlarmReceiver.java
           grep -q 'setAlarmClock' android/app/src/main/java/com/neurosync/familia/AlarmReceiver.java
           grep -q 'RoleManager.ROLE_HOME' android/app/src/main/java/com/neurosync/familia/MainActivity.java
+          grep -q 'AlarmChallengeStore' android/app/src/main/java/com/neurosync/familia/AlarmRingActivity.java
+          grep -q 'ACTION_SHOW_ALARMS' android/app/src/main/java/com/neurosync/familia/MainActivity.java
           grep -q 'MAX_ATTEMPTS=5' android/app/src/main/java/com/neurosync/familia/AccountStore.java
           grep -q 'Settings.ACTION_APP_NOTIFICATION_SETTINGS' android/app/src/main/java/com/neurosync/familia/FocusLauncherActivity.java
           if grep -q 'BIND_NOTIFICATION_LISTENER_SERVICE' android/app/src/main/AndroidManifest.xml; then
