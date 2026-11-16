@@ -51,10 +51,10 @@ jobs:
           import re, subprocess, tempfile
           html=Path('index.html').read_text(encoding='utf-8')
           assert 'NeuroFlow' not in html, 'Se detectó la interfaz anterior'
-          assert 'netlify' not in html.lower().split('<script>')[0], 'Revisar referencias externas'
+          assert 'netlify.app' not in html.lower(), 'No debe haber dependencias de Netlify'
           for tag in ['login-form','view-admin','view-tasks','view-alarms','view-calendar','view-bags']:
               assert f'id="{tag}"' in html, f'Falta sección {tag}'
-          scripts=re.findall(r'<script(?:\\s[^>]*)?>([\\s\\S]*?)</script>',html)
+          scripts=[part.split('</script>',1)[0] for part in html.split('<script>')[1:]]
           assert scripts, 'No hay JavaScript'
           for i,code in enumerate(scripts):
               path=Path(tempfile.gettempdir())/f'ns-syntax-{i}.js'
