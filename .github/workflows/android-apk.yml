@@ -135,6 +135,17 @@ jobs:
           print("Comprobaciones de sintaxis corregidas")
           PY
 
+      - name: Comprobar audio, launcher y permisos de NeuroSync 6.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'versionCode 6' android/app/build.gradle
+          grep -q 'AlarmAudioService' android/app/src/main/AndroidManifest.xml
+          grep -q 'FOREGROUND_SERVICE_MEDIA_PLAYBACK' android/app/src/main/AndroidManifest.xml
+          grep -q 'AlarmAudioService.start' android/app/src/main/java/com/neurosync/familia/AlarmReceiver.java
+          grep -q 'RoleManager.ROLE_HOME' android/app/src/main/java/com/neurosync/familia/MainActivity.java
+          echo "Comprobaciones de audio y launcher completadas"
+
       - name: Configurar Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
