@@ -14,7 +14,9 @@ import java.util.Map;
  */
 public final class AlarmReceiver extends BroadcastReceiver {
  public AlarmReceiver(){}
- private static final String CHANNEL="neurosync_alarms_v2";
+ private static final String CHANNEL="neurosync_alarms_v3";
+ private static final String DISMISS="com.neurosync.familia.alarm.DISMISS";
+ private static final String POSTPONE="com.neurosync.familia.alarm.POSTPONE";
  private static final String PREFIX="alarm_";
  private static final String FIRE="com.neurosync.familia.RING";
  private static final String SNOOZE="com.neurosync.familia.SNOOZE";
@@ -60,7 +62,15 @@ public final class AlarmReceiver extends BroadcastReceiver {
   ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id.hashCode());
  }
  public static void dismiss(Context ctx,String id){
+  AlarmAudioService.stop(ctx);
   ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id.hashCode());
+  // No borrar la siguiente repetición diaria/semanal.
+  String data=ctx.getSharedPreferences("ns_alarms",0).getString(PREFIX+id,null);
+  if(data!=null)try{
+    JSONObject entry=new JSONObject(data);
+    if("none".equals(entry.optString("repeat","none")))
+      ctx.getSharedPreferences("ns_alarms",0).edit().remove(PREFIX+id).apply();
+  }catch(Exception ignored){}
  }
  public static void snooze(Context ctx,String id,int minutes){
   try{
@@ -71,6 +81,7 @@ public final class AlarmReceiver extends BroadcastReceiver {
    if(Build.VERSION.SDK_INT<31||alarm.canScheduleExactAlarms())
      alarm.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,when,pendingSnooze(ctx,id));
    else alarm.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,when,pendingSnooze(ctx,id));
+   AlarmAudioService.stop(ctx);
    ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id.hashCode());
   }catch(Exception ignored){}
  }
@@ -100,6 +111,8 @@ public final class AlarmReceiver extends BroadcastReceiver {
  @Override public void onReceive(Context ctx,Intent intent){
   if(intent==null)return;
   if(Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction()) || AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED.equals(intent.getAction())){restore(ctx);return;}
+  if(DISMISS.equals(intent.getAction())){dismiss(ctx,intent.getStringExtra("id"));return;}
+  if(POSTPONE.equals(intent.getAction())){snooze(ctx,intent.getStringExtra("id"),5);return;}
   if(!FIRE.equals(intent.getAction())&&!SNOOZE.equals(intent.getAction()))return;
   String id=intent.getStringExtra("id");if(id==null)return;
   String raw=ctx.getSharedPreferences("ns_alarms",0).getString(PREFIX+id,null);if(raw==null)return;
@@ -109,6 +122,12 @@ public final class AlarmReceiver extends BroadcastReceiver {
    Intent screen=new Intent(ctx,AlarmRingActivity.class).putExtra("id",id).putExtra("title",title);
    screen.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
    PendingIntent full=PendingIntent.getActivity(ctx,id.hashCode(),screen,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+   Intent stopAction=new Intent(ctx,AlarmReceiver.class).setAction(DISMISS).putExtra("id",id);
+   Intent snoozeAction=new Intent(ctx,AlarmReceiver.class).setAction(POSTPONE).putExtra("id",id);
+   PendingIntent stopPending=PendingIntent.getBroadcast(ctx,id.hashCode()^0x25252525,stopAction,
+      PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+   PendingIntent snoozePending=PendingIntent.getBroadcast(ctx,id.hashCode()^0x35353535,snoozeAction,
+      PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
    Notification notice=new Notification.Builder(ctx,CHANNEL)
     .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
     .setContentTitle("⏰ "+title)
@@ -117,8 +136,13 @@ public final class AlarmReceiver extends BroadcastReceiver {
     .setPriority(Notification.PRIORITY_MAX)
     .setVisibility(Notification.VISIBILITY_PUBLIC)
     .setAutoCancel(false).setOngoing(true)
+    .addAction(android.R.drawable.ic_media_pause,"Detener",stopPending)
+    .addAction(android.R.drawable.ic_menu_recent_history,"Posponer",snoozePending)
     .setContentIntent(full).setFullScreenIntent(full,true).build();
    ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).notify(id.hashCode(),notice);
+   try{AlarmAudioService.start(ctx,id,title);}
+   catch(Exception e){android.util.Log.e("NeuroSync","No se pudo iniciar audio en segundo plano",e);}
+
    String repeat=a.optString("repeat",a.optBoolean("daily")?"daily":"none");
    long interval="weekly".equals(repeat)?604800000L:"daily".equals(repeat)?86400000L:0L;
    if(interval>0 && FIRE.equals(intent.getAction())){
