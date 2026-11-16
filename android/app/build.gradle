@@ -8,6 +8,7 @@ android {
         targetSdk 35
         versionCode 10
         versionName '10.0.0'
+        manifestPlaceholders = [appLabel: 'NeuroSync Familia']
     }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     signingConfigs {
@@ -21,6 +22,13 @@ android {
         }
     }
     buildTypes {
+        preview {
+            initWith debug
+            applicationIdSuffix '.preview'
+            versionNameSuffix '-preview'
+            manifestPlaceholders = [appLabel: 'NeuroSync PRUEBA 10']
+            matchingFallbacks = ['debug']
+        }
         release {
             minifyEnabled false
             if (System.getenv('NS_KEYSTORE_FILE')) {
