@@ -22,7 +22,6 @@ launcher = require_file(JAVA / "FocusLauncherActivity.java")
 main = require_file(JAVA / "MainActivity.java")
 alarm = require_file(JAVA / "AlarmReceiver.java")
 audio = require_file(JAVA / "AlarmAudioService.java")
-filter_service = require_file(JAVA / "FocusNotificationListener.java")
 for name in ("AccountStore.java", "AlarmRingActivity.java", "TodayWidget.java", "SyncService.java"):
     require_file(JAVA / name)
 for resource in ("res/layout/widget_today.xml", "res/xml/today_widget_info.xml",
@@ -41,8 +40,8 @@ if manifest_text:
         if homes != [".FocusLauncherActivity"]:
             issues.append(f"Expected one HOME activity FocusLauncherActivity, found {homes}")
         services = {s.get(NS+"name") for s in tree.findall(".//service")}
-        if ".FocusNotificationListener" not in services:
-            issues.append("Notification listener not declared")
+        if ".FocusNotificationListener" in services:
+            issues.append("Restricted notification listener must not be enabled by default")
         if ".AlarmAudioService" not in services:
             issues.append("Alarm sound foreground service not declared")
         if ".SyncService" not in services:
@@ -72,13 +71,13 @@ if launcher:
                     "Settings.ACTION_USAGE_ACCESS_SETTINGS"):
         if feature not in launcher:
             issues.append(f"Missing focus feature: {feature}")
+    if "Settings.ACTION_APP_NOTIFICATION_SETTINGS" not in launcher:
+        issues.append("Notification controls must use Android per-app settings instead of privileged listening")
     if "Intent.ACTION_DIAL" not in launcher:
         issues.append("Launcher must retain access to phone dialer")
     if "Settings.ACTION_HOME_SETTINGS" not in launcher:
         issues.append("Launcher must allow reverting home app")
 
-if filter_service and ("CATEGORY_ALARM" not in filter_service or "CATEGORY_CALL" not in filter_service):
-    issues.append("Notification filter needs call and alarm exclusions")
 if audio and ("startForeground" not in audio or "USAGE_ALARM" not in audio):
     issues.append("AlarmAudioService must start foreground audio using alarm stream")
 if alarm and "AlarmAudioService.start" not in alarm:
