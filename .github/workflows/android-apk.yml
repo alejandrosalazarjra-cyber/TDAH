@@ -86,7 +86,7 @@ jobs:
               if not (android / relative).is_file():
                   errors.append(f"Falta recurso Android: {relative}")
           gradle = pathlib.Path("android/app/build.gradle").read_text()
-          if not re.search(r"versionCode\\s+4\\b", gradle):
+          if not re.search(r"versionCode\s+4\b", gradle):
               errors.append("android/app/build.gradle no contiene versionCode 4")
           manifest_file = android / "AndroidManifest.xml"
           try:
@@ -104,7 +104,7 @@ jobs:
               if ".FocusNotificationListener" not in services:
                   errors.append("FocusNotificationListener no está registrado en AndroidManifest.xml")
               bridges = (java / "MainActivity.java").read_text() if (java / "MainActivity.java").is_file() else ""
-              if len(re.findall(r"void\\s+openMinimalHome\\s*\\(", bridges)) != 1:
+              if len(re.findall(r"void\s+openMinimalHome\s*\(", bridges)) != 1:
                   errors.append("MainActivity debe exponer exactamente un método openMinimalHome")
           except Exception as exc:
               errors.append(f"No se pudo validar AndroidManifest.xml: {exc}")
