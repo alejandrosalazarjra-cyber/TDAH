@@ -8,11 +8,22 @@
  <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
  <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+ <queries>
+   <intent><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent>
+   <intent><action android:name="android.intent.action.DIAL"/></intent>
+ </queries>
  <application android:icon="@drawable/ic_neurosync" android:label="NeuroSync Familia" android:theme="@android:style/Theme.Material.Light.NoActionBar" android:usesCleartextTraffic="true" android:allowBackup="false">
   <activity android:name=".MainActivity" android:exported="true"><intent-filter>
    <action android:name="android.intent.action.MAIN"/>
    <category android:name="android.intent.category.LAUNCHER"/>
   </intent-filter></activity>
+  <activity android:name=".HomeActivity" android:exported="true" android:launchMode="singleTask">
+    <intent-filter>
+      <action android:name="android.intent.action.MAIN"/>
+      <category android:name="android.intent.category.HOME"/>
+      <category android:name="android.intent.category.DEFAULT"/>
+    </intent-filter>
+  </activity>
   <activity android:name=".AlarmRingActivity" android:exported="false" android:showWhenLocked="true" android:turnScreenOn="true" android:excludeFromRecents="true" android:theme="@android:style/Theme.Material.NoActionBar"/>
   <service android:name=".SyncService" android:exported="false" android:foregroundServiceType="dataSync"/>
   <receiver android:name=".TodayWidget" android:exported="true">
