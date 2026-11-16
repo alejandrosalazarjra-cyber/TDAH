@@ -11,7 +11,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.concurrent.ConcurrentHashMap;
-import java.security.MessageDigest;
 
 /** Gestión local de cuentas en el servidor principal. Nunca almacena contraseñas en claro.
  * admin1234 es exclusivamente la clave inicial para configurar el sistema;
