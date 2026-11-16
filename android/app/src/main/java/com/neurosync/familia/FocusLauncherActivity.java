@@ -333,7 +333,7 @@ public final class FocusLauncherActivity extends Activity {
     Calendar d=Calendar.getInstance();d.set(Calendar.HOUR_OF_DAY,0);d.set(Calendar.MINUTE,0);
     d.set(Calendar.SECOND,0);d.set(Calendar.MILLISECOND,0);
     Map<String,UsageStats> rows=stats.queryAndAggregateUsageStats(d.getTimeInMillis(),System.currentTimeMillis());
-    ArrayList<UsageStats> ordered=new ArrayList<>(rows.values());
+    ArrayList<UsageStats> ordered=new ArrayList<>(rows==null?Collections.emptyList():rows.values());
     ordered.sort((a,b)->Long.compare(b.getTotalTimeInForeground(),a.getTotalTimeInForeground()));
     StringBuilder summary=new StringBuilder();int displayed=0;
     for(UsageStats entry:ordered){
@@ -416,6 +416,14 @@ public final class FocusLauncherActivity extends Activity {
     view.addView(action("Conceder acceso a tiempo de uso",this::requestUsageAccess));view.addView(gap(12));
     TextView total=text("Tiempo aproximado registrado hoy: "+(todayUsageMillis()/60000)+" minutos",14,MUTED,false);view.addView(total);
     view.addView(gap(26));
+    view.addView(text("Pantalla y accesibilidad",18,WHITE,true));view.addView(gap(10));
+    view.addView(action("Opciones de escala de grises del sistema",()->{
+      new AlertDialog.Builder(this).setTitle("Modo monocromático")
+        .setMessage("NeuroSync ya usa una interfaz oscura minimalista. Para poner otras aplicaciones en escala de grises, Android ofrece opciones de corrección de color o Bienestar digital según el fabricante. Puedes activarlo voluntariamente en Ajustes.")
+        .setNegativeButton("Cancelar",null)
+        .setPositiveButton("Abrir Accesibilidad",(d,w)->launchIntent(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)))
+        .show();
+    }));view.addView(gap(14));
     view.addView(action("Cambiar pantalla de inicio desde Android",()->launchIntent(new Intent(Settings.ACTION_HOME_SETTINGS))));
     showContent(view);
   }
