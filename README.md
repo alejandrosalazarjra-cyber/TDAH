@@ -1,5 +1,13 @@
 # NeuroSync Familia — Android
 
+## NeuroSync 9.0 — Reloj, desafíos y contador personal
+
+**Reloj de Google:** la opción de música intenta abrir el paquete `com.google.android.deskclock`, después la lista general de alarmas (`ACTION_SHOW_ALARMS`) y, finalmente, la acción para crear alarma. Estas opciones dependen del sistema y del fabricante. **Elegir una canción de YouTube Music requiere la integración dentro de Reloj de Google y una suscripción Premium para canciones concretas**. La alarma con música de Google Clock es distinta de las alarmas nativas de NeuroSync: no es posible combinar automáticamente ambas mediante esa integración.
+
+**Desafíos al sonar:** al crear una alarma de NeuroSync se puede elegir **sin desafío**, **resolver tres sumas** o **tocar doce veces**. Las acciones de notificación no ofrecen detener directamente una alarma con desafío. Siempre se ofrece **Posponer cinco minutos** y una salida de emergencia **Detener sin desafío** con confirmación en la pantalla; el servicio tiene un límite de reproducción para evitar que siga sonando indefinidamente. La pantalla completa depende de los permisos y de las restricciones de Android.
+
+**Contador NoFap:** sección personal para elegir desde qué fecha contar, consultar días transcurridos y registrar nuevos comienzos conservando un historial. El dato se guarda **solo en el WebView del dispositivo para la cuenta activa**, no se envía a `/sync` ni aparece en los respaldos familiares. No pretende diagnosticar, culpabilizar ni presentar la masturbación como un problema médico por sí misma. Se puede utilizar como seguimiento de un objetivo personal voluntario.
+
 ## NeuroSync 8.0 — sesión persistente y organización clara
 
 **Inicio de sesión:** NeuroSync recuerda la cuenta seleccionada al cerrar la app, salir al launcher o reiniciar el teléfono. Guarda el token de acceso cifrado mediante **Android Keystore y AES-GCM**, nunca la contraseña. Al abrirla nuevamente intenta restaurar el usuario desde Android, sin solicitar credenciales. Pulsa **Salir de la cuenta** para borrar el token y revocar la sesión local. Cambiar contraseña también invalida la sesión por seguridad.
