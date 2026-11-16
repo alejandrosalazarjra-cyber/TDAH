@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>NeuroSync LifeOS</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#7C4DFF">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <style>
 :root{--bg-main:#05050A;--bg-card:rgba(20,20,30,0.7);--bg-input:rgba(40,40,55,0.8);--accent-primary:#7C4DFF;--accent-secondary:#00E676;--accent-danger:#FF1744;--accent-warning:#FFD600;--text-main:#FFFFFF;--text-muted:#8E8E93;--text-dim:#636366;--border-color:rgba(255,255,255,0.1);--glass-border:rgba(255,255,255,0.15);--safe-bottom:env(safe-area-inset-bottom);--safe-top:env(safe-area-inset-top)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;-webkit-user-select:none;user-select:none}
@@ -1539,5 +1542,6 @@ const nav=byId('nav-family');nav.onclick=()=>{document.querySelectorAll('.screen
 renderTasks();renderPacks();checkReminders();setInterval(checkReminders,30000);
 })();
 </script>
+<script>if('serviceWorker' in navigator && location.protocol==='https:'){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}</script>
 </body>
 </html>
