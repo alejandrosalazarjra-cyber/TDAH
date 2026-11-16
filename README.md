@@ -1,5 +1,25 @@
 # NeuroSync Familia — Android
 
+## NeuroSync 8.0 — sesión persistente y organización clara
+
+**Inicio de sesión:** NeuroSync recuerda la cuenta seleccionada al cerrar la app, salir al launcher o reiniciar el teléfono. Guarda el token de acceso cifrado mediante **Android Keystore y AES-GCM**, nunca la contraseña. Al abrirla nuevamente intenta restaurar el usuario desde Android, sin solicitar credenciales. Pulsa **Salir de la cuenta** para borrar el token y revocar la sesión local. Cambiar contraseña también invalida la sesión por seguridad.
+
+Para usuarios conectados a Cloudflare, la interfaz puede mostrar la información local sin internet, pero la sesión remota está sujeta a la expiración del servidor (actualmente 7 días). La sincronización y los permisos siguen exigiendo autorización válida del servidor cuando vuelva la conexión. No debe presentarse como sesión de internet sin vencimiento hasta que se implemente un sistema seguro de renovación.
+
+**Organización para reducir carga mental:**
+- **Captura rápida:** escribe ideas sin fecha ni obligación inmediata. Quedan en la **Bandeja de entrada** hasta que decidas planificarlas.
+- **Solo una cosa ahora:** muestra la actividad prioritaria del día y el siguiente paso concreto, sin la distracción de toda la lista.
+- **Tres prioridades:** limita lo que aparece en la pantalla de inicio, aunque las demás tareas permanecen disponibles.
+- **Pasos pequeños:** confirma uno por uno y observa cómo progresa la actividad.
+- **Temporizador de cinco minutos:** ayuda a empezar con una acción breve; puede detenerse en cualquier momento. No emite una alarma nativa si la aplicación está completamente cerrada.
+- **Prioridad y energía:** cada tarea puede etiquetarse por importancia y energía requerida.
+- **Edición real de tareas:** cambia nombre, responsable, fecha, hora, repetición y pasos; los recordatorios relacionados se actualizan.
+- **Mascota:** sigue evolucionando con las tareas completadas, pero no penaliza los descansos.
+
+Estas herramientas son opciones de organización, no un tratamiento ni un diagnóstico de TDAH.
+
+**Compatibilidad:** los datos previos de tareas, alarmas, listas y mascota se conservan al actualizar sin desinstalar, siempre que Android acepte la firma de la APK. No desinstales una versión con información importante sin exportar antes un respaldo.
+
 ## NeuroSync 7.0 — corrección de permisos y diseño compacto
 
 - **Android puede bloquear el permiso especial de escucha de notificaciones** en una APK distribuida por WhatsApp. NeuroSync ya no solicita ese acceso ni registra el servicio correspondiente. En la lista de aplicaciones → tres puntos → «Ajustar sus notificaciones en Android» se abre el panel oficial de notificaciones de la aplicación elegida, sin leer mensajes ni intentar desactivar protecciones del fabricante.
