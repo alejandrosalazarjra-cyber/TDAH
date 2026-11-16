@@ -1,0 +1,116 @@
+package com.neurosync.familia;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.util.Base64;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
+import java.util.concurrent.ConcurrentHashMap;
+
+/** Gestión local de cuentas en el servidor principal. Nunca almacena contraseñas en claro.
+ * admin1234 es exclusivamente la clave inicial para configurar el sistema;
+ * la interfaz solicita cambiarla y las cuentas familiares necesitan una clave propia.
+ */
+public final class AccountStore {
+  private static final SecureRandom RANDOM=new SecureRandom();
+  private static final ConcurrentHashMap<String,String> TOKENS=new ConcurrentHashMap<>();
+  private static final Object LOCK=new Object();
+  private AccountStore(){}
+  private static SharedPreferences prefs(Context c){return c.getSharedPreferences("ns_accounts",Context.MODE_PRIVATE);}
+  private static String random(int bytes){byte[] raw=new byte[bytes];RANDOM.nextBytes(raw);return Base64.encodeToString(raw,Base64.NO_WRAP|Base64.URL_SAFE);}
+  private static String hash(String password,String salt)throws Exception{
+    byte[] raw=Base64.decode(salt,Base64.URL_SAFE|Base64.NO_WRAP);
+    PBEKeySpec spec=new PBEKeySpec(password.toCharArray(),raw,180000,256);
+    try{return Base64.encodeToString(SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).getEncoded(),Base64.NO_WRAP);}
+    finally{spec.clearPassword();}
+  }
+  private static JSONArray users(Context c)throws Exception{
+    String saved=prefs(c).getString("users","");
+    if(saved.isEmpty()){
+      JSONArray a=new JSONArray();a.put(make("administrador","admin1234","admin"));
+      prefs(c).edit().putString("users",a.toString()).commit();
+      return a;
+    }
+    return new JSONArray(saved);
+  }
+  private static JSONObject make(String user,String password,String role)throws Exception{
+    String salt=random(18);
+    return new JSONObject().put("username",user).put("role",role).put("salt",salt)
+      .put("hash",hash(password,salt)).put("active",true);
+  }
+  private static JSONObject find(JSONArray users,String username){
+    for(int i=0;i<users.length();i++){JSONObject u=users.optJSONObject(i);if(u!=null&&username.equals(u.optString("username")))return u;}return null;
+  }
+  private static String norm(String user){return user==null?"":user.trim().toLowerCase(java.util.Locale.ROOT);}
+  public static JSONObject authenticate(Context c,String username,String password){
+    try{
+      synchronized(LOCK){
+        String name=norm(username);
+        if(!name.matches("[a-z0-9_\\-]{3,30}")||password==null||password.length()>160)return fail("Credenciales incorrectas");
+        JSONObject found=find(users(c),name);
+        if(found==null||!found.optBoolean("active"))return fail("Credenciales incorrectas");
+        String actual=hash(password,found.optString("salt"));
+        if(!MessageDigest.isEqual(actual.getBytes(StandardCharsets.UTF_8),found.optString("hash").getBytes(StandardCharsets.UTF_8)))return fail("Credenciales incorrectas");
+        String token=random(32);TOKENS.put(token,name);
+        return new JSONObject().put("ok",true).put("token",token).put("user",publicUser(found))
+          .put("mustChangePassword",name.equals("administrador")&&password.equals("admin1234"));
+      }
+    }catch(Exception e){return fail("No se pudo iniciar sesión");}
+  }
+  public static JSONObject publicUser(JSONObject u)throws Exception{
+    return new JSONObject().put("username",u.optString("username")).put("role",u.optString("role")).put("active",u.optBoolean("active",true));
+  }
+  public static JSONObject identity(Context c,String token){
+    try{
+      if(token==null||token.length()<30)return null;
+      String username=TOKENS.get(token);
+      if(username==null)return null;
+      JSONObject user=find(users(c),username);
+      return user!=null&&user.optBoolean("active")?publicUser(user):null;
+    }catch(Exception ex){return null;}
+  }
+  public static JSONObject list(Context c,JSONObject actor){
+    try{
+      if(actor==null||!"admin".equals(actor.optString("role")))return fail("Sin permisos");
+      JSONArray result=new JSONArray(), all=users(c);
+      for(int i=0;i<all.length();i++)result.put(publicUser(all.getJSONObject(i)));
+      return new JSONObject().put("ok",true).put("users",result);
+    }catch(Exception e){return fail("No se pudo consultar usuarios");}
+  }
+  public static JSONObject create(Context c,JSONObject actor,String username,String password){
+    try{
+      synchronized(LOCK){
+        if(actor==null||!"admin".equals(actor.optString("role")))return fail("Solo el administrador puede crear cuentas");
+        String name=norm(username);
+        if(!name.matches("[a-z0-9_\\-]{3,30}"))return fail("Usuario: 3 a 30 caracteres, letras, números, guión o _");
+        if(password==null||password.length()<10||password.length()>128)return fail("La contraseña debe tener entre 10 y 128 caracteres");
+        JSONArray all=users(c);if(find(all,name)!=null)return fail("Ese usuario ya existe");
+        all.put(make(name,password,"member"));
+        prefs(c).edit().putString("users",all.toString()).commit();
+        return new JSONObject().put("ok",true).put("user",name);
+      }
+    }catch(Exception e){return fail("Error creando la cuenta");}
+  }
+  public static JSONObject change(Context c,JSONObject actor,String previous,String next){
+    try{
+      synchronized(LOCK){
+        if(actor==null)return fail("Inicia sesión");
+        if(next==null||next.length()<10||next.length()>128)return fail("Contraseña nueva: mínimo 10 caracteres");
+        JSONArray all=users(c);JSONObject user=find(all,actor.optString("username"));
+        if(user==null)return fail("No encontrado");
+        String expected=hash(previous,user.optString("salt"));
+        if(!MessageDigest.isEqual(expected.getBytes(StandardCharsets.UTF_8),user.optString("hash").getBytes(StandardCharsets.UTF_8)))return fail("Contraseña actual incorrecta");
+        JSONObject changed=make(user.optString("username"),next,user.optString("role"));
+        user.put("hash",changed.optString("hash")).put("salt",changed.optString("salt"));
+        prefs(c).edit().putString("users",all.toString()).commit();
+        return new JSONObject().put("ok",true);
+      }
+    }catch(Exception e){return fail("No se pudo cambiar la contraseña");}
+  }
+  public static JSONObject fail(String error){try{return new JSONObject().put("ok",false).put("error",error);}catch(Exception e){return new JSONObject();}}
+}
