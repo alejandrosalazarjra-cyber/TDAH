@@ -31,7 +31,7 @@ public final class FocusLauncherActivity extends Activity {
   private final Handler handler=new Handler(Looper.getMainLooper());
   private final Runnable updateClock=new Runnable(){@Override public void run(){if(!drawer)renderHome();handler.postDelayed(this,30000);}};
   private final ArrayList<AppEntry> apps=new ArrayList<>();
-  private final Set<String> favorites=new HashSet<>(), focusApps=new HashSet<>(), mutedApps=new HashSet<>();
+  private final Set<String> favorites=new HashSet<>(), focusApps=new HashSet<>();
   private android.content.SharedPreferences preferences;
   private float xStart,yStart;
   private boolean focusEnabled=true;
@@ -73,7 +73,6 @@ public final class FocusLauncherActivity extends Activity {
     preferences=getSharedPreferences("focus_launcher",MODE_PRIVATE);
     favorites.addAll(preferences.getStringSet("favorites",Collections.emptySet()));
     focusApps.addAll(preferences.getStringSet("focus",Collections.emptySet()));
-    mutedApps.addAll(preferences.getStringSet("muted_notifications",Collections.emptySet()));
     focusEnabled=preferences.getBoolean("focus_enabled",true);
     focusStart=preferences.getInt("focus_start",0);
     focusEnd=preferences.getInt("focus_end",0);
@@ -111,7 +110,6 @@ public final class FocusLauncherActivity extends Activity {
   private void persist(){
     preferences.edit().putStringSet("favorites",new HashSet<>(favorites))
       .putStringSet("focus",new HashSet<>(focusApps))
-      .putStringSet("muted_notifications",new HashSet<>(mutedApps))
       .putBoolean("focus_enabled",focusEnabled)
       .putInt("focus_start",focusStart).putInt("focus_end",focusEnd)
       .putInt("daily_budget",dailyBudget).putInt("mindful_delay",mindfulDelay).apply();
@@ -262,26 +260,43 @@ public final class FocusLauncherActivity extends Activity {
   }
   private void showEntryOptions(AppEntry app){
     boolean fav=favorites.contains(app.packageName),focus=focusApps.contains(app.packageName);
-    boolean muted=mutedApps.contains(app.packageName);
     int currentLimit=preferences.getInt("app_limit_"+app.packageName,0);
-    String[] items={
+    String[] choices={
       fav?"Quitar de favoritos":"Agregar a inicio",
       focus?"Quitar pausa consciente":"Añadir pausa consciente",
-      muted?"Dejar pasar notificaciones":"Filtrar sus notificaciones",
+      "Ajustar sus notificaciones en Android",
       "Objetivo diario: "+(currentLimit==0?"sin límite":currentLimit+" min"),
       "Abrir aplicación"
     };
-    new AlertDialog.Builder(this).setTitle(app.title).setItems(items,(dialog,which)->{
-      if(which==0){if(fav)favorites.remove(app.packageName);else favorites.add(app.packageName);persist();refreshApps();if(drawer)renderApps(search==null?"":search.getText().toString());else renderHome();}
-      if(which==1){if(focus)focusApps.remove(app.packageName);else focusApps.add(app.packageName);persist();if(drawer)renderApps(search==null?"":search.getText().toString());}
-      if(which==2){
-        if(muted)mutedApps.remove(app.packageName);else mutedApps.add(app.packageName);
-        persist();if(drawer)renderApps(search==null?"":search.getText().toString());
-        if(!isNotificationListenerEnabled())showNotificationPermissionHelp();
+    new AlertDialog.Builder(this).setTitle(app.title).setItems(choices,(dialog,index)->{
+      if(index==0){
+        if(fav)favorites.remove(app.packageName);else favorites.add(app.packageName);
+        persist();refreshApps();
+        if(drawer)renderApps(search==null?"":search.getText().toString());else renderHome();
       }
-      if(which==3)chooseAppLimit(app);
-      if(which==4)openEntry(app);
+      if(index==1){
+        if(focus)focusApps.remove(app.packageName);else focusApps.add(app.packageName);
+        persist();if(drawer)renderApps(search==null?"":search.getText().toString());
+      }
+      if(index==2)openNotificationSettings(app);
+      if(index==3)chooseAppLimit(app);
+      if(index==4)openEntry(app);
     }).setNegativeButton("Cancelar",null).show();
+  }
+  private void openNotificationSettings(AppEntry app){
+    new AlertDialog.Builder(this).setTitle("Notificaciones de "+app.title)
+      .setMessage("Android controla las notificaciones de cada aplicación. Puedes silenciarlas o desactivarlas aquí sin conceder a NeuroSync acceso a mensajes privados.")
+      .setPositiveButton("Abrir ajustes",(d,w)->{
+        try{
+          Intent settings=new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
+          settings.putExtra(Settings.EXTRA_APP_PACKAGE,app.packageName);
+          startActivity(settings);
+        }catch(Exception error){
+          Intent details=new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+            android.net.Uri.parse("package:"+app.packageName));
+          launchIntent(details);
+        }
+      }).setNegativeButton("Cancelar",null).show();
   }
   private void chooseAppLimit(AppEntry app){
     String[] labels={"Sin límite","10 minutos","20 minutos","30 minutos","45 minutos","60 minutos","90 minutos"};
@@ -381,16 +396,6 @@ public final class FocusLauncherActivity extends Activity {
     }
     launchIntent(new Intent(Settings.ACTION_HOME_SETTINGS));
   }
-  private boolean isNotificationListenerEnabled(){
-    String enabled=Settings.Secure.getString(getContentResolver(),"enabled_notification_listeners");
-    return enabled!=null&&enabled.contains(getPackageName());
-  }
-  private void showNotificationPermissionHelp(){
-    new AlertDialog.Builder(this).setTitle("Permiso de notificaciones")
-      .setMessage("NeuroSync puede ocultar notificaciones de las aplicaciones que tú selecciones. No guarda ni envía el texto de tus mensajes. Puedes desactivar este permiso cuando quieras.")
-      .setPositiveButton("Abrir permisos",(d,w)->launchIntent(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)))
-      .setNegativeButton("Ahora no",null).show();
-  }
   private void requestUsageAccess(){launchIntent(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));}
   private boolean hasUsagePermission(){
     android.app.AppOpsManager ops=(android.app.AppOpsManager)getSystemService(APP_OPS_SERVICE);
@@ -484,7 +489,12 @@ public final class FocusLauncherActivity extends Activity {
     TextView explanation=text("La pausa se aplica únicamente a las aplicaciones que marques al abrirlas desde NeuroSync. No bloquea aplicaciones desde otros accesos.",12,MUTED,false);
     view.addView(explanation);view.addView(gap(22));
     view.addView(text("Bienestar digital",18,WHITE,true));view.addView(gap(10));
-    view.addView(action("Configurar filtro de notificaciones",this::showNotificationPermissionHelp));
+    view.addView(action("Notificaciones de otras aplicaciones",()->{
+      new AlertDialog.Builder(this).setTitle("Notificaciones")
+        .setMessage("Abre la lista de aplicaciones, toca los tres puntos de una y elige Ajustar notificaciones. Android te deja silenciarlas sin permisos restringidos.")
+        .setPositiveButton("Ver aplicaciones",(d,w)->showDrawer())
+        .setNegativeButton("Cerrar",null).show();
+    }));
     view.addView(gap(12));
     view.addView(action("Recordatorio diario: "+(dailyBudget==0?"desactivado":dailyBudget+" minutos"),this::chooseDailyBudget));
     view.addView(gap(12));
