@@ -98,6 +98,10 @@ public final class SyncService extends Service {
     String h="HTTP/1.1 "+status+" "+title+"\r\nContent-Type: application/json; charset=utf-8\r\nCache-Control: no-store\r\nConnection: close\r\nContent-Length: "+body.length+"\r\n\r\n";
     OutputStream o=s.getOutputStream();o.write(h.getBytes(StandardCharsets.US_ASCII));o.write(body);o.flush();
   }
+  // Android 15+ limita los servicios dataSync en segundo plano.
+  @Override public void onTimeout(int startId,int fgsType){
+    stopSelf();
+  }
   @Override public void onDestroy(){running=false;try{if(server!=null)server.close();}catch(Exception ignored){}workers.shutdownNow();super.onDestroy();}
   @Override public IBinder onBind(Intent intent){return null;}
 }
