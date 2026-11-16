@@ -27,6 +27,25 @@ La aplicación incluye un **launcher** nativo con estilo original inspirado en l
 - Respaldo y restauración desde Administración con el selector de archivos de Android. Los datos se guardan localmente; exporta antes de reinstalar. Los archivos de respaldo no están cifrados: guárdalos en un lugar privado.
 - Sincronización familiar: red local / Tailscale opcional o **servidor HTTPS Cloudflare Workers + D1**, preparado en `cloud/`.
 
+## Inicio minimalista propio (versión 4.0)
+
+La APK incluye **NeuroSync Inicio**, un launcher de Android que se puede elegir voluntariamente como pantalla de inicio:
+
+- Reloj y fecha grandes sobre fondo oscuro, tipografía clara y sin iconos en el inicio.
+- Aplicaciones instaladas en una lista con búsqueda, abiertas mediante Android.
+- Favoritas: mantén pulsada cualquier aplicación para ponerla en inicio.
+- Botón para volver a NeuroSync (agenda y tareas pendientes), teléfono y cámara.
+- Widget/contador de tareas conectado al almacenamiento local de NeuroSync.
+- Pausa consciente opcional por aplicación, con horario de inicio y fin configurable.
+- Acceso voluntario a estadísticas de uso del dispositivo para mostrar tiempo aproximado de pantalla.
+- Filtro de notificaciones **opt-in por aplicación**, con permiso especial: el servicio solo evalúa el nombre del paquete y descarta avisos seleccionados. No transmite contenido; respeta las notificaciones de llamadas, alarmas y servicios persistentes.
+
+**Cómo activarlo:** abre NeuroSync → **Mi día → Inicio minimalista de Android → Vista previa**. Si te gusta, toca **Usar como inicio predeterminado** y acepta la solicitud del sistema. También puedes entrar a Ajustes → Aplicaciones predeterminadas → Aplicación de inicio.
+
+**Cómo desactivarlo:** Ajustes Android → Aplicaciones predeterminadas → Aplicación de inicio → selecciona tu launcher original (p. ej., el del fabricante). No necesitas desinstalar NeuroSync.
+
+**Alcance y límites:** esta función NO reemplaza la pantalla de bloqueo con PIN/huella, NO bloquea permanentemente aplicaciones ni videos cortos desde otros accesos, NO vuelve el teléfono monocromático a nivel del sistema, y NO activa el filtro de notificaciones sin autorización explícita. Los horarios solo controlan la pausa al abrir aplicaciones desde NeuroSync Inicio. No se usan permisos de accesibilidad ni administración del dispositivo para impedir funciones esenciales.
+
 ## Primer uso Android
 1. En GitHub → Actions → **Compilar APK NeuroSync**, ejecuta manualmente el flujo y, si se completa, descarga el artefacto APK.
 2. Instala el APK permitiendo la instalación desde el administrador de archivos; no requiere Play Store.
