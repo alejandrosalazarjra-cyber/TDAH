@@ -70,8 +70,10 @@ jobs:
           grep -q 'versionCode 4' android/app/build.gradle
           test -s android/app/src/main/java/com/neurosync/familia/AlarmRingActivity.java
           test -s android/app/src/main/java/com/neurosync/familia/TodayWidget.java
-          test -s android/app/src/main/java/com/neurosync/familia/HomeActivity.java
+          test -s android/app/src/main/java/com/neurosync/familia/FocusLauncherActivity.java
+          test -s android/app/src/main/java/com/neurosync/familia/FocusNotificationListener.java
           grep -q 'android.intent.category.HOME' android/app/src/main/AndroidManifest.xml
+          test "$(grep -c 'android.intent.category.HOME' android/app/src/main/AndroidManifest.xml)" -eq 1
           test -s android/app/src/main/res/xml/today_widget_info.xml
           echo "Cuentas, alarmas nativas, widget, inicio alternativo y versión 4 encontrados"
 
