@@ -2,7 +2,30 @@ plugins { id 'com.android.application' }
 android {
     namespace 'com.neurosync.familia'
     compileSdk 35
-    defaultConfig { applicationId 'com.neurosync.familia'; minSdk 26; targetSdk 35; versionCode 9; versionName '9.0.0' }
+    defaultConfig {
+        applicationId 'com.neurosync.familia'
+        minSdk 26
+        targetSdk 35
+        versionCode 10
+        versionName '10.0.0'
+    }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
-    buildTypes { release { minifyEnabled false } }
+    signingConfigs {
+        if (System.getenv('NS_KEYSTORE_FILE')) {
+            create('neurosyncRelease') {
+                storeFile file(System.getenv('NS_KEYSTORE_FILE'))
+                storePassword System.getenv('NS_SIGNING_PASSWORD')
+                keyAlias System.getenv('NS_SIGNING_ALIAS') ?: 'neurosync'
+                keyPassword System.getenv('NS_SIGNING_PASSWORD')
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (System.getenv('NS_KEYSTORE_FILE')) {
+                signingConfig signingConfigs.neurosyncRelease
+            }
+        }
+    }
 }
