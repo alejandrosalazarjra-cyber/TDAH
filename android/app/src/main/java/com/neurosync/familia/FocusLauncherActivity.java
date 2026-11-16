@@ -92,6 +92,11 @@ public final class FocusLauncherActivity extends Activity {
   }
   @Override protected void onResume(){
     super.onResume();handler.removeCallbacks(updateClock);handler.post(updateClock);
+    String today=new SimpleDateFormat("yyyy-MM-dd",Locale.US).format(new Date());
+    if(!today.equals(preferences.getString("usage_warning_date",""))){
+      usageWarningShown=false;
+      preferences.edit().putString("usage_warning_date",today).apply();
+    }
     if(!usageWarningShown&&hasUsagePermission()&&dailyBudget>0&&todayUsageMillis()/60000>=dailyBudget){
       usageWarningShown=true;
       new AlertDialog.Builder(this).setTitle("Recordatorio de descanso")
@@ -275,6 +280,13 @@ public final class FocusLauncherActivity extends Activity {
   }
   private void openEntry(AppEntry app){
     int limit=preferences.getInt("app_limit_"+app.packageName,0);
+    if(limit>0&&!hasUsagePermission()){
+      new AlertDialog.Builder(this).setTitle("Permiso para contar minutos")
+        .setMessage("El objetivo de "+limit+" minutos para "+app.title+" necesita el acceso voluntario a estadísticas de uso de Android. Sin ese permiso no se puede medir el tiempo.")
+        .setPositiveButton("Configurar permiso",(d,w)->requestUsageAccess())
+        .setNegativeButton("Abrir sin contar",(d,w)->openWithFocus(app)).show();
+      return;
+    }
     long minutes=limit>0?appUsageMinutes(app.packageName):-1;
     if(limit>0&&minutes>=limit){
       new AlertDialog.Builder(this).setTitle("Objetivo diario alcanzado")
