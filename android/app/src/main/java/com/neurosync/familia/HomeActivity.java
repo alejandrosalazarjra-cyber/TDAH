@@ -185,12 +185,13 @@ public final class HomeActivity extends Activity {
     boolean quiet=from>=0&&to>=0&&(from<=to?(hour>=from&&hour<to):(hour>=from||hour<to));
     if(quiet)delay=Math.max(delay,5);
     if(delay<=0){launch(app);return;}
+    final int waitSeconds=delay;
     new AlertDialog.Builder(this).setTitle("¿Abrir "+app.title+"?")
       .setMessage((quiet?"Tu horario de concentración está activo. ":"")+"¿Es lo que quieres hacer ahora?")
       .setNegativeButton("Volver",null)
       .setPositiveButton("Abrir", (dialog,which)->{
-        Toast.makeText(this,"Espera "+delay+" segundos y vuelve a elegir la aplicación.",Toast.LENGTH_LONG).show();
-        handler.postDelayed(()->launch(app),delay*1000L);
+        Toast.makeText(this,"Pausa consciente: "+waitSeconds+" segundos",Toast.LENGTH_LONG).show();
+        handler.postDelayed(()->launch(app),waitSeconds*1000L);
       }).show();
   }
   private void launch(AppEntry app){
