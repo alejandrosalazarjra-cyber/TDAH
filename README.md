@@ -51,6 +51,7 @@ La APK incluye **NeuroSync Inicio**, un launcher de Android que se puede elegir 
 Desde **NeuroSync Inicio → ⚙ Ajustes** ahora puedes:
 
 - Configurar una pausa consciente al abrir determinadas aplicaciones: 0, 3, 5, 10 o 20 segundos. La cuenta regresiva puede cancelarse; no afecta a teléfono, emergencias o cámara.
+- Configurar un objetivo diario **por aplicación** desde el menú de tres puntos de cada app (10 a 90 minutos o desactivado). Cuando alcance el objetivo y la aplicación se abra desde el launcher, se muestra una advertencia con opción de continuar. Requiere acceso a estadísticas de uso.
 - Definir un horario en el que se aplican esas pausas.
 - Establecer un objetivo diario orientativo de tiempo de uso (30 a 240 minutos o desactivado).
 - Consultar un informe con las 10 aplicaciones de mayor uso del día. Requiere el permiso de estadísticas de uso de Android.
