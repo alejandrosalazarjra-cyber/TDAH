@@ -12,12 +12,15 @@ import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /** Contenedor nativo de NeuroSync: acceso por cuentas, sincronización y alarmas.
  * La interfaz principal se distribuye dentro de la APK (no depende de Netlify).
  */
 public final class MainActivity extends Activity {
   private WebView web;
+  private final ExecutorService networkWorker=Executors.newSingleThreadExecutor();
   private volatile String sessionToken="";
   private volatile JSONObject sessionUser=null;
   @Override public void onCreate(Bundle state){
@@ -143,6 +146,18 @@ public final class MainActivity extends Activity {
         return call("/sync",request).toString();
       }catch(Exception e){return AccountStore.fail("Datos de sincronización inválidos").toString();}
     }
+    @JavascriptInterface public void syncFamilyAsync(String json){
+      if(json==null||json.length()>500000)return;
+      networkWorker.execute(()->{
+        JSONObject result;
+        try{result=call("/sync",new JSONObject(json));}
+        catch(Exception error){result=AccountStore.fail("No se pudo sincronizar");}
+        String value=JSONObject.quote(result.toString());
+        runOnUiThread(()->{
+          if(web!=null)web.evaluateJavascript("window.neuroSyncOnSync && window.neuroSyncOnSync("+value+")",null);
+        });
+      });
+    }
     @JavascriptInterface public boolean scheduleAlarm(String id,String title,long when,boolean daily){
       try{return AlarmReceiver.schedule(MainActivity.this,id,title,when,daily);}
       catch(Exception e){return false;}
@@ -154,5 +169,5 @@ public final class MainActivity extends Activity {
     if(web.canGoBack())web.goBack();else new AlertDialog.Builder(this).setMessage("¿Cerrar NeuroSync?")
       .setNegativeButton("Cancelar",null).setPositiveButton("Salir",(d,w)->finish()).show();
   }
-  @Override public void onDestroy(){if(web!=null)web.destroy();super.onDestroy();}
+  @Override public void onDestroy(){networkWorker.shutdownNow();if(web!=null)web.destroy();super.onDestroy();}
 }
