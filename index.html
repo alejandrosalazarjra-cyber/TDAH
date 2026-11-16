@@ -212,9 +212,10 @@ by('quick-capture-form').onsubmit=function(event){
  input.value='';save();render();say('Anotado. No tienes que hacerlo ahora.');
 };
 function taskItem(t){var yes=taskDone(t),el=document.createElement('div');el.className='task'+(yes?' done':'');var meta=esc(t.date)+(t.time?' · '+esc(t.time):'')+' · '+esc(t.owner||'Yo')+(t.repeat&&t.repeat!=='none'?' · '+(t.repeat==='daily'?'Diaria':'Semanal'):'');
-el.innerHTML='<input type="checkbox" aria-label="Completar tarea" '+(yes?'checked':'')+'><div class="task-main"><div class="task-title">'+esc(t.title)+'</div><div class="task-meta">'+meta+'</div></div><button class="iconbtn" aria-label="Eliminar tarea">×</button>';
+el.innerHTML='<input type="checkbox" aria-label="Completar tarea" '+(yes?'checked':'')+'><div class="task-main"><div class="task-title">'+esc(t.title)+'</div><div class="task-meta">'+meta+'</div></div><button class="iconbtn edit-task" type="button" aria-label="Editar tarea" title="Editar">✎</button><button class="iconbtn delete-task" type="button" aria-label="Eliminar tarea" title="Eliminar">×</button>';
 el.querySelector('input').onchange=function(e){var k=t.repeat==='none'?t.date:day();t.doneDates=t.doneDates||[];if(e.target.checked){if(t.doneDates.indexOf(k)<0){t.doneDates.push(k);model.pet.food+=10;model.pet.xp+=10;say('¡Buen trabajo! +10 puntos para tu mascota 🐣')}}else{t.doneDates=t.doneDates.filter(function(v){return v!==k})}mark(t);save();render()};
-el.querySelector('button').onclick=function(){if(session.role!=='admin'&&t.owner==='todos'){say('Una tarea compartida solo puede eliminarla el administrador');return}if(confirm('¿Eliminar esta tarea?')){t.deleted=true;mark(t);save();render()}};
+el.querySelector('.edit-task').onclick=function(){editTask(t)};
+el.querySelector('.delete-task').onclick=function(){if(session.role!=='admin'&&t.owner==='todos'){say('Una tarea compartida solo puede eliminarla el administrador');return}if(confirm('¿Eliminar esta tarea?')){t.deleted=true;mark(t);save();render()}};
 if((t.steps||[]).length){
 var steps=document.createElement('div');steps.style.cssText='width:100%;padding:7px 0 0 30px;display:grid;gap:4px';
 (t.steps||[]).forEach(function(label,i){
@@ -298,6 +299,48 @@ if(kind==='task'){
 if(kind==='bag'){var items=(values.items||'').split(';').map(function(s){return s.trim()}).filter(Boolean);if(!items.length){say('Agrega algo para llevar');return}model.packs.push({id:uid(),place:(values.place||'').trim(),owner:values.owner||session.username,items:items,checked:{},updatedAt:stamp()})}
 if(kind==='alarm'){var d=values.date||day(),time=values.time||'08:00';if(!values.daily&&new Date(d+'T'+time+':00').getTime()<=Date.now()){say('Elige una hora futura para la alarma');return}var alarm={id:uid(),title:(values.title||'').trim()||'Recordatorio',date:d,time:time,daily:!!values.daily,owner:session.username,updatedAt:stamp()};model.alarms.push(alarm);scheduleAlarm(alarm)}
 save();closeModal();render();say('Guardado correctamente')};
+}
+function editTask(t){
+ if(!session||session.role!=='admin'&&t.owner!==session.username){say('Esta tarea no puede editarse desde tu cuenta');return}
+ openModal('task');
+ by('modal-title').textContent='Editar tarea';
+ var form=by('popup-form');
+ form.elements.title.value=t.title||'';
+ form.elements.owner.value=t.owner||session.username;
+ form.elements.date.value=t.date||day();
+ form.elements.time.value=t.time||'';
+ form.elements.repeat.value=t.repeat||'none';
+ form.elements.priority.value=t.priority||'normal';
+ form.elements.energy.value=t.energy||'medium';
+ form.elements.steps.value=(t.steps||[]).join('; ');
+ form.onsubmit=function(e){
+  e.preventDefault();
+  var value=Object.fromEntries(new FormData(form).entries());
+  if(!value.title||!value.title.trim()){say('Ponle un nombre a la tarea');return}
+  var steps=(value.steps||'').split(';').map(function(s){return s.trim()}).filter(Boolean);
+  var changedSteps=JSON.stringify(steps)!==JSON.stringify(t.steps||[]);
+  t.title=value.title.trim();
+  t.owner=value.owner||session.username;t.date=value.date||day();
+  t.time=value.time||'';t.repeat=value.repeat||'none';
+  t.priority=value.priority||'normal';t.energy=value.energy||'medium';
+  t.steps=steps;if(changedSteps)t.stepDates={};
+  mark(t);
+  var linked=(model.alarms||[]).find(function(a){return a.id==='task_'+t.id});
+  if(linked){
+   linked.title=t.title;linked.date=t.date;linked.time=t.time;
+   linked.owner=t.owner;linked.daily=t.repeat==='daily';linked.repeat=t.repeat;
+   linked.deleted=!t.time;mark(linked);
+   if(nat&&nat.cancelAlarm)try{nat.cancelAlarm(linked.id)}catch(error){}
+  }
+  if(t.time){
+   var alarm=linked||{id:'task_'+t.id,owner:t.owner,updatedAt:stamp()};
+   if(!linked)model.alarms.push(alarm);
+   alarm.title=t.title;alarm.date=t.date;alarm.time=t.time;alarm.owner=t.owner;
+   alarm.daily=t.repeat==='daily';alarm.repeat=t.repeat;alarm.deleted=false;mark(alarm);
+   if(t.owner===session.username||t.owner==='todos')scheduleAlarm(alarm);
+  }
+  save();closeModal();render();say('Cambios guardados');
+ };
 }
 function closeModal(){by('modal').classList.add('hidden')}
 by('close-modal').onclick=closeModal;by('modal').onclick=function(e){if(e.target===by('modal'))closeModal()};
