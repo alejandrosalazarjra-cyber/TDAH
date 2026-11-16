@@ -1,0 +1,10 @@
+name = "neurosync-familia"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+# Tras crear una base D1 en Cloudflare, reemplaza el ID.
+[[d1_databases]]
+binding = "DB"
+database_name = "neurosync-family"
+database_id = "REEMPLAZAR_CON_ID_D1"
+migrations_dir = "migrations"
