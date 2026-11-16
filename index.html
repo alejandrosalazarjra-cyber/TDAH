@@ -452,6 +452,15 @@ by('backup-import').onclick=function(){
 };
 function logout(){syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
 by('logout').onclick=logout;by('avatar').onclick=function(){if(confirm('¿Cerrar sesión de esta cuenta?'))logout()};
-document.addEventListener('visibilitychange',function(){if(!document.hidden)sync()});setInterval(sync,60000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden){sync();refreshFocusClock()}});setInterval(sync,60000);
+if(nat&&nat.restoreSession){
+ try{
+  var restored=JSON.parse(nat.restoreSession());
+  if(restored.ok&&restored.user&&restored.user.username){
+   enter(restored.user);
+   by('login-error').textContent='';
+  }
+ }catch(error){by('login-error').textContent='No se pudo recuperar la sesión. Puedes iniciar sesión normalmente.'}
+}
 })();
 </script></body></html>
