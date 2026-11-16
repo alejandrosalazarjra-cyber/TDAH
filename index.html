@@ -55,7 +55,14 @@
   <section class="view" id="view-tasks"><div class="card"><div class="between"><h2>Tareas organizadas</h2><button class="btn" data-open="task">+ Crear tarea</button></div><div class="tabs" id="task-filters"><button class="tab active" data-filter="all">Todas</button><button class="tab" data-filter="pending">Pendientes</button><button class="tab" data-filter="done">Realizadas</button></div><div id="tasks-list"></div></div></section>
   <section class="view" id="view-calendar"><div class="grid"><div class="card"><div class="between"><button class="btn ghost" id="prev-month">‹</button><h2 id="month-title" style="margin:0"></h2><button class="btn ghost" id="next-month">›</button></div><div class="calendar-grid" id="calendar" style="margin-top:20px"></div></div><div class="card"><h2 id="selected-title">Actividades del día</h2><div id="day-tasks"></div><button class="btn secondary" data-open="task">+ Agregar</button></div></div></section>
   <section class="view" id="view-bags"><div class="card"><div class="between"><h2>Listas para salir</h2><button class="btn" data-open="bag">+ Nueva lista</button></div><p class="muted small">Prepara lo que llevarás al gimnasio, al trabajo, al estudio o a cualquier destino.</p><div id="bags-list"></div></div></section>
-  <section class="view" id="view-alarms"><div class="card"><div class="between"><h2>Alarmas y recordatorios</h2><button class="btn" data-open="alarm">+ Crear alarma</button></div><p class="muted small">En Android, la aplicación programa notificaciones del sistema. Puedes crear alarmas para una fecha o repetirlas diariamente.</p><div class="card" style="background:#f6f8ff;box-shadow:none;margin:14px 0"><h3>Configurar alarma</h3><p class="hint" id="alarm-permission-status">Verifica los permisos de Android.</p><div class="row"><button type="button" class="btn secondary" id="alarm-permissions">Activar permisos</button><button type="button" class="btn ghost" id="alarm-test">Probar en 1 minuto</button><button type="button" class="btn ghost" id="alarm-clock-music">Música en Reloj</button><button type="button" class="btn ghost" id="alarm-local-sound">Elegir sonido del celular</button></div><p class="hint">La selección de canciones de YouTube Music se hace en Reloj de Google, no dentro de NeuroSync.</p></div><div id="alarms-list"></div></div></section>
+  <section class="view" id="view-alarms"><div class="card"><div class="between"><h2>Alarmas y recordatorios</h2><button class="btn" data-open="alarm">+ Crear alarma</button></div><p class="muted small">En Android, la aplicación programa notificaciones del sistema. Puedes crear alarmas para una fecha o repetirlas diariamente.</p><div style="margin:14px 0 17px;border:1px solid var(--border);border-radius:16px;padding:14px;background:#fafbfe">
+<div class="between" style="margin-bottom:9px"><b style="font-size:14px">Sonido y pantalla de alarma</b><span class="chip" id="alarm-permission-indicator">Android</span></div>
+<p class="hint" id="alarm-permission-status">Los permisos se solicitan cuando programas una alarma.</p>
+<div class="row" style="margin-top:12px">
+<button type="button" class="btn secondary" id="alarm-test">Probar en 1 min</button>
+<button type="button" class="btn ghost" id="alarm-local-sound">Elegir sonido</button>
+<button type="button" class="btn ghost" id="alarm-clock-music">Reloj y música</button></div>
+</div><div id="alarms-list"></div></div></section>
   <section class="view" id="view-admin"><div class="grid"><div class="stack"><div class="card"><div class="between"><h2>Miembros de la familia</h2><button class="btn" data-open="user">+ Crear cuenta</button></div><p class="muted small">Cada persona tiene su propio usuario. Las actividades se asignan por responsable.</p><div id="users-list"></div></div><div class="card"><h2>Flujos de trabajo</h2><p class="small muted">Crea una tarea recurrente y asígnala a un miembro. Puedes añadir subtareas, horario y fecha.</p><button class="btn secondary" data-open="task">+ Crear flujo / tarea</button></div></div><div class="stack"><div class="card"><h2>Respaldo personal</h2>
 <p class="hint">Guarda y recupera tus tareas, listas, alarmas y progreso de mascota antes de reinstalar una APK.</p>
 <div class="row"><button class="btn secondary" type="button" id="backup-export">Exportar respaldo</button><button class="btn ghost" type="button" id="backup-import">Importar respaldo</button></div></div><div class="card"><h2>Seguridad</h2><p class="muted small">Cambia la contraseña inicial del administrador. Usa una diferente para cada persona.</p><form id="password-form" class="stack" style="gap:10px"><label class="field">Contraseña actual<input id="current-pass" type="password" required></label><label class="field">Contraseña nueva (mín. 10 caracteres)<input id="new-pass" type="password" minlength="10" required></label><button class="btn" type="submit">Cambiar contraseña</button></form></div><div class="card"><h2>Teléfono principal</h2><p class="muted small">La sincronización por internet usa una base central en Cloudflare cuando esté activada. Tu cuenta controla miembros y tareas; no necesitas Netlify, Tailscale ni Play Store.</p><button class="btn secondary" id="configure-network">Configurar conexión</button></div></div></div></section>
@@ -163,7 +170,11 @@ document.querySelectorAll('[data-view]').forEach(function(b){b.addEventListener(
 by('prev-month').onclick=function(){month=new Date(month.getFullYear(),month.getMonth()-1,1);renderCalendar()};by('next-month').onclick=function(){month=new Date(month.getFullYear(),month.getMonth()+1,1);renderCalendar()};
 document.querySelectorAll('[data-filter]').forEach(function(b){b.onclick=function(){filter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(function(x){x.classList.toggle('active',x===b)});render()}});
 function field(label,name,type,options){if(type==='select'){return '<label class="field">'+label+'<select name="'+name+'">'+options.map(function(o){return '<option value="'+esc(o[0])+'">'+esc(o[1])+'</option>'}).join('')+'</select></label>'}return '<label class="field">'+label+'<input name="'+name+'" type="'+(type||'text')+'" '+(name==='title'||name==='place'||name==='username'?'required':'')+'></label>'}
-function openModal(kind){var head={task:'Nueva tarea / flujo',bag:'Nueva lista de salida',alarm:'Nueva alarma',user:'Crear cuenta familiar'};by('modal-title').textContent=head[kind];var body=by('modal-body'),users=(session.role==='admin'?getUsers():[]),who=session.role==='admin'?[['todos','Todos']].concat(users.map(function(u){return [u.username,u.username]})):[[session.username,session.username]];
+function openModal(kind){
+if(kind==='alarm'&&nat&&nat.requestAlarmPermissions){
+ try{var perms=JSON.parse(nat.alarmPermissions());if(!perms.notifications||!perms.exact||!perms.fullScreen)nat.requestAlarmPermissions();}catch(e){}
+}
+var head={task:'Nueva tarea / flujo',bag:'Nueva lista de salida',alarm:'Nueva alarma',user:'Crear cuenta familiar'};by('modal-title').textContent=head[kind];var body=by('modal-body'),users=(session.role==='admin'?getUsers():[]),who=session.role==='admin'?[['todos','Todos']].concat(users.map(function(u){return [u.username,u.username]})):[[session.username,session.username]];
 var html='<form id="popup-form" class="form-grid">';
 if(kind==='task')html+=field('Actividad','title')+field('Responsable','owner','select',who)+field('Fecha','date','date')+field('Hora','time','time')+field('Repetición','repeat','select',[['none','Una vez'],['daily','Diario'],['weekly','Semanal']])+'<label class="field wide">Pasos pequeños (separados por punto y coma)<textarea name="steps" placeholder="Preparar mochila; Revisar llaves; Salir"></textarea></label>';
 if(kind==='bag')html+=field('Lugar o destino','place')+field('Responsable','owner','select',who)+'<label class="field wide">Objetos separados por punto y coma<textarea name="items" required placeholder="Agua; Toalla; Candado"></textarea></label>';
@@ -180,7 +191,11 @@ if(kind==='task'){
  if(task.time){
   var reminder={id:'task_'+task.id,title:task.title,date:task.date,time:task.time,daily:task.repeat==='daily',repeat:task.repeat,owner:task.owner,updatedAt:stamp()};
   model.alarms.push(reminder);
-  if(reminder.owner===session.username||reminder.owner==='todos')scheduleAlarm(reminder);
+  if(reminder.owner===session.username||reminder.owner==='todos'){
+   if(nat&&nat.requestAlarmPermissions)try{var permissions=JSON.parse(nat.alarmPermissions());
+     if(!permissions.notifications||!permissions.exact||!permissions.fullScreen)nat.requestAlarmPermissions();}catch(e){}
+   scheduleAlarm(reminder);
+ }
  }
 }
 if(kind==='bag'){var items=(values.items||'').split(';').map(function(s){return s.trim()}).filter(Boolean);if(!items.length){say('Agrega algo para llevar');return}model.packs.push({id:uid(),place:(values.place||'').trim(),owner:values.owner||session.username,items:items,checked:{},updatedAt:stamp()})}
@@ -207,16 +222,20 @@ function checkAlarmPermissions(){
  if(!nat||!nat.alarmPermissions){status.textContent='Disponible desde la aplicación Android.';return;}
  try{
   var a=JSON.parse(nat.alarmPermissions());
-  status.textContent='Notificaciones: '+(a.notifications?'Permitidas':'Pendientes')+' | Alarmas exactas: '+(a.exact?'Permitidas':'Pendientes')+' | Pantalla completa: '+(a.fullScreen?'Permitida':'Pendiente');
+  var count=[a.notifications,a.exact,a.fullScreen].filter(Boolean).length;
+  status.textContent=count===3?'Permisos disponibles. Prueba el sonido y la pantalla bloqueada.':'Android requiere '+(3-count)+' autorización(es) para todas las funciones. Se solicitarán al crear o probar una alarma.';
+  var badge=by('alarm-permission-indicator');
+  if(badge)badge.textContent=count===3?'Listo':'Permisos '+count+'/3';
  }catch(err){status.textContent='No se pudo verificar los permisos'}
 }
-by('alarm-permissions').onclick=function(){
- if(nat&&nat.requestAlarmPermissions){nat.requestAlarmPermissions();setTimeout(checkAlarmPermissions,2000)}
- else say('La solicitud de permisos funciona en la APK Android');
-};
 by('alarm-test').onclick=function(){
- if(nat&&nat.testAlarm){say(nat.testAlarm()?'Prueba programada para dentro de un minuto':'No se pudo programar la prueba')}
- else say('Abre la APK Android para probar la alarma');
+ if(nat&&nat.testAlarm){
+  if(nat.requestAlarmPermissions) {
+   try{var state=JSON.parse(nat.alarmPermissions());
+   if(!state.notifications||!state.exact||!state.fullScreen)nat.requestAlarmPermissions();}catch(e){}
+  }
+  say(nat.testAlarm()?'Alarma de prueba para dentro de 60 segundos':'No se pudo programar. Comprueba los permisos y la hora.');
+ }else say('La prueba de sonido requiere la APK Android');
 };
 window.neuroAlarmSoundSelected=function(){say('Sonido guardado para próximas alarmas')};
 by('alarm-local-sound').onclick=function(){
@@ -231,7 +250,7 @@ document.addEventListener('visibilitychange',function(){if(!document.hidden)chec
 checkAlarmPermissions();
 by('set-default-home').onclick=function(){
  if(nat&&nat.requestDefaultHome)nat.requestDefaultHome();
- else say('Solo disponible desde la APK de Android');
+ else say('La selección de inicio está disponible desde la APK Android');
 };
 by('open-minimal-home').onclick=function(){
  if(nat&&nat.openMinimalHome)nat.openMinimalHome();
