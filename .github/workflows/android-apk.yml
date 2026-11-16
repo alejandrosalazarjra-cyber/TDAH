@@ -35,12 +35,13 @@ jobs:
           set -euo pipefail
           echo "ANDROID_HOME=$ANDROID_HOME"
           test -d "$ANDROID_HOME" || { echo "::error::SDK Android no disponible"; exit 1; }
-          if [ ! -d "$ANDROID_HOME/platforms/android-35" ]; then
-            echo "Instalando Android SDK Platform 35"
+          if [ ! -f "$ANDROID_HOME/platforms/android-35/android.jar" ] || [ ! -x "$ANDROID_HOME/build-tools/35.0.0/aapt" ]; then
+            echo "Instalando SDK Platform y Build Tools 35"
             "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0"
           fi
           test -f "$ANDROID_HOME/platforms/android-35/android.jar"
-          echo "SDK Android 35 disponible"
+          test -x "$ANDROID_HOME/build-tools/35.0.0/aapt"
+          echo "SDK Android 35 y herramientas APK disponibles"
 
       - name: Validar interfaz antes de compilar
         shell: bash
