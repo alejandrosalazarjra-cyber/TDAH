@@ -1,42 +1,108 @@
 package com.neurosync.familia;
 
 import android.app.Activity;
-import android.content.Intent;
-import android.os.Build;
-import android.os.Bundle;
+import android.os.*;
+import android.graphics.Color;
 import android.view.Gravity;
 import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.TextView;
+import android.widget.*;
+import java.util.Random;
 
-/** Pantalla de control. El sonido lo mantiene AlarmAudioService aunque no abra esta pantalla. */
+/** Alarma con un desafío opcional. Siempre tiene salida segura sin reto. */
 public final class AlarmRingActivity extends Activity {
  private String id;
+ private String challenge;
+ private int remaining=3, correct=0, tapped=0;
+ private int answer;
+ private TextView prompt, progress;
+ private EditText input;
+ private LinearLayout root;
+ private long openedAt;
+ private final Random random=new Random();
+ private int dp(int px){return Math.round(getResources().getDisplayMetrics().density*px);}
+ private TextView label(String text,int size){
+   TextView view=new TextView(this);view.setText(text);view.setTextColor(Color.WHITE);
+   view.setTextSize(size);view.setGravity(Gravity.CENTER);view.setPadding(dp(8),dp(12),dp(8),dp(12));
+   return view;
+ }
+ private Button button(String text){
+   Button result=new Button(this);result.setText(text);result.setAllCaps(false);
+   result.setMinHeight(dp(52));return result;
+ }
+ private void finishAlarm(){
+   AlarmReceiver.dismiss(this,id);finish();
+ }
  @Override public void onCreate(Bundle state){
    super.onCreate(state);
    if(Build.VERSION.SDK_INT>=27){setShowWhenLocked(true);setTurnScreenOn(true);}
    else getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED|WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
    id=getIntent().getStringExtra("id");
-   String title=getIntent().getStringExtra("title");
    if(id==null){finish();return;}
-   LinearLayout root=new LinearLayout(this);
-   root.setPadding(28,36,28,36);
+   openedAt=SystemClock.elapsedRealtime();
+   challenge=AlarmChallengeStore.get(this,id);
+   String title=getIntent().getStringExtra("title");
+   root=new LinearLayout(this);
    root.setOrientation(LinearLayout.VERTICAL);
    root.setGravity(Gravity.CENTER);
+   root.setPadding(dp(22),dp(24),dp(22),dp(24));
    root.setBackgroundColor(0xFF111215);
-   TextView bell=new TextView(this);bell.setText("⏰");bell.setTextSize(64);
-   bell.setGravity(Gravity.CENTER);
-   TextView heading=new TextView(this);heading.setText(title==null?"Alarma":title);
-   heading.setTextSize(29);heading.setTextColor(0xFFFFFFFF);heading.setGravity(Gravity.CENTER);
-   heading.setPadding(0,20,0,40);
-   Button stop=new Button(this);stop.setText("Detener alarma");
-   stop.setOnClickListener(v->{AlarmReceiver.dismiss(this,id);finish();});
-   Button snooze=new Button(this);snooze.setText("Posponer 5 minutos");
+   ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.addView(root);
+   setContentView(scroll);
+   root.addView(label("⏰",54));
+   root.addView(label(title==null?"Alarma":title,27));
+   progress=label("",15);root.addView(progress);
+   prompt=label("",22);root.addView(prompt);
+   if("math".equals(challenge)){
+     input=new EditText(this);input.setSingleLine(true);input.setTextColor(Color.WHITE);
+     input.setHintTextColor(0xFFB0B0B0);input.setHint("Tu respuesta");
+     input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER|android.text.InputType.TYPE_NUMBER_FLAG_SIGNED);
+     root.addView(input);
+     Button check=button("Comprobar respuesta");root.addView(check);
+     check.setOnClickListener(v->{
+       int value;
+       try{value=Integer.parseInt(input.getText().toString().trim());}
+       catch(Exception ex){input.setError("Escribe el resultado");return;}
+       if(value!=answer){input.setError("Inténtalo de nuevo");return;}
+       if(++correct>=remaining)finishAlarm();
+       else nextQuestion();
+     });
+     nextQuestion();
+   }else if("taps".equals(challenge)){
+     progress.setText("Toca el botón 12 veces para desactivar la alarma");
+     Button tap=button("Tocar · 0 / 12");root.addView(tap);
+     tap.setOnClickListener(v->{
+       tapped++;tap.setText("Tocar · "+tapped+" / 12");
+       if(tapped>=12)finishAlarm();
+     });
+   }else{
+     Button stop=button("Detener alarma");root.addView(stop);
+     stop.setOnClickListener(v->finishAlarm());
+   }
+   Button snooze=button("Posponer 5 minutos");root.addView(snooze);
    snooze.setOnClickListener(v->{AlarmReceiver.snooze(this,id,5);finish();});
-   root.addView(bell);root.addView(heading);root.addView(stop);root.addView(snooze);
-   setContentView(root);
+   if(!"none".equals(challenge)){
+     Button emergency=button("Detener sin desafío");
+     root.addView(emergency);
+     emergency.setOnClickListener(v->new android.app.AlertDialog.Builder(this)
+       .setTitle("¿Detener sin completar?")
+       .setMessage("Puedes detener la alarma sin el desafío si lo necesitas. Esta opción siempre estará disponible.")
+       .setNegativeButton("Volver al desafío",null)
+       .setPositiveButton("Detener ahora",(d,w)->finishAlarm()).show());
+   }
  }
- @Override public void onBackPressed(){ /* Elige detener o posponer explícitamente. */ }
+ private void nextQuestion(){
+   int x=3+random.nextInt(16),y=2+random.nextInt(14);
+   answer=x+y;
+   progress.setText("Desafío "+(correct+1)+" de "+remaining);
+   prompt.setText(x+" + "+y+" = ?");
+   input.setText("");
+ }
+ @Override public void onBackPressed(){
+   // Si necesita detenerse, el botón seguro está siempre visible.
+   if("none".equals(challenge))finishAlarm();
+   else new android.app.AlertDialog.Builder(this).setTitle("Alarma activa")
+     .setMessage("Elige Posponer o Detener sin desafío si no puedes continuar.")
+     .setPositiveButton("Entendido",null).show();
+ }
 }
