@@ -268,6 +268,22 @@ public final class MainActivity extends Activity {
         }
       });
     }
+    @JavascriptInterface public void openMinimalHome(){
+      runOnUiThread(()->startActivity(new Intent(MainActivity.this,FocusLauncherActivity.class)));
+    }
+    @JavascriptInterface public void requestDefaultHome(){
+      runOnUiThread(()->{
+        if(Build.VERSION.SDK_INT>=29){
+          android.app.role.RoleManager role=getSystemService(android.app.role.RoleManager.class);
+          if(role!=null&&role.isRoleAvailable(android.app.role.RoleManager.ROLE_HOME)){
+            try{startActivity(role.createRequestRoleIntent(android.app.role.RoleManager.ROLE_HOME));return;}
+            catch(Exception ignored){}
+          }
+        }
+        try{startActivity(new Intent(android.provider.Settings.ACTION_HOME_SETTINGS));}
+        catch(Exception e){new AlertDialog.Builder(MainActivity.this).setMessage("Abre Ajustes → Aplicaciones predeterminadas → Aplicación de inicio y selecciona NeuroSync.").setPositiveButton("Aceptar",null).show();}
+      });
+    }
     @JavascriptInterface public void updateWidget(int pending){
       TodayWidget.refresh(MainActivity.this,Math.max(0,Math.min(pending,9999)));
     }
