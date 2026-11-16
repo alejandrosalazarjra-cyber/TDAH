@@ -124,6 +124,7 @@ function render(){
 if(!session)return;
 var tasks=allTasks(),current=tasks.filter(todayTask),completed=current.filter(taskDone).length;
 by('stat-today').textContent=completed;by('stat-pending').textContent=tasks.filter(function(t){return !taskDone(t)}).length;by('stat-food').textContent=model.pet.food;
+if(nat&&nat.updateWidget){try{nat.updateWidget(tasks.filter(function(t){return !taskDone(t)}).length)}catch(e){}}
 var phases=['🥚','🐣','🐥','🦊','🐉'];var p=Math.min(4,Math.floor((model.pet.xp||0)/70));
 by('pet-face').textContent=phases[p];by('pet-level').textContent='Nivel '+(p+1);by('pet-headline').textContent=p===0?'Cada paso te hace crecer.':p>=3?'¡Mira cuánto has crecido!':'Tu compañero está evolucionando.';
 by('pet-detail').textContent='Tienes '+model.pet.food+' puntos. Completa tus tareas y aliméntalo para evolucionar.';
