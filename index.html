@@ -187,6 +187,29 @@ function closeModal(){by('modal').classList.add('hidden')}
 by('close-modal').onclick=closeModal;by('modal').onclick=function(e){if(e.target===by('modal'))closeModal()};
 document.querySelectorAll('[data-open]').forEach(function(b){b.onclick=function(){openModal(b.dataset.open)}});
 function scheduleAlarm(a){if(!nat||!nat.scheduleAlarm)return;var when=new Date(a.date+'T'+a.time+':00').getTime();if(a.daily&&when<Date.now())when+=86400000;try{nat.scheduleAlarm(a.id,a.title,when,a.daily)}catch(e){say('La alarma no se pudo programar')}}
+function checkAlarmPermissions(){
+ var status=by('alarm-permission-status');
+ if(!status)return;
+ if(!nat||!nat.alarmPermissions){status.textContent='Disponible desde la aplicación Android.';return;}
+ try{
+  var a=JSON.parse(nat.alarmPermissions());
+  status.textContent='Notificaciones: '+(a.notifications?'Permitidas':'Pendientes')+' | Alarmas exactas: '+(a.exact?'Permitidas':'Pendientes')+' | Pantalla completa: '+(a.fullScreen?'Permitida':'Pendiente');
+ }catch(err){status.textContent='No se pudo verificar los permisos'}
+}
+by('alarm-permissions').onclick=function(){
+ if(nat&&nat.requestAlarmPermissions){nat.requestAlarmPermissions();setTimeout(checkAlarmPermissions,2000)}
+ else say('La solicitud de permisos funciona en la APK Android');
+};
+by('alarm-test').onclick=function(){
+ if(nat&&nat.testAlarm){say(nat.testAlarm()?'Prueba programada para dentro de un minuto':'No se pudo programar la prueba')}
+ else say('Abre la APK Android para probar la alarma');
+};
+by('alarm-clock-music').onclick=function(){
+ if(nat&&nat.openSystemClock){nat.openSystemClock()}
+ else say('Abre Reloj de Google para elegir YouTube Music');
+};
+document.addEventListener('visibilitychange',function(){if(!document.hidden)checkAlarmPermissions()});
+checkAlarmPermissions();
 by('pet-feed').onclick=function(){if(model.pet.food<20){say('Necesitas completar tareas para conseguir 20 puntos');return}model.pet.food-=20;model.pet.xp+=15;model.pet.feeds++;save();render();say('🍎 ¡Tu mascota comió y ganó experiencia!')};
 var syncing=false;
 window.neuroSyncOnSync=function(payload,requestingUser){
