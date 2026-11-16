@@ -31,6 +31,7 @@
   <button class="nav" data-view="calendar"><span>▦</span><span class="nav-label">Calendario</span></button>
   <button class="nav" data-view="bags"><span>▣</span><span class="nav-label">Mis listas</span></button>
   <button class="nav" data-view="alarms"><span>◷</span><span class="nav-label">Alarmas</span></button>
+  <button class="nav" data-view="habits"><span>◉</span><span class="nav-label">Mi progreso</span></button>
   <button class="nav admin-only" data-view="admin"><span>♙</span><span class="nav-label">Administración</span></button>
   <div class="sidebar-bottom"><button id="logout" class="btn ghost" style="width:100%">Salir de la cuenta</button></div>
  </aside>
@@ -80,12 +81,30 @@
 <button type="button" class="btn ghost" id="alarm-local-sound">Elegir sonido</button>
 <button type="button" class="btn ghost" id="alarm-clock-music">Reloj y música</button></div>
 </div><div id="alarms-list"></div></div></section>
+  <section class="view" id="view-habits">
+   <div class="card" style="max-width:600px;margin:auto">
+    <span class="chip">Solo en este teléfono</span>
+    <h2 style="margin-top:14px">Mi contador personal</h2>
+    <p class="hint">Un objetivo elegido por ti, sin juicios ni castigos. Este registro no se comparte con tu familia ni afecta a la mascota.</p>
+    <div style="text-align:center;padding:22px 8px">
+     <strong id="streak-days" style="font-size:clamp(52px,12vw,84px);color:var(--ink)">0</strong>
+     <p style="font-weight:600">días desde tu fecha registrada</p>
+     <p id="streak-since" class="muted small"></p>
+    </div>
+    <div class="row">
+      <button class="btn secondary" type="button" id="streak-start">Elegir fecha de inicio</button>
+      <button class="btn ghost" type="button" id="streak-reset">Registrar un nuevo comienzo</button>
+    </div>
+    <p class="hint" style="margin-top:20px">Puedes empezar otra vez sin perder el historial. Un tropiezo no define tu valor.</p>
+    <h2>Historial privado</h2><div id="streak-history"></div>
+   </div>
+  </section>
   <section class="view" id="view-admin"><div class="grid"><div class="stack"><div class="card"><div class="between"><h2>Miembros de la familia</h2><button class="btn" data-open="user">+ Crear cuenta</button></div><p class="muted small">Cada persona tiene su propio usuario. Las actividades se asignan por responsable.</p><div id="users-list"></div></div><div class="card"><h2>Flujos de trabajo</h2><p class="small muted">Crea una tarea recurrente y asígnala a un miembro. Puedes añadir subtareas, horario y fecha.</p><button class="btn secondary" data-open="task">+ Crear flujo / tarea</button></div></div><div class="stack"><div class="card"><h2>Respaldo personal</h2>
 <p class="hint">Guarda y recupera tus tareas, listas, alarmas y progreso de mascota antes de reinstalar una APK.</p>
 <div class="row"><button class="btn secondary" type="button" id="backup-export">Exportar respaldo</button><button class="btn ghost" type="button" id="backup-import">Importar respaldo</button></div></div><div class="card"><h2>Seguridad</h2><p class="muted small">Cambia la contraseña inicial del administrador. Usa una diferente para cada persona.</p><form id="password-form" class="stack" style="gap:10px"><label class="field">Contraseña actual<input id="current-pass" type="password" required></label><label class="field">Contraseña nueva (mín. 10 caracteres)<input id="new-pass" type="password" minlength="10" required></label><button class="btn" type="submit">Cambiar contraseña</button></form></div><div class="card"><h2>Teléfono principal</h2><p class="muted small">La sincronización por internet usa una base central en Cloudflare cuando esté activada. Tu cuenta controla miembros y tareas; no necesitas Netlify, Tailscale ni Play Store.</p><button class="btn secondary" id="configure-network">Configurar conexión</button></div></div></div></section>
  </main>
  <nav class="nav-mobile" aria-label="Navegación">
-  <button class="active" data-view="home"><span>⌂</span>Hoy</button><button data-view="tasks"><span>☑</span>Tareas</button><button data-view="calendar"><span>▦</span>Agenda</button><button data-view="bags"><span>▣</span>Listas</button><button data-view="alarms"><span>◷</span>Alarmas</button><button class="admin-only" data-view="admin"><span>♙</span>Admin</button>
+  <button class="active" data-view="home"><span>⌂</span>Hoy</button><button data-view="tasks"><span>☑</span>Tareas</button><button data-view="calendar"><span>▦</span>Agenda</button><button data-view="bags"><span>▣</span>Listas</button><button data-view="alarms"><span>◷</span>Alarmas</button><button data-view="habits"><span>◉</span>Progreso</button><button class="admin-only" data-view="admin"><span>♙</span>Admin</button>
  </nav>
 </div>
 <div id="modal" class="modal hidden" role="dialog" aria-modal="true"><div class="card"><div class="between"><h2 id="modal-title">Nuevo</h2><button class="iconbtn" id="close-modal" aria-label="Cerrar">✕</button></div><div id="modal-body"></div></div></div>
@@ -94,7 +113,7 @@
 (function(){
 'use strict';
 var by=function(id){return document.getElementById(id)}, nat=window.AndroidBridge, session=null, model=null, filter='all', selected=new Date(), month=new Date();
-var labels={home:'Mi día',tasks:'Mis tareas',calendar:'Calendario',bags:'Mis listas',alarms:'Mis alarmas',admin:'Administración'};
+var labels={home:'Mi día',tasks:'Mis tareas',calendar:'Calendario',bags:'Mis listas',alarms:'Mis alarmas',habits:'Mi progreso',admin:'Administración'};
 var localKey=function(){return 'ns_v2_'+(session?session.username:'visitor')};
 var stamp=function(){return Date.now()}, uid=function(){return String(Date.now())+'_'+Math.random().toString(36).slice(2,9)};
 var day=function(d){var x=d||new Date();return x.getFullYear()+'-'+('0'+(x.getMonth()+1)).slice(-2)+'-'+('0'+x.getDate()).slice(-2)};
@@ -263,7 +282,7 @@ var list=by('users-list');if(!list)return;
 if(!nat||!nat.getUsers){list.innerHTML='<p class="hint">Las cuentas familiares requieren instalar la APK Android y activar el celular principal.</p>';return}
 try{var data=JSON.parse(nat.getUsers());if(!data.ok){list.textContent=data.error||'No disponible';return}
 list.replaceChildren();data.users.forEach(function(u){var d=document.createElement('div');d.className='profile-line';d.innerHTML='<span><b>'+esc(u.username)+'</b><br><small class="muted">'+(u.role==='admin'?'Administrador':'Miembro')+'</small></span><span class="chip">'+(u.active?'Activo':'Inactivo')+'</span>';list.append(d)})}catch(e){list.textContent='No se pudo obtener la lista de miembros'}}
-function show(view){if(view==='admin'&&session.role!=='admin')return;document.querySelectorAll('.view').forEach(function(v){v.classList.toggle('active',v.id==='view-'+view)});document.querySelectorAll('[data-view]').forEach(function(b){b.classList.toggle('active',b.dataset.view===view)});by('page-title').textContent=labels[view];render()}
+function show(view){if(view==='admin'&&session.role!=='admin')return;document.querySelectorAll('.view').forEach(function(v){v.classList.toggle('active',v.id==='view-'+view)});document.querySelectorAll('[data-view]').forEach(function(b){b.classList.toggle('active',b.dataset.view===view)});by('page-title').textContent=labels[view];render();if(view==='habits')renderStreak()}
 document.querySelectorAll('[data-view]').forEach(function(b){b.addEventListener('click',function(){show(b.dataset.view)})});
 by('prev-month').onclick=function(){month=new Date(month.getFullYear(),month.getMonth()-1,1);renderCalendar()};by('next-month').onclick=function(){month=new Date(month.getFullYear(),month.getMonth()+1,1);renderCalendar()};
 document.querySelectorAll('[data-filter]').forEach(function(b){b.onclick=function(){filter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(function(x){x.classList.toggle('active',x===b)});render()}});
@@ -276,7 +295,7 @@ var head={task:'Nueva tarea / flujo',bag:'Nueva lista de salida',alarm:'Nueva al
 var html='<form id="popup-form" class="form-grid">';
 if(kind==='task')html+=field('Actividad','title')+field('Responsable','owner','select',who)+field('Fecha','date','date')+field('Hora','time','time')+field('Repetición','repeat','select',[['none','Una vez'],['daily','Diario'],['weekly','Semanal']])+field('Prioridad','priority','select',[['normal','Normal'],['high','Importante'],['low','Puede esperar']])+field('Energía necesaria','energy','select',[['low','Poca energía'],['medium','Media'],['high','Alta']])+'<label class="field wide">Primeros pasos (separados por punto y coma)<textarea name="steps" placeholder="Preparar mochila; Revisar llaves; Salir"></textarea></label>';
 if(kind==='bag')html+=field('Lugar o destino','place')+field('Responsable','owner','select',who)+'<label class="field wide">Objetos separados por punto y coma<textarea name="items" required placeholder="Agua; Toalla; Candado"></textarea></label>';
-if(kind==='alarm')html+=field('Nombre de la alarma','title')+field('Fecha','date','date')+field('Hora','time','time')+'<label class="field wide"><span class="row"><input type="checkbox" name="daily" style="width:20px"> Repetir todos los días</span></label>';
+if(kind==='alarm')html+=field('Nombre de la alarma','title')+field('Fecha','date','date')+field('Hora','time','time')+field('Desafío para detener','challenge','select',[['none','Sin desafío'],['math','Resolver 3 sumas'],['taps','Tocar 12 veces']])+'<label class="field wide"><span class="row"><input type="checkbox" name="daily" style="width:20px"> Repetir todos los días</span></label>';
 if(kind==='user')html+=field('Usuario (sin espacios)','username')+field('Contraseña (mínimo 10 caracteres)','password','password');
 html+='<div class="wide row" style="justify-content:flex-end"><button type="button" id="cancel-popup" class="btn ghost">Cancelar</button><button class="btn" type="submit">Guardar</button></div></form>';body.innerHTML=html;by('modal').classList.remove('hidden');
 by('cancel-popup').onclick=closeModal;var form=by('popup-form');if(form.elements.date)form.elements.date.value=day();
@@ -297,7 +316,7 @@ if(kind==='task'){
  }
 }
 if(kind==='bag'){var items=(values.items||'').split(';').map(function(s){return s.trim()}).filter(Boolean);if(!items.length){say('Agrega algo para llevar');return}model.packs.push({id:uid(),place:(values.place||'').trim(),owner:values.owner||session.username,items:items,checked:{},updatedAt:stamp()})}
-if(kind==='alarm'){var d=values.date||day(),time=values.time||'08:00';if(!values.daily&&new Date(d+'T'+time+':00').getTime()<=Date.now()){say('Elige una hora futura para la alarma');return}var alarm={id:uid(),title:(values.title||'').trim()||'Recordatorio',date:d,time:time,daily:!!values.daily,owner:session.username,updatedAt:stamp()};model.alarms.push(alarm);scheduleAlarm(alarm)}
+if(kind==='alarm'){var d=values.date||day(),time=values.time||'08:00';if(!values.daily&&new Date(d+'T'+time+':00').getTime()<=Date.now()){say('Elige una hora futura para la alarma');return}var alarm={id:uid(),title:(values.title||'').trim()||'Recordatorio',date:d,time:time,daily:!!values.daily,challenge:values.challenge||'none',owner:session.username,updatedAt:stamp()};model.alarms.push(alarm);scheduleAlarm(alarm)}
 save();closeModal();render();say('Guardado correctamente')};
 }
 function editTask(t){
@@ -352,6 +371,7 @@ function scheduleAlarm(a){
  if(repeat==='weekly')while(when<Date.now())when+=7*86400000;
  else if(repeat==='daily')while(when<Date.now())when+=86400000;
  try{
+  if(nat.setAlarmChallenge)nat.setAlarmChallenge(a.id,a.challenge||'none');
   var ok=nat.scheduleAlarmRepeat?nat.scheduleAlarmRepeat(a.id,a.title,when,repeat):nat.scheduleAlarm(a.id,a.title,when,repeat==='daily');
   if(!ok)say('No se pudo programar la alarma: revisa la fecha y los permisos');
  }catch(e){say('Error al programar alarma')}
@@ -384,7 +404,7 @@ by('alarm-local-sound').onclick=function(){
 };
 by('alarm-clock-music').onclick=function(){
  if(nat&&nat.openSystemClock){nat.openSystemClock()}
- else say('Abre Reloj de Google para elegir YouTube Music');
+ else say('En Reloj de Google abre una alarma → Sonido → YouTube Music (Premium para canciones)');
 };
 document.addEventListener('visibilitychange',function(){if(!document.hidden)checkAlarmPermissions()});
 checkAlarmPermissions();
@@ -492,6 +512,43 @@ by('backup-export').onclick=function(){
 by('backup-import').onclick=function(){
  if(nat&&nat.importBackup)nat.importBackup();
  else say('La restauración mediante archivos está disponible en la APK Android');
+};
+// Registro personal privado: no se envía al servicio familiar.
+function streakKey(){return 'ns_private_progress_'+(session?session.username:'visitor')}
+function readStreak(){
+ try{var data=JSON.parse(localStorage.getItem(streakKey()));
+ if(data&&typeof data.started==='string'&&Array.isArray(data.history))return data;}catch(e){}
+ return {started:day(),history:[]};
+}
+function renderStreak(){
+ if(!session)return;
+ var data=readStreak();
+ var first=new Date(data.started+'T12:00:00'),now=new Date(day()+'T12:00:00');
+ var count=Number.isFinite(first.getTime())?Math.max(0,Math.floor((now-first)/86400000)):0;
+ by('streak-days').textContent=count;
+ by('streak-since').textContent='Desde '+data.started;
+ var history=by('streak-history');history.replaceChildren();
+ if(!data.history.length){history.innerHTML='<p class="hint">No hay registros anteriores.</p>';return}
+ data.history.slice(-15).reverse().forEach(function(entry){
+  var line=document.createElement('div');line.className='list-row';
+  line.textContent='Del '+entry.from+' al '+entry.to;history.append(line);
+ });
+}
+by('streak-start').onclick=function(){
+ if(!session)return;
+ var data=readStreak(),date=prompt('Fecha desde la que deseas contar (AAAA-MM-DD)',data.started);
+ if(!date)return;
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(new Date(date+'T12:00:00').getTime())||date>day()){say('Elige una fecha válida, no futura');return}
+ if(!confirm('¿Guardar esta fecha de inicio en tu contador privado?'))return;
+ data.started=date;localStorage.setItem(streakKey(),JSON.stringify(data));renderStreak();
+};
+by('streak-reset').onclick=function(){
+ if(!session)return;
+ if(!confirm('¿Comenzar a contar desde hoy? Se conservará el historial y no se compartirá con otras cuentas.'))return;
+ var data=readStreak();
+ if(data.started!==day())data.history.push({from:data.started,to:day()});
+ data.started=day();localStorage.setItem(streakKey(),JSON.stringify(data));
+ renderStreak();say('Nuevo comienzo registrado');
 };
 function logout(){syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
 by('logout').onclick=logout;by('avatar').onclick=function(){if(confirm('¿Cerrar sesión de esta cuenta?'))logout()};
