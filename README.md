@@ -1,5 +1,15 @@
 # NeuroSync Familia — Android
 
+## NeuroSync 7.0 — corrección de permisos y diseño compacto
+
+- **Android puede bloquear el permiso especial de escucha de notificaciones** en una APK distribuida por WhatsApp. NeuroSync ya no solicita ese acceso ni registra el servicio correspondiente. En la lista de aplicaciones → tres puntos → «Ajustar sus notificaciones en Android» se abre el panel oficial de notificaciones de la aplicación elegida, sin leer mensajes ni intentar desactivar protecciones del fabricante.
+- **Inicio minimalista más compacto:** reloj, fecha, tarjetas y accesos con alturas reducidas, tipografía uniforme sin depender de la fuente personalizada del teléfono y elipsis para nombres largos. Se conservan accesos a teléfono, cámara, búsqueda, agenda, favoritas y concentración.
+- **Cuentas más protegidas:** tras cinco intentos de inicio de sesión fallidos se aplica un bloqueo temporal de quince minutos. El administrador debe cambiar la contraseña inicial `admin1234` antes de crear cuentas de otras personas.
+- **Verificación del APK:** el flujo muestra el tamaño real de `app-debug.apk` y su SHA-256. El artefacto ZIP de GitHub suele ser más pequeño que la APK sin comprimir.
+- **Tamaño y seguridad:** no se agregan archivos basura para llegar artificialmente a 20 MB. La aplicación utiliza el motor WebView instalado en Android, por eso puede tener un APK muy liviano. Los controles de seguridad se verifican por permisos, código, firma, sesiones y pruebas, no por tamaño. La APK actual sigue siendo de pruebas y puede estar firmada con una clave debug diferente entre ejecuciones.
+
+**Limitación:** el filtro automático de notificaciones de otras aplicaciones no está disponible en esta versión; se sustituyó por controles nativos del sistema para evitar el permiso restringido. La sincronización familiar por internet todavía requiere desplegar el servidor Cloudflare de `cloud/`.
+
 ## Alarmas y launcher — corrección NeuroSync 6.0
 
 Al crear o probar una alarma, NeuroSync solicita **en el momento de uso** las autorizaciones necesarias: notificaciones, alarma exacta y, en Android 14+, acceso especial a pantalla completa. No se pide autorización de cámara, porque la aplicación abre la cámara instalada mediante una intención de Android y no accede por sí misma al sensor.
