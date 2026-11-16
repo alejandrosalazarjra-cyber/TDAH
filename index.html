@@ -42,7 +42,19 @@
     <div class="stack">
      <div class="card hero"><div><span class="chip">TU COMPAÑERO</span><h2 style="margin-top:12px" id="pet-headline">Cada pequeño paso cuenta.</h2><p class="muted" id="pet-detail">Completa tareas para alimentar y evolucionar a tu mascota.</p><div class="row"><button class="btn" id="pet-feed">🍎 Dar comida · 20 puntos</button><span class="chip" id="pet-level">Nivel 1</span></div></div><div class="pet" id="pet-face" aria-label="Mascota evolutiva">🥚</div></div>
      <div class="stats"><div class="stat"><strong id="stat-today">0</strong><span>Hechas hoy</span></div><div class="stat"><strong id="stat-pending">0</strong><span>Pendientes</span></div><div class="stat"><strong id="stat-food">0</strong><span>Puntos para comida</span></div></div>
-     <div class="card"><div class="between"><h2>En qué concentrarme</h2><button class="btn secondary" data-open="task">+ Nueva tarea</button></div><div id="home-tasks"></div></div>
+     <div class="card" id="quick-capture-card">
+      <div class="between"><h2>Vacía tu mente</h2><span class="chip">Captura rápida</span></div>
+      <p class="hint">Escribe lo que te preocupa recordar. No necesitas organizarlo todavía.</p>
+      <form id="quick-capture-form" class="row">
+       <input id="quick-capture-input" aria-label="Escribe una idea o tarea" maxlength="160" required placeholder="Ej. Comprar jabón, llevar toalla..." style="flex:1;min-width:160px">
+       <button class="btn" type="submit">Guardar</button>
+      </form>
+     </div>
+     <div class="card"><div class="between"><h2>Solo una cosa ahora</h2><span class="chip" id="focus-indicator">Sin presión</span></div>
+      <div id="next-action"></div>
+      <div class="row" style="margin-top:12px"><button class="btn secondary" type="button" id="focus-five">Comenzar 5 minutos</button><span class="hint" id="focus-clock">Un inicio pequeño es suficiente.</span></div>
+     </div>
+     <div class="card"><div class="between"><h2>Mis 3 prioridades</h2><button class="btn secondary" data-open="task">+ Nueva tarea</button></div><div id="home-tasks"></div></div>
     </div>
     <div class="stack">
      <div class="card"><div class="between"><h2>Inicio minimalista de Android</h2><span class="chip">Nuevo</span></div><p class="hint">Sustituye voluntariamente la pantalla de inicio de tu celular. Incluye aplicaciones, favoritos, reloj y acceso a tareas. Puedes volver al inicio original cuando quieras.</p><div class="row"><button type="button" class="btn" id="open-minimal-home">Vista previa del inicio</button><button type="button" class="btn secondary" id="set-default-home">Usar como inicio predeterminado</button></div><p class="hint" style="margin-top:10px">Podrás volver a tu pantalla anterior desde Ajustes → Aplicaciones predeterminadas → Inicio.</p></div>
@@ -52,7 +64,12 @@
     </div>
    </div>
   </section>
-  <section class="view" id="view-tasks"><div class="card"><div class="between"><h2>Tareas organizadas</h2><button class="btn" data-open="task">+ Crear tarea</button></div><div class="tabs" id="task-filters"><button class="tab active" data-filter="all">Todas</button><button class="tab" data-filter="pending">Pendientes</button><button class="tab" data-filter="done">Realizadas</button></div><div id="tasks-list"></div></div></section>
+  <section class="view" id="view-tasks">
+   <div class="card"><div class="between"><h2>Bandeja de entrada</h2><span class="chip" id="inbox-count">0 capturas</span></div>
+    <p class="hint">Aquí puedes guardar ideas sin fecha. Cuando estés preparado, convierte una en tarea de hoy.</p>
+    <div id="inbox-list"></div>
+   </div>
+   <div class="card" style="margin-top:15px"><div class="between"><h2>Tareas organizadas</h2><button class="btn" data-open="task">+ Crear tarea</button></div><div class="tabs" id="task-filters"><button class="tab active" data-filter="all">Todas</button><button class="tab" data-filter="pending">Pendientes</button><button class="tab" data-filter="done">Realizadas</button></div><div id="tasks-list"></div></div></section>
   <section class="view" id="view-calendar"><div class="grid"><div class="card"><div class="between"><button class="btn ghost" id="prev-month">‹</button><h2 id="month-title" style="margin:0"></h2><button class="btn ghost" id="next-month">›</button></div><div class="calendar-grid" id="calendar" style="margin-top:20px"></div></div><div class="card"><h2 id="selected-title">Actividades del día</h2><div id="day-tasks"></div><button class="btn secondary" data-open="task">+ Agregar</button></div></div></section>
   <section class="view" id="view-bags"><div class="card"><div class="between"><h2>Listas para salir</h2><button class="btn" data-open="bag">+ Nueva lista</button></div><p class="muted small">Prepara lo que llevarás al gimnasio, al trabajo, al estudio o a cualquier destino.</p><div id="bags-list"></div></div></section>
   <section class="view" id="view-alarms"><div class="card"><div class="between"><h2>Alarmas y recordatorios</h2><button class="btn" data-open="alarm">+ Crear alarma</button></div><p class="muted small">En Android, la aplicación programa notificaciones del sistema. Puedes crear alarmas para una fecha o repetirlas diariamente.</p><div style="margin:14px 0 17px;border:1px solid var(--border);border-radius:16px;padding:14px;background:#fafbfe">
@@ -107,7 +124,7 @@ if(session&&session.role==='admin'){
 }
 localStorage.setItem(localKey(),JSON.stringify(fresh));return fresh;
 }
-function save(){localStorage.setItem(localKey(),JSON.stringify(model));by('sync-status').textContent='Cambios guardados';if(nat&&nat.syncFamily){setTimeout(sync,350)}}
+function save(){localStorage.setItem(localKey(),JSON.stringify(model));by('sync-status').textContent='Cambios guardados';if(nat&&(nat.syncFamilyAsync||nat.syncFamily)){setTimeout(sync,350)}}
 function active(list){return list.filter(function(t){return !t.deleted})}
 function owned(t){return session.role==='admin'||t.owner===session.username||t.owner==='todos'}
 function mark(t){t.updatedAt=stamp();return t}
@@ -176,7 +193,7 @@ if(kind==='alarm'&&nat&&nat.requestAlarmPermissions){
 }
 var head={task:'Nueva tarea / flujo',bag:'Nueva lista de salida',alarm:'Nueva alarma',user:'Crear cuenta familiar'};by('modal-title').textContent=head[kind];var body=by('modal-body'),users=(session.role==='admin'?getUsers():[]),who=session.role==='admin'?[['todos','Todos']].concat(users.map(function(u){return [u.username,u.username]})):[[session.username,session.username]];
 var html='<form id="popup-form" class="form-grid">';
-if(kind==='task')html+=field('Actividad','title')+field('Responsable','owner','select',who)+field('Fecha','date','date')+field('Hora','time','time')+field('Repetición','repeat','select',[['none','Una vez'],['daily','Diario'],['weekly','Semanal']])+'<label class="field wide">Pasos pequeños (separados por punto y coma)<textarea name="steps" placeholder="Preparar mochila; Revisar llaves; Salir"></textarea></label>';
+if(kind==='task')html+=field('Actividad','title')+field('Responsable','owner','select',who)+field('Fecha','date','date')+field('Hora','time','time')+field('Repetición','repeat','select',[['none','Una vez'],['daily','Diario'],['weekly','Semanal']])+field('Prioridad','priority','select',[['normal','Normal'],['high','Importante'],['low','Puede esperar']])+field('Energía necesaria','energy','select',[['low','Poca energía'],['medium','Media'],['high','Alta']])+'<label class="field wide">Primeros pasos (separados por punto y coma)<textarea name="steps" placeholder="Preparar mochila; Revisar llaves; Salir"></textarea></label>';
 if(kind==='bag')html+=field('Lugar o destino','place')+field('Responsable','owner','select',who)+'<label class="field wide">Objetos separados por punto y coma<textarea name="items" required placeholder="Agua; Toalla; Candado"></textarea></label>';
 if(kind==='alarm')html+=field('Nombre de la alarma','title')+field('Fecha','date','date')+field('Hora','time','time')+'<label class="field wide"><span class="row"><input type="checkbox" name="daily" style="width:20px"> Repetir todos los días</span></label>';
 if(kind==='user')html+=field('Usuario (sin espacios)','username')+field('Contraseña (mínimo 10 caracteres)','password','password');
@@ -186,7 +203,7 @@ form.onsubmit=function(ev){ev.preventDefault();var values=Object.fromEntries(new
 if(kind==='user'){if(!nat||!nat.createAccount){say('Crea cuentas desde el APK Android');return}try{var r=JSON.parse(nat.createAccount(values.username,values.password));if(!r.ok){say(r.error||'No se pudo crear la cuenta');return}say('Cuenta creada: '+values.username);renderUsers()}catch(e){say('Error creando usuario')}closeModal();return}
 if(kind==='task'){
  var title=(values.title||'').trim();if(!title)return;
- var task={id:uid(),title:title,owner:values.owner||session.username,date:values.date||day(),time:values.time||'',repeat:values.repeat||'none',steps:(values.steps||'').split(';').map(function(s){return s.trim()}).filter(Boolean),doneDates:[],updatedAt:stamp()};
+ var task={id:uid(),title:title,owner:values.owner||session.username,date:values.date||day(),time:values.time||'',repeat:values.repeat||'none',priority:values.priority||'normal',energy:values.energy||'medium',steps:(values.steps||'').split(';').map(function(s){return s.trim()}).filter(Boolean),doneDates:[],updatedAt:stamp()};
  model.tasks.push(task);
  if(task.time){
   var reminder={id:'task_'+task.id,title:task.title,date:task.date,time:task.time,daily:task.repeat==='daily',repeat:task.repeat,owner:task.owner,updatedAt:stamp()};
