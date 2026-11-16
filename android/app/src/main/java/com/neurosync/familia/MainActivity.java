@@ -50,6 +50,18 @@ public final class MainActivity extends Activity {
     if(Build.VERSION.SDK_INT>=33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED)
       requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},11);
   }
+  @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
+    super.onActivityResult(requestCode,resultCode,data);
+    if(requestCode==191 && resultCode==RESULT_OK && data!=null && data.getData()!=null){
+      try{
+        android.net.Uri uri=data.getData();
+        int flags=data.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION;
+        getContentResolver().takePersistableUriPermission(uri,flags);
+        getSharedPreferences("ns_sound",0).edit().putString("uri",uri.toString()).apply();
+        if(web!=null)web.evaluateJavascript("window.neuroAlarmSoundSelected && window.neuroAlarmSoundSelected()",null);
+      }catch(Exception ex){android.util.Log.w("NeuroSync","No se pudo guardar sonido personalizado",ex);}
+    }
+  }
   private boolean localHost(){return "host".equals(getPreferences(0).getString("mode",""));}
   private JSONObject remote(String path,JSONObject request){
     HttpURLConnection c=null;
@@ -233,6 +245,17 @@ public final class MainActivity extends Activity {
     }
     @JavascriptInterface public void updateWidget(int pending){
       TodayWidget.refresh(MainActivity.this,Math.max(0,Math.min(pending,9999)));
+    }
+    @JavascriptInterface public void chooseAlarmSound(){
+      runOnUiThread(()->{
+        try{
+          Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT);
+          intent.addCategory(Intent.CATEGORY_OPENABLE);
+          intent.setType("audio/*");
+          intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+          startActivityForResult(intent,191);
+        }catch(Exception e){android.util.Log.e("NeuroSync","Selector de sonidos no disponible",e);}
+      });
     }
     @JavascriptInterface public boolean testAlarm(){
       return AlarmReceiver.schedule(MainActivity.this,"test_neurosync","Prueba de alarma",System.currentTimeMillis()+60000L,false);
