@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
     paths:
+      - 'index.html'
+      - 'android/**'
       - '.github/workflows/android-apk.yml'
 
 concurrency:
@@ -62,6 +64,16 @@ jobs:
               subprocess.run(['node','--check',str(path)],check=True)
           print('Interfaz validada: navegación, acceso, alarmas y sintaxis JS')
           PY
+
+      - name: Comprobar componentes Android nuevos
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s android/app/src/main/java/com/neurosync/familia/AccountStore.java
+          test -s android/app/src/main/java/com/neurosync/familia/AlarmReceiver.java
+          test -s android/app/src/main/java/com/neurosync/familia/SyncService.java
+          grep -q 'versionCode 2' android/app/build.gradle
+          echo "Cuentas, alarmas y versión 2 encontrados"
 
       - name: Configurar Gradle
         uses: gradle/actions/setup-gradle@v4
