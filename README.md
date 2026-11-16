@@ -1,47 +1,67 @@
-# NeuroSync Familia · APK Android
+# NeuroSync Familia — Android
 
-Proyecto Android de NeuroSync construido a partir de la interfaz web existente en `index.html`. No requiere publicar en Google Play.
+Aplicación de organización personal y familiar, creada en el repositorio **TDAH** sin utilizar Netlify ni publicar en Google Play.
 
-## Construir y enviar el APK
+## Qué incluye
 
-1. Abrir **GitHub → Actions → Compilar APK NeuroSync**.
-2. Ejecutar **Run workflow** si no se disparó automáticamente con el último commit.
-3. Al finalizar correctamente, abrir el run y descargar el artefacto **NeuroSync-Familia-APK**.
-4. Descomprimir el ZIP para encontrar `app-debug.apk`.
-5. Enviar **ese APK** como documento por WhatsApp a mamá y hermano. Cada uno tendrá que autorizar la instalación desde WhatsApp o su administrador de archivos. Una APK de depuración es **para pruebas familiares**, no para distribución pública.
+- Nueva interfaz móvil original, responsive, sin dependencias visuales de NeuroFlow.
+- Pantalla de acceso por usuario y contraseña.
+- Administrador: crea cuentas individuales, consulta miembros, asigna responsabilidades, crea tareas recurrentes y pasos pequeños.
+- Miembros: visualizan sus tareas, listas y recordatorios, y pueden completar sus actividades.
+- Mascota evolutiva y puntos por tareas completadas.
+- Calendario, listas para llevar a gimnasio/trabajo, alarmas locales del sistema Android.
+- Sincronización privada entre teléfonos mediante el servidor en el teléfono principal; guarda cambios locales cuando no hay conexión.
 
-Esta compilación incorpora el HTML del repositorio en la APK. No es una simple pestaña que descarga la web privada de GitHub.
+## Primer acceso
 
-## Sincronización con tu celular como fuente principal
+1. Instala la APK en el **celular principal** y abre NeuroSync.
+2. Pulsa **Soy el administrador** para activar el servidor del teléfono.
+3. Ingresa con usuario `administrador` y contraseña temporal `admin1234`.
+4. En **Administración → Seguridad**, **cambia inmediatamente** esa contraseña por una propia y larga (al menos 10 caracteres).
+5. Usa **Crear cuenta** para registrar `mama` y `hermano` (o los nombres que elijas) con contraseñas independientes.
+6. Crea tareas y asígnalas a cada responsable. Si registras una hora, también se guarda un recordatorio para el dispositivo correspondiente.
 
-Cada celular conserva su copia de tareas y listas. El principal ejecuta un pequeño servicio HTTP local, autenticado, en el puerto `8765`. Para conectarte desde otra red, **instala Tailscale en los tres celulares**, agrégalos a la misma red privada y comprueba que pueden verse. No abras el puerto al internet público.
+**Seguridad:** `admin1234` es solo la clave inicial. El servidor rechaza la conexión remota con esa clave inicial para que no administres la familia sin cambiarla. Las contraseñas se almacenan como derivaciones PBKDF2 con sal, no en texto plano.
 
-1. En el celular principal: **Familia → Configurar sincronización → Este es mi celular principal**. La aplicación genera un código de 32 caracteres y arranca el servidor.
-2. Abre Tailscale en tu celular y consulta su IP privada **100.x.x.x**. Debe permanecer conectado.
-3. En el celular de mamá y hermano: **Familia → Configurar sincronización → Conectar**. Escribe la IP privada del principal y el código.
-4. Pulsa **Sincronizar ahora** en cada celular. También se intenta sincronizar al iniciar, al modificar tareas y aproximadamente cada minuto mientras la aplicación está abierta.
-5. Cuando no hay conexión, las tareas pueden seguir modificándose localmente; se reintenta al recuperar conexión y abrir la aplicación.
+## Conectar teléfonos de mamá y hermano
 
-**Limitaciones de esta primera implementación:** la sincronización abarca solo **tareas familiares y listas para salir**, no todos los módulos antiguos de NeuroSync. Los avisos actuales del HTML no equivalen a recordatorios Android garantizados con la app cerrada. No existen aún cuentas independientes con identidad comprobada, cifrado de base de datos ni permisos granulares: el código compartido autoriza a los miembros conectados a ver y editar todos los elementos familiares. Si dos personas cambian el mismo elemento sin conexión, prevalece el cambio cuyo reloj de dispositivo tenga el timestamp más reciente. Los borrados se conservan para evitar la reaparición de elementos. La comunicación a la IP privada está protegida por el túnel Tailscale **solo cuando Tailscale está conectado**; HTTP por sí mismo no cifra los datos en una Wi-Fi privada. Android puede suspender el servidor por ahorro energético o límites de servicios en segundo plano. El servicio no garantiza acceso permanente.
+1. Instala la misma APK en los otros teléfonos.
+2. Instala y conecta **Tailscale** en los tres teléfonos, dentro de la misma red privada.
+3. En tu teléfono principal, abre Tailscale y consulta su IP privada (habitualmente `100.x.x.x`).
+4. En el otro teléfono, toca **Vincular mi celular** e introduce esa IP.
+5. Entra con el usuario y la contraseña que creaste para esa persona.
+6. Usa el icono ↻ para sincronizar. La sincronización también se solicita al volver a abrir la app, al realizar cambios y aproximadamente cada minuto **mientras está abierta**.
 
-**Seguridad:** no compartas el código familiar públicamente, no expongas el puerto 8765 mediante port-forwarding y no guardes información sensible en esta versión experimental. Exporta respaldos periódicos. Para usarla en producción familiar será necesario probar instalación, sincronización, restauración, permisos y apagado/reinicio en tres dispositivos reales.
+No abras el puerto `8765` al internet público. La VPN privada protege la conexión entre teléfonos; el servicio HTTP por sí mismo **no cifra** conexiones LAN sin Tailscale.
 
-## Desarrollo local
+## Alarmas
+
+Las alarmas se programan mediante **AlarmManager** y notificaciones del sistema, con repetición diaria opcional. La aplicación también crea recordatorios al asignar una tarea con hora. Concede permiso para notificaciones en Android 13 o superior. Android puede retrasarlas durante el ahorro de batería: no es un reemplazo certificado de una aplicación de despertador de alta precisión.
+
+## Obtener APK para WhatsApp
+
+GitHub → **Actions → Compilar APK NeuroSync** → última ejecución correcta → **Artifacts** → `NeuroSync-Familia-APK` → extraer `app-debug.apk`.
+
+No necesitas Play Store ni Netlify. Es una APK de prueba, no una release definitiva. **IMPORTANTE:** los APK debug producidos por distintos ejecutores de GitHub pueden tener firmas diferentes y no permitir instalar una actualización sobre la anterior. Para esta versión quizá sea necesario desinstalar la anterior, lo que puede eliminar datos locales. Conserva respaldos antes de desinstalar y no elimines el único celular con la base principal sin una estrategia de recuperación.
+
+## Limitaciones importantes
+
+- **Todavía requiere pruebas reales en los tres teléfonos**: no basta con que compile.
+- La sincronización ocurre al usar la app y cuando el servidor responde; no puede garantizarse 24/7. En Android 15+, un servicio `dataSync` está sujeto a un límite de horas en segundo plano; tras detenerse necesitarás volver a abrir la aplicación en el celular principal.
+- Los cambios simultáneos del **mismo registro** se resuelven por timestamp de dispositivo. Falta reconciliación por campo y gestión avanzada de conflictos.
+- Los datos se guardan localmente sin cifrado a nivel de base de datos; no almacenar secretos sensibles ni información médica.
+- Aún falta gestión de permisos más detallada, restablecimiento de contraseñas, copia de seguridad central automática y firma estable para actualizaciones.
+- La APK **no puede bloquear el desbloqueo de Android**; ello requiere componentes de gestión del dispositivo y permisos específicos.
+- No hay infraestructura en Netlify. Para acceso remoto hace falta Tailscale u otra red privada.
+
+## Compilación local
 
 Requiere Java 17, Android SDK 35 y Gradle 8.11.1.
 
-```bash
+```sh
 cp index.html android/app/src/main/assets/index.html
 cd android
-gradle assembleDebug
+gradle --no-daemon assembleDebug
 ```
 
-El APK resultante estará en `android/app/build/outputs/apk/debug/app-debug.apk`. Para una APK de distribución a largo plazo, preparar una firma de release propia, mantenerla a salvo y firmar todas las actualizaciones con la misma clave. No subas la clave de firma al repositorio.
-
-## Próximos controles necesarios
-
-- Pruebas de compilación y ejecución en Android (no se han certificado aquí).
-- Credenciales individuales y restricciones por cuenta/rol.
-- Motor de sincronización con operaciones por campo y conflictos explícitos.
-- Notificaciones programadas nativas y tareas de fondo con límites Android.
-- Recuperación ante pérdida del celular central y migración a otro servidor.
+APK generado: `android/app/build/outputs/apk/debug/app-debug.apk`.
