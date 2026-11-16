@@ -54,9 +54,17 @@ public final class MainActivity extends Activity {
   private JSONObject remote(String path,JSONObject request){
     HttpURLConnection c=null;
     try{
-      String ip=getPreferences(0).getString("server","");
-      if(!validPrivateIp(ip))return AccountStore.fail("Configura una IP privada válida");
-      URL url=new URL("http://"+ip+":"+SyncService.PORT+path);
+      String mode=getPreferences(0).getString("mode","");
+      URL url;
+      if("cloud".equals(mode)){
+        String base=getPreferences(0).getString("cloud","");
+        if(!validCloudUrl(base))return AccountStore.fail("Configura el servidor HTTPS familiar");
+        url=new URL(base+path);
+      }else{
+        String ip=getPreferences(0).getString("server","");
+        if(!validPrivateIp(ip))return AccountStore.fail("Configura una IP privada válida");
+        url=new URL("http://"+ip+":"+SyncService.PORT+path);
+      }
       c=(HttpURLConnection)url.openConnection();c.setRequestMethod("POST");
       c.setConnectTimeout(5000);c.setReadTimeout(8000);c.setDoOutput(true);c.setUseCaches(false);
       c.setRequestProperty("Content-Type","application/json");
@@ -70,7 +78,7 @@ public final class MainActivity extends Activity {
       ByteArrayOutputStream read=new ByteArrayOutputStream();byte[] buf=new byte[8192];int n;
       try(InputStream r=in){while((n=r.read(buf))!=-1){read.write(buf,0,n);if(read.size()>600000)throw new IOException("Respuesta demasiado grande");}}
       return new JSONObject(read.toString("UTF-8"));
-    }catch(Exception e){return AccountStore.fail("No se pudo conectar al celular principal. Comprueba Tailscale y que el servidor esté activo.");}
+    }catch(Exception e){return AccountStore.fail("No se pudo conectar al servidor familiar. Comprueba internet y la dirección del servicio.");}
     finally{if(c!=null)c.disconnect();}
   }
   private JSONObject call(String path,JSONObject args){
@@ -103,6 +111,14 @@ public final class MainActivity extends Activity {
     startActivity(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
       android.net.Uri.parse("package:"+getPackageName())));
   }
+  private static boolean validCloudUrl(String url){
+    try{
+      java.net.URI u=new java.net.URI(url);
+      return "https".equalsIgnoreCase(u.getScheme())&&u.getHost()!=null&&u.getHost().length()>3
+        &&u.getUserInfo()==null&&u.getQuery()==null&&u.getFragment()==null
+        &&(u.getPath()==null||u.getPath().isEmpty()||u.getPath().equals("/"));
+    }catch(Exception e){return false;}
+  }
   private void startServer(){runOnUiThread(()->{
     try{startForegroundService(new Intent(this,SyncService.class));}
     catch(Exception e){android.util.Log.w("NeuroSync","No se pudo iniciar servicio: "+e.getMessage());}
@@ -122,6 +138,15 @@ public final class MainActivity extends Activity {
       sessionToken="";sessionUser=null;
       runOnUiThread(()->stopService(new Intent(MainActivity.this,SyncService.class)));
       return success("Conectado al servidor "+ip+". Inicia sesión con tu usuario familiar.").toString();
+    }
+    @JavascriptInterface public String configureCloud(String base){
+      if(base==null)return AccountStore.fail("Dirección vacía").toString();
+      String url=base.trim().replaceAll("/+$","");
+      if(!validCloudUrl(url))return AccountStore.fail("Escribe una dirección HTTPS válida del servidor familiar").toString();
+      getPreferences(0).edit().putString("mode","cloud").putString("cloud",url).apply();
+      sessionToken="";sessionUser=null;
+      runOnUiThread(()->stopService(new Intent(MainActivity.this,SyncService.class)));
+      return success("Servidor en internet configurado. Inicia sesión con tu cuenta familiar.").toString();
     }
     @JavascriptInterface public String login(String username,String password){
       String mode=getPreferences(0).getString("mode","");
