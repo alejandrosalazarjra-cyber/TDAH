@@ -251,9 +251,6 @@ public final class MainActivity extends Activity {
           .setPositiveButton("Entendido",null).show();
       });
     }
-    @JavascriptInterface public void openMinimalHome(){
-      runOnUiThread(()->startActivity(new Intent(MainActivity.this,HomeActivity.class)));
-    }
     @JavascriptInterface public void openSystemClock(){
       runOnUiThread(()->{
         try{
