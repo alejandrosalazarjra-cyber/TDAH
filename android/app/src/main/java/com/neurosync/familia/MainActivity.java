@@ -40,7 +40,7 @@ public final class MainActivity extends Activity {
     web.addJavascriptInterface(new NativeBridge(),"AndroidBridge");
     try(InputStream input=getAssets().open("index.html")){
       ByteArrayOutputStream bytes=new ByteArrayOutputStream();
-      input.transferTo(bytes);
+      byte[] chunk=new byte[8192];int count;while((count=input.read(chunk))!=-1)bytes.write(chunk,0,count);
       web.loadDataWithBaseURL("https://appassets.androidplatform.net/index.html",bytes.toString("UTF-8"),"text/html","UTF-8",null);
     }catch(Exception ex){new AlertDialog.Builder(this).setMessage("No se encontró index.html en el APK").show();}
     snapshot=getPreferences(0).getString("local_snapshot",snapshot);
@@ -111,6 +111,12 @@ public final class MainActivity extends Activity {
     new AlertDialog.Builder(this).setTitle("Estado de sincronización").setMessage(message).setPositiveButton("Entendido",null).show();
   }
   private void showMessage(String text){runOnUiThread(()->new AlertDialog.Builder(this).setMessage(text).setPositiveButton("OK",null).show());}
+  private String readString(InputStream stream)throws IOException{
+    ByteArrayOutputStream bytes=new ByteArrayOutputStream();
+    byte[] chunk=new byte[8192];int count;
+    while((count=stream.read(chunk))!=-1){bytes.write(chunk,0,count);if(bytes.size()>600000)throw new IOException("Respuesta muy grande");}
+    return new String(bytes.toByteArray(),StandardCharsets.UTF_8);
+  }
   private void sync(){
     String mode=getPreferences(0).getString("mode","");
     if(mode.isEmpty())return;
@@ -128,7 +134,7 @@ public final class MainActivity extends Activity {
           byte[] body=in.toString().getBytes(StandardCharsets.UTF_8);c.setFixedLengthStreamingMode(body.length);
           try(OutputStream stream=c.getOutputStream()){stream.write(body);}
           if(c.getResponseCode()!=200)throw new IOException("Servidor respondió "+c.getResponseCode());
-          try(InputStream stream=c.getInputStream()){out=new JSONObject(new String(stream.readAllBytes(),StandardCharsets.UTF_8));}
+          try(InputStream stream=c.getInputStream()){out=new JSONObject(readString(stream));}
           c.disconnect();
         }
         String result=out.toString();
