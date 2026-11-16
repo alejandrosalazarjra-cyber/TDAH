@@ -137,6 +137,9 @@ public final class AccountStore {
         }
       }
       if(username==null)return null;
+      String expected=sessions(c).getString("token_"+username,"");
+      if(expected.isEmpty()||!MessageDigest.isEqual(expected.getBytes(StandardCharsets.UTF_8),
+        tokenHash(token).getBytes(StandardCharsets.UTF_8)))return null;
       JSONObject user=find(users(c),username);
       return user!=null&&user.optBoolean("active")?publicUser(user):null;
     }catch(Exception ex){return null;}
