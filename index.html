@@ -189,8 +189,8 @@ document.querySelectorAll('[data-open]').forEach(function(b){b.onclick=function(
 function scheduleAlarm(a){if(!nat||!nat.scheduleAlarm)return;var when=new Date(a.date+'T'+a.time+':00').getTime();if(a.daily&&when<Date.now())when+=86400000;try{nat.scheduleAlarm(a.id,a.title,when,a.daily)}catch(e){say('La alarma no se pudo programar')}}
 by('pet-feed').onclick=function(){if(model.pet.food<20){say('Necesitas completar tareas para conseguir 20 puntos');return}model.pet.food-=20;model.pet.xp+=15;model.pet.feeds++;save();render();say('🍎 ¡Tu mascota comió y ganó experiencia!')};
 var syncing=false;
-window.neuroSyncOnSync=function(payload){
- syncing=false;if(!session||!model)return;
+window.neuroSyncOnSync=function(payload,requestingUser){
+ syncing=false;if(!session||!model||(requestingUser&&session.username!==requestingUser))return;
  try{
   var res=typeof payload==='string'?JSON.parse(payload):payload;
   if(!res.ok){by('sync-status').textContent=res.error||'Sin conexión · guardado local';return}
@@ -212,7 +212,7 @@ window.neuroSyncOnSync=function(payload){
 function sync(){
  if(!session||!nat||syncing)return;
  var content=JSON.stringify({tasks:model.tasks,packs:model.packs,alarms:model.alarms});
- if(nat.syncFamilyAsync){syncing=true;by('sync-status').textContent='Sincronizando…';try{nat.syncFamilyAsync(content)}catch(e){syncing=false;by('sync-status').textContent='Guardado local'}return}
+ if(nat.syncFamilyAsync){syncing=true;by('sync-status').textContent='Sincronizando…';try{nat.syncFamilyAsync(content,session.username)}catch(e){syncing=false;by('sync-status').textContent='Guardado local'}return}
  if(nat.syncFamily){try{window.neuroSyncOnSync(nat.syncFamily(content))}catch(e){by('sync-status').textContent='Guardado local'}}
 }
 by('sync-btn').onclick=sync;
@@ -226,7 +226,7 @@ by('setup-host').onclick=function(){if(nat&&nat.configureHost){try{var r=JSON.pa
 by('setup-client').onclick=function(){if(!nat||!nat.configureRemote){say('La conexión familiar requiere la APK Android');return}var host=prompt('Escribe la IP privada de Tailscale del celular principal (100.x.x.x)');if(!host)return;try{var result=JSON.parse(nat.configureRemote(host));say(result.message||'Configuración guardada')}catch(e){say('No se pudo configurar la conexión')}};
 by('configure-network').onclick=function(){if(nat&&nat.configureHost){var r=JSON.parse(nat.configureHost());say(r.message||'Configurado')}else say('Función exclusiva de APK')};
 by('password-form').onsubmit=function(e){e.preventDefault();if(!nat||!nat.changePassword){say('Cambia contraseñas desde el APK Android');return}try{var r=JSON.parse(nat.changePassword(by('current-pass').value,by('new-pass').value));say(r.ok?'Contraseña actualizada':(r.error||'Error'));if(r.ok)by('password-form').reset()}catch(err){say('No se pudo cambiar la contraseña')}};
-function logout(){session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
+function logout(){syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
 by('logout').onclick=logout;
 document.addEventListener('visibilitychange',function(){if(!document.hidden)sync()});setInterval(sync,60000);
 })();
