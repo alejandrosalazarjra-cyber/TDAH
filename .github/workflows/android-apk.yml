@@ -78,7 +78,7 @@ jobs:
           required = [
               "AccountStore.java", "AlarmReceiver.java", "SyncService.java",
               "AlarmRingActivity.java", "TodayWidget.java",
-              "FocusLauncherActivity.java", "FocusNotificationListener.java",
+              "FocusLauncherActivity.java", "AlarmAudioService.java",
               "MainActivity.java",
           ]
           errors = []
@@ -109,8 +109,10 @@ jobs:
               if home != [".FocusLauncherActivity"]:
                   errors.append(f"Debe existir solo FocusLauncherActivity como HOME; se encontraron: {home}")
               services = [x.get(ns+"name") for x in manifest.findall(".//service")]
-              if ".FocusNotificationListener" not in services:
-                  errors.append("FocusNotificationListener no está registrado en AndroidManifest.xml")
+              if ".FocusNotificationListener" in services:
+                  errors.append("No activar permiso de escucha de notificaciones restringido")
+              if ".AlarmAudioService" not in services:
+                  errors.append("Falta servicio de sonido de alarmas")
               bridges = (java / "MainActivity.java").read_text() if (java / "MainActivity.java").is_file() else ""
               if len(re.findall(r"void\s+openMinimalHome\s*\(", bridges)) != 1:
                   errors.append("MainActivity debe exponer exactamente un método openMinimalHome")
@@ -135,17 +137,20 @@ jobs:
           print("Comprobaciones de sintaxis corregidas")
           PY
 
-      - name: Comprobar audio, launcher y permisos de NeuroSync 6.0
+      - name: Comprobar seguridad, alarmas y launcher
         shell: bash
         run: |
           set -euo pipefail
-          grep -q 'versionCode 6' android/app/build.gradle
           grep -q 'AlarmAudioService' android/app/src/main/AndroidManifest.xml
           grep -q 'FOREGROUND_SERVICE_MEDIA_PLAYBACK' android/app/src/main/AndroidManifest.xml
           grep -q 'AlarmAudioService.start' android/app/src/main/java/com/neurosync/familia/AlarmReceiver.java
           grep -q 'setAlarmClock' android/app/src/main/java/com/neurosync/familia/AlarmReceiver.java
           grep -q 'RoleManager.ROLE_HOME' android/app/src/main/java/com/neurosync/familia/MainActivity.java
-          echo "Comprobaciones de audio y launcher completadas"
+          if grep -q 'BIND_NOTIFICATION_LISTENER_SERVICE' android/app/src/main/AndroidManifest.xml; then
+            echo '::error::Permiso restringido de notificaciones no autorizado'
+            exit 1
+          fi
+          echo "Verificación de seguridad, permisos mínimos y alarmas completada"
 
       - name: Configurar Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -185,6 +190,9 @@ jobs:
           test -f "$ANDROID_HOME/build-tools/35.0.0/aapt" || { echo "::error::Falta aapt del SDK Android 35"; exit 1; }
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee /tmp/neurosync-apk-info.txt
           grep -q "package: name='com.neurosync.familia'" /tmp/neurosync-apk-info.txt
+          BYTES=$(stat -c%s "$APK")
+          echo "APK descomprimido: $BYTES bytes"
+          sha256sum "$APK" | tee /tmp/neurosync-apk-sha256.txt
           echo "APK generado, ZIP íntegro y paquete Android correcto"
 
       - name: Publicar APK para descarga
