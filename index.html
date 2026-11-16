@@ -141,7 +141,7 @@ e.querySelector('.iconbtn').onclick=function(){if(confirm('¿Eliminar lista?')){
 var c=e.querySelector('.bag-checks');(b.items||[]).forEach(function(it,i){var l=document.createElement('label');l.className='check';var input=document.createElement('input');input.type='checkbox';input.checked=!!(b.checked||{})[i];input.onchange=function(){b.checked=b.checked||{};b.checked[i]=input.checked;mark(b);save()};l.append(input,document.createTextNode(it));c.append(l)});
 e.querySelector('.btn').onclick=function(){b.checked={};mark(b);save();render()};return e}
 function renderBags(){fill('bags-list',active(model.packs).filter(owned),bagItem,'Crea una lista para tu próxima salida.')}
-function alarmItem(a){var e=document.createElement('div');e.className='list-row';e.innerHTML='<div class="between"><div><b>⏰ '+esc(a.title)+'</b><div class="task-meta">'+esc(a.date)+' · '+esc(a.time)+(a.daily?' · Todos los días':'')+'</div></div><button class="iconbtn" aria-label="Eliminar alarma">×</button></div>';e.querySelector('button').onclick=function(){a.deleted=true;mark(a);try{nat&&nat.cancelAlarm&&nat.cancelAlarm(a.id)}catch(err){}save();render()};return e}
+function alarmItem(a){var e=document.createElement('div');e.className='list-row';e.innerHTML='<div class="between"><div><b>⏰ '+esc(a.title)+'</b><div class="task-meta">'+esc(a.date)+' · '+esc(a.time)+(a.daily?' · Todos los días':'')+'</div></div><button class="iconbtn" aria-label="Eliminar alarma">×</button></div>';e.querySelector('button').onclick=function(){if(session.role!=='admin'&&a.owner==='todos'){say('Esta alarma compartida solo puede eliminarla el administrador');return}a.deleted=true;mark(a);try{nat&&nat.cancelAlarm&&nat.cancelAlarm(a.id)}catch(err){}save();render()};return e}
 function renderAlarms(){fill('alarms-list',active(model.alarms).filter(owned),alarmItem,'No hay alarmas. Crea una para recordar algo importante.')}
 function renderCalendar(){var grid=by('calendar');grid.replaceChildren();by('month-title').textContent=month.toLocaleDateString('es-CO',{month:'long',year:'numeric'});var wd=['L','M','M','J','V','S','D'];wd.forEach(function(w){var e=document.createElement('span');e.className='week-label';e.textContent=w;grid.append(e)});
 var first=new Date(month.getFullYear(),month.getMonth(),1),offset=(first.getDay()+6)%7,last=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();
@@ -169,7 +169,16 @@ html+='<div class="wide row" style="justify-content:flex-end"><button type="butt
 by('cancel-popup').onclick=closeModal;var form=by('popup-form');if(form.elements.date)form.elements.date.value=day();
 form.onsubmit=function(ev){ev.preventDefault();var values=Object.fromEntries(new FormData(form).entries());
 if(kind==='user'){if(!nat||!nat.createAccount){say('Crea cuentas desde el APK Android');return}try{var r=JSON.parse(nat.createAccount(values.username,values.password));if(!r.ok){say(r.error||'No se pudo crear la cuenta');return}say('Cuenta creada: '+values.username);renderUsers()}catch(e){say('Error creando usuario')}closeModal();return}
-if(kind==='task'){var title=(values.title||'').trim();if(!title)return;model.tasks.push({id:uid(),title:title,owner:values.owner||session.username,date:values.date||day(),time:values.time||'',repeat:values.repeat||'none',steps:(values.steps||'').split(';').map(function(s){return s.trim()}).filter(Boolean),doneDates:[],updatedAt:stamp()})}
+if(kind==='task'){
+ var title=(values.title||'').trim();if(!title)return;
+ var task={id:uid(),title:title,owner:values.owner||session.username,date:values.date||day(),time:values.time||'',repeat:values.repeat||'none',steps:(values.steps||'').split(';').map(function(s){return s.trim()}).filter(Boolean),doneDates:[],updatedAt:stamp()};
+ model.tasks.push(task);
+ if(task.time){
+  var reminder={id:'task_'+task.id,title:task.title,date:task.date,time:task.time,daily:task.repeat==='daily',owner:task.owner,updatedAt:stamp()};
+  model.alarms.push(reminder);
+  if(reminder.owner===session.username||reminder.owner==='todos')scheduleAlarm(reminder);
+ }
+}
 if(kind==='bag'){var items=(values.items||'').split(';').map(function(s){return s.trim()}).filter(Boolean);if(!items.length){say('Agrega algo para llevar');return}model.packs.push({id:uid(),place:(values.place||'').trim(),owner:values.owner||session.username,items:items,checked:{},updatedAt:stamp()})}
 if(kind==='alarm'){var d=values.date||day(),time=values.time||'08:00';if(!values.daily&&new Date(d+'T'+time+':00').getTime()<=Date.now()){say('Elige una hora futura para la alarma');return}var alarm={id:uid(),title:(values.title||'').trim()||'Recordatorio',date:d,time:time,daily:!!values.daily,owner:session.username,updatedAt:stamp()};model.alarms.push(alarm);scheduleAlarm(alarm)}
 save();closeModal();render();say('Guardado correctamente')};
@@ -196,6 +205,7 @@ window.neuroSyncOnSync=function(payload){
    model[k]=Array.from(found.values());
   });
   localStorage.setItem(localKey(),JSON.stringify(model));
+  if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm);
   by('sync-status').textContent='✓ Sincronizado';render();
  }catch(e){by('sync-status').textContent='Error aplicando cambios'}
 };
@@ -207,7 +217,7 @@ function sync(){
 }
 by('sync-btn').onclick=sync;
 function getUsers(){if(!nat||!nat.getUsers)return [{username:session.username,role:session.role}];try{var r=JSON.parse(nat.getUsers());return r.users||[]}catch(e){return []}}
-function enter(u){session=u;model=load();model.pet=model.pet||{xp:0,food:0,feeds:0};by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=u.username.slice(0,1).toUpperCase();by('greeting').textContent='Hola, '+u.username+'. Hoy puedes avanzar a tu ritmo.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username}).forEach(scheduleAlarm)}
+function enter(u){session=u;model=load();model.pet=model.pet||{xp:0,food:0,feeds:0};by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=u.username.slice(0,1).toUpperCase();by('greeting').textContent='Hola, '+u.username+'. Hoy puedes avanzar a tu ritmo.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
 by('login-form').onsubmit=function(e){e.preventDefault();var username=by('login-user').value.trim().toLowerCase(),password=by('login-pass').value;
 if(nat&&nat.login){try{var res=JSON.parse(nat.login(username,password));if(!res.ok){by('login-error').textContent=res.error||'Usuario o contraseña incorrectos';return}enter(res.user);return}catch(err){by('login-error').textContent='Error de conexión con el teléfono principal';return}}
 if(username==='administrador'&&password==='admin1234'){enter({username:username,role:'admin'});say('Modo web de demostración: sin cuentas seguras ni sincronización');return}
