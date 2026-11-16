@@ -31,7 +31,7 @@ public final class FocusLauncherActivity extends Activity {
   private final Handler handler=new Handler(Looper.getMainLooper());
   private final Runnable updateClock=new Runnable(){@Override public void run(){if(!drawer)renderHome();handler.postDelayed(this,30000);}};
   private final ArrayList<AppEntry> apps=new ArrayList<>();
-  private final Set<String> favorites=new HashSet<>(), focusApps=new HashSet<>();
+  private final Set<String> favorites=new HashSet<>(), focusApps=new HashSet<>(), mutedApps=new HashSet<>();
   private android.content.SharedPreferences preferences;
   private float xStart,yStart;
   private boolean focusEnabled=true;
@@ -70,6 +70,7 @@ public final class FocusLauncherActivity extends Activity {
     preferences=getSharedPreferences("focus_launcher",MODE_PRIVATE);
     favorites.addAll(preferences.getStringSet("favorites",Collections.emptySet()));
     focusApps.addAll(preferences.getStringSet("focus",Collections.emptySet()));
+    mutedApps.addAll(preferences.getStringSet("muted_notifications",Collections.emptySet()));
     focusEnabled=preferences.getBoolean("focus_enabled",true);
     focusStart=preferences.getInt("focus_start",0);
     focusEnd=preferences.getInt("focus_end",0);
@@ -89,6 +90,7 @@ public final class FocusLauncherActivity extends Activity {
   private void persist(){
     preferences.edit().putStringSet("favorites",new HashSet<>(favorites))
       .putStringSet("focus",new HashSet<>(focusApps))
+      .putStringSet("muted_notifications",new HashSet<>(mutedApps))
       .putBoolean("focus_enabled",focusEnabled)
       .putInt("focus_start",focusStart).putInt("focus_end",focusEnd).apply();
   }
@@ -211,15 +213,22 @@ public final class FocusLauncherActivity extends Activity {
   }
   private void showEntryOptions(AppEntry app){
     boolean fav=favorites.contains(app.packageName),focus=focusApps.contains(app.packageName);
+    boolean muted=mutedApps.contains(app.packageName);
     String[] items={
       fav?"Quitar de favoritos":"Agregar a inicio",
       focus?"Quitar pausa consciente":"Añadir pausa consciente",
+      muted?"Dejar pasar notificaciones":"Filtrar sus notificaciones",
       "Abrir aplicación"
     };
     new AlertDialog.Builder(this).setTitle(app.title).setItems(items,(dialog,which)->{
       if(which==0){if(fav)favorites.remove(app.packageName);else favorites.add(app.packageName);persist();refreshApps();if(drawer)renderApps(search==null?"":search.getText().toString());else renderHome();}
       if(which==1){if(focus)focusApps.remove(app.packageName);else focusApps.add(app.packageName);persist();if(drawer)renderApps(search==null?"":search.getText().toString());}
-      if(which==2)openEntry(app);
+      if(which==2){
+        if(muted)mutedApps.remove(app.packageName);else mutedApps.add(app.packageName);
+        persist();if(drawer)renderApps(search==null?"":search.getText().toString());
+        if(!isNotificationListenerEnabled())showNotificationPermissionHelp();
+      }
+      if(which==3)openEntry(app);
     }).setNegativeButton("Cancelar",null).show();
   }
   private boolean focusIsActive(){
@@ -259,6 +268,16 @@ public final class FocusLauncherActivity extends Activity {
       }
     }
     launchIntent(new Intent(Settings.ACTION_HOME_SETTINGS));
+  }
+  private boolean isNotificationListenerEnabled(){
+    String enabled=Settings.Secure.getString(getContentResolver(),"enabled_notification_listeners");
+    return enabled!=null&&enabled.contains(getPackageName());
+  }
+  private void showNotificationPermissionHelp(){
+    new AlertDialog.Builder(this).setTitle("Permiso de notificaciones")
+      .setMessage("NeuroSync puede ocultar notificaciones de las aplicaciones que tú selecciones. No guarda ni envía el texto de tus mensajes. Puedes desactivar este permiso cuando quieras.")
+      .setPositiveButton("Abrir permisos",(d,w)->launchIntent(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)))
+      .setNegativeButton("Ahora no",null).show();
   }
   private void requestUsageAccess(){launchIntent(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));}
   private long todayUsageMillis(){
@@ -303,6 +322,8 @@ public final class FocusLauncherActivity extends Activity {
     TextView explanation=text("La pausa se aplica únicamente a las aplicaciones que marques al abrirlas desde NeuroSync. No bloquea aplicaciones desde otros accesos.",12,MUTED,false);
     view.addView(explanation);view.addView(gap(22));
     view.addView(text("Bienestar digital",18,WHITE,true));view.addView(gap(10));
+    view.addView(action("Configurar filtro de notificaciones",this::showNotificationPermissionHelp));
+    view.addView(gap(12));
     view.addView(action("Conceder acceso a tiempo de uso",this::requestUsageAccess));view.addView(gap(12));
     TextView total=text("Tiempo aproximado registrado hoy: "+(todayUsageMillis()/60000)+" minutos",14,MUTED,false);view.addView(total);
     view.addView(gap(26));
