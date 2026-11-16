@@ -97,8 +97,10 @@ public final class FocusLauncherActivity extends Activity {
       usageWarningShown=false;
       preferences.edit().putString("usage_warning_date",today).apply();
     }
-    if(!usageWarningShown&&hasUsagePermission()&&dailyBudget>0&&todayUsageMillis()/60000>=dailyBudget){
+    if(!usageWarningShown&&hasUsagePermission()&&dailyBudget>0&&
+       !today.equals(preferences.getString("last_budget_alert_date",""))&&todayUsageMillis()/60000>=dailyBudget){
       usageWarningShown=true;
+      preferences.edit().putString("last_budget_alert_date",today).apply();
       new AlertDialog.Builder(this).setTitle("Recordatorio de descanso")
         .setMessage("Has alcanzado tu objetivo diario de "+dailyBudget+" minutos de uso. Puedes cerrar aplicaciones o continuar voluntariamente.")
         .setPositiveButton("Ver mis tareas",(d,w)->openNeuroSync())
