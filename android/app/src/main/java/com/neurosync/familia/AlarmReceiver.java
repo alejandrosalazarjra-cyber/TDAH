@@ -49,8 +49,14 @@ public final class AlarmReceiver extends BroadcastReceiver {
  private static boolean program(Context ctx,String id,long when){
   try{
    AlarmManager alarm=manager(ctx);
-   if(Build.VERSION.SDK_INT<31||alarm.canScheduleExactAlarms())alarm.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,when,pending(ctx,id));
-   else alarm.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,when,pending(ctx,id));
+   if(Build.VERSION.SDK_INT<31||alarm.canScheduleExactAlarms()){
+     Intent view=new Intent(ctx,AlarmRingActivity.class).putExtra("id",id);
+     PendingIntent show=PendingIntent.getActivity(ctx,id.hashCode()^0x45454545,view,
+       PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+     alarm.setAlarmClock(new AlarmManager.AlarmClockInfo(when,show),pending(ctx,id));
+   }else{
+     alarm.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,when,pending(ctx,id));
+   }
    return true;
   }catch(Exception ex){android.util.Log.e("NeuroSync","No se pudo programar alarma",ex);return false;}
  }
