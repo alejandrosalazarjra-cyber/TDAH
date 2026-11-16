@@ -462,7 +462,10 @@ public final class FocusLauncherActivity extends Activity {
     view.addView(action("Ver uso por aplicación",this::showUsageReport));
     view.addView(gap(12));
     view.addView(action("Conceder acceso a tiempo de uso",this::requestUsageAccess));view.addView(gap(12));
-    TextView total=text("Tiempo aproximado registrado hoy: "+(todayUsageMillis()/60000)+" minutos",14,MUTED,false);view.addView(total);
+    TextView total=text(hasUsagePermission()
+      ? "Tiempo aproximado registrado hoy: "+(todayUsageMillis()/60000)+" minutos"
+      : "Tiempo de uso: concede permiso en Android para consultar los minutos",14,MUTED,false);
+    view.addView(total);
     view.addView(gap(26));
     view.addView(text("Pantalla y accesibilidad",18,WHITE,true));view.addView(gap(10));
     view.addView(action("Opciones de escala de grises del sistema",()->{
