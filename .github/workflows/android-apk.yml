@@ -6,6 +6,10 @@ on:
     paths:
       - '.github/workflows/android-apk.yml'
 
+concurrency:
+  group: neurosync-build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   apk:
     runs-on: ubuntu-24.04
@@ -36,6 +40,28 @@ jobs:
           fi
           test -f "$ANDROID_HOME/platforms/android-35/android.jar"
           echo "SDK Android 35 disponible"
+
+      - name: Validar interfaz antes de compilar
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          import re, subprocess, tempfile
+          html=Path('index.html').read_text(encoding='utf-8')
+          assert 'NeuroFlow' not in html, 'Se detectó la interfaz anterior'
+          assert 'netlify' not in html.lower().split('<script>')[0], 'Revisar referencias externas'
+          for tag in ['login-form','view-admin','view-tasks','view-alarms','view-calendar','view-bags']:
+              assert f'id="{tag}"' in html, f'Falta sección {tag}'
+          scripts=re.findall(r'<script(?:\\s[^>]*)?>([\\s\\S]*?)</script>',html)
+          assert scripts, 'No hay JavaScript'
+          for i,code in enumerate(scripts):
+              path=Path(tempfile.gettempdir())/f'ns-syntax-{i}.js'
+              path.write_text(code,encoding='utf-8')
+              subprocess.run(['node','--check',str(path)],check=True)
+          print('Interfaz validada: navegación, acceso, alarmas y sintaxis JS')
+          PY
 
       - name: Configurar Gradle
         uses: gradle/actions/setup-gradle@v4
