@@ -36,6 +36,9 @@ public final class FocusLauncherActivity extends Activity {
   private float xStart,yStart;
   private boolean focusEnabled=true;
   private int focusStart=0,focusEnd=0;
+  private int dailyBudget=120;
+  private int mindfulDelay=5;
+  private boolean usageWarningShown=false;
 
   private static class AppEntry {
     String title,packageName,activity;
@@ -74,6 +77,8 @@ public final class FocusLauncherActivity extends Activity {
     focusEnabled=preferences.getBoolean("focus_enabled",true);
     focusStart=preferences.getInt("focus_start",0);
     focusEnd=preferences.getInt("focus_end",0);
+    dailyBudget=preferences.getInt("daily_budget",120);
+    mindfulDelay=preferences.getInt("mindful_delay",5);
     root=vertical();root.setBackgroundColor(BLACK);setContentView(root);
     refreshApps();renderHome();
     root.setOnTouchListener((v,event)->{
@@ -85,14 +90,24 @@ public final class FocusLauncherActivity extends Activity {
       return false;
     });
   }
-  @Override protected void onResume(){super.onResume();handler.removeCallbacks(updateClock);handler.post(updateClock);}
+  @Override protected void onResume(){
+    super.onResume();handler.removeCallbacks(updateClock);handler.post(updateClock);
+    if(!usageWarningShown&&hasUsagePermission()&&dailyBudget>0&&todayUsageMillis()/60000>=dailyBudget){
+      usageWarningShown=true;
+      new AlertDialog.Builder(this).setTitle("Recordatorio de descanso")
+        .setMessage("Has alcanzado tu objetivo diario de "+dailyBudget+" minutos de uso. Puedes cerrar aplicaciones o continuar voluntariamente.")
+        .setPositiveButton("Ver mis tareas",(d,w)->openNeuroSync())
+        .setNegativeButton("Entendido",null).show();
+    }
+  }
   @Override protected void onPause(){handler.removeCallbacks(updateClock);super.onPause();}
   private void persist(){
     preferences.edit().putStringSet("favorites",new HashSet<>(favorites))
       .putStringSet("focus",new HashSet<>(focusApps))
       .putStringSet("muted_notifications",new HashSet<>(mutedApps))
       .putBoolean("focus_enabled",focusEnabled)
-      .putInt("focus_start",focusStart).putInt("focus_end",focusEnd).apply();
+      .putInt("focus_start",focusStart).putInt("focus_end",focusEnd)
+      .putInt("daily_budget",dailyBudget).putInt("mindful_delay",mindfulDelay).apply();
   }
   private void refreshApps(){
     apps.clear();
@@ -241,11 +256,32 @@ public final class FocusLauncherActivity extends Activity {
     if(focusIsActive()&&focusApps.contains(app.packageName)){
       new AlertDialog.Builder(this)
         .setTitle("Antes de abrir "+app.title)
-        .setMessage("¿Para qué quieres usar esta aplicación? Puedes continuar o volver a tus tareas.")
-        .setPositiveButton("Abrir de todos modos",(d,w)->launchEntry(app))
+        .setMessage("¿Para qué quieres usar esta aplicación? Puedes continuar o volver a tus tareas. Si continúas, habrá una pausa de "+mindfulDelay+" segundos.")
+        .setPositiveButton("Continuar",(d,w)->delayLaunch(app))
         .setNegativeButton("Volver a mis tareas",(d,w)->openNeuroSync())
         .setNeutralButton("Cancelar",null).show();
     }else launchEntry(app);
+  }
+  private void delayLaunch(AppEntry app){
+    if(mindfulDelay<=0){launchEntry(app);return;}
+    LinearLayout content=vertical();pad(content,22,14);
+    TextView countdown=text(String.valueOf(mindfulDelay),35,BLACK,true);
+    countdown.setGravity(Gravity.CENTER);content.addView(countdown);
+    TextView message=text("Puedes cambiar de opinión antes de abrir "+app.title+".",14,BLACK,false);
+    content.addView(message);
+    final AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Pausa consciente")
+      .setView(content).setNegativeButton("Cancelar",null).create();
+    final long end=SystemClock.elapsedRealtime()+mindfulDelay*1000L;
+    final Runnable[] ticker=new Runnable[1];
+    ticker[0]=()->{
+      if(!dialog.isShowing())return;
+      long remaining=Math.max(0,(end-SystemClock.elapsedRealtime()+999)/1000);
+      countdown.setText(String.valueOf(remaining));
+      if(remaining<=0){dialog.dismiss();launchEntry(app);}
+      else handler.postDelayed(ticker[0],200);
+    };
+    dialog.setOnDismissListener(d->handler.removeCallbacks(ticker[0]));
+    dialog.show();handler.post(ticker[0]);
   }
   private void launchEntry(AppEntry app){
     try{
@@ -280,6 +316,53 @@ public final class FocusLauncherActivity extends Activity {
       .setNegativeButton("Ahora no",null).show();
   }
   private void requestUsageAccess(){launchIntent(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));}
+  private boolean hasUsagePermission(){
+    android.app.AppOpsManager ops=(android.app.AppOpsManager)getSystemService(APP_OPS_SERVICE);
+    return ops!=null&&ops.checkOpNoThrow(android.app.AppOpsManager.OPSTR_GET_USAGE_STATS,
+      android.os.Process.myUid(),getPackageName())==android.app.AppOpsManager.MODE_ALLOWED;
+  }
+  private void showUsageReport(){
+    if(!hasUsagePermission()){
+      new AlertDialog.Builder(this).setTitle("Tiempo de uso")
+        .setMessage("Para consultar el tiempo por aplicación, Android debe conceder acceso a estadísticas de uso. No se comparten estos datos con tu familia.")
+        .setNegativeButton("Cancelar",null)
+        .setPositiveButton("Conceder acceso",(d,w)->requestUsageAccess()).show();
+      return;
+    }
+    UsageStatsManager stats=(UsageStatsManager)getSystemService(USAGE_STATS_SERVICE);
+    Calendar d=Calendar.getInstance();d.set(Calendar.HOUR_OF_DAY,0);d.set(Calendar.MINUTE,0);
+    d.set(Calendar.SECOND,0);d.set(Calendar.MILLISECOND,0);
+    Map<String,UsageStats> rows=stats.queryAndAggregateUsageStats(d.getTimeInMillis(),System.currentTimeMillis());
+    ArrayList<UsageStats> ordered=new ArrayList<>(rows.values());
+    ordered.sort((a,b)->Long.compare(b.getTotalTimeInForeground(),a.getTotalTimeInForeground()));
+    StringBuilder summary=new StringBuilder();int displayed=0;
+    for(UsageStats entry:ordered){
+      long minutes=entry.getTotalTimeInForeground()/60000;
+      if(minutes<1||entry.getPackageName().equals(getPackageName()))continue;
+      String label=entry.getPackageName();
+      try{label=String.valueOf(getPackageManager().getApplicationLabel(
+        getPackageManager().getApplicationInfo(label,0)));}catch(Exception ignored){}
+      summary.append(label).append(": ").append(minutes).append(" min\n");
+      if(++displayed>=10)break;
+    }
+    if(displayed==0)summary.append("Todavía no hay información de uso para hoy.");
+    new AlertDialog.Builder(this).setTitle("Uso de aplicaciones hoy").setMessage(summary.toString())
+      .setPositiveButton("Cerrar",null).show();
+  }
+  private void chooseDailyBudget(){
+    final String[] choices={"Desactivado","30 minutos","60 minutos","90 minutos","120 minutos","180 minutos","240 minutos"};
+    final int[] values={0,30,60,90,120,180,240};
+    int selected=0;for(int i=0;i<values.length;i++)if(values[i]==dailyBudget)selected=i;
+    new AlertDialog.Builder(this).setTitle("Recordatorio de tiempo diario")
+      .setSingleChoiceItems(choices,selected,(d,index)->{dailyBudget=values[index];usageWarningShown=false;persist();d.dismiss();showSettings()})
+      .setNegativeButton("Cancelar",null).show();
+  }
+  private void chooseMindfulDelay(){
+    final String[] choices={"Sin espera","3 segundos","5 segundos","10 segundos","20 segundos"};
+    final int[] values={0,3,5,10,20};
+    new AlertDialog.Builder(this).setTitle("Duración de la pausa")
+      .setItems(choices,(d,index)->{mindfulDelay=values[index];persist();showSettings()}).show();
+  }
   private long todayUsageMillis(){
     try{
       UsageStatsManager manager=(UsageStatsManager)getSystemService(USAGE_STATS_SERVICE);
@@ -314,6 +397,8 @@ public final class FocusLauncherActivity extends Activity {
       focusEnabled=!focusEnabled;persist();showSettings();
     });
     view.addView(pause);view.addView(gap(12));
+    view.addView(action("Duración de la pausa: "+mindfulDelay+" segundos",this::chooseMindfulDelay));
+    view.addView(gap(12));
     TextView schedule=action("Horario de concentración: "+formatMinutes(focusStart)+" – "+formatMinutes(focusEnd),
       this::chooseFocusHours);
     view.addView(schedule);view.addView(gap(9));
@@ -323,6 +408,10 @@ public final class FocusLauncherActivity extends Activity {
     view.addView(explanation);view.addView(gap(22));
     view.addView(text("Bienestar digital",18,WHITE,true));view.addView(gap(10));
     view.addView(action("Configurar filtro de notificaciones",this::showNotificationPermissionHelp));
+    view.addView(gap(12));
+    view.addView(action("Recordatorio diario: "+(dailyBudget==0?"desactivado":dailyBudget+" minutos"),this::chooseDailyBudget));
+    view.addView(gap(12));
+    view.addView(action("Ver uso por aplicación",this::showUsageReport));
     view.addView(gap(12));
     view.addView(action("Conceder acceso a tiempo de uso",this::requestUsageAccess));view.addView(gap(12));
     TextView total=text("Tiempo aproximado registrado hoy: "+(todayUsageMillis()/60000)+" minutos",14,MUTED,false);view.addView(total);
