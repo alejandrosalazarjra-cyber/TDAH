@@ -108,6 +108,8 @@ public final class AccountStore {
         JSONObject changed=make(user.optString("username"),next,user.optString("role"));
         user.put("hash",changed.optString("hash")).put("salt",changed.optString("salt"));
         prefs(c).edit().putString("users",all.toString()).commit();
+        final String userName=user.optString("username");
+        TOKENS.entrySet().removeIf(entry->userName.equals(entry.getValue()));
         return new JSONObject().put("ok",true);
       }
     }catch(Exception e){return fail("No se pudo cambiar la contraseña");}
