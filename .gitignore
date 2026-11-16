@@ -1,0 +1,6 @@
+# Never commit signing credentials or private signing material.
+signing/
+*.jks
+*.keystore
+*.p12
+*keystore-password*
