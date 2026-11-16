@@ -86,6 +86,10 @@ public final class MainActivity extends Activity {
     try{for(int i=0;i+1<pairs.length;i+=2)r.put(pairs[i],pairs[i+1]);}catch(Exception ignored){}
     return r;
   }
+  private JSONObject success(String message){
+    try{return new JSONObject().put("ok",true).put("message",message);}
+    catch(Exception error){return new JSONObject();}
+  }
   private static boolean validPrivateIp(String host){
     if(host==null||!host.matches("(?:\\d{1,3}\\.){3}\\d{1,3}"))return false;
     String[] p=host.split("\\.");int[] n=new int[4];
@@ -100,14 +104,14 @@ public final class MainActivity extends Activity {
     @JavascriptInterface public String configureHost(){
       getPreferences(0).edit().putString("mode","host").remove("server").apply();
       sessionToken="";sessionUser=null;startServer();
-      return payload("message","Celular principal activado. Usa el usuario administrador y cambia la clave inicial.").putOpt("ok",true).toString();
+      return success("Celular principal activado. Usa el usuario administrador y cambia la clave inicial.").toString();
     }
     @JavascriptInterface public String configureRemote(String ip){
       if(!validPrivateIp(ip))return AccountStore.fail("Usa la IP privada de Tailscale (100.x.x.x) o Wi-Fi").toString();
       getPreferences(0).edit().putString("mode","client").putString("server",ip).apply();
       sessionToken="";sessionUser=null;
       runOnUiThread(()->stopService(new Intent(MainActivity.this,SyncService.class)));
-      return payload("message","Conectado al servidor "+ip+". Inicia sesión con tu usuario familiar.").putOpt("ok",true).toString();
+      return success("Conectado al servidor "+ip+". Inicia sesión con tu usuario familiar.").toString();
     }
     @JavascriptInterface public String login(String username,String password){
       String mode=getPreferences(0).getString("mode","");
@@ -117,7 +121,7 @@ public final class MainActivity extends Activity {
       if(result.optBoolean("ok")){
         sessionToken=result.optString("token","");
         sessionUser=result.optJSONObject("user");
-        if(result.optBoolean("mustChangePassword"))result.putOpt("warning","Cambia la contraseña inicial en Administración.");
+        // El aviso de contraseña inicial se gestiona en la interfaz.
         result.remove("token"); // El secreto de sesión permanece exclusivamente en Java.
       }
       return result.toString();
