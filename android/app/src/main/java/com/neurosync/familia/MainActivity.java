@@ -48,11 +48,17 @@ public final class MainActivity extends Activity {
       web.loadDataWithBaseURL("https://appassets.androidplatform.net/index.html",b.toString("UTF-8"),"text/html","UTF-8",null);
     }catch(Exception ex){new AlertDialog.Builder(this).setMessage("No se pudo cargar la interfaz de NeuroSync").setPositiveButton("Aceptar",null).show();}
     if("host".equals(getPreferences(0).getString("mode","")))startServer();
-    if(Build.VERSION.SDK_INT>=33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED)
-      requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},11);
+    // Los permisos se solicitan al crear/probar una alarma, no al abrir la aplicación.
   }
   @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
     super.onActivityResult(requestCode,resultCode,data);
+    if(requestCode==194){
+      boolean selected=holdsHomeRole();
+      new AlertDialog.Builder(this).setTitle(selected?"Inicio activado":"Inicio sin cambiar")
+        .setMessage(selected?"NeuroSync es ahora tu pantalla de inicio.":"Android no seleccionó NeuroSync. Abre Ajustes → Aplicaciones predeterminadas → Aplicación de inicio. Si tu fabricante no lo permite, conserva la pantalla original.")
+        .setPositiveButton("Entendido",null).show();
+      return;
+    }
     if(resultCode!=RESULT_OK||data==null||data.getData()==null)return;
     android.net.Uri uri=data.getData();
     if(requestCode==191){
@@ -82,6 +88,55 @@ public final class MainActivity extends Activity {
         if(web!=null)web.evaluateJavascript("window.neuroImportData && window.neuroImportData("+JSONObject.quote(json)+")",null);
       }catch(Exception e){android.util.Log.e("NeuroSync","Error importando respaldo",e);}
     }
+  }
+  private void requestNextAlarmPermission(){
+    if(Build.VERSION.SDK_INT>=33 &&
+       checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED){
+      requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},101);return;
+    }
+    if(Build.VERSION.SDK_INT>=31 && !((AlarmManager)getSystemService(ALARM_SERVICE)).canScheduleExactAlarms()){
+      try{startActivity(new Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+        android.net.Uri.parse("package:"+getPackageName())));}
+      catch(Exception e){openAppSettings();}
+      return;
+    }
+    if(Build.VERSION.SDK_INT>=34 && !getSystemService(NotificationManager.class).canUseFullScreenIntent()){
+      try{startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT,
+        android.net.Uri.parse("package:"+getPackageName())));}
+      catch(Exception e){openAppSettings();}
+      return;
+    }
+    new AlertDialog.Builder(this).setTitle("Alarmas configuradas")
+      .setMessage("Ya puedes probar la alarma. Verifica también que el volumen de alarmas del teléfono no esté en cero.")
+      .setPositiveButton("Entendido",null).show();
+  }
+  @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] grants){
+    super.onRequestPermissionsResult(request,permissions,grants);
+    if(request==101 && grants.length>0 && grants[0]==PackageManager.PERMISSION_GRANTED)
+      new AlertDialog.Builder(this).setTitle("Notificaciones activadas")
+        .setMessage("Continúa con los demás permisos para que las alarmas aparezcan cuando el celular esté bloqueado.")
+        .setPositiveButton("Continuar",(d,w)->requestNextAlarmPermission()).show();
+  }
+  private boolean holdsHomeRole(){
+    if(Build.VERSION.SDK_INT<29)return false;
+    android.app.role.RoleManager role=getSystemService(android.app.role.RoleManager.class);
+    return role!=null&&role.isRoleHeld(android.app.role.RoleManager.ROLE_HOME);
+  }
+  private void requestHomeRole(){
+    if(holdsHomeRole()){
+      new AlertDialog.Builder(this).setTitle("Inicio configurado")
+        .setMessage("NeuroSync ya es tu pantalla de inicio predeterminada.")
+        .setPositiveButton("Entendido",null).show();return;
+    }
+    if(Build.VERSION.SDK_INT>=29){
+      android.app.role.RoleManager role=getSystemService(android.app.role.RoleManager.class);
+      if(role!=null&&role.isRoleAvailable(android.app.role.RoleManager.ROLE_HOME)){
+        try{startActivityForResult(role.createRequestRoleIntent(android.app.role.RoleManager.ROLE_HOME),194);return;}
+        catch(Exception e){android.util.Log.w("NeuroSync","No se pudo abrir selector HOME",e);}
+      }
+    }
+    try{startActivity(new Intent(android.provider.Settings.ACTION_HOME_SETTINGS));}
+    catch(Exception e){openAppSettings();}
   }
   private boolean localHost(){return "host".equals(getPreferences(0).getString("mode",""));}
   private JSONObject remote(String path,JSONObject request){
@@ -233,22 +288,12 @@ public final class MainActivity extends Activity {
     }
     @JavascriptInterface public void requestAlarmPermissions(){
       runOnUiThread(()->{
-        if(Build.VERSION.SDK_INT>=33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED){
-          requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},101);return;
-        }
-        if(Build.VERSION.SDK_INT>=31 && !((AlarmManager)getSystemService(ALARM_SERVICE)).canScheduleExactAlarms()){
-          try{startActivity(new Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
-            android.net.Uri.parse("package:"+getPackageName())));}catch(Exception e){openAppSettings();}
-          return;
-        }
-        if(Build.VERSION.SDK_INT>=34 && !getSystemService(NotificationManager.class).canUseFullScreenIntent()){
-          try{startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT,
-             android.net.Uri.parse("package:"+getPackageName())));}catch(Exception e){openAppSettings();}
-          return;
-        }
-        new AlertDialog.Builder(MainActivity.this).setTitle("Alarmas listas")
-          .setMessage("Los permisos principales están habilitados. Crea una alarma de prueba para verificar que suene.")
-          .setPositiveButton("Entendido",null).show();
+        new AlertDialog.Builder(MainActivity.this)
+          .setTitle("Permisos de las alarmas")
+          .setMessage("NeuroSync necesita notificaciones para avisarte, alarmas exactas para respetar la hora y permiso de pantalla completa cuando el celular esté bloqueado. Android te pedirá cada autorización por separado.")
+          .setNegativeButton("Ahora no",null)
+          .setPositiveButton("Continuar",(dialog,which)->requestNextAlarmPermission())
+          .show();
       });
     }
     @JavascriptInterface public void openSystemClock(){
@@ -269,17 +314,15 @@ public final class MainActivity extends Activity {
       runOnUiThread(()->startActivity(new Intent(MainActivity.this,FocusLauncherActivity.class)));
     }
     @JavascriptInterface public void requestDefaultHome(){
-      runOnUiThread(()->{
-        if(Build.VERSION.SDK_INT>=29){
-          android.app.role.RoleManager role=getSystemService(android.app.role.RoleManager.class);
-          if(role!=null&&role.isRoleAvailable(android.app.role.RoleManager.ROLE_HOME)){
-            try{startActivity(role.createRequestRoleIntent(android.app.role.RoleManager.ROLE_HOME));return;}
-            catch(Exception ignored){}
-          }
-        }
-        try{startActivity(new Intent(android.provider.Settings.ACTION_HOME_SETTINGS));}
-        catch(Exception e){new AlertDialog.Builder(MainActivity.this).setMessage("Abre Ajustes → Aplicaciones predeterminadas → Aplicación de inicio y selecciona NeuroSync.").setPositiveButton("Aceptar",null).show();}
-      });
+      runOnUiThread(()->requestHomeRole());
+    }
+    @JavascriptInterface public String homeStatus(){
+      try{
+        JSONObject j=new JSONObject();
+        j.put("selected",holdsHomeRole());
+        j.put("available",Build.VERSION.SDK_INT>=29);
+        return j.toString();
+      }catch(Exception e){return "{}";}
     }
     @JavascriptInterface public void updateWidget(int pending){
       TodayWidget.refresh(MainActivity.this,Math.max(0,Math.min(pending,9999)));
