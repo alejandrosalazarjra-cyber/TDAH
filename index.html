@@ -85,7 +85,17 @@ function todayTask(t){if(t.date>day())return false;if(t.repeat==='daily')return 
 function taskItem(t){var yes=taskDone(t),el=document.createElement('div');el.className='task'+(yes?' done':'');var meta=esc(t.date)+(t.time?' · '+esc(t.time):'')+' · '+esc(t.owner||'Yo')+(t.repeat&&t.repeat!=='none'?' · '+(t.repeat==='daily'?'Diaria':'Semanal'):'');
 el.innerHTML='<input type="checkbox" aria-label="Completar tarea" '+(yes?'checked':'')+'><div class="task-main"><div class="task-title">'+esc(t.title)+'</div><div class="task-meta">'+meta+'</div></div><button class="iconbtn" aria-label="Eliminar tarea">×</button>';
 el.querySelector('input').onchange=function(e){var k=t.repeat==='none'?t.date:day();t.doneDates=t.doneDates||[];if(e.target.checked){if(t.doneDates.indexOf(k)<0){t.doneDates.push(k);model.pet.food+=10;model.pet.xp+=10;say('¡Buen trabajo! +10 puntos para tu mascota 🐣')}}else{t.doneDates=t.doneDates.filter(function(v){return v!==k})}mark(t);save();render()};
-el.querySelector('button').onclick=function(){if(confirm('¿Eliminar esta tarea?')){t.deleted=true;mark(t);save();render()}};
+el.querySelector('button').onclick=function(){if(session.role!=='admin'&&t.owner==='todos'){say('Una tarea compartida solo puede eliminarla el administrador');return}if(confirm('¿Eliminar esta tarea?')){t.deleted=true;mark(t);save();render()}};
+if((t.steps||[]).length){
+var steps=document.createElement('div');steps.style.cssText='width:100%;padding:7px 0 0 30px;display:grid;gap:4px';
+(t.steps||[]).forEach(function(label,i){
+ var k=t.repeat==='none'?t.date:day(),checked=(t.stepDates&&t.stepDates[k]||[]).indexOf(i)!==-1;
+ var row=document.createElement('label');row.className='check';row.style.fontSize='12px';var box=document.createElement('input');box.type='checkbox';box.checked=checked;
+ box.onchange=function(){t.stepDates=t.stepDates||{};var arr=t.stepDates[k]||[];t.stepDates[k]=box.checked?Array.from(new Set(arr.concat(i))):arr.filter(function(x){return x!==i});mark(t);save()};
+ row.append(box,document.createTextNode(label));steps.append(row);
+});
+var wrap=document.createElement('div');wrap.style.cssText='flex-basis:100%;margin-left:30px';wrap.append(steps);el.style.flexWrap='wrap';el.append(wrap);
+}
 return el}
 function fill(id,items,renderer,empty){var el=by(id);el.replaceChildren();if(!items.length){var p=document.createElement('div');p.className='empty';p.textContent=empty||'Nada pendiente por aquí';el.appendChild(p);return}items.forEach(function(t){el.appendChild(renderer(t))})}
 function render(){
