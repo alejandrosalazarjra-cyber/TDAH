@@ -146,7 +146,7 @@ public final class MainActivity extends Activity {
         return call("/sync",request).toString();
       }catch(Exception e){return AccountStore.fail("Datos de sincronización inválidos").toString();}
     }
-    @JavascriptInterface public void syncFamilyAsync(String json){
+    @JavascriptInterface public void syncFamilyAsync(String json,String requestingUser){
       if(json==null||json.length()>500000)return;
       networkWorker.execute(()->{
         JSONObject result;
@@ -154,7 +154,7 @@ public final class MainActivity extends Activity {
         catch(Exception error){result=AccountStore.fail("No se pudo sincronizar");}
         String value=JSONObject.quote(result.toString());
         runOnUiThread(()->{
-          if(web!=null)web.evaluateJavascript("window.neuroSyncOnSync && window.neuroSyncOnSync("+value+")",null);
+          if(web!=null)web.evaluateJavascript("window.neuroSyncOnSync && window.neuroSyncOnSync("+value+","+JSONObject.quote(requestingUser)+")",null);
         });
       });
     }
