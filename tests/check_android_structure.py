@@ -22,7 +22,7 @@ launcher = require_file(JAVA / "FocusLauncherActivity.java")
 main = require_file(JAVA / "MainActivity.java")
 alarm = require_file(JAVA / "AlarmReceiver.java")
 audio = require_file(JAVA / "AlarmAudioService.java")
-for name in ("AccountStore.java", "AlarmRingActivity.java", "TodayWidget.java", "SyncService.java", "SessionVault.java"):
+for name in ("AccountStore.java", "AlarmRingActivity.java", "TodayWidget.java", "SyncService.java", "SessionVault.java", "AlarmChallengeStore.java"):
     require_file(JAVA / name)
 for resource in ("res/layout/widget_today.xml", "res/xml/today_widget_info.xml",
                  "res/drawable/ic_neurosync.xml"):
@@ -91,6 +91,18 @@ if audio and ("startForeground" not in audio or "USAGE_ALARM" not in audio):
     issues.append("AlarmAudioService must start foreground audio using alarm stream")
 if alarm and "AlarmAudioService.start" not in alarm:
     issues.append("AlarmReceiver must start sound automatically on alarm firing")
+if alarm:
+    if "AlarmChallengeStore.get" not in alarm:
+        issues.append("Alarm notification must respect challenge mode")
+    if "AlarmChallengeStore.remove" not in alarm:
+        issues.append("Canceling an alarm must clear its challenge setting")
+ring = require_file(JAVA / "AlarmRingActivity.java")
+for feature in ('"math"', '"taps"', "finishAlarm()", "Detener sin desafío"):
+    if feature not in ring:
+        issues.append(f"Missing safe alarm challenge behavior: {feature}")
+main = require_file(JAVA / "MainActivity.java")
+if "AlarmClock.ACTION_SHOW_ALARMS" not in main or 'com.google.android.deskclock' not in main:
+    issues.append("Google Clock compatibility fallback missing")
 if alarm and "setFullScreenIntent" not in alarm:
     issues.append("AlarmReceiver missing full-screen alarm notification")
 
