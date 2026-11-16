@@ -60,22 +60,60 @@ jobs:
           print('Interfaz validada: navegación, acceso, alarmas y sintaxis JS')
           PY
 
-      - name: Comprobar componentes Android nuevos
+      - name: Comprobar componentes Android y configuración
         shell: bash
         run: |
-          set -euo pipefail
-          test -s android/app/src/main/java/com/neurosync/familia/AccountStore.java
-          test -s android/app/src/main/java/com/neurosync/familia/AlarmReceiver.java
-          test -s android/app/src/main/java/com/neurosync/familia/SyncService.java
-          grep -q 'versionCode 4' android/app/build.gradle
-          test -s android/app/src/main/java/com/neurosync/familia/AlarmRingActivity.java
-          test -s android/app/src/main/java/com/neurosync/familia/TodayWidget.java
-          test -s android/app/src/main/java/com/neurosync/familia/FocusLauncherActivity.java
-          test -s android/app/src/main/java/com/neurosync/familia/FocusNotificationListener.java
-          grep -q 'android.intent.category.HOME' android/app/src/main/AndroidManifest.xml
-          test "$(grep -c 'android.intent.category.HOME' android/app/src/main/AndroidManifest.xml)" -eq 1
-          test -s android/app/src/main/res/xml/today_widget_info.xml
-          echo "Cuentas, alarmas nativas, widget, inicio alternativo y versión 4 encontrados"
+          python3 - <<'PY'
+          import pathlib
+          import re
+          import sys
+          from xml.etree import ElementTree as ET
+          android = pathlib.Path("android/app/src/main")
+          java = android / "java/com/neurosync/familia"
+          required = [
+              "AccountStore.java", "AlarmReceiver.java", "SyncService.java",
+              "AlarmRingActivity.java", "TodayWidget.java",
+              "FocusLauncherActivity.java", "FocusNotificationListener.java",
+              "MainActivity.java",
+          ]
+          errors = []
+          for name in required:
+              path = java / name
+              if not path.is_file() or path.stat().st_size == 0:
+                  errors.append(f"Falta o está vacío: {path}")
+          for relative in ("res/xml/today_widget_info.xml", "res/layout/widget_today.xml",
+                           "res/drawable/ic_neurosync.xml"):
+              if not (android / relative).is_file():
+                  errors.append(f"Falta recurso Android: {relative}")
+          gradle = pathlib.Path("android/app/build.gradle").read_text()
+          if not re.search(r"versionCode\\s+4\\b", gradle):
+              errors.append("android/app/build.gradle no contiene versionCode 4")
+          manifest_file = android / "AndroidManifest.xml"
+          try:
+              manifest = ET.parse(manifest_file).getroot()
+              ns = "{http://schemas.android.com/apk/res/android}"
+              activities = manifest.findall(".//activity")
+              home = []
+              for activity in activities:
+                  for intent in activity.findall("intent-filter"):
+                      if any(cat.get(ns+"name") == "android.intent.category.HOME" for cat in intent.findall("category")):
+                          home.append(activity.get(ns+"name"))
+              if home != [".FocusLauncherActivity"]:
+                  errors.append(f"Debe existir solo FocusLauncherActivity como HOME; se encontraron: {home}")
+              services = [x.get(ns+"name") for x in manifest.findall(".//service")]
+              if ".FocusNotificationListener" not in services:
+                  errors.append("FocusNotificationListener no está registrado en AndroidManifest.xml")
+              bridges = (java / "MainActivity.java").read_text() if (java / "MainActivity.java").is_file() else ""
+              if len(re.findall(r"void\\s+openMinimalHome\\s*\\(", bridges)) != 1:
+                  errors.append("MainActivity debe exponer exactamente un método openMinimalHome")
+          except Exception as exc:
+              errors.append(f"No se pudo validar AndroidManifest.xml: {exc}")
+          if errors:
+              for problem in errors:
+                  print(f"::error::{problem}")
+              sys.exit(1)
+          print("Verificación correcta: archivos, AndroidManifest, launcher, servicios y versión 4.")
+          PY
 
       - name: Configurar Gradle
         uses: gradle/actions/setup-gradle@v4
