@@ -24,13 +24,17 @@ public final class AlarmReceiver extends BroadcastReceiver {
  }
  private static AlarmManager manager(Context ctx){return (AlarmManager)ctx.getSystemService(Context.ALARM_SERVICE);}
  public static boolean schedule(Context ctx,String id,String title,long at,boolean daily){
+   return scheduleRepeat(ctx,id,title,at,daily?"daily":"none");
+ }
+ public static boolean scheduleRepeat(Context ctx,String id,String title,long at,String repeat){
   try{
    if(id==null||id.length()<2||id.length()>100||at<=0)return false;
    if(title==null||title.trim().isEmpty())title="Recordatorio";
    long when=at;
-   if(daily)while(when<=System.currentTimeMillis())when+=86400000L;
+   long interval="weekly".equals(repeat)?604800000L:"daily".equals(repeat)?86400000L:0L;
+   if(interval>0)while(when<=System.currentTimeMillis())when+=interval;
    if(when<=System.currentTimeMillis())return false;
-   JSONObject entry=new JSONObject().put("id",id).put("title",title).put("when",when).put("daily",daily);
+   JSONObject entry=new JSONObject().put("id",id).put("title",title).put("when",when).put("repeat",repeat);
    ctx.getSharedPreferences("ns_alarms",0).edit().putString(PREFIX+id,entry.toString()).apply();
    return program(ctx,id,when);
   }catch(Exception e){return false;}
@@ -66,7 +70,9 @@ public final class AlarmReceiver extends BroadcastReceiver {
    try{
     JSONObject a=new JSONObject((String)row.getValue());
     String id=a.getString("id");long when=a.getLong("when");
-    if(a.optBoolean("daily"))while(when<=System.currentTimeMillis())when+=86400000L;
+    String repeat=a.optString("repeat",a.optBoolean("daily")?"daily":"none");
+    long interval="weekly".equals(repeat)?604800000L:"daily".equals(repeat)?86400000L:0L;
+    if(interval>0)while(when<=System.currentTimeMillis())when+=interval;
     if(when>System.currentTimeMillis())program(ctx,id,when);
    }catch(Exception ignored){}
   }
@@ -103,9 +109,11 @@ public final class AlarmReceiver extends BroadcastReceiver {
     .setAutoCancel(false).setOngoing(true)
     .setContentIntent(full).setFullScreenIntent(full,true).build();
    ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).notify(id.hashCode(),notice);
-   if(a.optBoolean("daily")){
-    long next=a.optLong("when")+86400000L;
-    while(next<=System.currentTimeMillis())next+=86400000L;
+   String repeat=a.optString("repeat",a.optBoolean("daily")?"daily":"none");
+   long interval="weekly".equals(repeat)?604800000L:"daily".equals(repeat)?86400000L:0L;
+   if(interval>0){
+    long next=a.optLong("when")+interval;
+    while(next<=System.currentTimeMillis())next+=interval;
     a.put("when",next);
     ctx.getSharedPreferences("ns_alarms",0).edit().putString(PREFIX+id,a.toString()).apply();
     program(ctx,id,next);
