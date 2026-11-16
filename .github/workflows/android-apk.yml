@@ -146,6 +146,8 @@ jobs:
           grep -q 'AlarmAudioService.start' android/app/src/main/java/com/neurosync/familia/AlarmReceiver.java
           grep -q 'setAlarmClock' android/app/src/main/java/com/neurosync/familia/AlarmReceiver.java
           grep -q 'RoleManager.ROLE_HOME' android/app/src/main/java/com/neurosync/familia/MainActivity.java
+          grep -q 'MAX_ATTEMPTS=5' android/app/src/main/java/com/neurosync/familia/AccountStore.java
+          grep -q 'Settings.ACTION_APP_NOTIFICATION_SETTINGS' android/app/src/main/java/com/neurosync/familia/FocusLauncherActivity.java
           if grep -q 'BIND_NOTIFICATION_LISTENER_SERVICE' android/app/src/main/AndroidManifest.xml; then
             echo '::error::Permiso restringido de notificaciones no autorizado'
             exit 1
@@ -193,6 +195,8 @@ jobs:
           BYTES=$(stat -c%s "$APK")
           echo "APK descomprimido: $BYTES bytes"
           sha256sum "$APK" | tee /tmp/neurosync-apk-sha256.txt
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK" | tee /tmp/neurosync-signature.txt
+          echo "Firma Android verificada; el peso del APK no demuestra seguridad"
           echo "APK generado, ZIP íntegro y paquete Android correcto"
 
       - name: Publicar APK para descarga
