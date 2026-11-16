@@ -78,7 +78,7 @@ jobs:
           required = [
               "AccountStore.java", "AlarmReceiver.java", "SyncService.java",
               "AlarmRingActivity.java", "TodayWidget.java",
-              "FocusLauncherActivity.java", "AlarmAudioService.java",
+              "FocusLauncherActivity.java", "AlarmAudioService.java", "SessionVault.java",
               "MainActivity.java",
           ]
           errors = []
@@ -129,6 +129,16 @@ jobs:
         shell: bash
         run: |
           python3 tests/check_android_structure.py
+          python3 - <<'PY'
+          from pathlib import Path
+          src=Path('index.html').read_text(encoding='utf-8')
+          assert 'nat.restoreSession()' in src, 'No se restaura sesión al abrir NeuroSync'
+          for feature in ('quick-capture-form','inbox-list','next-action','focus-five',
+                          'function editTask(t)','function renderFocus()','function renderInbox()'):
+              assert feature in src, f'Falta función de organización: {feature}'
+          assert 'if(t.inbox||t.date>day())' in src, 'Las ideas sin planificar no deben aparecer como tareas'
+          print('Sesión persistente, captura rápida, bandeja, foco y edición comprobados')
+          PY
           python3 - <<'PY'
           from pathlib import Path
           java = Path("android/app/src/main/java/com/neurosync/familia/FocusLauncherActivity.java").read_text()
