@@ -100,10 +100,17 @@ public final class HomeActivity extends Activity {
     drawerButton.setPadding(0,dp(15),0,dp(15));
     drawerButton.setOnClickListener(v->showDrawer());
     margin(drawerButton,12,16);
-    TextView bottom=text("☎  Teléfono                  ◉  Cámara",15,0xFFDDDDDD);
-    bottom.setPadding(0,dp(18),0,dp(6));
-    bottom.setOnClickListener(v->chooseShortcut());
-    margin(bottom,28,0);
+    LinearLayout shortcuts=new LinearLayout(this);
+    shortcuts.setGravity(Gravity.CENTER_VERTICAL);
+    TextView phone=text("☎  Teléfono",16,0xFFDDDDDD);
+    phone.setPadding(0,dp(12),dp(12),dp(12));
+    phone.setLayoutParams(new LinearLayout.LayoutParams(0,-2,1));
+    phone.setOnClickListener(v->openDialer());
+    TextView camera=text("◎  Cámara",16,0xFFDDDDDD);
+    camera.setPadding(dp(12),dp(12),0,dp(12));
+    camera.setOnClickListener(v->openCamera());
+    shortcuts.addView(phone);shortcuts.addView(camera);
+    margin(shortcuts,28,0);
   }
   private void loadApps(){
     installed.clear();PackageManager pm=getPackageManager();
@@ -203,9 +210,13 @@ public final class HomeActivity extends Activity {
       startActivity(intent);
     }catch(Exception e){Toast.makeText(this,"No se pudo abrir esa aplicación",Toast.LENGTH_SHORT).show();}
   }
-  private void chooseShortcut(){
-    Intent dial=new Intent(Intent.ACTION_DIAL);
-    try{startActivity(dial);}catch(Exception e){Toast.makeText(this,"Sin marcador compatible",Toast.LENGTH_SHORT).show();}
+  private void openDialer(){
+    try{startActivity(new Intent(Intent.ACTION_DIAL));}
+    catch(Exception e){Toast.makeText(this,"Sin marcador compatible",Toast.LENGTH_SHORT).show();}
+  }
+  private void openCamera(){
+    try{startActivity(new Intent("android.media.action.STILL_IMAGE_CAMERA"));}
+    catch(Exception e){Toast.makeText(this,"No hay cámara compatible",Toast.LENGTH_SHORT).show();}
   }
   private void showSettings(){
     final String[] options={"Cambiar pantalla de inicio predeterminada","Pausa antes de abrir apps","Horario de concentración","Abrir NeuroSync (tareas)","Restablecer inicio original"};
