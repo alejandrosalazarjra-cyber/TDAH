@@ -46,6 +46,20 @@ La APK incluye **NeuroSync Inicio**, un launcher de Android que se puede elegir 
 
 **Alcance y límites:** esta función NO reemplaza la pantalla de bloqueo con PIN/huella, NO bloquea permanentemente aplicaciones ni videos cortos desde otros accesos, NO vuelve el teléfono monocromático a nivel del sistema, y NO activa el filtro de notificaciones sin autorización explícita. Los horarios solo controlan la pausa al abrir aplicaciones desde NeuroSync Inicio. No se usan permisos de accesibilidad ni administración del dispositivo para impedir funciones esenciales.
 
+## Bienestar digital y concentración — ampliación
+
+Desde **NeuroSync Inicio → ⚙ Ajustes** ahora puedes:
+
+- Configurar una pausa consciente al abrir determinadas aplicaciones: 0, 3, 5, 10 o 20 segundos. La cuenta regresiva puede cancelarse; no afecta a teléfono, emergencias o cámara.
+- Definir un horario en el que se aplican esas pausas.
+- Establecer un objetivo diario orientativo de tiempo de uso (30 a 240 minutos o desactivado).
+- Consultar un informe con las 10 aplicaciones de mayor uso del día. Requiere el permiso de estadísticas de uso de Android.
+- Recibir un recordatorio al volver al launcher si alcanzaste el objetivo diario, cuando el permiso de uso esté concedido. **No es una notificación garantizada con la aplicación cerrada**, ni un bloqueo del teléfono.
+- Abrir el apartado de Accesibilidad de Android para configurar escala de grises/corrección de color, cuando el fabricante la admita.
+- Elegir aplicaciones cuyo contenido de notificaciones se filtre con autorización independiente.
+
+Los controles de tiempo son voluntarios y locales al dispositivo. No usan permisos de accesibilidad para vigilar otras aplicaciones ni pretenden bloquear videos cortos dentro de YouTube, Instagram o TikTok. Ese bloqueo requiere capacidades específicas y comprobación de compatibilidad antes de ofrecerlo.
+
 ## Primer uso Android
 1. En GitHub → Actions → **Compilar APK NeuroSync**, ejecuta manualmente el flujo y, si se completa, descarga el artefacto APK.
 2. Instala el APK permitiendo la instalación desde el administrador de archivos; no requiere Play Store.
