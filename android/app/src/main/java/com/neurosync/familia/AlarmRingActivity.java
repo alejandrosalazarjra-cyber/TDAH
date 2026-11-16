@@ -36,17 +36,22 @@ public final class AlarmRingActivity extends Activity {
   snooze.setOnClickListener(v->{AlarmReceiver.snooze(this,id,5);stopSound();finish();});
   root.addView(bell);root.addView(heading);root.addView(dismiss);root.addView(snooze);
   setContentView(root);
-  try{
-   String custom=getSharedPreferences("ns_sound",0).getString("uri","");
-   Uri uri=custom.isEmpty()?null:Uri.parse(custom);
-   if(uri==null)uri=android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM);
-   if(uri==null)uri=Settings.System.DEFAULT_NOTIFICATION_URI;
-   player=new MediaPlayer();
-   player.setDataSource(this,uri);
-   player.setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM)
-     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
-   player.setLooping(true);player.prepare();player.start();
-  }catch(Exception error){android.util.Log.e("NeuroSync","No se pudo reproducir audio de alarma",error);}
+  String custom=getSharedPreferences("ns_sound",0).getString("uri","");
+  Uri local=custom.isEmpty()?null:Uri.parse(custom);
+  if(!startSound(local)){
+    Uri system=RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+    if(!startSound(system))startSound(Settings.System.DEFAULT_NOTIFICATION_URI);
+  }
+ }
+ private boolean startSound(Uri uri){
+   if(uri==null)return false;
+   try{
+     stopSound();
+     player=new MediaPlayer();
+     player.setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM)
+       .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
+     player.setDataSource(this,uri);player.setLooping(true);player.prepare();player.start();return true;
+   }catch(Exception e){android.util.Log.w("NeuroSync","Intentando otro tono de alarma",e);stopSound();return false;}
  }
  @Override protected void onDestroy(){stopSound();super.onDestroy();}
  @Override public void onBackPressed(){ /* Evita cerrar accidentalmente sin detener o posponer. */ }
