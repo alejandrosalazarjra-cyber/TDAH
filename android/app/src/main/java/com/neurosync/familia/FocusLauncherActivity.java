@@ -35,6 +35,7 @@ public final class FocusLauncherActivity extends Activity {
   private android.content.SharedPreferences preferences;
   private float xStart,yStart;
   private boolean focusEnabled=true;
+  private int focusStart=0,focusEnd=0;
 
   private static class AppEntry {
     String title,packageName,activity;
@@ -70,6 +71,8 @@ public final class FocusLauncherActivity extends Activity {
     favorites.addAll(preferences.getStringSet("favorites",Collections.emptySet()));
     focusApps.addAll(preferences.getStringSet("focus",Collections.emptySet()));
     focusEnabled=preferences.getBoolean("focus_enabled",true);
+    focusStart=preferences.getInt("focus_start",0);
+    focusEnd=preferences.getInt("focus_end",0);
     root=vertical();root.setBackgroundColor(BLACK);setContentView(root);
     refreshApps();renderHome();
     root.setOnTouchListener((v,event)->{
@@ -86,7 +89,8 @@ public final class FocusLauncherActivity extends Activity {
   private void persist(){
     preferences.edit().putStringSet("favorites",new HashSet<>(favorites))
       .putStringSet("focus",new HashSet<>(focusApps))
-      .putBoolean("focus_enabled",focusEnabled).apply();
+      .putBoolean("focus_enabled",focusEnabled)
+      .putInt("focus_start",focusStart).putInt("focus_end",focusEnd).apply();
   }
   private void refreshApps(){
     apps.clear();
@@ -218,8 +222,14 @@ public final class FocusLauncherActivity extends Activity {
       if(which==2)openEntry(app);
     }).setNegativeButton("Cancelar",null).show();
   }
+  private boolean focusIsActive(){
+    if(!focusEnabled)return false;
+    if(focusStart==focusEnd)return true;
+    Calendar now=Calendar.getInstance();int minute=now.get(Calendar.HOUR_OF_DAY)*60+now.get(Calendar.MINUTE);
+    return focusStart<focusEnd?minute>=focusStart&&minute<focusEnd:minute>=focusStart||minute<focusEnd;
+  }
   private void openEntry(AppEntry app){
-    if(focusEnabled&&focusApps.contains(app.packageName)){
+    if(focusIsActive()&&focusApps.contains(app.packageName)){
       new AlertDialog.Builder(this)
         .setTitle("Antes de abrir "+app.title)
         .setMessage("¿Para qué quieres usar esta aplicación? Puedes continuar o volver a tus tareas.")
@@ -262,6 +272,16 @@ public final class FocusLauncherActivity extends Activity {
       return total;
     }catch(Exception e){return 0;}
   }
+  private String formatMinutes(int value){return String.format(Locale.getDefault(),"%02d:%02d",value/60,value%60);}
+  private void chooseFocusHours(){
+    int hour=focusStart/60,min=focusStart%60;
+    new TimePickerDialog(this,(picker,h,m)->{
+      focusStart=h*60+m;
+      new TimePickerDialog(this,(endPicker,h2,m2)->{
+        focusEnd=h2*60+m2;persist();showSettings();
+      },focusEnd/60,focusEnd%60,true).show();
+    },hour,min,true).show();
+  }
   private void showSettings(){
     drawer=true;
     LinearLayout view=vertical();pad(view,20,22);
@@ -275,6 +295,11 @@ public final class FocusLauncherActivity extends Activity {
       focusEnabled=!focusEnabled;persist();showSettings();
     });
     view.addView(pause);view.addView(gap(12));
+    TextView schedule=action("Horario de concentración: "+formatMinutes(focusStart)+" – "+formatMinutes(focusEnd),
+      this::chooseFocusHours);
+    view.addView(schedule);view.addView(gap(9));
+    TextView allDay=text("Si la hora inicial y final son iguales, la pausa se aplica todo el día.",12,MUTED,false);
+    view.addView(allDay);view.addView(gap(12));
     TextView explanation=text("La pausa se aplica únicamente a las aplicaciones que marques al abrirlas desde NeuroSync. No bloquea aplicaciones desde otros accesos.",12,MUTED,false);
     view.addView(explanation);view.addView(gap(22));
     view.addView(text("Bienestar digital",18,WHITE,true));view.addView(gap(10));
