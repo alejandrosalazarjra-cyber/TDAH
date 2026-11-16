@@ -1487,7 +1487,29 @@ const uuid=()=>globalThis.crypto?.randomUUID?.()||String(Date.now())+Math.random
 const blank=()=>({tasks:[],packs:[],notified:[]});
 function load(){try{const x=JSON.parse(localStorage.getItem(KEY));if(x&&Array.isArray(x.tasks)&&Array.isArray(x.packs))return {...blank(),...x};}catch(e){}return blank()}
 let data=load();
-function save(){localStorage.setItem(KEY,JSON.stringify(data))}
+function save(){
+ localStorage.setItem(KEY,JSON.stringify(data));
+ try{window.AndroidBridge?.familyChanged(JSON.stringify({tasks:data.tasks,packs:data.packs}));}catch(e){}
+}
+function mark(t){t.updatedAt=Date.now();return t}
+window.familyApplyRemote=function(raw){
+ try{
+  const remote=typeof raw==='string'?JSON.parse(raw):raw;
+  if(!Array.isArray(remote.tasks)||!Array.isArray(remote.packs))return;
+  for(const key of ['tasks','packs']){
+   const map=new Map();
+   for(const item of [...data[key],...remote[key]]){
+    if(!item||typeof item.id!=='string')continue;
+    const previous=map.get(item.id);
+    if(!previous||(Number(item.updatedAt)||1)>(Number(previous.updatedAt)||1))map.set(item.id,item);
+   }
+   data[key]=Array.from(map.values());
+  }
+  localStorage.setItem(KEY,JSON.stringify(data));
+  renderTasks();renderPacks();msg('✅ Datos familiares sincronizados');
+ }catch(e){msg('Error al aplicar sincronización');}
+};
+
 function msg(s){byId('family-status').textContent=s}
 const ownerName={yo:'Yo',mama:'Mamá',hermano:'Hermano',todos:'Todos'};
 function node(tag,cls,value){const e=document.createElement(tag);if(cls)e.className=cls;if(value!==undefined)e.textContent=value;return e}
@@ -1498,27 +1520,27 @@ function reward(){try{const d=JSON.parse(localStorage.getItem('neuroSyncDB'));if
 function renderTasks(){
  const list=byId('family-list');list.replaceChildren();
  const who=byId('family-filter').value;
- const items=data.tasks.filter(t=>who==='all'||t.owner===who).sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
+ const items=data.tasks.filter(t=>!t.deleted&&(who==='all'||t.owner===who)).sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
  if(!items.length){list.append(node('p','family-small','No hay tareas para esta selección.'));return}
  items.forEach(t=>{
   const article=node('article','family-entry'),head=node('div','family-entry-header'),left=node('div');
   left.append(node('strong','',t.title),node('div','family-small',ownerName[t.owner]+' · '+t.date+(t.time?' · '+t.time:'')+(t.repeat==='daily'?' · Diario':t.repeat==='weekly'?' · Semanal':'')));
-  const del=node('button','family-danger','Eliminar');del.type='button';del.onclick=()=>{if(confirm('¿Eliminar esta actividad?')){data.tasks=data.tasks.filter(x=>x.id!==t.id);save();renderTasks()}};head.append(left,del);article.append(head);
+  const del=node('button','family-danger','Eliminar');del.type='button';del.onclick=()=>{if(confirm('¿Eliminar esta actividad?')){t.deleted=true;mark(t);save();renderTasks()}};head.append(left,del);article.append(head);
   const check=node('label','family-check');const input=node('input');input.type='checkbox';input.checked=isDone(t);
   const title=node('span',input.checked?'family-done':'','Confirmar actividad realizada');check.append(input,title);
-  input.onchange=()=>{const k=occurrenceKey(t);t.doneDates=t.doneDates||[];if(input.checked){if(!t.doneDates.includes(k)){t.doneDates.push(k);reward()}}else t.doneDates=t.doneDates.filter(x=>x!==k);save();renderTasks()};
+  input.onchange=()=>{const k=occurrenceKey(t);t.doneDates=t.doneDates||[];if(input.checked){if(!t.doneDates.includes(k)){t.doneDates.push(k);reward()}}else t.doneDates=t.doneDates.filter(x=>x!==k);mark(t);save();renderTasks()};
   article.append(check);
-  (t.steps||[]).forEach((step,i)=>{const row=node('label','family-check');const c=node('input');c.type='checkbox';c.checked=(t.stepDates?.[occurrenceKey(t)]||[]).includes(i);const span=node('span',c.checked?'family-done':'',step);row.append(c,span);c.onchange=()=>{t.stepDates=t.stepDates||{};const k=occurrenceKey(t),a=t.stepDates[k]||[];t.stepDates[k]=c.checked?[...new Set([...a,i])]:a.filter(n=>n!==i);save();renderTasks()};article.append(row)});
+  (t.steps||[]).forEach((step,i)=>{const row=node('label','family-check');const c=node('input');c.type='checkbox';c.checked=(t.stepDates?.[occurrenceKey(t)]||[]).includes(i);const span=node('span',c.checked?'family-done':'',step);row.append(c,span);c.onchange=()=>{t.stepDates=t.stepDates||{};const k=occurrenceKey(t),a=t.stepDates[k]||[];t.stepDates[k]=c.checked?[...new Set([...a,i])]:a.filter(n=>n!==i);mark(t);save();renderTasks()};article.append(row)});
   list.append(article);
  });
 }
 function renderPacks(){
  const list=byId('packing-list');list.replaceChildren();
  if(!data.packs.length)list.append(node('p','family-small','Aún no tienes listas. Agrega tu primer destino.'));
- data.packs.forEach(p=>{
- const article=node('article','family-entry'),head=node('div','family-entry-header'),name=node('strong','',p.place),del=node('button','family-danger','Eliminar');del.type='button';del.onclick=()=>{if(confirm('¿Eliminar esta lista?')){data.packs=data.packs.filter(x=>x.id!==p.id);save();renderPacks()}};head.append(name,del);article.append(head);
- p.items.forEach((item,i)=>{const label=node('label','family-check'),input=node('input');input.type='checkbox';input.checked=!!p.checked[i];const t=node('span',input.checked?'family-done':'',item);label.append(input,t);input.onchange=()=>{p.checked[i]=input.checked;save();renderPacks()};article.append(label)});
- const reset=node('button','family-secondary','Reiniciar lista para la próxima salida');reset.type='button';reset.onclick=()=>{p.checked={};save();renderPacks()};article.append(reset);list.append(article)});
+ data.packs.filter(p=>!p.deleted).forEach(p=>{
+ const article=node('article','family-entry'),head=node('div','family-entry-header'),name=node('strong','',p.place),del=node('button','family-danger','Eliminar');del.type='button';del.onclick=()=>{if(confirm('¿Eliminar esta lista?')){p.deleted=true;mark(p);save();renderPacks()}};head.append(name,del);article.append(head);
+ p.items.forEach((item,i)=>{const label=node('label','family-check'),input=node('input');input.type='checkbox';input.checked=!!p.checked[i];const t=node('span',input.checked?'family-done':'',item);label.append(input,t);input.onchange=()=>{p.checked[i]=input.checked;mark(p);save();renderPacks()};article.append(label)});
+ const reset=node('button','family-secondary','Reiniciar lista para la próxima salida');reset.type='button';reset.onclick=()=>{p.checked={};mark(p);save();renderPacks()};article.append(reset);list.append(article)});
 }
 function checkReminders(){
  const now=new Date(),day=today(),hhmm=now.toTimeString().slice(0,5);
@@ -1531,15 +1553,23 @@ function checkReminders(){
 }
 byId('family-date').value=today();
 byId('family-task-form').addEventListener('submit',e=>{e.preventDefault();const title=byId('family-title').value.trim(),date=byId('family-date').value;if(!title||!date)return;
- data.tasks.push({id:uuid(),title,owner:byId('family-owner').value,date,time:byId('family-time').value,repeat:byId('family-repeat').value,steps:byId('family-steps').value.split(';').map(s=>s.trim()).filter(Boolean),doneDates:[],stepDates:{}});
+ data.tasks.push({updatedAt:Date.now(),id:uuid(),title,owner:byId('family-owner').value,date,time:byId('family-time').value,repeat:byId('family-repeat').value,steps:byId('family-steps').value.split(';').map(s=>s.trim()).filter(Boolean),doneDates:[],stepDates:{}});
  save();e.target.reset();byId('family-date').value=today();renderTasks();msg('Responsabilidad guardada')});
 byId('family-filter').addEventListener('change',renderTasks);
-byId('pack-form').addEventListener('submit',e=>{e.preventDefault();const place=byId('pack-place').value.trim(),items=byId('pack-items').value.split(';').map(s=>s.trim()).filter(Boolean);if(!place||!items.length)return;data.packs.push({id:uuid(),place,items,checked:{}});save();e.target.reset();renderPacks();msg('Lista guardada')});
+byId('pack-form').addEventListener('submit',e=>{e.preventDefault();const place=byId('pack-place').value.trim(),items=byId('pack-items').value.split(';').map(s=>s.trim()).filter(Boolean);if(!place||!items.length)return;data.packs.push({updatedAt:Date.now(),id:uuid(),place,items,checked:{}});save();e.target.reset();renderPacks();msg('Lista guardada')});
 byId('family-notification').onclick=async()=>{if(!('Notification' in window)){msg('Este navegador no admite notificaciones');return}const permission=await Notification.requestPermission();msg(permission==='granted'?'Avisos habilitados mientras la web esté abierta':'No se concedió permiso para notificaciones')};
 byId('family-export').onclick=()=>{const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='neurosync-familia.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
-byId('family-import').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{if(file.size>2e6)throw Error('Archivo demasiado grande');const obj=JSON.parse(await file.text());if(!Array.isArray(obj.tasks)||!Array.isArray(obj.packs))throw Error('Formato incompatible');if(!confirm('¿Reemplazar los datos familiares de este dispositivo?'))return;data={...blank(),tasks:obj.tasks.filter(t=>t&&typeof t.title==='string'&&typeof t.id==='string').slice(0,2000),packs:obj.packs.filter(p=>p&&typeof p.place==='string'&&Array.isArray(p.items)).slice(0,500)};save();renderTasks();renderPacks();msg('Respaldo importado')}catch(err){msg('No se pudo importar: '+err.message)}finally{e.target.value=''}};
+byId('family-import').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{if(file.size>2e6)throw Error('Archivo demasiado grande');const obj=JSON.parse(await file.text());if(!Array.isArray(obj.tasks)||!Array.isArray(obj.packs))throw Error('Formato incompatible');if(!confirm('¿Reemplazar los datos familiares de este dispositivo?'))return;data={...blank(),tasks:obj.tasks.filter(t=>t&&typeof t.title==='string'&&typeof t.id==='string').slice(0,2000).map(mark),packs:obj.packs.filter(p=>p&&typeof p.place==='string'&&Array.isArray(p.items)).slice(0,500).map(mark)};save();renderTasks();renderPacks();msg('Respaldo importado')}catch(err){msg('No se pudo importar: '+err.message)}finally{e.target.value=''}};
+const nativeButton=document.createElement('button');
+nativeButton.type='button';nativeButton.className='family-primary';nativeButton.textContent='📱 Configurar sincronización entre celulares';
+nativeButton.onclick=()=>{if(window.AndroidBridge?.configure)window.AndroidBridge.configure();else msg('Esta opción estará disponible en la APK Android')};
+byId('family-notification').parentElement.append(nativeButton);
+const nativeSync=document.createElement('button');
+nativeSync.type='button';nativeSync.className='family-secondary';nativeSync.textContent='🔄 Sincronizar ahora';
+nativeSync.onclick=()=>{if(window.AndroidBridge?.syncNow)window.AndroidBridge.syncNow();else msg('Abre la APK para sincronizar entre celulares')};
+byId('family-notification').parentElement.append(nativeSync);
 const nav=byId('nav-family');nav.onclick=()=>{document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));byId('screen-family').classList.add('active');document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));nav.classList.add('active');byId('header-title').textContent='Familia y salidas';renderTasks();renderPacks()};
-renderTasks();renderPacks();checkReminders();setInterval(checkReminders,30000);
+renderTasks();renderPacks();checkReminders();setInterval(checkReminders,30000);setTimeout(()=>{try{window.AndroidBridge?.familyChanged(JSON.stringify({tasks:data.tasks,packs:data.packs}))}catch(e){}},1200);
 })();
 </script>
 <script>if('serviceWorker' in navigator && location.protocol==='https:'){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}</script>
