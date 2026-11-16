@@ -142,7 +142,19 @@ jobs:
 
       - name: Compilar APK instalable
         working-directory: android
-        run: gradle --no-daemon --stacktrace assembleDebug
+        shell: bash
+        run: |
+          set -o pipefail
+          gradle --no-daemon --stacktrace --warning-mode all assembleDebug 2>&1 | tee "$RUNNER_TEMP/neurosync-gradle.log"
+
+      - name: Guardar registro de errores de compilación
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NeuroSync-Registro-Error
+          path: ${{ runner.temp }}/neurosync-gradle.log
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Verificar que el APK sea instalable
         shell: bash
