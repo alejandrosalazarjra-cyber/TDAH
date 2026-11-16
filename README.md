@@ -46,6 +46,15 @@ La APK incluye **NeuroSync Inicio**, un launcher de Android que se puede elegir 
 
 **Alcance y límites:** esta función NO reemplaza la pantalla de bloqueo con PIN/huella, NO bloquea permanentemente aplicaciones ni videos cortos desde otros accesos, NO vuelve el teléfono monocromático a nivel del sistema, y NO activa el filtro de notificaciones sin autorización explícita. Los horarios solo controlan la pausa al abrir aplicaciones desde NeuroSync Inicio. No se usan permisos de accesibilidad ni administración del dispositivo para impedir funciones esenciales.
 
+## NeuroSync 5.0 — actualización de concentración y estabilidad
+
+- Sesiones de enfoque de 15, 25, 45 o 60 minutos desde el launcher, con contador de minutos restantes y cancelación voluntaria. Mientras la sesión esté activa, las aplicaciones marcadas para enfoque muestran una pausa consciente al abrirse desde NeuroSync.
+- Arreglo para **posponer una alarma sin eliminar su próxima repetición diaria/semanal**. La alarma pospuesta se agenda como evento independiente.
+- Prueba de estructura ampliada para detectar ausencia del temporizador y los controles de uso.
+- GitHub Actions guarda el artefacto `NeuroSync-Registro-Error` cuando Gradle falla, para diagnosticar el error con evidencia en lugar de repetir compilaciones sin saber la causa.
+
+**Pendiente:** compilación exitosa de la APK 5.0 y pruebas reales de funcionamiento en Android. Los controles de concentración son opcionales y no bloquean la pantalla protegida por PIN/huella ni el acceso a llamadas de emergencia. El bloqueo interno de videos cortos en otras apps y un filtro monocromático de todo el sistema no están implementados: requieren capacidades adicionales que no pueden garantizarse en todos los dispositivos.
+
 ## Bienestar digital y concentración — ampliación
 
 Desde **NeuroSync Inicio → ⚙ Ajustes** ahora puedes:
