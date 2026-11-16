@@ -1,5 +1,19 @@
 # NeuroSync Familia — Android
 
+## Alarmas y launcher — corrección NeuroSync 6.0
+
+Al crear o probar una alarma, NeuroSync solicita **en el momento de uso** las autorizaciones necesarias: notificaciones, alarma exacta y, en Android 14+, acceso especial a pantalla completa. No se pide autorización de cámara, porque la aplicación abre la cámara instalada mediante una intención de Android y no accede por sí misma al sensor.
+
+Las alarmas ahora disparan un servicio de sonido independiente de la pantalla, con tono del sistema y un tono de reserva, notificación de prioridad alta, acciones Detener y Posponer, y pantalla de control minimalista. La reproducción se detiene al seleccionar cualquiera de esas acciones y tiene límite de seguridad de tres minutos. Las alarmas exactas se anuncian mediante AlarmClockInfo cuando Android concede el permiso.
+
+**Comportamiento esperado de Android:** con el dispositivo desbloqueado puede aparecer un aviso emergente con botones en lugar de ocupar la pantalla entera. Con la pantalla bloqueada y el permiso concedido debe abrirse la pantalla de alarma, pero algunos fabricantes restringen estas funciones. No se puede forzar legalmente el reemplazo de la pantalla de bloqueo protegida.
+
+Para activar NeuroSync Inicio, entra en Mi día → Inicio minimalista → Usar como inicio predeterminado. El sistema mostrará su selector oficial y la aplicación comprobará el resultado. En teléfonos con personalizaciones del fabricante, consulta también Ajustes → Aplicaciones → Aplicaciones predeterminadas → Aplicación de inicio.
+
+**Prueba recomendada:** crea una alarma en un minuto y comprueba primero el sonido con pantalla encendida; repite con pantalla bloqueada, verifica Detener y Posponer. Si no suena, verifica volumen de alarmas, que Android permita las notificaciones y que el fabricante no restrinja actividad de la app en segundo plano.
+
+
+
 Aplicación de organización familiar en Android. **No utiliza Netlify ni necesita Google Play.**
 
 ## Inicio minimalista opcional de Android (v4.0)
