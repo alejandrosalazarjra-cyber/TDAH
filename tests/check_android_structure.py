@@ -22,7 +22,7 @@ launcher = require_file(JAVA / "FocusLauncherActivity.java")
 main = require_file(JAVA / "MainActivity.java")
 alarm = require_file(JAVA / "AlarmReceiver.java")
 audio = require_file(JAVA / "AlarmAudioService.java")
-for name in ("AccountStore.java", "AlarmRingActivity.java", "TodayWidget.java", "SyncService.java"):
+for name in ("AccountStore.java", "AlarmRingActivity.java", "TodayWidget.java", "SyncService.java", "SessionVault.java"):
     require_file(JAVA / name)
 for resource in ("res/layout/widget_today.xml", "res/xml/today_widget_info.xml",
                  "res/drawable/ic_neurosync.xml"):
@@ -55,10 +55,19 @@ if manifest_text:
         issues.append(f"Invalid manifest XML: {error}")
 
 if main:
-    for method in ("openMinimalHome", "requestDefaultHome", "scheduleAlarmRepeat", "alarmPermissions"):
+    for method in ("openMinimalHome", "requestDefaultHome", "scheduleAlarmRepeat", "alarmPermissions", "restoreSession"):
         count = len(re.findall(r"\b(?:void|boolean|String)\s+" + re.escape(method) + r"\s*\(", main))
         if count != 1:
             issues.append(f"MainActivity {method} declared {count} times, expected 1")
+    for required in ("SessionVault.restore", "SessionVault.save", "SessionVault.clear"):
+        if required not in main:
+            issues.append(f"Missing protected session integration: {required}")
+    vault = require_file(JAVA / "SessionVault.java")
+    if "AndroidKeyStore" not in vault or "AES/GCM/NoPadding" not in vault:
+        issues.append("Persistent session must be protected by Android Keystore AES-GCM")
+    account = require_file(JAVA / "AccountStore.java")
+    if "tokenHash" not in account or "ns_local_session_index" not in account:
+        issues.append("Local sessions must support restoration without plain-text credentials")
     if "HomeActivity.class" in main:
         issues.append("Stale launcher HomeActivity referenced from bridge")
 
