@@ -1,67 +1,52 @@
 # NeuroSync Familia — Android
 
-Aplicación de organización personal y familiar, creada en el repositorio **TDAH** sin utilizar Netlify ni publicar en Google Play.
+Aplicación de organización familiar en Android. **No utiliza Netlify ni necesita Google Play.**
 
-## Qué incluye
+## Funciones disponibles en el código
+- Interfaz móvil responsive con tareas, pasos, repeticiones y mascota evolutiva.
+- Acceso por cuentas individuales: administrador, miembros familiares.
+- Alarmas Android con sonido del sistema, pantalla emergente si Android lo autoriza, detener, posponer cinco minutos y prueba programada.
+- Permisos guiados: notificaciones, alarmas exactas y notificaciones de pantalla completa.
+- Sonido personalizado seleccionando un archivo de audio local del dispositivo.
+- Acceso a Reloj de Google para configurar música de YouTube Music **dentro de Reloj**, no como reproducción directa desde NeuroSync.
+- Widget **NeuroSync · Mi día** en el menú de widgets de la pantalla principal.
+- Respaldo local por dispositivo: las tareas usan almacenamiento de WebView; no desinstales sin conservar tus datos.
+- Sincronización familiar: red local / Tailscale opcional o **servidor HTTPS Cloudflare Workers + D1**, preparado en `cloud/`.
 
-- Nueva interfaz móvil original, responsive, sin dependencias visuales de NeuroFlow.
-- Pantalla de acceso por usuario y contraseña.
-- Administrador: crea cuentas individuales, consulta miembros, asigna responsabilidades, crea tareas recurrentes y pasos pequeños.
-- Miembros: visualizan sus tareas, listas y recordatorios, y pueden completar sus actividades.
-- Mascota evolutiva y puntos por tareas completadas.
-- Calendario, listas para llevar a gimnasio/trabajo, alarmas locales del sistema Android.
-- Sincronización privada entre teléfonos mediante el servidor en el teléfono principal; guarda cambios locales cuando no hay conexión.
+## Primer uso Android
+1. En GitHub → Actions → **Compilar APK NeuroSync**, ejecuta manualmente el flujo y, si se completa, descarga el artefacto APK.
+2. Instala el APK permitiendo la instalación desde el administrador de archivos; no requiere Play Store.
+3. Si quieres usar el teléfono como servidor privado local: selecciona **Soy el administrador**, ingresa con usuario `administrador` y clave provisional `admin1234`, y **cámbiala inmediatamente**.
+4. Si prefieres sincronización entre celulares solo con internet: publica antes el servidor de `cloud/`, usa **Conectar por internet** con la URL HTTPS y accede con el administrador creado al inicializar el servidor en Cloudflare (contraseña fuerte, nunca `admin1234`).
+5. Crea cuentas para mamá y hermano desde Administración. En sus teléfonos solo tendrán que instalar el APK y escribir la misma URL del servicio y sus credenciales.
+6. En Alarmas, pulsa **Activar permisos** y concede los permisos necesarios. Puede requerir pulsarlo nuevamente para cada permiso especial. Programa una **prueba para dentro de un minuto**.
+7. Para el widget: mantén pulsada una zona vacía de la pantalla de inicio → Widgets → NeuroSync · Mi día → Añadir.
 
-## Primer acceso
+## YouTube Music
+La integración oficial con música de YouTube Music está disponible dentro de **Reloj de Google** (según disponibilidad y tipo de suscripción); NeuroSync abre Reloj para seleccionar la alarma y su música. Las alarmas propias de NeuroSync no pueden reproducir directamente pistas protegidas por YouTube Music. También puedes elegir un **archivo local** como sonido de NeuroSync.
 
-1. Instala la APK en el **celular principal** y abre NeuroSync.
-2. Pulsa **Soy el administrador** para activar el servidor del teléfono.
-3. Ingresa con usuario `administrador` y contraseña temporal `admin1234`.
-4. En **Administración → Seguridad**, **cambia inmediatamente** esa contraseña por una propia y larga (al menos 10 caracteres).
-5. Usa **Crear cuenta** para registrar `mama` y `hermano` (o los nombres que elijas) con contraseñas independientes.
-6. Crea tareas y asígnalas a cada responsable. Si registras una hora, también se guarda un recordatorio para el dispositivo correspondiente.
+## Sincronización sin Tailscale
+La carpeta `cloud/` contiene un backend HTTPS con cuentas, sesiones, controles de acceso, límites de intentos de login y base D1. **Está preparado pero no desplegado**: requiere una cuenta Cloudflare, crear la base D1, configurar un secreto de arranque y publicar el Worker una única vez. Sigue `cloud/README.md`.
 
-**Seguridad:** `admin1234` es solo la clave inicial. El servidor rechaza la conexión remota con esa clave inicial para que no administres la familia sin cambiarla. Las contraseñas se almacenan como derivaciones PBKDF2 con sal, no en texto plano.
+La cuenta del administrador gestiona miembros y tareas. En esta modalidad Cloudflare es la base central; no se depende de que el teléfono del administrador funcione como servidor. Los dispositivos conservan datos localmente y reintentan sincronizar cuando se abre o utiliza la aplicación y mientras está abierta. **No se promete sincronización instantánea con la aplicación completamente cerrada.**
 
-## Conectar teléfonos de mamá y hermano
+## Limitaciones y seguridad
+- La APK debe **compilarse y probarse** en celulares reales; haber guardado código no demuestra que funcionen todas las alarmas ni todos los fabricantes.
+- Android puede negar pantallas completas, restringir precisión de alarmas, ahorrar batería o retrasar notificaciones. Hay alternativas cuando los permisos no están disponibles.
+- No usa permisos para bloquear el desbloqueo del sistema. Android requiere un modelo especial de administración del dispositivo para ciertas restricciones, que no debe simularse con una pantalla superpuesta.
+- Las contraseñas no se almacenan en texto plano en el backend. La contraseña inicial local es temporal.
+- Si dos personas editan el mismo registro desconectadas, la sincronización actual utiliza marcas de tiempo y todavía necesita resolución avanzada de conflictos.
+- El Widget muestra información después de que la aplicación actualice sus datos. No incluye información privada de otras cuentas.
+- Los APK de prueba pueden tener firmas distintas. **No desinstales una versión que contenga datos sin generar un respaldo o migrar la información.**
+- No hay CDN o despliegue de Netlify.
 
-1. Instala la misma APK en los otros teléfonos.
-2. Instala y conecta **Tailscale** en los tres teléfonos, dentro de la misma red privada.
-3. En tu teléfono principal, abre Tailscale y consulta su IP privada (habitualmente `100.x.x.x`).
-4. En el otro teléfono, toca **Vincular mi celular** e introduce esa IP.
-5. Entra con el usuario y la contraseña que creaste para esa persona.
-6. Usa el icono ↻ para sincronizar. La sincronización también se solicita al volver a abrir la app, al realizar cambios y aproximadamente cada minuto **mientras está abierta**.
+## Desarrollo
+Requiere Java 17, Gradle 8.11.1 y Android SDK 35.
 
-No abras el puerto `8765` al internet público. La VPN privada protege la conexión entre teléfonos; el servicio HTTP por sí mismo **no cifra** conexiones LAN sin Tailscale.
-
-## Alarmas
-
-Las alarmas se programan mediante **AlarmManager** y notificaciones del sistema, con repetición diaria opcional. La aplicación también crea recordatorios al asignar una tarea con hora. Concede permiso para notificaciones en Android 13 o superior. Android puede retrasarlas durante el ahorro de batería: no es un reemplazo certificado de una aplicación de despertador de alta precisión.
-
-## Obtener APK para WhatsApp
-
-GitHub → **Actions → Compilar APK NeuroSync** → última ejecución correcta → **Artifacts** → `NeuroSync-Familia-APK` → extraer `app-debug.apk`.
-
-No necesitas Play Store ni Netlify. Es una APK de prueba, no una release definitiva. **IMPORTANTE:** los APK debug producidos por distintos ejecutores de GitHub pueden tener firmas diferentes y no permitir instalar una actualización sobre la anterior. Para esta versión quizá sea necesario desinstalar la anterior, lo que puede eliminar datos locales. Conserva respaldos antes de desinstalar y no elimines el único celular con la base principal sin una estrategia de recuperación.
-
-## Limitaciones importantes
-
-- **Todavía requiere pruebas reales en los tres teléfonos**: no basta con que compile.
-- La sincronización ocurre al usar la app y cuando el servidor responde; no puede garantizarse 24/7. En Android 15+, un servicio `dataSync` está sujeto a un límite de horas en segundo plano; tras detenerse necesitarás volver a abrir la aplicación en el celular principal.
-- Los cambios simultáneos del **mismo registro** se resuelven por timestamp de dispositivo. Falta reconciliación por campo y gestión avanzada de conflictos.
-- Los datos se guardan localmente sin cifrado a nivel de base de datos; no almacenar secretos sensibles ni información médica.
-- Aún falta gestión de permisos más detallada, restablecimiento de contraseñas, copia de seguridad central automática y firma estable para actualizaciones.
-- La APK **no puede bloquear el desbloqueo de Android**; ello requiere componentes de gestión del dispositivo y permisos específicos.
-- No hay infraestructura en Netlify. Para acceso remoto hace falta Tailscale u otra red privada.
-
-## Compilación local
-
-Requiere Java 17, Android SDK 35 y Gradle 8.11.1.
-
-```sh
+```bash
 cp index.html android/app/src/main/assets/index.html
 cd android
-gradle --no-daemon assembleDebug
+gradle assembleDebug
 ```
 
-APK generado: `android/app/build/outputs/apk/debug/app-debug.apk`.
+APK resultante: `android/app/build/outputs/apk/debug/app-debug.apk`.
