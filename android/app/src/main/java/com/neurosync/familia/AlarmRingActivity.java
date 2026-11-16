@@ -37,7 +37,9 @@ public final class AlarmRingActivity extends Activity {
   root.addView(bell);root.addView(heading);root.addView(dismiss);root.addView(snooze);
   setContentView(root);
   try{
-   Uri uri=android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM);
+   String custom=getSharedPreferences("ns_sound",0).getString("uri","");
+   Uri uri=custom.isEmpty()?null:Uri.parse(custom);
+   if(uri==null)uri=android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM);
    if(uri==null)uri=Settings.System.DEFAULT_NOTIFICATION_URI;
    player=new MediaPlayer();
    player.setDataSource(this,uri);
