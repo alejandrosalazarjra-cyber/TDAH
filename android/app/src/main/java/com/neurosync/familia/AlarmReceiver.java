@@ -89,7 +89,7 @@ public final class AlarmReceiver extends BroadcastReceiver {
  }
  @Override public void onReceive(Context ctx,Intent intent){
   if(intent==null)return;
-  if(Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())){restore(ctx);return;}
+  if(Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction()) || AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED.equals(intent.getAction())){restore(ctx);return;}
   if(!FIRE.equals(intent.getAction()))return;
   String id=intent.getStringExtra("id");if(id==null)return;
   String raw=ctx.getSharedPreferences("ns_alarms",0).getString(PREFIX+id,null);if(raw==null)return;
