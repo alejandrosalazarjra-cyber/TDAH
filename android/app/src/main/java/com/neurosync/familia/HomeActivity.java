@@ -2,6 +2,10 @@ package com.neurosync.familia;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.AppOpsManager;
+import android.app.usage.UsageStats;
+import android.app.usage.UsageStatsManager;
+import android.os.Process;
 import android.app.role.RoleManager;
 import android.content.*;
 import android.content.pm.*;
@@ -219,16 +223,52 @@ public final class HomeActivity extends Activity {
     catch(Exception e){Toast.makeText(this,"No hay cámara compatible",Toast.LENGTH_SHORT).show();}
   }
   private void showSettings(){
-    final String[] options={"Cambiar pantalla de inicio predeterminada","Pausa antes de abrir apps","Horario de concentración","Abrir NeuroSync (tareas)","Restablecer inicio original"};
+    final String[] options={"Elegir inicio predeterminado","Pausa consciente al abrir apps","Horario de concentración","Tiempo de uso de aplicaciones","Abrir NeuroSync (tareas)","Volver al inicio original"};
     new AlertDialog.Builder(this).setTitle("Inicio minimalista").setItems(options,(d,index)->{
       switch(index){
         case 0:requestHome();break;
         case 1:chooseDelay();break;
         case 2:chooseQuietHours();break;
-        case 3:startActivity(new Intent(this,MainActivity.class));break;
+        case 3:showUsage();break;
+        case 4:startActivity(new Intent(this,MainActivity.class));break;
         default:openHomeSettings();
       }
     }).show();
+  }
+  private void showUsage(){
+    AppOpsManager appOps=(AppOpsManager)getSystemService(APP_OPS_SERVICE);
+    int mode=appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,Process.myUid(),getPackageName());
+    if(mode!=AppOpsManager.MODE_ALLOWED){
+      new AlertDialog.Builder(this).setTitle("Tiempo de uso")
+        .setMessage("Para mostrar el tiempo utilizado hoy, concede voluntariamente acceso a estadísticas de uso. Los datos se consultan en este teléfono y no se envían a la familia.")
+        .setNegativeButton("Cancelar",null)
+        .setPositiveButton("Abrir permisos",(d,w)->{
+          try{startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));}
+          catch(Exception e){Toast.makeText(this,"No disponible en este dispositivo",Toast.LENGTH_SHORT).show();}
+        }).show();
+      return;
+    }
+    UsageStatsManager stats=(UsageStatsManager)getSystemService(USAGE_STATS_SERVICE);
+    Calendar calendar=Calendar.getInstance();
+    calendar.set(Calendar.HOUR_OF_DAY,0);calendar.set(Calendar.MINUTE,0);calendar.set(Calendar.SECOND,0);
+    Map<String,UsageStats> entries=stats.queryAndAggregateUsageStats(calendar.getTimeInMillis(),System.currentTimeMillis());
+    ArrayList<UsageStats> ordered=new ArrayList<>(entries.values());
+    ordered.sort((a,b)->Long.compare(b.getTotalTimeInForeground(),a.getTotalTimeInForeground()));
+    StringBuilder summary=new StringBuilder();
+    long total=0;int shown=0;
+    PackageManager pm=getPackageManager();
+    for(UsageStats row:ordered){
+      long ms=row.getTotalTimeInForeground();
+      if(ms<60000||row.getPackageName().equals(getPackageName()))continue;
+      if(shown++>=8)break;total+=ms;
+      String title=row.getPackageName();
+      try{title=String.valueOf(pm.getApplicationLabel(pm.getApplicationInfo(title,0)));}
+      catch(Exception ignored){}
+      summary.append(title).append(": ").append(ms/60000).append(" min\n");
+    }
+    if(shown==0)summary.append("No hay estadísticas de hoy disponibles todavía.");
+    new AlertDialog.Builder(this).setTitle("Uso de aplicaciones hoy")
+      .setMessage(summary.toString()).setPositiveButton("Cerrar",null).show();
   }
   private void chooseDelay(){
     final String[] labels={"Sin pausa","3 segundos","5 segundos","10 segundos"};
