@@ -1,12 +1,7 @@
 name: Compilar APK NeuroSync
+# Compilación manual para no gastar minutos por cada cambio pequeño.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'index.html'
-      - 'android/**'
-      - '.github/workflows/android-apk.yml'
 
 concurrency:
   group: neurosync-build-${{ github.ref }}
@@ -72,8 +67,11 @@ jobs:
           test -s android/app/src/main/java/com/neurosync/familia/AccountStore.java
           test -s android/app/src/main/java/com/neurosync/familia/AlarmReceiver.java
           test -s android/app/src/main/java/com/neurosync/familia/SyncService.java
-          grep -q 'versionCode 2' android/app/build.gradle
-          echo "Cuentas, alarmas y versión 2 encontrados"
+          grep -q 'versionCode 3' android/app/build.gradle
+          test -s android/app/src/main/java/com/neurosync/familia/AlarmRingActivity.java
+          test -s android/app/src/main/java/com/neurosync/familia/TodayWidget.java
+          test -s android/app/src/main/res/xml/today_widget_info.xml
+          echo "Cuentas, alarmas nativas, widget y versión 3 encontrados"
 
       - name: Configurar Gradle
         uses: gradle/actions/setup-gradle@v4
