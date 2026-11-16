@@ -122,6 +122,25 @@ input[type=text],input[type=number],input[type=time],input[type=date],textarea,s
 .revive-section{text-align:center;padding:10px 0}
 /* DRAG TOUCH */
 .dragging{opacity:0.5}
+
+/* NeuroSync: familia + checklists, compatible con la interfaz existente */
+#screen-family .family-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:12px}
+#screen-family label{display:flex;flex-direction:column;gap:6px;font-size:.85rem;color:var(--text-muted)}
+#screen-family input,#screen-family select{width:100%;min-width:0;background:var(--bg-input);border:1px solid var(--border-color);border-radius:12px;padding:12px;color:var(--text-main);font-size:1rem;-webkit-user-select:text;user-select:text}
+#screen-family .family-primary,#screen-family .family-secondary{border:0;border-radius:12px;padding:12px 14px;font-weight:700;font-size:.9rem;cursor:pointer}
+#screen-family .family-primary{background:var(--accent-primary);color:#fff}
+#screen-family .family-secondary{background:var(--bg-input);color:var(--text-main)}
+#screen-family .family-row{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+#screen-family .family-row select{width:auto}
+#screen-family .family-list{display:grid;gap:10px;margin-top:14px}
+#screen-family .family-entry{border:1px solid var(--border-color);background:var(--bg-input);border-radius:14px;padding:14px;display:grid;gap:8px}
+#screen-family .family-entry-header{display:flex;justify-content:space-between;gap:8px;align-items:start}
+#screen-family .family-small{font-size:.78rem;color:var(--text-muted)}
+#screen-family .family-check{display:flex;align-items:center;gap:9px;font-size:.9rem;color:var(--text-main)}
+#screen-family .family-check input{width:20px;height:20px;flex:none}
+#screen-family .family-danger{border:0;background:none;color:#ff8f9c;cursor:pointer;padding:6px}
+#screen-family .family-done{text-decoration:line-through;opacity:.65}
+
 </style>
 </head>
 <body>
@@ -369,6 +388,27 @@ input[type=text],input[type=number],input[type=time],input[type=date],textarea,s
   </div>
 </div>
 
+
+<section class="screen" id="screen-family">
+ <div class="glass-card"><h2 style="margin-bottom:8px">🏠 Centro familiar</h2><p style="color:var(--text-muted);font-size:.9rem">Organiza tus tareas, las de mamá y las de tu hermano. En esta versión, los datos se guardan en este dispositivo; para compartirlos entre celulares se necesitará sincronización con cuentas.</p></div>
+ <div class="glass-card">
+  <h3 style="margin-bottom:12px">Nueva responsabilidad</h3>
+  <form id="family-task-form" class="family-grid">
+   <label>Actividad<input id="family-title" required maxlength="160" placeholder="Ej. Preparar uniforme"></label>
+   <label>Responsable<select id="family-owner"><option value="yo">Yo</option><option value="mama">Mamá</option><option value="hermano">Hermano</option><option value="todos">Todos</option></select></label>
+   <label>Fecha<input id="family-date" type="date" required></label>
+   <label>Hora<input id="family-time" type="time"></label>
+   <label>Repetición<select id="family-repeat"><option value="none">Una vez</option><option value="daily">Cada día</option><option value="weekly">Cada semana</option></select></label>
+   <label>Pasos pequeños<input id="family-steps" maxlength="600" placeholder="Separar con ; (opcional)"></label>
+   <button type="submit" class="family-primary">+ Crear responsabilidad</button>
+  </form>
+ </div>
+ <div class="glass-card"><div class="family-row"><h3>Actividades de la familia</h3><select id="family-filter"><option value="all">Todos</option><option value="yo">Yo</option><option value="mama">Mamá</option><option value="hermano">Hermano</option><option value="todos">Compartidas</option></select></div><div id="family-list" class="family-list"></div></div>
+ <div class="glass-card"><h3>🎒 Antes de salir</h3><p style="color:var(--text-muted);font-size:.85rem;margin:8px 0">Crea listas para gimnasio, trabajo, estudio u otros lugares. Marca lo que ya llevas.</p>
+  <form id="pack-form" class="family-grid"><label>Destino<input id="pack-place" required maxlength="70" placeholder="Gimnasio"></label><label>Qué debo llevar<input id="pack-items" required maxlength="500" placeholder="Agua; toalla; candado"></label><button class="family-primary" type="submit">Guardar lista</button></form><div id="packing-list" class="family-list"></div>
+ </div>
+ <div class="glass-card"><h3>🔔 Recordatorios y acceso rápido</h3><p style="color:var(--text-muted);font-size:.85rem;margin:8px 0">Los avisos funcionan mientras esta web está abierta. Para notificaciones fiables con la app cerrada se requiere un servicio push o una app Android. Puedes agregar esta página a la pantalla de inicio desde el menú de Chrome.</p><div class="family-row"><button id="family-notification" class="family-primary" type="button">Activar avisos</button><button id="family-export" class="family-secondary" type="button">Exportar respaldo</button><label class="family-secondary" style="cursor:pointer">Importar respaldo<input id="family-import" type="file" accept="application/json,.json" hidden></label></div><p id="family-status" aria-live="polite" style="font-size:.8rem;color:var(--accent-secondary);margin-top:10px"></p></div>
+</section>
 </main>
 <nav class="bottom-nav">
   <button class="nav-item active" data-screen="home"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>Inicio</button>
@@ -377,6 +417,7 @@ input[type=text],input[type=number],input[type=time],input[type=date],textarea,s
   <button class="nav-item" data-screen="finance"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/></svg>Finanzas</button>
   <button class="nav-item" data-screen="alarms"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Alarmas</button>
   <button class="nav-item" data-screen="settings"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Ajustes</button>
+<button class="nav-item" id="nav-family" type="button" aria-label="Familia y salidas"><span style="font-size:23px">🏠</span>Familia</button>
 </nav>
 </div>
 
@@ -1429,6 +1470,73 @@ function init(){
 
 init();
 
+})();
+</script>
+
+<script>
+/* Extensión aislada: mantiene las funciones originales de NeuroSync. */
+(()=>{
+'use strict';
+const KEY='neuroSyncFamilyV1';
+const byId=id=>document.getElementById(id);
+const today=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')};
+const uuid=()=>globalThis.crypto?.randomUUID?.()||String(Date.now())+Math.random().toString(36).slice(2);
+const blank=()=>({tasks:[],packs:[],notified:[]});
+function load(){try{const x=JSON.parse(localStorage.getItem(KEY));if(x&&Array.isArray(x.tasks)&&Array.isArray(x.packs))return {...blank(),...x};}catch(e){}return blank()}
+let data=load();
+function save(){localStorage.setItem(KEY,JSON.stringify(data))}
+function msg(s){byId('family-status').textContent=s}
+const ownerName={yo:'Yo',mama:'Mamá',hermano:'Hermano',todos:'Todos'};
+function node(tag,cls,value){const e=document.createElement(tag);if(cls)e.className=cls;if(value!==undefined)e.textContent=value;return e}
+function todayOrLater(task){if(task.repeat==='daily')return task.date<=today();if(task.repeat==='weekly'){const a=new Date(task.date+'T12:00:00'),b=new Date(today()+'T12:00:00');return task.date<=today()&&a.getDay()===b.getDay()}return task.date===today()}
+function occurrenceKey(t){return t.repeat==='none'?t.date:today()}
+function isDone(t){return (t.doneDates||[]).includes(occurrenceKey(t))}
+function reward(){try{const d=JSON.parse(localStorage.getItem('neuroSyncDB'));if(d?.mascot?.alive){d.mascot.xp=(Number(d.mascot.xp)||0)+10;localStorage.setItem('neuroSyncDB',JSON.stringify(d));msg('✨ +10 de experiencia para tu mascota. Abre Inicio para ver su evolución.')}else msg('✅ Actividad completada')}catch(e){msg('✅ Actividad completada')}}
+function renderTasks(){
+ const list=byId('family-list');list.replaceChildren();
+ const who=byId('family-filter').value;
+ const items=data.tasks.filter(t=>who==='all'||t.owner===who).sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
+ if(!items.length){list.append(node('p','family-small','No hay tareas para esta selección.'));return}
+ items.forEach(t=>{
+  const article=node('article','family-entry'),head=node('div','family-entry-header'),left=node('div');
+  left.append(node('strong','',t.title),node('div','family-small',ownerName[t.owner]+' · '+t.date+(t.time?' · '+t.time:'')+(t.repeat==='daily'?' · Diario':t.repeat==='weekly'?' · Semanal':'')));
+  const del=node('button','family-danger','Eliminar');del.type='button';del.onclick=()=>{if(confirm('¿Eliminar esta actividad?')){data.tasks=data.tasks.filter(x=>x.id!==t.id);save();renderTasks()}};head.append(left,del);article.append(head);
+  const check=node('label','family-check');const input=node('input');input.type='checkbox';input.checked=isDone(t);
+  const title=node('span',input.checked?'family-done':'','Confirmar actividad realizada');check.append(input,title);
+  input.onchange=()=>{const k=occurrenceKey(t);t.doneDates=t.doneDates||[];if(input.checked){if(!t.doneDates.includes(k)){t.doneDates.push(k);reward()}}else t.doneDates=t.doneDates.filter(x=>x!==k);save();renderTasks()};
+  article.append(check);
+  (t.steps||[]).forEach((step,i)=>{const row=node('label','family-check');const c=node('input');c.type='checkbox';c.checked=(t.stepDates?.[occurrenceKey(t)]||[]).includes(i);const span=node('span',c.checked?'family-done':'',step);row.append(c,span);c.onchange=()=>{t.stepDates=t.stepDates||{};const k=occurrenceKey(t),a=t.stepDates[k]||[];t.stepDates[k]=c.checked?[...new Set([...a,i])]:a.filter(n=>n!==i);save();renderTasks()};article.append(row)});
+  list.append(article);
+ });
+}
+function renderPacks(){
+ const list=byId('packing-list');list.replaceChildren();
+ if(!data.packs.length)list.append(node('p','family-small','Aún no tienes listas. Agrega tu primer destino.'));
+ data.packs.forEach(p=>{
+ const article=node('article','family-entry'),head=node('div','family-entry-header'),name=node('strong','',p.place),del=node('button','family-danger','Eliminar');del.type='button';del.onclick=()=>{if(confirm('¿Eliminar esta lista?')){data.packs=data.packs.filter(x=>x.id!==p.id);save();renderPacks()}};head.append(name,del);article.append(head);
+ p.items.forEach((item,i)=>{const label=node('label','family-check'),input=node('input');input.type='checkbox';input.checked=!!p.checked[i];const t=node('span',input.checked?'family-done':'',item);label.append(input,t);input.onchange=()=>{p.checked[i]=input.checked;save();renderPacks()};article.append(label)});
+ const reset=node('button','family-secondary','Reiniciar lista para la próxima salida');reset.type='button';reset.onclick=()=>{p.checked={};save();renderPacks()};article.append(reset);list.append(article)});
+}
+function checkReminders(){
+ const now=new Date(),day=today(),hhmm=now.toTimeString().slice(0,5);
+ let changed=false;
+ data.tasks.forEach(t=>{if(!todayOrLater(t)||!t.time||t.time>hhmm||isDone(t))return;const key=t.id+'@'+day;if(data.notified.includes(key))return;data.notified.push(key);changed=true;
+ const text=ownerName[t.owner]+': '+t.title;
+ if('Notification' in window&&Notification.permission==='granted')new Notification('NeuroSync · Actividad pendiente',{body:text,tag:key});else msg('⏰ Pendiente: '+text);
+ });
+ if(changed){data.notified=data.notified.slice(-300);save()}
+}
+byId('family-date').value=today();
+byId('family-task-form').addEventListener('submit',e=>{e.preventDefault();const title=byId('family-title').value.trim(),date=byId('family-date').value;if(!title||!date)return;
+ data.tasks.push({id:uuid(),title,owner:byId('family-owner').value,date,time:byId('family-time').value,repeat:byId('family-repeat').value,steps:byId('family-steps').value.split(';').map(s=>s.trim()).filter(Boolean),doneDates:[],stepDates:{}});
+ save();e.target.reset();byId('family-date').value=today();renderTasks();msg('Responsabilidad guardada')});
+byId('family-filter').addEventListener('change',renderTasks);
+byId('pack-form').addEventListener('submit',e=>{e.preventDefault();const place=byId('pack-place').value.trim(),items=byId('pack-items').value.split(';').map(s=>s.trim()).filter(Boolean);if(!place||!items.length)return;data.packs.push({id:uuid(),place,items,checked:{}});save();e.target.reset();renderPacks();msg('Lista guardada')});
+byId('family-notification').onclick=async()=>{if(!('Notification' in window)){msg('Este navegador no admite notificaciones');return}const permission=await Notification.requestPermission();msg(permission==='granted'?'Avisos habilitados mientras la web esté abierta':'No se concedió permiso para notificaciones')};
+byId('family-export').onclick=()=>{const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='neurosync-familia.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+byId('family-import').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{if(file.size>2e6)throw Error('Archivo demasiado grande');const obj=JSON.parse(await file.text());if(!Array.isArray(obj.tasks)||!Array.isArray(obj.packs))throw Error('Formato incompatible');if(!confirm('¿Reemplazar los datos familiares de este dispositivo?'))return;data={...blank(),tasks:obj.tasks.filter(t=>t&&typeof t.title==='string'&&typeof t.id==='string').slice(0,2000),packs:obj.packs.filter(p=>p&&typeof p.place==='string'&&Array.isArray(p.items)).slice(0,500)};save();renderTasks();renderPacks();msg('Respaldo importado')}catch(err){msg('No se pudo importar: '+err.message)}finally{e.target.value=''}};
+const nav=byId('nav-family');nav.onclick=()=>{document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));byId('screen-family').classList.add('active');document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));nav.classList.add('active');byId('header-title').textContent='Familia y salidas';renderTasks();renderPacks()};
+renderTasks();renderPacks();checkReminders();setInterval(checkReminders,30000);
 })();
 </script>
 </body>
