@@ -186,7 +186,48 @@ jobs:
           cp index.html android/app/src/main/assets/index.html
           test -s android/app/src/main/assets/index.html
 
+      - name: Compilar APK de prueba independiente (no sustituye tu instalación)
+        working-directory: android
+        shell: bash
+        run: |
+          set -o pipefail
+          gradle --no-daemon --stacktrace assemblePreview 2>&1 | tee "$RUNNER_TEMP/neurosync-gradle.log"
+
+      - name: Verificar que la prueba contiene la interfaz nueva
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/preview/app-preview.apk"
+          test -s "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | grep "package: name='com.neurosync.familia.preview' versionCode='10'"
+          python3 - <<'PY'
+          import zipfile,hashlib
+          from pathlib import Path
+          source=Path("index.html").read_bytes()
+          with zipfile.ZipFile("android/app/build/outputs/apk/preview/app-preview.apk") as z:
+              packed=z.read("assets/index.html")
+              assert packed==source, "ERROR: La APK de prueba tiene una interfaz antigua"
+              dex=b"".join(z.read(x) for x in z.namelist()
+                            if x.startswith("classes") and x.endswith(".dex"))
+              for name in (b"AlarmChallengeStore",b"AlarmRingActivity",b"SessionVault"):
+                  assert name in dex, f"Falta clase Android: {name!r}"
+              for name in (b'view-habits',b'buildInfo',b'setAlarmChallenge'):
+                  assert name in packed, f"Falta control HTML: {name!r}"
+          print("APK preview contiene HTML y funciones actuales.")
+          print("SHA256 de HTML:",hashlib.sha256(packed).hexdigest())
+          PY
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify "$APK"
+
+      - name: Publicar APK para comprobar funciones SIN borrar datos
+        uses: actions/upload-artifact@v4
+        with:
+          name: NeuroSync-10-PRUEBA-INDEPENDIENTE
+          path: android/app/build/outputs/apk/preview/app-preview.apk
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Preparar firma permanente de distribución
+        id: signing
         shell: bash
         env:
           NS_SIGNING_KEY_B64: ${{ secrets.NS_SIGNING_KEY_B64 }}
@@ -195,16 +236,18 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "$NS_SIGNING_KEY_B64" ] || [ -z "$NS_SIGNING_PASSWORD" ] || [ -z "$NS_SIGNING_ALIAS" ]; then
-            echo "::error::Falta firma permanente. Abre un Codespace y ejecuta bash scripts/setup-signing.sh UNA sola vez. No publiques APK debug como actualización."
-            exit 1
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::La APK de PRUEBA está disponible. Para la APK definitiva con firma permanente ejecuta bash scripts/setup-signing.sh UNA vez en Codespaces."
+            exit 0
           fi
           mkdir -p "$RUNNER_TEMP/ns-signing"
           printf '%s' "$NS_SIGNING_KEY_B64" | base64 -d > "$RUNNER_TEMP/ns-signing/neurosync-release.jks"
           chmod 600 "$RUNNER_TEMP/ns-signing/neurosync-release.jks"
           echo "NS_KEYSTORE_FILE=$RUNNER_TEMP/ns-signing/neurosync-release.jks" >> "$GITHUB_ENV"
-          echo "Firma permanente cargada desde GitHub Secrets; la clave no se publica"
-
+          echo "configured=true" >> "$GITHUB_OUTPUT"
+          echo "Firma estable cargada desde GitHub Secrets."
       - name: Compilar APK instalable de distribución
+        if: steps.signing.outputs.configured == 'true'
         working-directory: android
         shell: bash
         env:
@@ -224,6 +267,7 @@ jobs:
           retention-days: 7
 
       - name: Verificar versión, código real, firma y contenido APK
+        if: steps.signing.outputs.configured == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -256,9 +300,18 @@ jobs:
           sha256sum "$APK" | tee /tmp/neurosync-apk-sha256.txt
 
       - name: Publicar solo APK con firma permanente
+        if: steps.signing.outputs.configured == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: NeuroSync-Familia-Firmada
           path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 30
+
+      - name: Explicar cómo activar actualizaciones definitivas
+        if: steps.signing.outputs.configured != 'true'
+        shell: bash
+        run: |
+          echo "### Solo se ha publicado la APK PRUEBA" >> "$GITHUB_STEP_SUMMARY"
+          echo "La prueba se instala junto a la aplicación existente y no migra sus datos." >> "$GITHUB_STEP_SUMMARY"
+          echo "Para una APK definitiva que pueda actualizarse sin borrar datos, configura GitHub Secrets en un Codespace mediante: bash scripts/setup-signing.sh" >> "$GITHUB_STEP_SUMMARY"
