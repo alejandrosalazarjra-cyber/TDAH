@@ -18,6 +18,11 @@ public final class AlarmReceiver extends BroadcastReceiver {
  private static final String PREFIX="alarm_";
  private static final String FIRE="com.neurosync.familia.RING";
  private static final String SNOOZE="com.neurosync.familia.SNOOZE";
+ private static PendingIntent pendingSnooze(Context ctx,String id){
+  Intent intent=new Intent(ctx,AlarmReceiver.class).setAction(SNOOZE).putExtra("id",id);
+  return PendingIntent.getBroadcast(ctx,id.hashCode()^0x3F3F3F3F,intent,
+    PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+ }
  private static PendingIntent pending(Context ctx,String id){
   Intent intent=new Intent(ctx,AlarmReceiver.class).setAction(FIRE).putExtra("id",id);
   return PendingIntent.getBroadcast(ctx,id.hashCode(),intent,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
@@ -50,6 +55,7 @@ public final class AlarmReceiver extends BroadcastReceiver {
  public static void cancel(Context ctx,String id){
   if(id==null)return;
   manager(ctx).cancel(pending(ctx,id));
+  manager(ctx).cancel(pendingSnooze(ctx,id));
   ctx.getSharedPreferences("ns_alarms",0).edit().remove(PREFIX+id).apply();
   ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id.hashCode());
  }
@@ -60,7 +66,11 @@ public final class AlarmReceiver extends BroadcastReceiver {
   try{
    String s=ctx.getSharedPreferences("ns_alarms",0).getString(PREFIX+id,null);if(s==null)return;
    JSONObject a=new JSONObject(s);
-   program(ctx,id,System.currentTimeMillis()+minutes*60000L);
+   AlarmManager alarm=manager(ctx);
+   long when=System.currentTimeMillis()+minutes*60000L;
+   if(Build.VERSION.SDK_INT<31||alarm.canScheduleExactAlarms())
+     alarm.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,when,pendingSnooze(ctx,id));
+   else alarm.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,when,pendingSnooze(ctx,id));
    ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id.hashCode());
   }catch(Exception ignored){}
  }
@@ -90,7 +100,7 @@ public final class AlarmReceiver extends BroadcastReceiver {
  @Override public void onReceive(Context ctx,Intent intent){
   if(intent==null)return;
   if(Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction()) || AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED.equals(intent.getAction())){restore(ctx);return;}
-  if(!FIRE.equals(intent.getAction()))return;
+  if(!FIRE.equals(intent.getAction())&&!SNOOZE.equals(intent.getAction()))return;
   String id=intent.getStringExtra("id");if(id==null)return;
   String raw=ctx.getSharedPreferences("ns_alarms",0).getString(PREFIX+id,null);if(raw==null)return;
   try{
@@ -111,7 +121,7 @@ public final class AlarmReceiver extends BroadcastReceiver {
    ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).notify(id.hashCode(),notice);
    String repeat=a.optString("repeat",a.optBoolean("daily")?"daily":"none");
    long interval="weekly".equals(repeat)?604800000L:"daily".equals(repeat)?86400000L:0L;
-   if(interval>0){
+   if(interval>0 && FIRE.equals(intent.getAction())){
     long next=a.optLong("when")+interval;
     while(next<=System.currentTimeMillis())next+=interval;
     a.put("when",next);
