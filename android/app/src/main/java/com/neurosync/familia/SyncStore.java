@@ -43,11 +43,23 @@ public final class SyncStore {
             if(change==null)continue;
             String id=change.optString("id"),owner=change.optString("owner","");
             if(id.length()<3||id.length()>99||change.toString().length()>12000)continue;
-            if(!"admin".equals(actor.optString("role")) && !actor.optString("username").equals(owner))continue;
             JSONObject old=rows.get(id);
+            boolean admin="admin".equals(actor.optString("role"));
+            boolean own=actor.optString("username").equals(owner);
+            boolean shared="todos".equals(owner);
+            if(!admin&&!own&&!shared)continue;
             if(old!=null&&!visible(old,actor))continue;
             long updated=change.optLong("updatedAt",0);
             if(updated<1)continue;
+            if(!admin&&shared){
+              // Miembros: las tareas compartidas solo permiten confirmar pasos, no cambiar datos ni borrarlas.
+              if(old==null||change.optBoolean("deleted"))continue;
+              JSONObject safe=new JSONObject(old.toString());
+              if(change.has("doneDates"))safe.put("doneDates",change.optJSONArray("doneDates"));
+              if(change.has("stepDates"))safe.put("stepDates",change.optJSONObject("stepDates"));
+              safe.put("updatedAt",updated);
+              change=safe;
+            }
             if(old==null||updated>old.optLong("updatedAt",0))rows.put(id,change);
           }
           JSONArray all=new JSONArray(),subset=new JSONArray();
