@@ -430,14 +430,14 @@ public final class FocusLauncherActivity extends Activity {
     final int[] values={0,30,60,90,120,180,240};
     int selected=0;for(int i=0;i<values.length;i++)if(values[i]==dailyBudget)selected=i;
     new AlertDialog.Builder(this).setTitle("Recordatorio de tiempo diario")
-      .setSingleChoiceItems(choices,selected,(d,index)->{dailyBudget=values[index];usageWarningShown=false;persist();d.dismiss();showSettings()})
+      .setSingleChoiceItems(choices,selected,(d,index)->{dailyBudget=values[index];usageWarningShown=false;persist();d.dismiss();showSettings();})
       .setNegativeButton("Cancelar",null).show();
   }
   private void chooseMindfulDelay(){
     final String[] choices={"Sin espera","3 segundos","5 segundos","10 segundos","20 segundos"};
     final int[] values={0,3,5,10,20};
     new AlertDialog.Builder(this).setTitle("Duración de la pausa")
-      .setItems(choices,(d,index)->{mindfulDelay=values[index];persist();showSettings()}).show();
+      .setItems(choices,(d,index)->{mindfulDelay=values[index];persist();showSettings();}).show();
   }
   private long todayUsageMillis(){
     try{
