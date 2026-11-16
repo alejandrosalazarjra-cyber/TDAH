@@ -335,6 +335,19 @@ public final class MainActivity extends Activity {
           .show();
       });
     }
+    @JavascriptInterface public String buildInfo(){
+      try{
+        android.content.pm.PackageInfo pkg=getPackageManager().getPackageInfo(getPackageName(),0);
+        JSONObject result=new JSONObject();
+        result.put("version",pkg.versionName);
+        result.put("code",android.os.Build.VERSION.SDK_INT>=28?pkg.getLongVersionCode():pkg.versionCode);
+        result.put("package",getPackageName());
+        result.put("features",new org.json.JSONArray()
+          .put("Alarma con retos").put("Progreso privado").put("Sesión persistente")
+          .put("Bandeja de ideas").put("Launcher minimalista"));
+        return result.toString();
+      }catch(Exception ex){return "{}";}
+    }
     @JavascriptInterface public void openSystemClock(){
       runOnUiThread(()->{
         // ACTION_SET_ALARM no es compatible con todas las apps de reloj/OEM.
