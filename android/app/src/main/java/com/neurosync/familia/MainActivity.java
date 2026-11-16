@@ -99,6 +99,10 @@ public final class MainActivity extends Activity {
     try{for(int i=0;i<4;i++){n[i]=Integer.parseInt(p[i]);if(n[i]<0||n[i]>255)return false;}}catch(Exception e){return false;}
     return n[0]==10||(n[0]==192&&n[1]==168)||(n[0]==172&&n[1]>=16&&n[1]<=31)||(n[0]==100&&n[1]>=64&&n[1]<=127);
   }
+  private void openAppSettings(){
+    startActivity(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+      android.net.Uri.parse("package:"+getPackageName())));
+  }
   private void startServer(){runOnUiThread(()->{
     try{startForegroundService(new Intent(this,SyncService.class));}
     catch(Exception e){android.util.Log.w("NeuroSync","No se pudo iniciar servicio: "+e.getMessage());}
@@ -157,6 +161,53 @@ public final class MainActivity extends Activity {
           if(web!=null)web.evaluateJavascript("window.neuroSyncOnSync && window.neuroSyncOnSync("+value+","+JSONObject.quote(requestingUser)+")",null);
         });
       });
+    }
+    @JavascriptInterface public String alarmPermissions(){
+      try{
+        JSONObject j=new JSONObject();
+        NotificationManager n=getSystemService(NotificationManager.class);
+        boolean notifications=Build.VERSION.SDK_INT<33 || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED;
+        boolean exact=Build.VERSION.SDK_INT<31 || ((AlarmManager)getSystemService(ALARM_SERVICE)).canScheduleExactAlarms();
+        boolean full=Build.VERSION.SDK_INT<34 || n.canUseFullScreenIntent();
+        return j.put("notifications",notifications).put("exact",exact).put("fullScreen",full).toString();
+      }catch(Exception e){return "{}";}
+    }
+    @JavascriptInterface public void requestAlarmPermissions(){
+      runOnUiThread(()->{
+        if(Build.VERSION.SDK_INT>=33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED){
+          requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},101);return;
+        }
+        if(Build.VERSION.SDK_INT>=31 && !((AlarmManager)getSystemService(ALARM_SERVICE)).canScheduleExactAlarms()){
+          try{startActivity(new Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+            android.net.Uri.parse("package:"+getPackageName())));}catch(Exception e){openAppSettings();}
+          return;
+        }
+        if(Build.VERSION.SDK_INT>=34 && !getSystemService(NotificationManager.class).canUseFullScreenIntent()){
+          try{startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT,
+             android.net.Uri.parse("package:"+getPackageName())));}catch(Exception e){openAppSettings();}
+          return;
+        }
+        new AlertDialog.Builder(MainActivity.this).setTitle("Alarmas listas")
+          .setMessage("Los permisos principales están habilitados. Crea una alarma de prueba para verificar que suene.")
+          .setPositiveButton("Entendido",null).show();
+      });
+    }
+    @JavascriptInterface public void openSystemClock(){
+      runOnUiThread(()->{
+        try{
+          Intent i=new Intent(android.provider.AlarmClock.ACTION_SET_ALARM);
+          i.putExtra(android.provider.AlarmClock.EXTRA_MESSAGE,"NeuroSync");
+          i.putExtra(android.provider.AlarmClock.EXTRA_SKIP_UI,false);
+          startActivity(i);
+        }catch(Exception e){
+          new AlertDialog.Builder(MainActivity.this).setMessage(
+           "No se encontró una aplicación de reloj compatible. Instala Reloj de Google para elegir música de YouTube Music si está disponible.")
+           .setPositiveButton("Aceptar",null).show();
+        }
+      });
+    }
+    @JavascriptInterface public boolean testAlarm(){
+      return AlarmReceiver.schedule(MainActivity.this,"test_neurosync","Prueba de alarma",System.currentTimeMillis()+60000L,false);
     }
     @JavascriptInterface public boolean scheduleAlarm(String id,String title,long when,boolean daily){
       try{return AlarmReceiver.schedule(MainActivity.this,id,title,when,daily);}
