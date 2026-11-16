@@ -20,6 +20,29 @@ public final class AccountStore {
   private static final SecureRandom RANDOM=new SecureRandom();
   private static final ConcurrentHashMap<String,String> TOKENS=new ConcurrentHashMap<>();
   private static final Object LOCK=new Object();
+  private static final int MAX_ATTEMPTS=5;
+  private static final long LOCK_DURATION=15*60*1000L;
+  private static SharedPreferences attempts(Context c){return c.getSharedPreferences("ns_login_guard",Context.MODE_PRIVATE);}
+  private static String guardKey(String name){return "user_"+name;}
+  private static boolean locked(Context c,String name){
+    return attempts(c).getLong(guardKey(name)+"_until",0)>System.currentTimeMillis();
+  }
+  private static void badAttempt(Context c,String name){
+    SharedPreferences a=attempts(c);
+    int failures=a.getInt(guardKey(name)+"_fails",0)+1;
+    SharedPreferences.Editor edit=a.edit().putInt(guardKey(name)+"_fails",failures);
+    if(failures>=MAX_ATTEMPTS)edit.putLong(guardKey(name)+"_until",System.currentTimeMillis()+LOCK_DURATION);
+    edit.apply();
+  }
+  private static void clearAttempts(Context c,String name){
+    attempts(c).edit().remove(guardKey(name)+"_fails").remove(guardKey(name)+"_until").apply();
+  }
+  private static boolean defaultAdminPassword(JSONObject user)throws Exception{
+    return user!=null&&"administrador".equals(user.optString("username"))&&
+      MessageDigest.isEqual(hash("admin1234",user.optString("salt")).getBytes(StandardCharsets.UTF_8),
+      user.optString("hash").getBytes(StandardCharsets.UTF_8));
+  }
+
   private AccountStore(){}
   private static SharedPreferences prefs(Context c){return c.getSharedPreferences("ns_accounts",Context.MODE_PRIVATE);}
   private static String random(int bytes){byte[] raw=new byte[bytes];RANDOM.nextBytes(raw);return Base64.encodeToString(raw,Base64.NO_WRAP|Base64.URL_SAFE);}
@@ -52,13 +75,19 @@ public final class AccountStore {
       synchronized(LOCK){
         String name=norm(username);
         if(!name.matches("[a-z0-9_\\-]{3,30}")||password==null||password.length()>160)return fail("Credenciales incorrectas");
+        if(locked(c,name))return fail("Demasiados intentos. Intenta de nuevo dentro de 15 minutos.");
         JSONObject found=find(users(c),name);
-        if(found==null||!found.optBoolean("active"))return fail("Credenciales incorrectas");
+        if(found==null||!found.optBoolean("active")){
+          badAttempt(c,name);return fail("Credenciales incorrectas");
+        }
         String actual=hash(password,found.optString("salt"));
-        if(!MessageDigest.isEqual(actual.getBytes(StandardCharsets.UTF_8),found.optString("hash").getBytes(StandardCharsets.UTF_8)))return fail("Credenciales incorrectas");
+        if(!MessageDigest.isEqual(actual.getBytes(StandardCharsets.UTF_8),found.optString("hash").getBytes(StandardCharsets.UTF_8))){
+          badAttempt(c,name);return fail("Credenciales incorrectas");
+        }
+        clearAttempts(c,name);
         String token=random(32);TOKENS.put(token,name);
         return new JSONObject().put("ok",true).put("token",token).put("user",publicUser(found))
-          .put("mustChangePassword",name.equals("administrador")&&password.equals("admin1234"));
+          .put("mustChangePassword",defaultAdminPassword(found));
       }
     }catch(Exception e){return fail("No se pudo iniciar sesión");}
   }
@@ -89,7 +118,10 @@ public final class AccountStore {
         String name=norm(username);
         if(!name.matches("[a-z0-9_\\-]{3,30}"))return fail("Usuario: 3 a 30 caracteres, letras, números, guión o _");
         if(password==null||password.length()<10||password.length()>128)return fail("La contraseña debe tener entre 10 y 128 caracteres");
-        JSONArray all=users(c);if(find(all,name)!=null)return fail("Ese usuario ya existe");
+        JSONArray all=users(c);
+        JSONObject admin=find(all,"administrador");
+        if(defaultAdminPassword(admin))return fail("Cambia primero la contraseña provisional del administrador.");
+        if(find(all,name)!=null)return fail("Ese usuario ya existe");
         all.put(make(name,password,"member"));
         prefs(c).edit().putString("users",all.toString()).commit();
         return new JSONObject().put("ok",true).put("user",name);
