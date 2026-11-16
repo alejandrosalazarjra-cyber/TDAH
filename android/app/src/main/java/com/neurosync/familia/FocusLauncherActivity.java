@@ -229,10 +229,12 @@ public final class FocusLauncherActivity extends Activity {
   private void showEntryOptions(AppEntry app){
     boolean fav=favorites.contains(app.packageName),focus=focusApps.contains(app.packageName);
     boolean muted=mutedApps.contains(app.packageName);
+    int currentLimit=preferences.getInt("app_limit_"+app.packageName,0);
     String[] items={
       fav?"Quitar de favoritos":"Agregar a inicio",
       focus?"Quitar pausa consciente":"Añadir pausa consciente",
       muted?"Dejar pasar notificaciones":"Filtrar sus notificaciones",
+      "Objetivo diario: "+(currentLimit==0?"sin límite":currentLimit+" min"),
       "Abrir aplicación"
     };
     new AlertDialog.Builder(this).setTitle(app.title).setItems(items,(dialog,which)->{
@@ -243,8 +245,27 @@ public final class FocusLauncherActivity extends Activity {
         persist();if(drawer)renderApps(search==null?"":search.getText().toString());
         if(!isNotificationListenerEnabled())showNotificationPermissionHelp();
       }
-      if(which==3)openEntry(app);
+      if(which==3)chooseAppLimit(app);
+      if(which==4)openEntry(app);
     }).setNegativeButton("Cancelar",null).show();
+  }
+  private void chooseAppLimit(AppEntry app){
+    String[] labels={"Sin límite","10 minutos","20 minutos","30 minutos","45 minutos","60 minutos","90 minutos"};
+    int[] values={0,10,20,30,45,60,90};
+    new AlertDialog.Builder(this).setTitle("Tiempo diario: "+app.title)
+      .setItems(labels,(d,index)->{
+        preferences.edit().putInt("app_limit_"+app.packageName,values[index]).apply();
+        Toast.makeText(this,values[index]==0?"Objetivo desactivado":"Aviso a los "+values[index]+" minutos",Toast.LENGTH_SHORT).show();
+      }).setNegativeButton("Cancelar",null).show();
+  }
+  private long appUsageMinutes(String packageName){
+    if(!hasUsagePermission())return -1;
+    UsageStatsManager manager=(UsageStatsManager)getSystemService(USAGE_STATS_SERVICE);
+    Calendar d=Calendar.getInstance();d.set(Calendar.HOUR_OF_DAY,0);d.set(Calendar.MINUTE,0);
+    d.set(Calendar.SECOND,0);d.set(Calendar.MILLISECOND,0);
+    Map<String,UsageStats> usage=manager.queryAndAggregateUsageStats(d.getTimeInMillis(),System.currentTimeMillis());
+    UsageStats info=usage==null?null:usage.get(packageName);
+    return info==null?0:info.getTotalTimeInForeground()/60000;
   }
   private boolean focusIsActive(){
     if(!focusEnabled)return false;
@@ -253,6 +274,19 @@ public final class FocusLauncherActivity extends Activity {
     return focusStart<focusEnd?minute>=focusStart&&minute<focusEnd:minute>=focusStart||minute<focusEnd;
   }
   private void openEntry(AppEntry app){
+    int limit=preferences.getInt("app_limit_"+app.packageName,0);
+    long minutes=limit>0?appUsageMinutes(app.packageName):-1;
+    if(limit>0&&minutes>=limit){
+      new AlertDialog.Builder(this).setTitle("Objetivo diario alcanzado")
+        .setMessage("Ya has usado "+app.title+" aproximadamente "+minutes+" minutos hoy, superando tu objetivo de "+limit+". Puedes volver a tu agenda o abrir la aplicación igualmente.")
+        .setPositiveButton("Abrir igualmente",(d,w)->openWithFocus(app))
+        .setNegativeButton("Volver a mis tareas",(d,w)->openNeuroSync())
+        .setNeutralButton("Cancelar",null).show();
+      return;
+    }
+    openWithFocus(app);
+  }
+  private void openWithFocus(AppEntry app){
     if(focusIsActive()&&focusApps.contains(app.packageName)){
       new AlertDialog.Builder(this)
         .setTitle("Antes de abrir "+app.title)
