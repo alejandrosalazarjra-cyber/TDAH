@@ -127,6 +127,13 @@ jobs:
         shell: bash
         run: |
           python3 tests/check_android_structure.py
+          python3 - <<'PY'
+          from pathlib import Path
+          java = Path("android/app/src/main/java/com/neurosync/familia/FocusLauncherActivity.java").read_text()
+          assert "d.dismiss();showSettings();})" in java, "Falta punto y coma al guardar objetivo de uso"
+          assert "persist();showSettings();}).show()" in java, "Falta punto y coma al configurar pausa"
+          print("Comprobaciones de sintaxis corregidas")
+          PY
 
       - name: Configurar Gradle
         uses: gradle/actions/setup-gradle@v4
