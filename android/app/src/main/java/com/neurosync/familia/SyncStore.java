@@ -6,39 +6,59 @@ import org.json.JSONObject;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/** Réplica compartida de tareas y listas. Borrados mediante lápidas (tombstones).
- * Resolución determinista: gana updatedAt más reciente. No se sincronizan recordatorios privados.
- */
+/** Réplica central. El servidor valida cada objeto recibido y filtra por usuario al responder. */
 public final class SyncStore {
-  private static final Object LOCK = new Object();
-  public static final String KEY = "central_snapshot";
-  private SyncStore() {}
-  public static JSONObject merge(Context ctx, JSONObject incoming) throws Exception {
-    synchronized (LOCK) {
-      String stored = ctx.getSharedPreferences("neurosync_sync",0).getString(KEY,"{\"tasks\":[],\"packs\":[]}");
-      JSONObject result = new JSONObject(stored);
-      for (String kind : new String[]{"tasks","packs"}) {
-        Map<String,JSONObject> rows = new LinkedHashMap<>();
-        insert(rows,result.optJSONArray(kind));
-        insert(rows,incoming.optJSONArray(kind));
-        JSONArray values = new JSONArray();
-        for (JSONObject value : rows.values()) values.put(value);
-        result.put(kind,values);
-      }
-      ctx.getSharedPreferences("neurosync_sync",0).edit().putString(KEY,result.toString()).apply();
-      return result;
-    }
+  private static final Object LOCK=new Object();
+  private static final String KEY="family_v2";
+  private SyncStore(){}
+  private static JSONObject read(Context c)throws Exception{
+    String raw=c.getSharedPreferences("ns_family",0).getString(KEY,"{\"tasks\":[],\"packs\":[],\"alarms\":[]}");
+    return new JSONObject(raw);
   }
-  private static void insert(Map<String,JSONObject> rows, JSONArray list) {
-    if(list==null)return;
-    for(int i=0;i<Math.min(list.length(),3000);i++){
-      JSONObject entry=list.optJSONObject(i);
-      if(entry==null)continue;
-      String id=entry.optString("id","");
-      if(id.length()<1||id.length()>100)continue;
-      JSONObject previous=rows.get(id);
-      long time=entry.optLong("updatedAt",1);
-      if(previous==null || time>previous.optLong("updatedAt",1))rows.put(id,entry);
-    }
+  private static Map<String,JSONObject> map(JSONArray input){
+    Map<String,JSONObject> out=new LinkedHashMap<>();
+    if(input==null)return out;
+    for(int i=0;i<Math.min(3000,input.length());i++){
+      JSONObject row=input.optJSONObject(i);
+      if(row==null)continue;
+      String id=row.optString("id");
+      if(id.length()>0&&id.length()<100)out.put(id,row);
+    }return out;
+  }
+  private static boolean visible(JSONObject row,JSONObject actor){
+    String owner=row.optString("owner","");
+    return "admin".equals(actor.optString("role")) || actor.optString("username").equals(owner) || "todos".equals(owner);
+  }
+  public static JSONObject merge(Context c,JSONObject incoming,JSONObject actor){
+    if(actor==null)return AccountStore.fail("Inicia sesión");
+    try{
+      synchronized(LOCK){
+        JSONObject database=read(c),reply=new JSONObject().put("ok",true),view=new JSONObject();
+        for(String collection:new String[]{"tasks","packs","alarms"}){
+          Map<String,JSONObject> rows=map(database.optJSONArray(collection));
+          JSONArray posted=incoming.optJSONArray(collection);
+          if(posted!=null&&posted.length()>2500)return AccountStore.fail("Demasiadas actividades");
+          if(posted!=null)for(int i=0;i<posted.length();i++){
+            JSONObject change=posted.optJSONObject(i);
+            if(change==null)continue;
+            String id=change.optString("id"),owner=change.optString("owner","");
+            if(id.length()<3||id.length()>99||change.toString().length()>12000)continue;
+            if(!"admin".equals(actor.optString("role")) && !actor.optString("username").equals(owner))continue;
+            JSONObject old=rows.get(id);
+            if(old!=null&&!visible(old,actor))continue;
+            long updated=change.optLong("updatedAt",0);
+            if(updated<1)continue;
+            if(old==null||updated>old.optLong("updatedAt",0))rows.put(id,change);
+          }
+          JSONArray all=new JSONArray(),subset=new JSONArray();
+          for(JSONObject row:rows.values()){
+            all.put(row);if(visible(row,actor))subset.put(row);
+          }
+          database.put(collection,all);view.put(collection,subset);
+        }
+        c.getSharedPreferences("ns_family",0).edit().putString(KEY,database.toString()).commit();
+        return reply.put("data",view);
+      }
+    }catch(Exception e){return AccountStore.fail("Error sincronizando datos");}
   }
 }
