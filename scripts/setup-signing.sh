@@ -32,3 +32,7 @@ echo "MUY IMPORTANTE: guarda una copia privada de signing/neurosync-release.jks 
 echo "Sin estas dos piezas NO podrás actualizar aplicaciones firmadas con esta clave."
 echo "NO compartas ni subas esos archivos al repositorio ni a chats."
 keytool -list -keystore signing/neurosync-release.jks -alias neurosync -storepass "$(cat signing/keystore-password-KEEP-PRIVATE.txt)" | grep -E 'SHA256|SHA-256|Valid from' || true
+
+echo "Creando una compilación definitiva con la firma estable..."
+gh workflow run android-apk.yml -R "$REPO" --ref main
+echo "Revisa GitHub Actions → Compilar APK NeuroSync → último resultado. El artefacto definitivo se llamará NeuroSync-Familia-Firmada."
