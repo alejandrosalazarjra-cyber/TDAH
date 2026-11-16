@@ -143,6 +143,7 @@ jobs:
           grep -q 'AlarmAudioService' android/app/src/main/AndroidManifest.xml
           grep -q 'FOREGROUND_SERVICE_MEDIA_PLAYBACK' android/app/src/main/AndroidManifest.xml
           grep -q 'AlarmAudioService.start' android/app/src/main/java/com/neurosync/familia/AlarmReceiver.java
+          grep -q 'setAlarmClock' android/app/src/main/java/com/neurosync/familia/AlarmReceiver.java
           grep -q 'RoleManager.ROLE_HOME' android/app/src/main/java/com/neurosync/familia/MainActivity.java
           echo "Comprobaciones de audio y launcher completadas"
 
