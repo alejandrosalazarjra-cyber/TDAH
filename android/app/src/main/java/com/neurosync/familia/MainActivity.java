@@ -20,6 +20,7 @@ import java.util.concurrent.Executors;
  */
 public final class MainActivity extends Activity {
   private WebView web;
+  private String backupPending="";
   private final ExecutorService networkWorker=Executors.newSingleThreadExecutor();
   private volatile String sessionToken="";
   private volatile JSONObject sessionUser=null;
@@ -52,14 +53,34 @@ public final class MainActivity extends Activity {
   }
   @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
     super.onActivityResult(requestCode,resultCode,data);
-    if(requestCode==191 && resultCode==RESULT_OK && data!=null && data.getData()!=null){
+    if(resultCode!=RESULT_OK||data==null||data.getData()==null)return;
+    android.net.Uri uri=data.getData();
+    if(requestCode==191){
       try{
-        android.net.Uri uri=data.getData();
         int flags=data.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION;
         getContentResolver().takePersistableUriPermission(uri,flags);
         getSharedPreferences("ns_sound",0).edit().putString("uri",uri.toString()).apply();
         if(web!=null)web.evaluateJavascript("window.neuroAlarmSoundSelected && window.neuroAlarmSoundSelected()",null);
-      }catch(Exception ex){android.util.Log.w("NeuroSync","No se pudo guardar sonido personalizado",ex);}
+      }catch(Exception ex){android.util.Log.w("NeuroSync","No se pudo guardar audio",ex);}
+    }else if(requestCode==192){
+      try(java.io.OutputStream out=getContentResolver().openOutputStream(uri)){
+        if(out==null)throw new IOException("No se pudo abrir el destino");
+        out.write(backupPending.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        if(web!=null)web.evaluateJavascript("window.neuroBackupMessage && window.neuroBackupMessage('Respaldo guardado')",null);
+      }catch(Exception e){android.util.Log.e("NeuroSync","Error exportando respaldo",e);}
+      finally{backupPending="";}
+    }else if(requestCode==193){
+      try(java.io.InputStream in=getContentResolver().openInputStream(uri)){
+        if(in==null)throw new IOException("No se pudo leer el archivo");
+        ByteArrayOutputStream buffer=new ByteArrayOutputStream();
+        byte[] chunk=new byte[8192];int n;
+        while((n=in.read(chunk))!=-1){buffer.write(chunk,0,n);if(buffer.size()>500000)throw new IOException("Respaldo demasiado grande");}
+        String json=buffer.toString("UTF-8");
+        JSONObject parsed=new JSONObject(json);
+        if(parsed.optJSONArray("tasks")==null||parsed.optJSONArray("packs")==null||parsed.optJSONArray("alarms")==null)
+          throw new IOException("Formato de respaldo incompatible");
+        if(web!=null)web.evaluateJavascript("window.neuroImportData && window.neuroImportData("+JSONObject.quote(json)+")",null);
+      }catch(Exception e){android.util.Log.e("NeuroSync","Error importando respaldo",e);}
     }
   }
   private boolean localHost(){return "host".equals(getPreferences(0).getString("mode",""));}
@@ -246,6 +267,29 @@ public final class MainActivity extends Activity {
     }
     @JavascriptInterface public void updateWidget(int pending){
       TodayWidget.refresh(MainActivity.this,Math.max(0,Math.min(pending,9999)));
+    }
+    @JavascriptInterface public void exportBackup(String data){
+      if(data==null||data.length()>500000)return;
+      try{
+        JSONObject check=new JSONObject(data);
+        if(check.optJSONArray("tasks")==null||check.optJSONArray("packs")==null||check.optJSONArray("alarms")==null)return;
+      }catch(Exception ex){return;}
+      runOnUiThread(()->{
+        backupPending=data;
+        Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("application/json");
+        intent.putExtra(Intent.EXTRA_TITLE,"NeuroSync-respaldo.json");
+        startActivityForResult(intent,192);
+      });
+    }
+    @JavascriptInterface public void importBackup(){
+      runOnUiThread(()->{
+        Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("application/json");
+        startActivityForResult(intent,193);
+      });
     }
     @JavascriptInterface public void chooseAlarmSound(){
       runOnUiThread(()->{
