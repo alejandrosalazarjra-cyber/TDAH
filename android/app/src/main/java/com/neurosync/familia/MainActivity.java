@@ -96,6 +96,7 @@ public final class MainActivity extends Activity {
   private JSONObject call(String path,JSONObject args){
     if(sessionUser==null)return AccountStore.fail("Inicia sesión");
     if(!localHost())return remote(path,args);
+    if(AccountStore.identity(this,sessionToken)==null)return AccountStore.fail("Sesión caducada. Inicia sesión de nuevo.");
     switch(path){
       case "/users":return AccountStore.list(this,sessionUser);
       case "/create-user":return AccountStore.create(this,sessionUser,args.optString("username"),args.optString("password"));
