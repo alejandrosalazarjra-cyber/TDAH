@@ -496,6 +496,7 @@ body.ns-pomodoro-active{overflow:hidden}
 <div class="between" style="margin-bottom:9px"><b style="font-size:14px">Sonido y pantalla de alarma</b><span class="chip" id="alarm-permission-indicator">Android</span></div>
 <p class="hint" id="alarm-permission-status">Los permisos se solicitan cuando programas una alarma.</p>
 <div class="row" style="margin-top:12px">
+<button type="button" class="btn secondary" id="alarm-permissions-open">Permitir pantalla completa</button>
 <button type="button" class="btn secondary" id="alarm-test">Probar en 1 min</button>
 <button type="button" class="btn ghost" id="alarm-local-sound">Elegir sonido</button>
 <button type="button" class="btn ghost" id="alarm-clock-music">Abrir Reloj de Google</button></div>
@@ -1652,11 +1653,15 @@ function checkAlarmPermissions(){
  try{
   var a=JSON.parse(nat.alarmPermissions());
   var count=[a.notifications,a.exact,a.fullScreen].filter(Boolean).length;
-  status.textContent=count===3?'Permisos disponibles. Prueba el sonido y la pantalla bloqueada.':'Android requiere '+(3-count)+' autorización(es) para todas las funciones. Se solicitarán al crear o probar una alarma.';
+  status.textContent=count===3&&a.channelHigh!==false?'Permisos disponibles. Bloquea el teléfono para probar la apertura completa. Con pantalla desbloqueada Android muestra un aviso emergente.':'Faltan permisos o la prioridad del canal de alarma es baja. Usa Permitir pantalla completa y comprueba los ajustes de notificaciones.';
   var badge=by('alarm-permission-indicator');
   if(badge)badge.textContent=count===3?'Listo':'Permisos '+count+'/3';
  }catch(err){status.textContent='No se pudo verificar los permisos'}
 }
+by('alarm-permissions-open').onclick=function(){
+ if(nat&&nat.requestAlarmPermissions)nat.requestAlarmPermissions();
+ else say('Solo disponible en la APK Android');
+};
 by('alarm-test').onclick=function(){
  if(nat&&nat.testAlarm){
   if(nat.requestAlarmPermissions) {
