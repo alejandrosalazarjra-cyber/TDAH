@@ -32,3 +32,14 @@ Solo cambian el módulo del dragón, sus WebP, lectura Android de esos archivos,
 - Los ocho recursos se empaquetan como archivos locales en la APK y las rutas Android WebView se limitan a los nombres conocidos.
 - Pruebas: node tests/test_dragon_poses.js; python3 -m unittest discover -s tests -p 'test_dragon_module.py'.
 - Pendiente ampliar las poses a cada una de las otras cinco evoluciones, validar en un teléfono y refinar la consistencia del dibujo. Los WebP son fotogramas por postura, no un esqueleto separado en partes.
+
+
+## Seis evoluciones con animación coherente con su diseño
+- Las seis hojas de ocho poses se generaron a partir de recortes individuales de la lámina de evoluciones original de Higgsfield, no usando una referencia genérica común.
+- Cada evolución tiene un atlas WebP local de 768 × 384 px, dividido en ocho celdas de 192 × 192 px, con transparencia: assets/dragon/atlases/etapa-1.webp hasta etapa-6.webp.
+- Las poses se asignan a las acciones existentes: reposo, parpadeo, dos pasos, aleteo, sueño, alimentación y celebración; la transformación usa la pose de aleteo junto con el brillo.
+- Cada atlas es específico de su etapa. Huevo místico sigue siendo huevo; las demás formas no heredan los fotogramas de Cría. Las seis imágenes base evolucionadas siguen sirviendo como respaldo.
+- Los atlas se precargan y cachean solo cuando se necesitan. Se detienen los cambios de fotogramas al ocultar la aplicación o cuando el usuario activa la reducción de movimiento.
+- Cuando el usuario equipa estrella o bufanda, se conserva el SVG antiguo con el accesorio visible; falta incorporar accesorios separados a los fotogramas para usar los atlas con ellos.
+- Se comprobó la sintaxis JavaScript y se ejecutó una prueba de estados y cambio de fotogramas para las seis etapas con temporizadores simulados. Todavía falta una prueba en una APK compilada y una revisión visual presencial para descartar variaciones menores entre poses generadas por IA.
+- Se conservó sin cambios la rama main y las funciones de cuenta, alarmas, sincronización y respaldos.
