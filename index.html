@@ -661,6 +661,13 @@ html,body{background:#f8fbff;color:var(--ink)}
 </style><style id="ns-alarm-no-duplicate-title">
 body.ns-alarm-active #page-title{display:none!important}
 body.ns-alarm-active .top{margin-bottom:5px!important}
+</style><style id="ns-alarm-volume-editor">
+#modal.ns-alarm-modal .ns-volume-field{display:grid;gap:7px;color:#b6c7db}
+#modal.ns-alarm-modal .ns-volume-field output{justify-self:end;color:#e8f5ff;font-size:14px;font-weight:700}
+#modal.ns-alarm-modal .ns-volume-field input[type=range]{
+ appearance:auto!important;-webkit-appearance:auto!important;background:transparent!important;
+ border:0!important;padding:0!important;min-height:28px!important;width:100%;accent-color:#168bfa
+}
 </style></head><body>
 <div id="login" class="login ns-login-v3">
  <div class="ns-login-wrap">
@@ -2135,6 +2142,9 @@ function nsAlarmEdit(a){
  nsFillAlarmRepeat(form,a.repeat|| (a.daily?'daily':'none'));
  form.elements.snoozeMinutes.value=String(a.snoozeMinutes||5);
  form.elements.snoozeMax.value=String(a.snoozeMax==null?3:a.snoozeMax);
+ form.elements.volumePercent.value=String(a.volumePercent||100);
+ form.elements.volumePercent.dispatchEvent(new Event('input'));
+ form.elements.gentleSeconds.value=String(a.gentleSeconds||0);
  if(form._selectMission)form._selectMission(a.challenge||'none');
  form.onsubmit=function(e){
   e.preventDefault();
@@ -2147,7 +2157,8 @@ function nsAlarmEdit(a){
   var next=Object.assign({},a,{title:(v.title||'').trim()||'Alarma',
    date:v.date,time:v.time,repeat:selectedRepeat,daily:selectedRepeat==='daily',
    challenge:v.challenge||'none',
-   snoozeMinutes:Number(v.snoozeMinutes)||5,snoozeMax:Number(v.snoozeMax),updatedAt:stamp()});
+   snoozeMinutes:Number(v.snoozeMinutes)||5,snoozeMax:Number(v.snoozeMax),
+   volumePercent:Number(v.volumePercent)||100,gentleSeconds:Number(v.gentleSeconds)||0,updatedAt:stamp()});
   if(!nsNextAlarmDate(Object.assign({},next,{enabled:true}),Date.now())){
    say('Revisa la fecha y hora de esta alarma');return
   }
@@ -2158,6 +2169,7 @@ function nsAlarmEdit(a){
   var previousChallenge=a.challenge;
   Object.assign(a,next);
   if(nat&&nat.setAlarmOptions)nat.setAlarmOptions(a.id,a.snoozeMinutes,a.snoozeMax);
+  if(nat&&nat.setAlarmSoundBehavior)nat.setAlarmSoundBehavior(a.id,a.volumePercent,a.gentleSeconds);
   if(v.challenge==='qr'&&v.qrValue&&nat&&nat.setAlarmQrCode)nat.setAlarmQrCode(a.id,v.qrValue);
   if(v.challenge!=='qr'&&previousChallenge==='qr'&&nat&&nat.setAlarmQrCode)nat.setAlarmQrCode(a.id,'');
   save();closeModal();render();say('Alarma actualizada');
@@ -2174,6 +2186,9 @@ function nsAlarmDuplicate(a){
  nsFillAlarmRepeat(form,a.repeat|| (a.daily?'daily':'none'));
  form.elements.snoozeMinutes.value=String(a.snoozeMinutes||5);
  form.elements.snoozeMax.value=String(a.snoozeMax==null?3:a.snoozeMax);
+ form.elements.volumePercent.value=String(a.volumePercent||100);
+ form.elements.volumePercent.dispatchEvent(new Event('input'));
+ form.elements.gentleSeconds.value=String(a.gentleSeconds||0);
  // Nunca copiar QR de seguridad: necesita registrarse otra vez para el nuevo ID.
  if(form._selectMission)form._selectMission(a.challenge==='qr'?'none':a.challenge||'none');
 }
@@ -2276,7 +2291,12 @@ if(kind==='alarm')html+=
  '<p class="ns-mission-category">Sin desafío</p>'+
  '<button type="button" data-mission="none">Sin misión · detener normalmente</button></div>'+
  '<div id="qr-enroll" class="hidden"><input name="qrValue" type="hidden"><button type="button" class="btn secondary" id="qr-enroll-button">Registrar QR de referencia</button><p class="hint" id="qr-enroll-status">Necesitas un QR físico accesible; se verifica en este teléfono.</p></div></section>'+
- '<div class="ns-alarm-editor-note wide"><strong>Sonido</strong><span>El tono del teléfono se configura en Ajustes de alarma.</span></div>'+
+ '<div class="ns-alarm-editor-note wide"><strong>Sonido</strong><span>El tono se elige en Ajustes. Puedes adaptar el nivel de sonido de esta alarma.</span></div>'+
+ '<label class="field wide ns-volume-field">Volumen <output id="ns-alarm-volume-value">100%</output>'+
+ '<input name="volumePercent" type="range" min="20" max="100" step="10" value="100"></label>'+
+ '<label class="field wide">Despertar suave<select name="gentleSeconds">'+
+ '<option value="0">Desactivado</option><option value="30">Subir volumen durante 30 s</option>'+
+ '<option value="60">Subir volumen durante 60 s</option></select></label>'+
  '<div class="ns-alarm-editor-note wide"><strong>Posponer</strong><span>Elige el intervalo y cuántas veces se permite.</span></div>'+
  '<label class="field">Intervalo<select name="snoozeMinutes">'+
  '<option value="1">1 minuto</option><option value="3">3 minutos</option><option value="5" selected>5 minutos</option>'+
@@ -2311,6 +2331,7 @@ if(kind==='alarm'){
   nat.scanQrReference();
  };
  form.elements.time.value=new Date().toTimeString().slice(0,5);
+ form.elements.volumePercent.oninput=function(){by('ns-alarm-volume-value').textContent=this.value+'%'};
  form._selectMission=selectMission;
 }
 
@@ -2341,12 +2362,14 @@ if(kind==='alarm'){
  var alarm={id:uid(),title:(values.title||'').trim()||'Alarma',date:d,time:time,
   repeat:repeat,daily:repeat==='daily',challenge:values.challenge||'none',
   snoozeMinutes:Number(values.snoozeMinutes)||5,snoozeMax:Number(values.snoozeMax),
+  volumePercent:Number(values.volumePercent)||100,gentleSeconds:Number(values.gentleSeconds)||0,
   owner:session.username,enabled:true,updatedAt:stamp()};
  if(nat&&(nat.scheduleAlarm||nat.scheduleAlarmRepeat)&&!scheduleAlarm(alarm)){
   say('No se pudo programar en Android. Revisa la fecha y permisos.');return;
  }
  model.alarms.push(alarm);
  if(nat&&nat.setAlarmOptions)nat.setAlarmOptions(alarm.id,alarm.snoozeMinutes,alarm.snoozeMax);
+ if(nat&&nat.setAlarmSoundBehavior)nat.setAlarmSoundBehavior(alarm.id,alarm.volumePercent,alarm.gentleSeconds);
  if(values.challenge==='qr'&&nat&&nat.setAlarmQrCode)nat.setAlarmQrCode(alarm.id,values.qrValue);
 }
 save();closeModal();render();say('Guardado correctamente')};
