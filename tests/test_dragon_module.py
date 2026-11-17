@@ -40,6 +40,28 @@ class DragonContract(unittest.TestCase):
         self.assertIn("p.xp+=Math.max(5", HTML)
         self.assertIn("nsDragonClaim(m.id)", HTML)
 
+    def test_higgsfield_sprites_all_six_exist(self):
+        for stage in range(1, 7):
+            asset = ROOT / "assets" / "dragon" / f"etapa-{stage}.webp"
+            self.assertTrue(asset.is_file(), f"Falta {asset}")
+            self.assertGreater(asset.stat().st_size, 1000)
+            self.assertEqual(asset.read_bytes()[:4], b"RIFF")
+            self.assertEqual(asset.read_bytes()[8:12], b"WEBP")
+
+    def test_evolution_sprite_is_local_and_svg_fallback_remains(self):
+        self.assertIn("image.src='assets/dragon/etapa-'+(idx+1)+'.webp'", HTML)
+        self.assertIn("figure.innerHTML=nsDragonSvg(idx,p.accessory)", HTML)
+        self.assertIn("figure.classList.add('has-sprite')", HTML)
+        self.assertIn("image.onerror=function()", HTML)
+
+    def test_android_packages_and_serves_offline_sprites(self):
+        workflow = (ROOT / ".github" / "workflows" / "android-apk.yml").read_text(encoding="utf-8")
+        java = (ROOT / "android" / "app" / "src" / "main" / "java"
+                / "com" / "neurosync" / "familia" / "MainActivity.java").read_text(encoding="utf-8")
+        self.assertIn("cp assets/dragon/etapa-{1..6}.webp", workflow)
+        self.assertIn('path.matches("/assets/dragon/etapa-[1-6]\\\\.webp")', java)
+        self.assertIn('getAssets().open(file)', java)
+
     def test_exactly_one_initializer_and_script(self):
         self.assertEqual(HTML.count("nsDragonInitActions();"), 1)
         self.assertEqual(len(re.findall(r"<script(?:\s|>)", HTML)), 1)
