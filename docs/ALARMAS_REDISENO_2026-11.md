@@ -8,13 +8,12 @@ Aplicar la claridad visual de alarmas de referencia suministradas por el usuario
 2. **Editor:** nombre, fecha, hora (selector Android nativo de `input type=time`), repetición única, diaria, semanal, cada 2/3 días o **días concretos L-M-X-J-V-S-D**. Misiones soportadas: matemáticas, memoria, escribir una frase, toques, movimiento con acelerómetro, QR y dos rutinas combinadas.
 3. **Opciones:** posponer durante 1, 3, 5, 10 o 15 minutos; límite de 0, 1, 2, 3 o 5 veces. Configuración guardada por alarma en `AlarmOptionsStore`. Al detener una alarma se reinicia su contador.
 4. **Pantalla sonando:** se reutiliza `AlarmRingActivity` con estética nocturna y hora azul grande, manteniendo desafíos existentes, salida de seguridad y apertura sobre bloqueo cuando Android lo permite.
-5. **Ajustes:** pestaña propia para permisos, notificaciones, tono local, prueba rápida y acceso oficial a Reloj de Google.
+5. **Ajustes:** pestaña propia para permisos, notificaciones, tonos locales y prueba rápida.
 6. **Informe:** datos reales de `AlarmHistory` en los últimos 7 días (sonó, detenida, pospuesta), sin inventar estadísticas de sueño. Acceso al diario de sueño ya existente.
 7. **Portada:** vista compacta de próximas alarmas, que enlaza al editor sin repetir acciones avanzadas.
 
 ## Reglas de seguridad
 - La alarma no puede impedir apagar/desinstalar el teléfono mediante técnicas de evasión de Android. Se preserva la opción de detener sin desafío con confirmación.
-- El botón de YouTube Music delega en la aplicación Reloj de Google: no hay extracción de audio, streaming no autorizado ni reproducción oculta.
 - Solo se muestran misiones implementadas. No presentar caminar, sentadillas, reconocimiento de objetos en foto o combinaciones arbitrarias de 5 misiones como funcionales.
 - No se solicitarán permisos peligrosos adicionales para lograr el diseño. Los permisos de pantalla completa siguen bajo control de Android.
 - Al pausar una alarma no se borra el reto ni el QR. Al eliminarla sí se limpian.
@@ -40,4 +39,4 @@ Aplicar la claridad visual de alarmas de referencia suministradas por el usuario
 4. Pausar/reactivar una alarma QR y confirmar que el código se conserva.
 5. Editar y duplicar alarmas, y comprobar permisos de cuentas.
 6. Abrir Informe y confirmar que solo aparecen eventos reales, no horas de sueño inventadas.
-7. Usar el botón de Reloj y comprobar que el audio de YouTube Music permanece separado de las misiones NeuroSync.
+7. Seleccionar un tono local y comprobar reproducción, vibración y sonido de respaldo.
