@@ -838,9 +838,17 @@ function nsDragonRender(){
   image.alt='';
   image.decoding='async';
   image.onload=function(){if(image.parentNode===figure)figure.classList.add('has-sprite')};
-  image.onerror=function(){if(image.parentNode===figure)figure.removeChild(image)};
+  image.onerror=function(){
+   if(image.parentNode!==figure)return;
+   // Si falla una pose, volver a la ilustración base y finalmente al SVG.
+   if(image.src.indexOf('/poses/')!==-1&&!image.dataset.poseDisabled){
+    image.dataset.poseDisabled='true';
+    image.src='assets/dragon/etapa-'+(idx+1)+'.webp';
+   }else{figure.classList.remove('has-sprite');figure.removeChild(image)}
+  };
   image.src='assets/dragon/etapa-'+(idx+1)+'.webp';
   figure.appendChild(image);
+  nsDragonPoseSet(nsDragonActionState);
  }
  nsDragonCheckEvolution(idx);
  by('pet-face').setAttribute('aria-label',p.name+', '+spec.name);
@@ -1809,6 +1817,55 @@ var nsDragonActionState='idle';
 var nsDragonPending=[];
 var nsDragonDisplayedStage=null;
 var nsDragonStageOwner='';
+/* Selector de ocho poses Higgsfield para la evolución Cría (etapa 2).
+   Las demás cinco etapas siguen mostrando sus ilustraciones propias.
+   El cambio de fotogramas usa imágenes WebP locales, sin un render loop continuo. */
+var nsDragonPoseFrameTimer=null,nsDragonPoseBlinkTimer=null;
+var nsDragonPoseNames=['idle','blink','walk-a','walk-b','flap','sleep','eat','celebrate'];
+function nsDragonStopPoseTimers(){
+ if(nsDragonPoseFrameTimer!==null){clearInterval(nsDragonPoseFrameTimer);nsDragonPoseFrameTimer=null}
+ if(nsDragonPoseBlinkTimer!==null){clearTimeout(nsDragonPoseBlinkTimer);nsDragonPoseBlinkTimer=null}
+}
+function nsDragonPoseSet(state){
+ nsDragonStopPoseTimers();
+ var figure=by('pet-face');
+ if(!figure||figure.dataset.stage!=='1')return;
+ var image=figure.querySelector('img.ns-dragon-sprite');
+ if(!image||image.dataset.poseDisabled)return;
+ var reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ var hidden=document.hidden;
+ function use(name){
+  if(!image.isConnected||figure.dataset.stage!=='1'||image.dataset.poseDisabled)return;
+  if(image.dataset.poseName===name)return;
+  image.dataset.poseName=name;
+  image.src='assets/dragon/poses/'+name+'.webp';
+ }
+ if(reduced||hidden){use('idle');return}
+ if(state==='walk'){
+  var step=false;use('walk-a');
+  nsDragonPoseFrameTimer=setInterval(function(){step=!step;use(step?'walk-b':'walk-a')},340);
+ }else if(state==='idle'){
+  use('idle');
+  // Parpadeo ocasional; solo consume un temporizador cuando Azul está visible.
+  function blink(){
+   if(nsDragonActionState!=='idle'||document.hidden)return;
+   use('blink');
+   nsDragonPoseBlinkTimer=setTimeout(function(){
+    if(nsDragonActionState!=='idle')return;
+    use('idle');
+    nsDragonPoseBlinkTimer=setTimeout(blink,5200);
+   },170);
+  }
+  nsDragonPoseBlinkTimer=setTimeout(blink,5200);
+ }else{
+  var pose={sleep:'sleep',tired:'sleep',eat:'eat',play:'flap',celebrate:'celebrate',evolve:'flap'}[state]||'idle';
+  use(pose);
+ }
+}
+document.addEventListener('visibilitychange',function(){
+ if(session&&model)nsDragonPoseSet(nsDragonActionState);
+});
+
 var nsDragonAnimations={
  idle:{duration:0,priority:0},
  tired:{duration:0,priority:1},
@@ -1824,6 +1881,7 @@ function nsDragonSetState(state){
  nsDragonActionState=state;
  scene.dataset.dragonAction=state;
  scene.setAttribute('aria-label','Azul: '+state);
+ nsDragonPoseSet(state);
 }
 function nsDragonClearTimer(){
  if(nsDragonActionTimer!==null){clearTimeout(nsDragonActionTimer);nsDragonActionTimer=null}
