@@ -40,6 +40,12 @@ class DragonContract(unittest.TestCase):
         self.assertIn("p.xp+=Math.max(5", HTML)
         self.assertIn("nsDragonClaim(m.id)", HTML)
 
+    def test_celebration_is_gated_by_real_task_completion(self):
+        self.assertIn("if(awarded){nsDragonMessage(", HTML)
+        self.assertIn("nsDragonAnimate('celebrate')", HTML)
+        self.assertIn("nsDragonCheckEvolution(idx)", HTML)
+        self.assertIn("nsDragonPending", HTML)
+
     def test_higgsfield_sprites_all_six_exist(self):
         for stage in range(1, 7):
             asset = ROOT / "assets" / "dragon" / f"etapa-{stage}.webp"
