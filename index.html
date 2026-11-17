@@ -142,6 +142,14 @@
 @keyframes ns-dragon-focus{50%{transform:translateY(-3px) rotate(-2deg)}}
 @keyframes ns-dragon-rest{50%{transform:translateY(2px) scale(.99)}}
 @media(prefers-reduced-motion:reduce){.ns-dragon-scene[data-activity] .ns-dragon-figure{animation:none!important}}
+
+.ns-dragon-day-plan{margin-top:12px;max-width:480px;border-top:1px solid #d7e2fc;padding-top:10px}
+.ns-dragon-day-plan strong{font-size:13px;color:#253f7f}.ns-dragon-day-plan>.hint{font-size:11px;margin:7px 0}
+.ns-dragon-day-plan .btn.ghost{padding:6px 8px;min-height:30px;font-size:11px}
+.ns-dragon-day-row{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#fff9;border:1px solid #dbe5fb;border-radius:11px;padding:10px;margin-top:7px}
+.ns-dragon-day-row strong{font-size:12px;display:block}
+.ns-dragon-day-row small{font-size:11px;color:#526991;display:block;margin-top:3px}
+.ns-dragon-day-row>.btn{font-size:11px;padding:7px 9px;min-height:32px;flex-shrink:0}
 </style></head><body>
 <div id="login" class="login">
  <form id="login-form" class="card login-card">
@@ -193,7 +201,7 @@
    <button class="btn ghost" id="dragon-decorate" type="button">Personalizar</button>
   </div>
   <p class="ns-dragon-message" id="dragon-message" aria-live="polite">Estoy contigo. ¿Qué hacemos primero?</p>
-  <div class="ns-dragon-status" id="dragon-status">Un paso a la vez, sin presión.</div><div class="ns-dragon-coach" id="dragon-coach" aria-live="polite"></div>
+  <div class="ns-dragon-status" id="dragon-status">Un paso a la vez, sin presión.</div><div class="ns-dragon-coach" id="dragon-coach" aria-live="polite"></div><div class="ns-dragon-day-plan" id="dragon-day-plan"><div class="between"><strong>Mi compañero durante el día</strong><button class="btn ghost" id="dragon-advice-toggle" type="button">Silenciar consejos hoy</button></div><p class="hint">Sugerencias basadas en tus horarios, recordatorios y listas. Sin avisos invasivos.</p><div id="dragon-day-suggestions"></div></div>
  </div>
  <div class="ns-dragon-scene" id="dragon-scene" data-room="nest"><div class="ns-dragon-room-window"></div><div class="ns-dragon-room-floor"></div><span class="ns-dragon-companion-prop" id="dragon-companion-prop" aria-hidden="true"></span><div class="ns-dragon-room-prop" id="dragon-room-prop" aria-hidden="true">✦</div><div class="ns-dragon-glow"></div><div class="pet ns-dragon-figure" id="pet-face" role="img" aria-label="Dragón de productividad en evolución"></div><span class="ns-dragon-scenery" aria-hidden="true">✦</span></div>
  </div>
@@ -647,7 +655,7 @@ function nsDragonRender(){
  by('dragon-xp-label').textContent=next?p.xp+' / '+goal+' XP para evolucionar':p.xp+' XP · Evolución máxima';
  by('pet-detail').textContent=next?'Completa tareas y sesiones de concentración para ayudar a '+p.name+' a crecer.':'¡Evolución máxima! Puedes seguir reuniendo XP y cuidando a tu dragón.';
  by('stat-food').textContent=Math.floor(p.food);
- nsDragonQuestRender();nsDragonSyncActivity();nsDragonCoachRender();
+ nsDragonQuestRender();nsDragonSyncActivity();nsDragonCoachRender();nsDragonDayRender();
 }
 function nsDragonDailyProgress(){
  var date=day(),tasks=allTasks().filter(function(t){return t.owner===session.username&&!t.inbox&&(t.doneDates||[]).includes(date)&&(!t.repeat||t.repeat==='none'?t.date===date:nsTaskDueOn(t,date))});
@@ -810,7 +818,96 @@ function nsDragonBeginFocus(){
  nsDragonMessage('¡Empezamos! Tu dragón estudia contigo durante cinco minutos.',true)
 }
 
+
+/* Agenda contextual local: no solicita permisos de vigilancia ni crea notificaciones. */
+function nsDragonAdviceKey(){return 'ns_dragon_advice_v1_'+(session?session.username:'guest')}
+function nsDragonAdviceMuted(){
+ try{return localStorage.getItem(nsDragonAdviceKey())===day()}catch(e){return false}
+}
+function nsDragonToggleAdvice(){
+ if(!session)return;
+ if(nsDragonAdviceMuted())localStorage.removeItem(nsDragonAdviceKey());
+ else localStorage.setItem(nsDragonAdviceKey(),day());
+ nsDragonDayRender()
+}
+function nsDragonMinutesUntil(date,time){
+ if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(String(date||''))||!/^\\d{2}:\\d{2}$/.test(String(time||'')))return null;
+ var when=new Date(date+'T'+time+':00'),diff=(when.getTime()-Date.now())/60000;
+ return Number.isFinite(diff)?Math.ceil(diff):null
+}
+function nsDragonUpcomingAlarm(a){
+ if(!a||!a.date||!a.time)return null;
+ var repeat=a.repeat||(a.daily?'daily':'none'),when=new Date(a.date+'T'+a.time+':00');
+ if(!Number.isFinite(when.getTime()))return null;
+ var interval=repeat==='daily'?1:repeat==='weekly'?7:repeat==='every2'?2:repeat==='every3'?3:0;
+ if(interval){for(var n=0;n<1200&&when.getTime()<Date.now();n++)when.setDate(when.getDate()+interval)}
+ if(when.getTime()<Date.now())return null;
+ var minutes=Math.ceil((when.getTime()-Date.now())/60000);
+ return minutes>=0&&minutes<=120?minutes:null
+}
+function nsDragonDaySuggestions(){
+ if(!session||!model)return [];
+ var now=new Date(),hour=now.getHours(),result=[],candidates=allTasks().filter(function(t){
+  return !t.inbox&&!taskDone(t)&&t.time&&nsTaskDueOn(t,day())&&owned(t)
+ });
+ candidates.forEach(function(t){
+  var mins=nsDragonMinutesUntil(day(),t.time);
+  if(mins!==null&&mins>=-15&&mins<=90)result.push({kind:'task',ref:t.id,rank:mins<=15?0:1,minute:mins,
+   title:mins<=0?'Es momento de tu actividad':'Actividad dentro de '+mins+' min',
+   detail:t.title+' · '+t.time,action:'Preparar paso'});
+ });
+ (model.alarms||[]).filter(function(a){return !a.deleted&&owned(a)}).forEach(function(a){
+  var mins=nsDragonUpcomingAlarm(a);
+  if(mins!==null&&mins<=60&&!String(a.id).startsWith('task_'))result.push({kind:'alarm',ref:a.id,rank:2,minute:mins,title:'Recordatorio cercano',detail:a.title+' · en '+mins+' min',action:'Ver alarmas'});
+ });
+ if(hour>=5&&hour<=20){
+  active(model.packs||[]).filter(owned).forEach(function(b){
+   var pending=(b.items||[]).filter(function(x,i){return !(b.checked||{})[i]}).length;
+   if(pending)result.push({kind:'bag',ref:b.id,rank:3,minute:500,
+     title:'Lista para salir: '+b.place,detail:pending+' objeto'+(pending===1?'':'s')+' por revisar',action:'Revisar lista'})
+  });
+ }
+ if(!result.length){
+  if(nsFocusState)result.push({kind:'focus',rank:4,minute:0,title:'Tiempo de concentración',detail:nsFocusState.running?'Tu sesión está activa.':'Tu sesión está en pausa.',action:'Ver enfoque'});
+  else if(hour>=21||hour<6)result.push({kind:'rest',rank:5,minute:0,title:'Momento de descanso',detail:'Puedes registrar tu sueño o preparar mañana con calma.',action:'Mi progreso'});
+  else{
+   var next=nsDragonSuggestedTasks()[0];
+   result.push(next?{kind:'task',ref:next.id,rank:4,minute:0,title:'Una misión sencilla',detail:nextStep(next).label,action:'Elegir paso'}:
+     {kind:'rest',rank:5,minute:0,title:'Estás al día',detail:'Sin tareas urgentes. Puedes descansar o planificar algo nuevo.',action:'Mi progreso'});
+  }
+ }
+ return result.sort(function(a,b){return a.rank-b.rank||a.minute-b.minute}).slice(0,3)
+}
+function nsDragonDayAction(item){
+ if(item.kind==='task'){
+  var t=allTasks().find(function(x){return x.id===item.ref});
+  if(!t||!owned(t)){nsDragonDayRender();return}
+  model.focusId=t.id;save();renderFocus();nsDragonCoachRender();
+  nsDragonMessage('Prepararemos este paso: '+nextStep(t).label,true);return;
+ }
+ if(item.kind==='bag'){show('bags');nsDragonMessage('Revisa tus objetos antes de salir.',true);return}
+ if(item.kind==='alarm'){show('alarms');return}
+ if(item.kind==='focus'){show('home');nsDragonBeginFocus();return}
+ if(item.kind==='rest'){show('habits');return}
+}
+function nsDragonDayRender(){
+ if(!session||!model)return;
+ var area=by('dragon-day-suggestions'),toggle=by('dragon-advice-toggle');if(!area||!toggle)return;
+ area.replaceChildren();var muted=nsDragonAdviceMuted();
+ toggle.textContent=muted?'Activar consejos':'Silenciar consejos hoy';
+ if(muted){var p=document.createElement('p');p.className='hint';p.textContent='Los consejos están pausados hasta mañana. Tus alarmas y tareas siguen funcionando.';area.append(p);return}
+ nsDragonDaySuggestions().forEach(function(item){
+  var row=document.createElement('div');row.className='ns-dragon-day-row';
+  var info=document.createElement('div'),title=document.createElement('strong'),detail=document.createElement('small');
+  title.textContent=item.title;detail.textContent=item.detail;info.append(title,detail);
+  var btn=document.createElement('button');btn.className='btn secondary';btn.type='button';btn.textContent=item.action;
+  btn.onclick=function(){nsDragonDayAction(item)};
+  row.append(info,btn);area.append(row)
+ });
+}
+
 function nsDragonInit(){
+ by('dragon-advice-toggle').onclick=nsDragonToggleAdvice;
  by('dragon-room-select').onchange=function(){nsDragonSelectRoom(this.value)};
  by('dragon-furniture-select').onchange=function(){nsDragonSelectFurniture(this.value)};
  by('dragon-scene').onclick=function(){nsDragonMessage('¡Qué gusto verte! Sigamos a nuestro ritmo.',true)};
@@ -921,7 +1018,7 @@ function nsFocusRender(){
  by('ns-focus-hint').textContent=state?'Tiempo registrado: '+Math.floor(nsFocusElapsed()/60000)+' minutos · Puedes pausar cuando lo necesites.':'Selecciona una duración y una tarea.';
  var ring=by('focus-studio').querySelector('.ns-focus-ring');ring.style.setProperty('--ns-progress',(100*nsFocusElapsed()/total).toFixed(1)+'%');
  document.querySelectorAll('[data-focus-minutes]').forEach(function(b){b.classList.toggle('selected',Number(b.dataset.focusMinutes)===(state?state.duration:nsFocusDuration));b.disabled=!!state});
- nsDragonSyncActivity();nsDragonCoachRender();
+ nsDragonSyncActivity();nsDragonCoachRender();nsDragonDayRender();
 }
 function nsFocusSaveSession(completed){
  if(!nsFocusState||!session)return;
