@@ -128,6 +128,20 @@
 @keyframes ns-dragon-blink{0%,43%,46%,100%{transform:scaleY(1)}44%{transform:scaleY(.14)}}
 @keyframes ns-dragon-aura{0%,100%{opacity:.75;transform:scale(1)}50%{opacity:1;transform:scale(1.07)}}
 @media(prefers-reduced-motion:reduce){.ns-dragon-glow,.ns-dragon-wing,.ns-dragon-eye{animation:none!important}}
+
+.ns-dragon-companion-prop{position:absolute;z-index:3;left:8px;bottom:17px;font-size:32px;min-height:37px;pointer-events:none}
+.ns-dragon-scene[data-activity="studying"] .ns-dragon-figure{animation:ns-dragon-focus 4.8s ease-in-out infinite}
+.ns-dragon-scene[data-activity="resting"] .ns-dragon-figure{animation:ns-dragon-rest 5.2s ease-in-out infinite}
+.ns-dragon-scene[data-activity="resting"] .ns-dragon-glow{opacity:.4}
+.ns-dragon-coach{display:grid;gap:6px;max-width:410px;padding-top:10px}
+.ns-dragon-coach>strong{font-size:13px;color:#253f7f}.ns-dragon-coach>.hint{margin:0 0 4px;font-size:12px}
+.ns-dragon-mission-choice{border:1px solid #d9e3fa;border-radius:11px;text-align:left;padding:8px 11px;background:#fff9;color:#253963;cursor:pointer;display:grid;gap:3px}
+.ns-dragon-mission-choice.selected{border-color:#6c89ec;background:#e5edff}
+.ns-dragon-mission-choice span{font-size:12px;font-weight:700}
+.ns-dragon-mission-choice small{font-size:11px;color:#576b96}
+@keyframes ns-dragon-focus{50%{transform:translateY(-3px) rotate(-2deg)}}
+@keyframes ns-dragon-rest{50%{transform:translateY(2px) scale(.99)}}
+@media(prefers-reduced-motion:reduce){.ns-dragon-scene[data-activity] .ns-dragon-figure{animation:none!important}}
 </style></head><body>
 <div id="login" class="login">
  <form id="login-form" class="card login-card">
@@ -172,16 +186,16 @@
   <div class="ns-dragon-actions">
    <button class="btn" id="pet-feed" type="button">🍎 Alimentar · 20</button>
    <button class="btn secondary" id="dragon-pet" type="button">♡ Acariciar</button>
-   <button class="btn secondary" id="dragon-next" type="button">Mi siguiente paso</button>
+   <button class="btn secondary" id="dragon-next" type="button">Mi siguiente paso</button><button class="btn secondary" id="dragon-start-focus" type="button">Iniciar 5 min juntos</button>
   </div>
   <div class="ns-dragon-actions">
    <button class="btn ghost" id="dragon-name" type="button">Cambiar nombre</button>
    <button class="btn ghost" id="dragon-decorate" type="button">Personalizar</button>
   </div>
   <p class="ns-dragon-message" id="dragon-message" aria-live="polite">Estoy contigo. ¿Qué hacemos primero?</p>
-  <div class="ns-dragon-status" id="dragon-status">Un paso a la vez, sin presión.</div>
+  <div class="ns-dragon-status" id="dragon-status">Un paso a la vez, sin presión.</div><div class="ns-dragon-coach" id="dragon-coach" aria-live="polite"></div>
  </div>
- <div class="ns-dragon-scene" id="dragon-scene" data-room="nest"><div class="ns-dragon-room-window"></div><div class="ns-dragon-room-floor"></div><div class="ns-dragon-room-prop" id="dragon-room-prop" aria-hidden="true">✦</div><div class="ns-dragon-glow"></div><div class="pet ns-dragon-figure" id="pet-face" role="img" aria-label="Dragón de productividad en evolución"></div><span class="ns-dragon-scenery" aria-hidden="true">✦</span></div>
+ <div class="ns-dragon-scene" id="dragon-scene" data-room="nest"><div class="ns-dragon-room-window"></div><div class="ns-dragon-room-floor"></div><span class="ns-dragon-companion-prop" id="dragon-companion-prop" aria-hidden="true"></span><div class="ns-dragon-room-prop" id="dragon-room-prop" aria-hidden="true">✦</div><div class="ns-dragon-glow"></div><div class="pet ns-dragon-figure" id="pet-face" role="img" aria-label="Dragón de productividad en evolución"></div><span class="ns-dragon-scenery" aria-hidden="true">✦</span></div>
  </div>
      <div class="card ns-dragon-quest-card">
        <div class="between"><h2>La guarida de tu dragón</h2><span class="chip" id="dragon-quest-date">Mis misiones</span></div>
@@ -633,7 +647,7 @@ function nsDragonRender(){
  by('dragon-xp-label').textContent=next?p.xp+' / '+goal+' XP para evolucionar':p.xp+' XP · Evolución máxima';
  by('pet-detail').textContent=next?'Completa tareas y sesiones de concentración para ayudar a '+p.name+' a crecer.':'¡Evolución máxima! Puedes seguir reuniendo XP y cuidando a tu dragón.';
  by('stat-food').textContent=Math.floor(p.food);
- nsDragonQuestRender();
+ nsDragonQuestRender();nsDragonSyncActivity();nsDragonCoachRender();
 }
 function nsDragonDailyProgress(){
  var date=day(),tasks=allTasks().filter(function(t){return t.owner===session.username&&!t.inbox&&(t.doneDates||[]).includes(date)&&(!t.repeat||t.repeat==='none'?t.date===date:nsTaskDueOn(t,date))});
@@ -737,6 +751,60 @@ function nsDragonSelectFurniture(id){
  }
  p.furniture=id;save();nsDragonRender();nsDragonMessage('¡Nuestra habitación se ve genial!',true)
 }
+
+/* Acompañamiento en tiempo real: solo datos de tareas y enfoque de la cuenta activa. */
+function nsDragonActivity(){
+ if(!session||!nsFocusState)return 'ready';
+ return nsFocusState.running?'studying':'resting';
+}
+function nsDragonSyncActivity(){
+ var scene=by('dragon-scene'),prop=by('dragon-companion-prop');
+ if(!scene||!prop)return;
+ var mode=nsDragonActivity();
+ if(scene.dataset.activity!==mode){
+  scene.dataset.activity=mode;
+  prop.textContent=mode==='studying'?'📖':mode==='resting'?'💤':'';
+ }
+}
+function nsDragonSuggestedTasks(){
+ if(!session||!model)return [];
+ var energy={low:0,medium:1,high:2};
+ return actionable().filter(function(t){return t.owner===session.username})
+  .sort(function(a,b){return (energy[a.energy]??1)-(energy[b.energy]??1)||
+   priorityScore(a)-priorityScore(b)||(a.time||'99:99').localeCompare(b.time||'99:99')}).slice(0,3);
+}
+function nsDragonCoachRender(){
+ if(!session||!model)return;
+ var root=by('dragon-coach');if(!root)return;
+ root.replaceChildren();
+ var mode=nsDragonActivity(),suggestions=nsDragonSuggestedTasks();
+ var title=document.createElement('strong');
+ title.textContent=mode==='studying'?'Estudiando juntos':mode==='resting'?'Descanso consciente':'Tu siguiente misión';
+ root.append(title);
+ var detail=document.createElement('p');detail.className='hint';
+ detail.textContent=mode==='studying'?'Tu dragón lee mientras tú te concentras.':mode==='resting'?'Tu dragón también descansa; retoma cuando quieras.':!suggestions.length?'No hay tareas pendientes para hoy. Puedes descansar.':'Elige un paso pequeño. No tienes que hacerlo todo de una vez.';
+ root.append(detail);
+ if(mode!=='ready')return;
+ suggestions.forEach(function(t){
+  var button=document.createElement('button');button.type='button';button.className='ns-dragon-mission-choice';
+  var label=document.createElement('span');label.textContent=t.title;
+  var step=document.createElement('small');step.textContent=nextStep(t).label;
+  button.append(label,step);if(model.focusId===t.id)button.classList.add('selected');
+  button.onclick=function(){model.focusId=t.id;save();renderFocus();nsDragonCoachRender();nsDragonMessage('Empecemos por: '+nextStep(t).label,true)};
+  root.append(button)
+ });
+}
+function nsDragonBeginFocus(){
+ if(!session||!model)return;
+ if(nsFocusState){nsDragonMessage(nsFocusState.running?'Ya estamos concentrándonos.':'Tu sesión está en pausa. Retómala desde Concentración.',true);return}
+ var items=nsDragonSuggestedTasks(),task=items.find(function(t){return t.id===model.focusId})||items[0];
+ if(!task){nsDragonMessage('No tienes tareas para hoy. Puedes descansar o crear una nueva.',true);return}
+ model.focusId=task.id;nsFocusDuration=5;
+ nsFocusState={duration:5,taskId:task.id,elapsed:0,since:Date.now(),running:true};
+ nsFocusPersist();nsFocusRender();save();
+ nsDragonMessage('¡Empezamos! Tu dragón estudia contigo durante cinco minutos.',true)
+}
+
 function nsDragonInit(){
  by('dragon-room-select').onchange=function(){nsDragonSelectRoom(this.value)};
  by('dragon-furniture-select').onchange=function(){nsDragonSelectFurniture(this.value)};
@@ -749,9 +817,10 @@ function nsDragonInit(){
   save();nsDragonMessage('¡Gracias por la caricia! Me encanta acompañarte. ♡',true)
  };
  by('dragon-next').onclick=function(){
-  var t=actionable()[0];if(!t){nsDragonMessage('Hoy estás al día. ¿Quieres planificar algo nuevo?',true);return}
-  model.focusId=t.id;save();renderFocus();nsDragonMessage('Empecemos con: '+nextStep(t).label,true)
+  var t=nsDragonSuggestedTasks()[0];if(!t){nsDragonMessage('Estás al día. Puedes descansar o planificar algo nuevo.',true);return}
+  model.focusId=t.id;save();renderFocus();nsDragonCoachRender();nsDragonMessage('Empecemos con: '+nextStep(t).label,true)
  };
+ by('dragon-start-focus').onclick=nsDragonBeginFocus;
  by('dragon-name').onclick=async function(){
   var p=nsDragonData(),name=await nsPrompt('Nombre de tu dragón',p.name,{message:'Elige un nombre de máximo 18 caracteres.'});
   if(name===null)return;name=String(name).trim().slice(0,18);if(!name){say('Escribe un nombre');return}
@@ -847,6 +916,7 @@ function nsFocusRender(){
  by('ns-focus-hint').textContent=state?'Tiempo registrado: '+Math.floor(nsFocusElapsed()/60000)+' minutos · Puedes pausar cuando lo necesites.':'Selecciona una duración y una tarea.';
  var ring=by('focus-studio').querySelector('.ns-focus-ring');ring.style.setProperty('--ns-progress',(100*nsFocusElapsed()/total).toFixed(1)+'%');
  document.querySelectorAll('[data-focus-minutes]').forEach(function(b){b.classList.toggle('selected',Number(b.dataset.focusMinutes)===(state?state.duration:nsFocusDuration));b.disabled=!!state});
+ nsDragonSyncActivity();nsDragonCoachRender();
 }
 function nsFocusSaveSession(completed){
  if(!nsFocusState||!session)return;
