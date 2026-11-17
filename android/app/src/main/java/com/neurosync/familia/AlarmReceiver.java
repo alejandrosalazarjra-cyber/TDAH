@@ -30,6 +30,23 @@ public final class AlarmReceiver extends BroadcastReceiver {
   return PendingIntent.getBroadcast(ctx,id.hashCode(),intent,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
  }
  private static AlarmManager manager(Context ctx){return (AlarmManager)ctx.getSystemService(Context.ALARM_SERVICE);}
+ /** Avanza calendariamente conservando la hora local (incluido horario de verano). */
+ static long nextRepeat(long previous,String repeat,long now){
+  if(previous<=0)return -1;
+  int unit,amount;
+  if("weekly".equals(repeat)){unit=java.util.Calendar.WEEK_OF_YEAR;amount=1;}
+  else if("daily".equals(repeat)){unit=java.util.Calendar.DAY_OF_YEAR;amount=1;}
+  else if("every2".equals(repeat)){unit=java.util.Calendar.DAY_OF_YEAR;amount=2;}
+  else if("every3".equals(repeat)){unit=java.util.Calendar.DAY_OF_YEAR;amount=3;}
+  else return -1;
+  java.util.Calendar calendar=java.util.Calendar.getInstance();
+  calendar.setTimeInMillis(previous);
+  // Evita loops no acotados para relojes mal configurados o datos corruptos.
+  for(int count=0;count<50000 && calendar.getTimeInMillis()<=now;count++){
+   calendar.add(unit,amount);
+  }
+  return calendar.getTimeInMillis()>now?calendar.getTimeInMillis():-1;
+ }
  public static boolean schedule(Context ctx,String id,String title,long at,boolean daily){
    return scheduleRepeat(ctx,id,title,at,daily?"daily":"none");
  }
@@ -38,12 +55,15 @@ public final class AlarmReceiver extends BroadcastReceiver {
    if(id==null||id.length()<2||id.length()>100||at<=0)return false;
    if(title==null||title.trim().isEmpty())title="Recordatorio";
    long when=at;
-   long interval="weekly".equals(repeat)?604800000L:"daily".equals(repeat)?86400000L:"every2".equals(repeat)?172800000L:"every3".equals(repeat)?259200000L:0L;
-   if(interval>0)while(when<=System.currentTimeMillis())when+=interval;
+   if(!"none".equals(repeat)){
+    long next=nextRepeat(when,repeat,System.currentTimeMillis());
+    if(next>0)when=next;
+   }
    if(when<=System.currentTimeMillis())return false;
    JSONObject entry=new JSONObject().put("id",id).put("title",title).put("when",when).put("repeat",repeat);
+   if(!program(ctx,id,when))return false;
    ctx.getSharedPreferences("ns_alarms",0).edit().putString(PREFIX+id,entry.toString()).apply();
-   return program(ctx,id,when);
+   return true;
   }catch(Exception e){return false;}
  }
  private static boolean program(Context ctx,String id,long when){
@@ -95,16 +115,28 @@ public final class AlarmReceiver extends BroadcastReceiver {
   }catch(Exception ignored){}
  }
  private static void restore(Context ctx){
+  long now=System.currentTimeMillis();
   for(Map.Entry<String,?> row:ctx.getSharedPreferences("ns_alarms",0).getAll().entrySet()){
    if(!row.getKey().startsWith(PREFIX))continue;
    try{
     JSONObject a=new JSONObject((String)row.getValue());
-    String id=a.getString("id");long when=a.getLong("when");
+    String id=a.getString("id");
+    long when=a.getLong("when");
     String repeat=a.optString("repeat",a.optBoolean("daily")?"daily":"none");
-    long interval="weekly".equals(repeat)?604800000L:"daily".equals(repeat)?86400000L:"every2".equals(repeat)?172800000L:"every3".equals(repeat)?259200000L:0L;
-    if(interval>0)while(when<=System.currentTimeMillis())when+=interval;
-    if(when>System.currentTimeMillis())program(ctx,id,when);
-   }catch(Exception ignored){}
+    if(when<=now && !"none".equals(repeat)){
+      when=nextRepeat(when,repeat,now);
+      if(when>now){
+       a.put("when",when);
+       ctx.getSharedPreferences("ns_alarms",0).edit().putString(PREFIX+id,a.toString()).apply();
+      }
+    }
+    if(when>now)program(ctx,id,when);
+    else if("none".equals(repeat)){
+      // Una alarma pasada no se repite automáticamente; conservar datos para
+      // que el usuario pueda revisarla sin inventar una nueva fecha.
+      android.util.Log.i("DrakoPlan","Alarma antigua sin repetición: "+id);
+    }
+   }catch(Exception ex){android.util.Log.w("DrakoPlan","No se pudo restaurar una alarma",ex);}
   }
  }
  private static void channel(Context ctx){
@@ -119,7 +151,10 @@ public final class AlarmReceiver extends BroadcastReceiver {
  }
  @Override public void onReceive(Context ctx,Intent intent){
   if(intent==null)return;
-  if(Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction()) || AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED.equals(intent.getAction())){restore(ctx);return;}
+  if(Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())
+    || Intent.ACTION_TIME_CHANGED.equals(intent.getAction())
+    || Intent.ACTION_TIMEZONE_CHANGED.equals(intent.getAction())
+    || AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED.equals(intent.getAction())){restore(ctx);return;}
   if(DISMISS.equals(intent.getAction())){
     String alarmId=intent.getStringExtra("id");
     if("none".equals(AlarmChallengeStore.get(ctx,alarmId)))dismiss(ctx,alarmId);
@@ -161,13 +196,14 @@ public final class AlarmReceiver extends BroadcastReceiver {
    catch(Exception e){android.util.Log.e("NeuroSync","No se pudo iniciar audio en segundo plano",e);}
 
    String repeat=a.optString("repeat",a.optBoolean("daily")?"daily":"none");
-   long interval="weekly".equals(repeat)?604800000L:"daily".equals(repeat)?86400000L:"every2".equals(repeat)?172800000L:"every3".equals(repeat)?259200000L:0L;
-   if(interval>0 && FIRE.equals(intent.getAction())){
-    long next=a.optLong("when")+interval;
-    while(next<=System.currentTimeMillis())next+=interval;
-    a.put("when",next);
-    ctx.getSharedPreferences("ns_alarms",0).edit().putString(PREFIX+id,a.toString()).apply();
-    program(ctx,id,next);
+   if(!"none".equals(repeat) && FIRE.equals(intent.getAction())){
+    long next=nextRepeat(a.optLong("when"),repeat,System.currentTimeMillis());
+    if(next>System.currentTimeMillis() && program(ctx,id,next)){
+      a.put("when",next);
+      ctx.getSharedPreferences("ns_alarms",0).edit().putString(PREFIX+id,a.toString()).apply();
+    }else{
+      android.util.Log.e("DrakoPlan","No se pudo programar la siguiente repetición: "+id);
+    }
    }else{
     // Se mantiene el registro hasta detenerla, para permitir posponer.
    }
