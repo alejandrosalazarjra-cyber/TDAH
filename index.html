@@ -288,6 +288,12 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
 @keyframes ns-azul-evolve{0%{transform:scale(.83);opacity:.45;filter:brightness(2)}38%{transform:scale(1.14);opacity:1;filter:brightness(1.8)}70%{transform:scale(.98);filter:brightness(1.2)}100%{transform:scale(1);filter:brightness(1)}}
 @keyframes ns-azul-evolve-glow{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.32)}}
 @media(prefers-reduced-motion:reduce){.ns-dragon-scene .ns-dragon-figure.has-sprite,.ns-dragon-scene .ns-dragon-glow{animation:none!important;transition:none!important}}
+
+/* Atlas compatible con imágenes evolutivas: ocho celdas 4×2. */
+.ns-dragon-figure .ns-dragon-atlas{display:none;width:100%;max-width:220px;aspect-ratio:1/1;background-repeat:no-repeat;background-size:400% 200%;background-position:0% 0%;margin:auto;filter:drop-shadow(0 6px 8px #12276455)}
+.ns-dragon-figure.has-atlas .ns-dragon-atlas{display:block}
+.ns-dragon-figure.has-atlas > .ns-dragon-sprite,.ns-dragon-figure.has-atlas > svg{display:none}
+@media(prefers-reduced-motion:reduce){.ns-dragon-figure.has-atlas,.ns-dragon-figure.has-atlas .ns-dragon-atlas{animation:none!important;transition:none!important}}
 </style></head><body>
 <div id="login" class="login ns-login-v3">
  <div class="ns-login-wrap">
@@ -831,13 +837,13 @@ function nsDragonRender(){
  if(figure.dataset.stage!==String(idx)||figure.dataset.accessory!==p.accessory){
   figure.dataset.stage=String(idx);
   figure.dataset.accessory=p.accessory;
-  figure.classList.remove('has-sprite');
+  figure.classList.remove('has-sprite','has-atlas');
   figure.innerHTML=nsDragonSvg(idx,p.accessory); // SVG seguro si falla WebP.
   var image=document.createElement('img');
   image.className='ns-dragon-sprite';
   image.alt='';
   image.decoding='async';
-  image.onload=function(){if(image.parentNode===figure)figure.classList.add('has-sprite')};
+  image.onload=function(){if(image.parentNode===figure){figure.classList.add('has-sprite');nsDragonPoseSet(nsDragonActionState)}};
   image.onerror=function(){
    if(image.parentNode!==figure)return;
    // Si falla una pose, volver a la ilustración base y finalmente al SVG.
@@ -1820,46 +1826,78 @@ var nsDragonStageOwner='';
 /* Selector de ocho poses Higgsfield para la evolución Cría (etapa 2).
    Las demás cinco etapas siguen mostrando sus ilustraciones propias.
    El cambio de fotogramas usa imágenes WebP locales, sin un render loop continuo. */
+/* Un atlas por evolución (4 columnas × 2 filas; 8 poses; WebP RGBA).
+   Fuente: variantes generadas con referencias recortadas de cada etapa aprobada.
+   El dibujo base de la evolución se conserva como fallback si no carga el atlas. */
 var nsDragonPoseFrameTimer=null,nsDragonPoseBlinkTimer=null;
 var nsDragonPoseNames=['idle','blink','walk-a','walk-b','flap','sleep','eat','celebrate'];
+var nsDragonAtlasCache={};
 function nsDragonStopPoseTimers(){
  if(nsDragonPoseFrameTimer!==null){clearInterval(nsDragonPoseFrameTimer);nsDragonPoseFrameTimer=null}
  if(nsDragonPoseBlinkTimer!==null){clearTimeout(nsDragonPoseBlinkTimer);nsDragonPoseBlinkTimer=null}
 }
+function nsDragonAtlasFrame(figure,idx){
+ var tile=figure.querySelector('.ns-dragon-atlas');
+ if(!tile)return;
+ idx=Math.max(0,Math.min(7,Number(idx)||0));
+ tile.style.backgroundPosition=((idx%4)*100/3)+'% '+(Math.floor(idx/4)*100)+'%';
+ tile.dataset.pose=nsDragonPoseNames[idx];
+}
 function nsDragonPoseSet(state){
  nsDragonStopPoseTimers();
  var figure=by('pet-face');
- if(!figure||figure.dataset.stage!=='1')return;
- var image=figure.querySelector('img.ns-dragon-sprite');
- if(!image||image.dataset.poseDisabled)return;
- var reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
- var hidden=document.hidden;
- function use(name){
-  if(!image.isConnected||figure.dataset.stage!=='1'||image.dataset.poseDisabled)return;
-  if(image.dataset.poseName===name)return;
-  image.dataset.poseName=name;
-  image.src='assets/dragon/poses/'+name+'.webp';
+ if(!figure||!session||!model)return;
+ var index=Number(figure.dataset.stage);
+ if(!Number.isInteger(index)||index<0||index>5)return;
+ var key=String(index+1);
+ var url='assets/dragon/atlases/etapa-'+key+'.webp';
+ var tile=figure.querySelector('.ns-dragon-atlas');
+ if(!tile){
+  var status=nsDragonAtlasCache[key];
+  if(status==='failed')return;
+  if(status!=='loaded'){
+   if(status!=='loading'){
+    nsDragonAtlasCache[key]='loading';
+    var preload=new Image();
+    preload.onload=function(){
+     nsDragonAtlasCache[key]='loaded';
+     if(figure.isConnected&&figure.dataset.stage===String(index))nsDragonPoseSet(nsDragonActionState);
+    };
+    preload.onerror=function(){nsDragonAtlasCache[key]='failed'};
+    preload.src=url;
+   }
+   return;
+  }
+  tile=document.createElement('span');
+  tile.className='ns-dragon-atlas';
+  tile.setAttribute('aria-hidden','true');
+  tile.style.backgroundImage='url("'+url+'")';
+  figure.appendChild(tile);
+  figure.classList.add('has-atlas');
  }
- if(reduced||hidden){use('idle');return}
+ var reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ if(reduced||document.hidden){nsDragonAtlasFrame(figure,0);return}
  if(state==='walk'){
-  var step=false;use('walk-a');
-  nsDragonPoseFrameTimer=setInterval(function(){step=!step;use(step?'walk-b':'walk-a')},340);
+  var step=0;nsDragonAtlasFrame(figure,2);
+  nsDragonPoseFrameTimer=setInterval(function(){
+   if(!session||!model||document.hidden){nsDragonStopPoseTimers();return}
+   step=1-step;nsDragonAtlasFrame(figure,step?3:2)
+  },340);
  }else if(state==='idle'){
-  use('idle');
-  // Parpadeo ocasional; solo consume un temporizador cuando Azul está visible.
+  nsDragonAtlasFrame(figure,0);
   function blink(){
    if(!session||!model||nsDragonActionState!=='idle'||document.hidden)return;
-   use('blink');
+   nsDragonAtlasFrame(figure,1);
    nsDragonPoseBlinkTimer=setTimeout(function(){
-    if(nsDragonActionState!=='idle')return;
-    use('idle');
-    nsDragonPoseBlinkTimer=setTimeout(blink,5200);
+    if(!session||!model||nsDragonActionState!=='idle')return;
+    nsDragonAtlasFrame(figure,0);
+    nsDragonPoseBlinkTimer=setTimeout(blink,4800);
    },170);
   }
-  nsDragonPoseBlinkTimer=setTimeout(blink,5200);
+  nsDragonPoseBlinkTimer=setTimeout(blink,4800);
  }else{
-  var pose={sleep:'sleep',tired:'sleep',eat:'eat',play:'flap',celebrate:'celebrate',evolve:'flap'}[state]||'idle';
-  use(pose);
+  var idx={tired:5,sleep:5,eat:6,play:4,celebrate:7,evolve:4}[state];
+  nsDragonAtlasFrame(figure,idx===undefined?0:idx);
  }
 }
 document.addEventListener('visibilitychange',function(){
