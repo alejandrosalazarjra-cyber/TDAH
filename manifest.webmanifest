@@ -1,12 +1,12 @@
 {
   "name": "NeuroSync · Organizador familiar",
   "short_name": "NeuroSync",
-  "description": "Agenda, mascota y rutinas familiares",
+  "description": "NeuroSync: organización familiar, enfoque, alarmas y dragón evolutivo.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#05050A",
-  "theme_color": "#7C4DFF",
+  "background_color": "#F4FAFF",
+  "theme_color": "#096AB8",
   "icons": [
     {
       "src": "./icon.svg",
