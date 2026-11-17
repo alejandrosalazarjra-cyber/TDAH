@@ -1915,8 +1915,8 @@ e.querySelector('.btn').onclick=function(){b.checked={};mark(b);save();render()}
 function renderBags(){fill('bags-list',active(model.packs).filter(owned),bagItem,'Crea una lista para tu próxima salida.')}
 /* Próxima alarma: cálculo por fechas locales sin sumar 24 h fijas. */
 function nsNextAlarmDate(a,now){
- if(!a||a.enabled===false||a.deleted||!/^\\d{4}-\\d{2}-\\d{2}$/.test(a.date||'')||
-    !/^\\d{2}:\\d{2}$/.test(a.time||''))return null;
+ if(!a||a.enabled===false||a.deleted||!/^\d{4}-\d{2}-\d{2}$/.test(a.date||'')||
+    !/^\d{2}:\d{2}$/.test(a.time||''))return null;
  var dates=a.date.split('-').map(Number),hours=a.time.split(':').map(Number);
  var date=new Date(dates[0],dates[1]-1,dates[2],hours[0],hours[1],0,0);
  if(!Number.isFinite(date.getTime()))return null;
@@ -1964,7 +1964,8 @@ function nsAlarmToggle(a){
   }
   a.enabled=true;
  }else{
-  if(nat&&nat.cancelAlarm)nat.cancelAlarm(a.id);
+  if(nat&&nat.pauseAlarm)nat.pauseAlarm(a.id);
+  else if(nat&&nat.cancelAlarm)nat.cancelAlarm(a.id);
   a.enabled=false;
  }
  mark(a);save();render();
@@ -1995,9 +1996,10 @@ function nsAlarmEdit(a){
    say('Android no pudo actualizar la alarma');return
   }
   // No mutar la fuente hasta comprobar la programación nativa.
+  var previousChallenge=a.challenge;
   Object.assign(a,next);
   if(v.challenge==='qr'&&v.qrValue&&nat&&nat.setAlarmQrCode)nat.setAlarmQrCode(a.id,v.qrValue);
-  if(v.challenge!=='qr'&&nat&&nat.setAlarmQrCode)nat.setAlarmQrCode(a.id,'');
+  if(v.challenge!=='qr'&&previousChallenge==='qr'&&nat&&nat.setAlarmQrCode)nat.setAlarmQrCode(a.id,'');
   save();closeModal();render();say('Alarma actualizada');
  };
 }
@@ -2217,6 +2219,7 @@ window.neuroQrEnrollment=function(raw){
  say('QR de referencia capturado');
 };
 function scheduleAlarm(a){
+ if(a.enabled===false)return false;
  if(!nat||(!nat.scheduleAlarm&&!nat.scheduleAlarmRepeat))return false;
  var dateText=String(a.date||''),timeText=String(a.time||'');
  if(!/^\d{4}-\d{2}-\d{2}$/.test(dateText)||!/^\d{2}:\d{2}$/.test(timeText)){
