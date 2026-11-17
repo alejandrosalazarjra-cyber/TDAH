@@ -1604,9 +1604,41 @@ function nsDialog(o){return new Promise(function(resolve){
 function nsConfirm(title,message,ok){return nsDialog({title:title,message:message,ok:ok||'Confirmar'})}
 function nsPrompt(title,value,extra){return nsDialog(Object.assign({title:title,value:value||'',input:true,ok:'Guardar'},extra||{}))}
 function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+/* Fase 1: recuperación local versionada. Los datos corruptos jamás se borran silenciosamente. */
+function nsValidModel(x){return x&&typeof x==='object'&&!Array.isArray(x)&&Array.isArray(x.tasks)&&Array.isArray(x.packs)&&Array.isArray(x.alarms)&&x.pet&&typeof x.pet==='object'}
+function nsReadModel(raw){if(!raw)return null;try{var v=JSON.parse(raw);return nsValidModel(v)?v:null}catch(e){return null}}
+function nsLocalSave(data){
+ if(!session||!nsValidModel(data))throw Error('Datos no válidos');
+ var key=localKey(),previous=localStorage.getItem(key),old=nsReadModel(previous);
+ var json=JSON.stringify(data);
+ if(old&&previous!==json)localStorage.setItem(key+'_anterior',previous);
+ if(old&&Date.now()-Number(localStorage.getItem(key+'_recovery_at')||0)>900000){
+  localStorage.setItem(key+'_rescate',previous);
+  localStorage.setItem(key+'_recovery_at',String(Date.now()));
+ }
+ localStorage.setItem(key,json);
+ if(localStorage.getItem(key)!==json)throw Error('No se pudo verificar el guardado');
+ return true;
+}
 function load(){
-try{var saved=JSON.parse(localStorage.getItem(localKey()));if(saved&&Array.isArray(saved.tasks)&&Array.isArray(saved.packs)&&Array.isArray(saved.alarms))return saved;}catch(e){}
-var fresh=blank();
+ var key=localKey(),current=localStorage.getItem(key),saved=nsReadModel(current);
+ if(saved)return saved;
+ var safe=nsReadModel(localStorage.getItem(key+'_anterior'))||
+          nsReadModel(localStorage.getItem(key+'_rescate'));
+ if(safe){
+  // Preservar el registro dañado sin sobrescribir la última copia recuperable.
+  if(current){try{localStorage.setItem(key+'_corrupto_'+Date.now(),current)}catch(e){}}
+  try{localStorage.setItem(key,JSON.stringify(safe))}catch(e){}
+  setTimeout(function(){say('Se recuperaron datos de una copia local anterior. Revisa tus últimas tareas.')},100);
+  return safe;
+ }
+ if(current){
+  // Bloquear escrituras que podrían destruir el último archivo recuperable.
+  nsStorageRecoveryBlocked=true;
+  setTimeout(function(){say('No se pudo leer tu información. No se sobrescribirá; exporta o revisa el respaldo.')},100);
+  return blank();
+ }
+ var fresh=blank();
 if(session&&session.role==='admin'){
  try{
   var old=JSON.parse(localStorage.getItem('neuroSyncDB'));
@@ -1625,23 +1657,37 @@ if(session&&session.role==='admin'){
   }
  }catch(e){}
 }
-localStorage.setItem(localKey(),JSON.stringify(fresh));return fresh;
+try{nsLocalSave(fresh)}catch(e){nsStorageRecoveryBlocked=true}return fresh;
 }
 var nsDriveBackupTimer=null;
+function nsUploadDriveNow(){
+ if(!session||!session.google||!model||!nat||!nat.backupGoogleDrive||nsStorageRecoveryBlocked)return;
+ try{
+  nat.backupGoogleDrive(JSON.stringify({version:1,googleId:session.username.slice(7),savedAt:Date.now(),model:model}));
+ }catch(error){by('sync-status').textContent='Copia Drive pendiente'}
+}
 function nsQueueDriveBackup(){
  if(!session||!session.google||!nat||!nat.backupGoogleDrive)return;
  clearTimeout(nsDriveBackupTimer);
- nsDriveBackupTimer=setTimeout(function(){
-  if(!session||!session.google||!model)return;
-  try{nat.backupGoogleDrive(JSON.stringify({version:1,googleId:session.username.slice(7),savedAt:Date.now(),model:model}))}
-  catch(error){by('sync-status').textContent='Copia Drive pendiente'}
- },15000);
+ nsDriveBackupTimer=setTimeout(nsUploadDriveNow,15000);
 }
+var nsStorageRecoveryBlocked=false;
 function save(){
- localStorage.setItem(localKey(),JSON.stringify(model));
- by('sync-status').textContent=session&&session.google?'Guardado local · Drive pendiente':'Cambios guardados';
- if(session&&session.google){nsQueueDriveBackup();return}
+ if(!session||!model)return false;
+ if(nsStorageRecoveryBlocked){by('sync-status').textContent='Guardado bloqueado: protege tus datos anteriores';say('No se sobrescribirá un archivo local dañado.');return false}
+ try{
+  // La fecha pertenece al contenido y permite comparar versiones entre Drive y el equipo.
+  model._localUpdatedAt=Date.now();
+  nsLocalSave(model);
+ }catch(e){
+  by('sync-status').textContent='No guardado: revisa espacio disponible';
+  say('No se pudieron guardar tus cambios en este dispositivo.');
+  return false;
+ }
+ by('sync-status').textContent=session.google?'Guardado local · Drive pendiente':'Guardado local verificado';
+ if(session.google){nsQueueDriveBackup();return true}
  if(nat&&(nat.syncFamilyAsync||nat.syncFamily)){setTimeout(sync,350)}
+ return true;
 }
 function active(list){return list.filter(function(t){return !t.deleted})}
 function owned(t){return session.role==='admin'||t.owner===session.username||t.owner==='todos'}
@@ -2004,7 +2050,7 @@ function sync(){
 }
 by('sync-btn').onclick=sync;
 function getUsers(){if(!nat||!nat.getUsers)return [{username:session.username,role:session.role}];try{var r=JSON.parse(nat.getUsers());return r.users||[]}catch(e){return []}}
-function enter(u){session=u;model=load();nsSleepRender();nsSceneRestore();nsFocusRestore();nsLauncherFocusSync();nsFocusTasks();nsFocusStats();nsFocusRender();nsDragonData();by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=(u.displayName||u.username).slice(0,1).toUpperCase();by('greeting').textContent='Tu día está listo para avanzar a tu ritmo.';by('ns-home-welcome').textContent='Hola, '+(u.displayName||u.email||u.username)+'. Tu día te espera.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');if(nsPendingRoute){var route=nsPendingRoute;nsPendingRoute='';nsNavigate(route)}sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
+function enter(u){nsStorageRecoveryBlocked=false;session=u;model=load();nsSleepRender();nsSceneRestore();nsFocusRestore();nsLauncherFocusSync();nsFocusTasks();nsFocusStats();nsFocusRender();nsDragonData();by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=(u.displayName||u.username).slice(0,1).toUpperCase();by('greeting').textContent='Tu día está listo para avanzar a tu ritmo.';by('ns-home-welcome').textContent='Hola, '+(u.displayName||u.email||u.username)+'. Tu día te espera.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');if(nsPendingRoute){var route=nsPendingRoute;nsPendingRoute='';nsNavigate(route)}sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
 by('ns-owner-access').onclick=function(){
  var panel=by('ns-admin-login'),showing=!panel.classList.toggle('hidden');
  by('ns-owner-access').setAttribute('aria-expanded',String(showing));
@@ -2042,11 +2088,29 @@ window.neuroGoogleBackupRestored=async function(raw){
  try{
   var backup=JSON.parse(raw);
   if(backup.version!==1||backup.googleId!==session.username.slice(7)||!backup.model||!Array.isArray(backup.model.tasks)||!Array.isArray(backup.model.packs)||!Array.isArray(backup.model.alarms))return;
+  var who=session.username;
+  var localTime=Number(model._localUpdatedAt)||0;
+  var cloudTime=Number(backup.model._localUpdatedAt)||Number(backup.savedAt)||0;
   var hasData=model.tasks.length||model.alarms.length||model.packs.length;
-  if(hasData&&!await nsConfirm('Respaldo encontrado','¿Restaurar los datos guardados en tu cuenta de Google? Reemplazará los datos locales de esta cuenta.','Restaurar'))return;
-  model=backup.model;localStorage.setItem(localKey(),JSON.stringify(model));
-  render();nsDragonRender();nsFocusTasks();nsFocusStats();
-  say('Respaldo personal restaurado desde Google Drive');
+  // Nunca reemplazar automáticamente datos locales nuevos o de otra sesión.
+  if(hasData||cloudTime<localTime){
+   var warning=cloudTime<localTime
+    ?'Esta copia de Drive es anterior a los datos de este teléfono. Restaurarla podría borrar cambios recientes. ¿Continuar de todos modos?'
+    :'Se encontró una copia de Drive. Restaurarla sustituirá los datos locales de esta cuenta. ¿Continuar?';
+   if(!await nsConfirm('Confirmar restauración',warning,'Restaurar'))return;
+  }
+  if(!session||session.username!==who||nsStorageRecoveryBlocked)return;
+  var oldModel=model;
+  try{
+   nsLocalSave(backup.model);model=backup.model;
+   render();nsDragonRender();nsFocusTasks();nsFocusStats();
+   // Restaurar también las alarmas nativas correspondientes a esta cuenta.
+   if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===who||a.owner==='todos'}).forEach(scheduleAlarm);
+   say('Respaldo restaurado. Verifica tus alarmas.');
+  }catch(err){
+   model=oldModel;
+   by('sync-status').textContent='No se pudo aplicar la copia; datos anteriores conservados';
+  }
  }catch(e){if(by('sync-status'))by('sync-status').textContent='Restauración Drive no disponible'}
 };
 by('login-form').onsubmit=function(e){e.preventDefault();var username=by('login-user').value.trim().toLowerCase(),password=by('login-pass').value;
@@ -2458,9 +2522,12 @@ function nsDragonInitActions(){
  nsDragonRender=function(){originalRender();nsDragonUpdateEnergy()};
 }
 
-function logout(){clearTimeout(nsDriveBackupTimer);if(session&&session.google&&nat&&nat.logoutGoogle)nat.logoutGoogle();if(nsFocusState)nsFocusSaveSession(false);nsLauncherFocusSync();syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
+function logout(){clearTimeout(nsDriveBackupTimer);nsUploadDriveNow();if(session&&session.google&&nat&&nat.logoutGoogle)nat.logoutGoogle();if(nsFocusState)nsFocusSaveSession(false);nsLauncherFocusSync();syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
 by('logout').onclick=logout;by('avatar').onclick=async function(){if(await nsConfirm('Cerrar sesión','¿Quieres cerrar esta sesión?','Cerrar sesión'))logout()};
-document.addEventListener('visibilitychange',function(){if(!document.hidden){sync();refreshFocusClock()}});setInterval(sync,60000);
+document.addEventListener('visibilitychange',function(){
+ if(document.hidden){clearTimeout(nsDriveBackupTimer);nsUploadDriveNow()}
+ else{sync();refreshFocusClock()}
+});setInterval(sync,60000);
 var nsGoogleRestored=false;
 if(nat&&nat.restoreGoogleSession){
  try{
