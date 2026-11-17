@@ -11,7 +11,7 @@ for(const [,code] of scripts)new vm.Script(code,{filename:'index.html'});
 for(const id of ['ns-next-hour','ns-next-description','ns-next-countdown',
  'alarms-list','ns-alarms-tab-report','ns-alarms-tab-settings','ns-wake-list',
  'ns-wake-fired','ns-wake-dismissed','ns-wake-snoozed','alarm-permissions-open',
- 'ns-mission-select','ns-mission-options','ns-create-music-alarm']){
+ 'ns-mission-select','ns-mission-options','alarm-local-sound']){
  assert(html.includes('id="'+id+'"') || html.includes('id=\\"'+id+'\\"'),
   'Falta control '+id);
 }
@@ -59,5 +59,6 @@ assert(receiver.includes('Math.max(System.currentTimeMillis(),original)'),
  'Una alarma sonada temprano no puede reprogramarse en la misma ocurrencia');
 assert(bridge.includes('setAlarmOptions(')&&bridge.includes('pauseAlarm('));
 assert(bridge.includes('setAlarmSoundBehavior('),'Falta puente de volumen y despertar gradual');
-assert(html.includes('La música de YouTube Music Premium se configura en Reloj de Google.'));
+assert(!html.includes('ns-create-music-alarm') && !html.includes('alarm-clock-music'),'La interfaz no debe abrir servicios musicales externos');
+assert(!bridge.includes('createYouTubeMusicClockAlarm') && !bridge.includes('openSystemClock'),'No conservar puentes de música externa');
 console.log('Alarmas UI OK: tabs, próxima hora, editor, misiones, posponer y seguridad nativa');
