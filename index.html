@@ -2161,7 +2161,7 @@ function nsAlarmDuplicate(a){
  form.elements.title.value=(a.title||'Alarma')+' · copia';
  form.elements.time.value=a.time||'08:00';
  form.elements.date.value=day();
- form.elements.repeat.value=a.repeat|| (a.daily?'daily':'none');
+ nsFillAlarmRepeat(form,a.repeat|| (a.daily?'daily':'none'));
  form.elements.snoozeMinutes.value=String(a.snoozeMinutes||5);
  form.elements.snoozeMax.value=String(a.snoozeMax==null?3:a.snoozeMax);
  // Nunca copiar QR de seguridad: necesita registrarse otra vez para el nuevo ID.
