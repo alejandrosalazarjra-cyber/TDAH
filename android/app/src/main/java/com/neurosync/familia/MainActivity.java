@@ -520,56 +520,6 @@ public final class MainActivity extends Activity {
         return result.toString();
       }catch(Exception ex){return "{}";}
     }
-    /** Configura la hora mediante API oficial; selección musical queda en la app Reloj. */
-    @JavascriptInterface public void createYouTubeMusicClockAlarm(){
-      runOnUiThread(()->{
-        java.util.Calendar now=java.util.Calendar.getInstance();
-        new android.app.TimePickerDialog(MainActivity.this,(picker,hour,minute)->{
-          new AlertDialog.Builder(MainActivity.this)
-           .setTitle("Canción de YouTube Music")
-           .setMessage("Se abrirá Reloj de Android con la hora elegida. Dentro de esa alarma, toca Sonido → YouTube Music y elige tu canción con Premium. La música sonará desde Reloj; los retos de NeuroSync no controlan esa alarma.")
-           .setNegativeButton("Cancelar",null)
-           .setPositiveButton("Abrir Reloj",(dialog,which)->{
-             Intent intent=new Intent(android.provider.AlarmClock.ACTION_SET_ALARM)
-               .putExtra(android.provider.AlarmClock.EXTRA_HOUR,hour)
-               .putExtra(android.provider.AlarmClock.EXTRA_MINUTES,minute)
-               .putExtra(android.provider.AlarmClock.EXTRA_MESSAGE,"NeuroSync · Música")
-               .putExtra(android.provider.AlarmClock.EXTRA_SKIP_UI,false);
-             try{startActivity(intent);}
-             catch(Exception ex){
-               android.util.Log.w("NeuroSync","Reloj no disponible",ex);
-               new AlertDialog.Builder(MainActivity.this)
-                .setTitle("Reloj no disponible")
-                .setMessage("Instala o abre Reloj de Google y elige Sonido → YouTube Music.")
-                .setPositiveButton("Entendido",null).show();
-             }
-           }).show();
-        },now.get(java.util.Calendar.HOUR_OF_DAY),now.get(java.util.Calendar.MINUTE),true).show();
-      });
-    }
-    @JavascriptInterface public void openSystemClock(){
-      runOnUiThread(()->{
-        // ACTION_SET_ALARM no es compatible con todas las apps de reloj/OEM.
-        // Abrimos la app real antes de mostrar el mensaje de error.
-        Intent[] choices=new Intent[]{
-          getPackageManager().getLaunchIntentForPackage("com.google.android.deskclock"),
-          new Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS),
-          new Intent(android.provider.AlarmClock.ACTION_SET_ALARM)
-            .putExtra(android.provider.AlarmClock.EXTRA_MESSAGE,"NeuroSync")
-            .putExtra(android.provider.AlarmClock.EXTRA_SKIP_UI,false)
-        };
-        for(Intent intent:choices){
-          if(intent==null)continue;
-          try{
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);return;
-          }catch(Exception ignored){}
-        }
-        new AlertDialog.Builder(MainActivity.this).setTitle("Abrir Reloj")
-          .setMessage("Android no permitió abrir una app de reloj desde NeuroSync. Abre Reloj de Google manualmente, elige una alarma y selecciona YouTube Music como sonido.")
-          .setPositiveButton("Entendido",null).show();
-      });
-    }
     @JavascriptInterface public void scanQrReference(){
       runOnUiThread(()->{
         qrEnrollmentPending=true;
