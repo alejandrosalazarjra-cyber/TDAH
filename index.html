@@ -1603,32 +1603,43 @@ by('password-form').onsubmit=function(e){e.preventDefault();if(!nat||!nat.change
 window.neuroBackupMessage=function(message){say(message)};
 window.neuroImportData=async function(raw){
  try{
+  if(!session||!model)throw Error('Inicia sesión antes de restaurar');
   var restored=JSON.parse(raw);
   if(!Array.isArray(restored.tasks)||!Array.isArray(restored.packs)||!Array.isArray(restored.alarms))throw Error('Formato inválido');
-  if(!await nsConfirm('Importar respaldo','Se combinarán actividades con las actuales de '+session.username+'.','Importar'))return;
+  // Las copias nuevas pertenecen exclusivamente a la cuenta que las creó.
+  // Las copias antiguas no tenían propietario explícito: se importan solamente registros propios.
+  if(restored.exportedFor&&restored.exportedFor!==session.username)
+    throw Error('Esta copia pertenece a otra cuenta. Inicia sesión con esa cuenta para restaurarla.');
+  if(!await nsConfirm('Importar respaldo','Se combinarán únicamente tus actividades con las actuales de '+session.username+'. Guarda antes una copia de tus datos actuales.','Importar'))return;
+  var imported=0,ignored=0;
   for(var kind of ['tasks','packs','alarms']){
     var items=new Map((model[kind]||[]).map(function(row){return [row.id,row]}));
     restored[kind].slice(0,2000).forEach(function(row){
-      if(!row||typeof row.id!=='string'||typeof row.owner!=='string')return;
-      if(session.role!=='admin'&&row.owner!==session.username)return;
+      if(!row||typeof row.id!=='string'||typeof row.owner!=='string'||row.owner!==session.username){ignored++;return;}
       var old=items.get(row.id);
-      if(!old||(+row.updatedAt||0)>(+old.updatedAt||0))items.set(row.id,row);
+      if(!old||(+row.updatedAt||0)>(+old.updatedAt||0)){items.set(row.id,row);imported++;}
     });
     model[kind]=Array.from(items.values());
   }
-  if(restored.pet&&typeof restored.pet==='object')model.pet=restored.pet;
-  if(Array.isArray(restored.templates))nsTemplateMerge(restored.templates);
-  save();render();say('Respaldo importado correctamente');
- }catch(e){say('No se pudo importar este respaldo')}
+  // Una copia histórica sin identificador de usuario no puede restaurar
+  // mascota ni plantillas con seguridad: evita mezclar datos entre perfiles.
+  if(restored.exportedFor===session.username){
+    if(restored.pet&&typeof restored.pet==='object'&&!Array.isArray(restored.pet))model.pet=restored.pet;
+    if(Array.isArray(restored.templates))nsTemplateMerge(restored.templates);
+  }
+  save();render();say('Respaldo restaurado: '+imported+' registros; '+ignored+' omitidos');
+ }catch(e){say(e&&e.message?e.message:'No se pudo importar este respaldo')}
 };
-by('backup-export').onclick=function(){
+by('backup-export').onclick=async function(){
  if(!session||!model)return;
- var data=JSON.stringify({version:2,tasks:model.tasks,packs:model.packs,alarms:model.alarms,pet:model.pet,templates:nsTemplateRead()});
+ if(!await nsConfirm('Exportar copia personal','El archivo JSON no está cifrado. Guarda tu respaldo en una carpeta privada de Drive y no lo compartas con otras personas.','Exportar'))return;
+ var mine=function(rows){return (rows||[]).filter(function(row){return row&&row.owner===session.username})};
+ var data=JSON.stringify({version:3,exportedFor:session.username,exportedAt:new Date().toISOString(),tasks:mine(model.tasks),packs:mine(model.packs),alarms:mine(model.alarms),pet:model.pet,templates:nsTemplateRead()});
  if(nat&&nat.exportBackup)nat.exportBackup(data);
  else{
   var blob=new Blob([data],{type:'application/json'});
   var url=URL.createObjectURL(blob),link=document.createElement('a');
-  link.href=url;link.download='NeuroSync-respaldo.json';link.click();
+  link.href=url;link.download='NeuroSync-respaldo-personal.json';link.click();
   setTimeout(function(){URL.revokeObjectURL(url)},1000);
  }
 };
