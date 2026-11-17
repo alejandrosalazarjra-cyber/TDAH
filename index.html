@@ -2089,6 +2089,8 @@ function nsAlarmEdit(a){
  form.elements.time.value=a.time||'08:00';
  form.elements.date.value=a.date||day();
  form.elements.repeat.value=a.repeat|| (a.daily?'daily':'none');
+ form.elements.snoozeMinutes.value=String(a.snoozeMinutes||5);
+ form.elements.snoozeMax.value=String(a.snoozeMax==null?3:a.snoozeMax);
  if(form._selectMission)form._selectMission(a.challenge||'none');
  form.onsubmit=function(e){
   e.preventDefault();
@@ -2098,7 +2100,8 @@ function nsAlarmEdit(a){
   }
   var next=Object.assign({},a,{title:(v.title||'').trim()||'Alarma',
    date:v.date,time:v.time,repeat:v.repeat,daily:v.repeat==='daily',
-   challenge:v.challenge||'none',updatedAt:stamp()});
+   challenge:v.challenge||'none',
+   snoozeMinutes:Number(v.snoozeMinutes)||5,snoozeMax:Number(v.snoozeMax),updatedAt:stamp()});
   if(!nsNextAlarmDate(Object.assign({},next,{enabled:true}),Date.now())){
    say('Revisa la fecha y hora de esta alarma');return
   }
@@ -2108,6 +2111,7 @@ function nsAlarmEdit(a){
   // No mutar la fuente hasta comprobar la programación nativa.
   var previousChallenge=a.challenge;
   Object.assign(a,next);
+  if(nat&&nat.setAlarmOptions)nat.setAlarmOptions(a.id,a.snoozeMinutes,a.snoozeMax);
   if(v.challenge==='qr'&&v.qrValue&&nat&&nat.setAlarmQrCode)nat.setAlarmQrCode(a.id,v.qrValue);
   if(v.challenge!=='qr'&&previousChallenge==='qr'&&nat&&nat.setAlarmQrCode)nat.setAlarmQrCode(a.id,'');
   save();closeModal();render();say('Alarma actualizada');
@@ -2122,6 +2126,8 @@ function nsAlarmDuplicate(a){
  form.elements.time.value=a.time||'08:00';
  form.elements.date.value=day();
  form.elements.repeat.value=a.repeat|| (a.daily?'daily':'none');
+ form.elements.snoozeMinutes.value=String(a.snoozeMinutes||5);
+ form.elements.snoozeMax.value=String(a.snoozeMax==null?3:a.snoozeMax);
  // Nunca copiar QR de seguridad: necesita registrarse otra vez para el nuevo ID.
  if(form._selectMission)form._selectMission(a.challenge==='qr'?'none':a.challenge||'none');
 }
@@ -2210,7 +2216,13 @@ if(kind==='alarm')html+=
  '<button type="button" data-mission="none">Sin misión · detener normalmente</button></div>'+
  '<div id="qr-enroll" class="hidden"><input name="qrValue" type="hidden"><button type="button" class="btn secondary" id="qr-enroll-button">Registrar QR de referencia</button><p class="hint" id="qr-enroll-status">Necesitas un QR físico accesible; se verifica en este teléfono.</p></div></section>'+
  '<div class="ns-alarm-editor-note wide"><strong>Sonido</strong><span>El tono del teléfono se configura en Ajustes de alarma.</span></div>'+
- '<div class="ns-alarm-editor-note wide"><strong>Posponer</strong><span>5 minutos · comportamiento predeterminado de Android en NeuroSync</span></div>';
+ '<div class="ns-alarm-editor-note wide"><strong>Posponer</strong><span>Elige el intervalo y cuántas veces se permite.</span></div>'+
+ '<label class="field">Intervalo<select name="snoozeMinutes">'+
+ '<option value="1">1 minuto</option><option value="3">3 minutos</option><option value="5" selected>5 minutos</option>'+
+ '<option value="10">10 minutos</option><option value="15">15 minutos</option></select></label>'+
+ '<label class="field">Número máximo<select name="snoozeMax">'+
+ '<option value="0">Desactivado</option><option value="1">1 vez</option><option value="2">2 veces</option>'+
+ '<option value="3" selected>3 veces</option><option value="5">5 veces</option></select></label>';
 if(kind==='user')html+=field('Usuario (sin espacios)','username')+field('Contraseña (mínimo 10 caracteres)','password','password');
 html+='<div class="wide row" style="justify-content:flex-end"><button type="button" id="cancel-popup" class="btn ghost">Cancelar</button><button class="btn" type="submit">Guardar</button></div></form>';body.innerHTML=html;by('modal').classList.remove('hidden');by('modal').classList.toggle('ns-alarm-modal',kind==='alarm');
 by('cancel-popup').onclick=closeModal;var form=by('popup-form');if(form.elements.date)form.elements.date.value=day();
@@ -2263,11 +2275,13 @@ if(kind==='alarm'){
  }
  var alarm={id:uid(),title:(values.title||'').trim()||'Alarma',date:d,time:time,
   repeat:repeat,daily:repeat==='daily',challenge:values.challenge||'none',
+  snoozeMinutes:Number(values.snoozeMinutes)||5,snoozeMax:Number(values.snoozeMax),
   owner:session.username,enabled:true,updatedAt:stamp()};
  if(nat&&(nat.scheduleAlarm||nat.scheduleAlarmRepeat)&&!scheduleAlarm(alarm)){
   say('No se pudo programar en Android. Revisa la fecha y permisos.');return;
  }
  model.alarms.push(alarm);
+ if(nat&&nat.setAlarmOptions)nat.setAlarmOptions(alarm.id,alarm.snoozeMinutes,alarm.snoozeMax);
  if(values.challenge==='qr'&&nat&&nat.setAlarmQrCode)nat.setAlarmQrCode(alarm.id,values.qrValue);
 }
 save();closeModal();render();say('Guardado correctamente')};
