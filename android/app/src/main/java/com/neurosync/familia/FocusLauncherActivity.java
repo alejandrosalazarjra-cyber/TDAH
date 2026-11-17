@@ -206,7 +206,7 @@ public final class FocusLauncherActivity extends Activity {
     body.addView(gap(8));
     long focus=focusRemaining();
     TextView session=action(focus>0?
-       "◷  Concentración: "+((focus+59999)/60000)+" min":"◷  Iniciar concentración",this::chooseFocusSession);
+       "◷  Concentración: "+((focus+59999)/60000)+" min":"◷  Iniciar concentración",()->openNeuroSync("focus"));
     body.addView(session);
     body.addView(gap(22));
     TextView favoriteTitle=text("FAVORITAS",11,MUTED,true);
@@ -226,6 +226,14 @@ public final class FocusLauncherActivity extends Activity {
     body.addView(action("⌕  Buscar aplicaciones",this::showDrawer));
     body.addView(gap(8));
     body.addView(action("✓  Agenda y tareas",()->openNeuroSync("calendar")));
+    body.addView(gap(8));
+    LinearLayout sections=horizontal();
+    sections.addView(action("◷  Alarmas",()->openNeuroSync("alarms")),new LinearLayout.LayoutParams(0,dp(48),1));
+    sections.addView(new View(this),new LinearLayout.LayoutParams(dp(8),1));
+    sections.addView(action("☷  Listas",()->openNeuroSync("bags")),new LinearLayout.LayoutParams(0,dp(48),1));
+    sections.addView(new View(this),new LinearLayout.LayoutParams(dp(8),1));
+    sections.addView(action("◉  Progreso",()->openNeuroSync("habits")),new LinearLayout.LayoutParams(0,dp(48),1));
+    body.addView(sections);
     body.addView(gap(16));
     LinearLayout shortcuts=horizontal();
     shortcuts.setGravity(Gravity.CENTER);
