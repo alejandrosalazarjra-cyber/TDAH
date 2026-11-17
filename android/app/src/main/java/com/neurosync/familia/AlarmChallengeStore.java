@@ -7,7 +7,11 @@ public final class AlarmChallengeStore {
  private AlarmChallengeStore(){}
  /** Guarda solo una huella SHA-256; el texto QR no se sincroniza entre familiares. */
  public static void setQr(Context ctx,String id,String contents){
-  if(id==null||id.length()>100||contents==null||contents.isEmpty()||contents.length()>2048)return;
+  if(id==null||id.length()>100||contents==null||contents.length()>2048)return;
+  if(contents.isEmpty()){
+   ctx.getSharedPreferences("ns_alarm_challenges",0).edit().remove("qr_"+id).apply();
+   return;
+  }
   ctx.getSharedPreferences("ns_alarm_challenges",0).edit().putString("qr_"+id,digest(contents)).apply();
  }
  public static boolean matchesQr(Context ctx,String id,String contents){

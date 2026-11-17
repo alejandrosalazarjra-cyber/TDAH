@@ -101,8 +101,10 @@ for feature in ('"math"', '"taps"', "finishAlarm()", "Detener sin desafío"):
     if feature not in ring:
         issues.append(f"Missing safe alarm challenge behavior: {feature}")
 main = require_file(JAVA / "MainActivity.java")
-if "AlarmClock.ACTION_SHOW_ALARMS" not in main or 'com.google.android.deskclock' not in main:
-    issues.append("Google Clock compatibility fallback missing")
+if "chooseAlarmSound" not in main:
+    issues.append("Alarm sound picker bridge is missing")
+if "setAlarmSoundBehavior" not in main:
+    issues.append("Local alarm volume bridge is missing")
 if alarm and "setFullScreenIntent" not in alarm:
     issues.append("AlarmReceiver missing full-screen alarm notification")
 

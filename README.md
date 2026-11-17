@@ -75,8 +75,6 @@ No instales las APK de prueba o depuración para uso familiar permanente. Las cr
 
 ## NeuroSync 9.0 — Reloj, desafíos y contador personal
 
-**Reloj de Google:** la opción de música intenta abrir el paquete `com.google.android.deskclock`, después la lista general de alarmas (`ACTION_SHOW_ALARMS`) y, finalmente, la acción para crear alarma. Estas opciones dependen del sistema y del fabricante. **Elegir una canción de YouTube Music requiere la integración dentro de Reloj de Google y una suscripción Premium para canciones concretas**. La alarma con música de Google Clock es distinta de las alarmas nativas de NeuroSync: no es posible combinar automáticamente ambas mediante esa integración.
-
 **Desafíos al sonar:** al crear una alarma de NeuroSync se puede elegir **sin desafío**, **resolver tres sumas** o **tocar doce veces**. Las acciones de notificación no ofrecen detener directamente una alarma con desafío. Siempre se ofrece **Posponer cinco minutos** y una salida de emergencia **Detener sin desafío** con confirmación en la pantalla; el servicio tiene un límite de reproducción para evitar que siga sonando indefinidamente. La pantalla completa depende de los permisos y de las restricciones de Android.
 
 **Contador NoFap:** sección personal para elegir desde qué fecha contar, consultar días transcurridos y registrar nuevos comienzos conservando un historial. El dato se guarda **solo en el WebView del dispositivo para la cuenta activa**, no se envía a `/sync` ni aparece en los respaldos familiares. No pretende diagnosticar, culpabilizar ni presentar la masturbación como un problema médico por sí misma. Se puede utilizar como seguimiento de un objetivo personal voluntario.
@@ -147,7 +145,6 @@ La aplicación incluye un **launcher** nativo con estilo original inspirado en l
 - Alarmas Android con sonido del sistema, pantalla emergente si Android lo autoriza, detener, posponer cinco minutos y prueba programada.
 - Permisos guiados: notificaciones, alarmas exactas y notificaciones de pantalla completa.
 - Sonido personalizado seleccionando un archivo de audio local del dispositivo.
-- Acceso a Reloj de Google para configurar música de YouTube Music **dentro de Reloj**, no como reproducción directa desde NeuroSync.
 - Widget **NeuroSync · Mi día** en el menú de widgets de la pantalla principal.
 - Respaldo y restauración desde Administración con el selector de archivos de Android. Los datos se guardan localmente; exporta antes de reinstalar. Los archivos de respaldo no están cifrados: guárdalos en un lugar privado.
 - Sincronización familiar: red local / Tailscale opcional o **servidor HTTPS Cloudflare Workers + D1**, preparado en `cloud/`.
@@ -204,9 +201,6 @@ Los controles de tiempo son voluntarios y locales al dispositivo. No usan permis
 6. En Alarmas, pulsa **Activar permisos** y concede los permisos necesarios. Puede requerir pulsarlo nuevamente para cada permiso especial. Programa una **prueba para dentro de un minuto**.
 7. Antes de desinstalar una versión, abre Administración → Respaldo personal → Exportar respaldo.
 8. Para el widget: mantén pulsada una zona vacía de la pantalla de inicio → Widgets → NeuroSync · Mi día → Añadir.
-
-## YouTube Music
-La integración oficial con música de YouTube Music está disponible dentro de **Reloj de Google** (según disponibilidad y tipo de suscripción); NeuroSync abre Reloj para seleccionar la alarma y su música. Las alarmas propias de NeuroSync no pueden reproducir directamente pistas protegidas por YouTube Music. También puedes elegir un **archivo local** como sonido de NeuroSync.
 
 ## Sincronización sin Tailscale
 La carpeta `cloud/` contiene un backend HTTPS con cuentas, sesiones, controles de acceso, límites de intentos de login y base D1. **Está preparado pero no desplegado**: requiere una cuenta Cloudflare, crear la base D1, configurar un secreto de arranque y publicar el Worker una única vez. Sigue `cloud/README.md`.

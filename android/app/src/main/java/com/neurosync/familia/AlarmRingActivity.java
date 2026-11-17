@@ -43,7 +43,7 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
    result.setMinHeight(dp(54));result.setTextSize(15);
    result.setTextColor(Color.WHITE);
    android.graphics.drawable.GradientDrawable bg=new android.graphics.drawable.GradientDrawable();
-   bg.setColor(0xFF465FD6);bg.setCornerRadius(dp(16));result.setBackground(bg);
+   bg.setColor(0xFF168BFA);bg.setCornerRadius(dp(16));result.setBackground(bg);
    LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-1,dp(54));
    params.setMargins(0,dp(5),0,dp(5));result.setLayoutParams(params);
    return result;
@@ -70,7 +70,15 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
    super.onCreate(state);
    if(Build.VERSION.SDK_INT>=27){setShowWhenLocked(true);setTurnScreenOn(true);}
    else getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED|WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
-   getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+   getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON | WindowManager.LayoutParams.FLAG_FULLSCREEN);
+   // Experiencia de alarma independiente de la WebView y sin barras superpuestas.
+   getWindow().getDecorView().setSystemUiVisibility(
+     android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
+     | android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+     | android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+     | android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+     | android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+     | android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
    id=getIntent().getStringExtra("id");
    if(id==null){finish();return;}
    openedAt=SystemClock.elapsedRealtime();
@@ -93,19 +101,37 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
    root=new LinearLayout(this);
    root.setOrientation(LinearLayout.VERTICAL);
    root.setGravity(Gravity.CENTER);
-   root.setPadding(dp(22),dp(24),dp(22),dp(24));
+   root.setPadding(dp(24),dp(26),dp(24),dp(36));
    android.graphics.drawable.GradientDrawable background=new android.graphics.drawable.GradientDrawable(
-     android.graphics.drawable.GradientDrawable.Orientation.TL_BR,new int[]{0xFF101A31,0xFF233963,0xFF131C34});
+     android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,new int[]{0xFF0C1730,0xFF101827,0xFF090D17});
    root.setBackground(background);
    ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.addView(root);
    setContentView(scroll);
-   root.addView(label("☀",52));
-   root.addView(label("ES MOMENTO DE DESPERTAR",14));
-   root.addView(label(alarmTitle,29));
+   TextView wakeMark=label("✦",31);wakeMark.setTextColor(0xFF168BFA);
+   root.addView(wakeMark);
+   TextView eyebrow=label("NEUROSYNC · DESPERTAR",12);
+   eyebrow.setTextColor(0xFF93A8C2);root.addView(eyebrow);
+   TextView currentTime=label(new java.text.SimpleDateFormat("HH:mm",java.util.Locale.getDefault()).format(new java.util.Date()),70);
+   currentTime.setTextColor(0xFF168BFA);
+   currentTime.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD);
+   currentTime.setPadding(dp(2),dp(0),dp(2),dp(5));
+   root.addView(currentTime);
+   TextView subtitle=label(alarmTitle,24);subtitle.setTextColor(0xFFF1F7FF);
+   root.addView(subtitle);
+   TextView invitation=label("Despierta a tu ritmo",14);
+   invitation.setTextColor(0xFF98B1C9);root.addView(invitation);
+   Runnable updateClock=new Runnable(){
+     @Override public void run(){
+       if(isFinishing()||isDestroyed())return;
+       currentTime.setText(new java.text.SimpleDateFormat("HH:mm",java.util.Locale.getDefault()).format(new java.util.Date()));
+       uiHandler.postDelayed(this,30000);
+     }
+   };
+   uiHandler.postDelayed(updateClock,30000);
    if(!routineType.isEmpty()){
      root.addView(label("RUTINA DE DESPERTAR · ETAPA "+(routineStep+1)+" DE "+routineStages(routineType).length,14));
    }
-   progress=label("",15);root.addView(progress);
+   progress=label("",15);progress.setTextColor(0xFF91B7D8);root.addView(progress);
    prompt=label("",22);root.addView(prompt);
    if("math".equals(challenge)||"math_hard".equals(challenge)){
      input=new EditText(this);input.setSingleLine(true);input.setTextColor(Color.WHITE);
@@ -193,10 +219,24 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
      Button stop=button("Detener alarma");root.addView(stop);
      stop.setOnClickListener(v->finishAlarm());
    }
-   Button snooze=button("Posponer 5 minutos");root.addView(snooze);
-   snooze.setOnClickListener(v->{AlarmReceiver.snooze(this,id,5);finish();});
+   final int snoozeMinutes=AlarmOptionsStore.minutes(this,id);
+   final int remainingSnoozes=Math.max(0,AlarmOptionsStore.max(this,id)-AlarmOptionsStore.used(this,id));
+   if(remainingSnoozes>0){
+     Button snooze=button("Posponer "+snoozeMinutes+" min · "+remainingSnoozes+" disponible(s)");
+     android.graphics.drawable.GradientDrawable subdued=new android.graphics.drawable.GradientDrawable();
+     subdued.setColor(0xFF283851);subdued.setCornerRadius(dp(16));snooze.setBackground(subdued);
+     root.addView(snooze);
+     snooze.setOnClickListener(v->{
+       if(AlarmReceiver.snooze(this,id,snoozeMinutes))finish();
+       else Toast.makeText(this,"No se pudo posponer. Puedes terminar la alarma.",Toast.LENGTH_LONG).show();
+     });
+   }
    if(!"none".equals(challenge)){
      Button emergency=button("Detener sin desafío");
+     emergency.setTextColor(0xFFD5E4F4);
+     android.graphics.drawable.GradientDrawable secondary=new android.graphics.drawable.GradientDrawable();
+     secondary.setColor(0xFF29384D);secondary.setCornerRadius(dp(16));
+     emergency.setBackground(secondary);
      root.addView(emergency);
      emergency.setOnClickListener(v->{
        emergency.setVisibility(android.view.View.GONE);

@@ -31,9 +31,34 @@ public final class AlarmReceiver extends BroadcastReceiver {
   return PendingIntent.getBroadcast(ctx,id.hashCode(),intent,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
  }
  private static AlarmManager manager(Context ctx){return (AlarmManager)ctx.getSystemService(Context.ALARM_SERVICE);}
+ /** Repetición de días elegidos, en formato ISO 1=Lunes ... 7=Domingo. */
+ static boolean isDaysRepeat(String repeat){
+  if(repeat==null||!repeat.matches("days:[1-7](,[1-7]){0,6}"))return false;
+  String[] parts=repeat.substring(5).split(",");
+  java.util.HashSet<String> unique=new java.util.HashSet<>();
+  for(String p:parts)if(!unique.add(p))return false;
+  return !unique.isEmpty();
+ }
+ private static int isoDay(java.util.Calendar c){
+  return (c.get(java.util.Calendar.DAY_OF_WEEK)+5)%7+1;
+ }
  /** Avanza calendariamente conservando la hora local (incluido horario de verano). */
  static long nextRepeat(long previous,String repeat,long now){
   if(previous<=0)return -1;
+  if(isDaysRepeat(repeat)){
+   java.util.HashSet<Integer> wanted=new java.util.HashSet<>();
+   for(String p:repeat.substring(5).split(","))wanted.add(Integer.parseInt(p));
+   java.util.Calendar c=java.util.Calendar.getInstance();
+   c.setTimeInMillis(previous);
+   // Hasta 8 días son suficientes para encontrar la próxima ocurrencia
+   // cuando la fecha de referencia ya está en el futuro.
+   // Las referencias pasadas pueden requerir más pasos.
+   for(int i=0;i<50000;i++){
+    if(c.getTimeInMillis()>now&&wanted.contains(isoDay(c)))return c.getTimeInMillis();
+    c.add(java.util.Calendar.DAY_OF_YEAR,1);
+   }
+   return -1;
+  }
   int unit,amount;
   if("weekly".equals(repeat)){unit=java.util.Calendar.WEEK_OF_YEAR;amount=1;}
   else if("daily".equals(repeat)){unit=java.util.Calendar.DAY_OF_YEAR;amount=1;}
@@ -54,16 +79,31 @@ public final class AlarmReceiver extends BroadcastReceiver {
  public static boolean scheduleRepeat(Context ctx,String id,String title,long at,String repeat){
   try{
    if(id==null||id.length()<2||id.length()>100||at<=0)return false;
+   if(!("none".equals(repeat)||"daily".equals(repeat)||"weekly".equals(repeat)
+        ||"every2".equals(repeat)||"every3".equals(repeat)||isDaysRepeat(repeat)))return false;
    if(title==null||title.trim().isEmpty())title="Recordatorio";
    long when=at;
    if(!"none".equals(repeat)){
-    long next=nextRepeat(when,repeat,System.currentTimeMillis());
-    if(next>0)when=next;
+    if(isDaysRepeat(repeat)||when<=System.currentTimeMillis()){
+     long next=nextRepeat(when,repeat,System.currentTimeMillis());
+     if(next>0)when=next;
+     else return false;
+    }
    }
    if(when<=System.currentTimeMillis())return false;
    JSONObject entry=new JSONObject().put("id",id).put("title",title).put("when",when).put("repeat",repeat);
-   if(!program(ctx,id,when))return false;
-   ctx.getSharedPreferences("ns_alarms",0).edit().putString(PREFIX+id,entry.toString()).apply();
+   // Guardar primero el registro para que el receptor encuentre la alarma si se dispara
+   // inmediatamente. commit() verifica persistencia antes de anunciar programación correcta.
+   android.content.SharedPreferences prefs=ctx.getSharedPreferences("ns_alarms",0);
+   String previous=prefs.getString(PREFIX+id,null);
+   if(!prefs.edit().putString(PREFIX+id,entry.toString()).commit())return false;
+   if(!program(ctx,id,when)){
+    android.content.SharedPreferences.Editor rollback=prefs.edit();
+    if(previous==null)rollback.remove(PREFIX+id);
+    else rollback.putString(PREFIX+id,previous);
+    rollback.commit();
+    return false;
+   }
    return true;
   }catch(Exception e){return false;}
  }
@@ -81,6 +121,15 @@ public final class AlarmReceiver extends BroadcastReceiver {
    return true;
   }catch(Exception ex){android.util.Log.e("NeuroSync","No se pudo programar alarma",ex);return false;}
  }
+ /** Desactiva sin eliminar los retos ni el QR vinculados a esa alarma. */
+ public static void pause(Context ctx,String id){
+  if(id==null)return;
+  manager(ctx).cancel(pending(ctx,id));
+  manager(ctx).cancel(pendingSnooze(ctx,id));
+  ctx.getSharedPreferences("ns_alarm_snoozes",0).edit().remove(SNOOZE_PREFIX+id).apply();
+  ctx.getSharedPreferences("ns_alarms",0).edit().remove(PREFIX+id).apply();
+  ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id.hashCode());
+ }
  public static void cancel(Context ctx,String id){
   if(id==null)return;
   manager(ctx).cancel(pending(ctx,id));
@@ -88,6 +137,7 @@ public final class AlarmReceiver extends BroadcastReceiver {
   ctx.getSharedPreferences("ns_alarm_snoozes",0).edit().remove(SNOOZE_PREFIX+id).apply();
   ctx.getSharedPreferences("ns_alarms",0).edit().remove(PREFIX+id).apply();
   AlarmChallengeStore.remove(ctx,id);
+  AlarmOptionsStore.delete(ctx,id);
   ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id.hashCode());
  }
  public static void dismiss(Context ctx,String id){
@@ -95,6 +145,7 @@ public final class AlarmReceiver extends BroadcastReceiver {
   manager(ctx).cancel(pendingSnooze(ctx,id));
   ctx.getSharedPreferences("ns_alarm_snoozes",0).edit().remove(SNOOZE_PREFIX+id).apply();
   AlarmHistory.record(ctx,id,"dismiss");
+  AlarmOptionsStore.reset(ctx,id);
   AlarmAudioService.stop(ctx);
   ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id.hashCode());
   // No borrar la siguiente repetición diaria/semanal.
@@ -105,20 +156,43 @@ public final class AlarmReceiver extends BroadcastReceiver {
       ctx.getSharedPreferences("ns_alarms",0).edit().remove(PREFIX+id).apply();
   }catch(Exception ignored){}
  }
- public static void snooze(Context ctx,String id,int minutes){
+ public static boolean snooze(Context ctx,String id,int minutes){
+  if(id==null||!AlarmOptionsStore.canSnooze(ctx,id))return false;
   try{
-   String s=ctx.getSharedPreferences("ns_alarms",0).getString(PREFIX+id,null);if(s==null)return;
+   String s=ctx.getSharedPreferences("ns_alarms",0).getString(PREFIX+id,null);if(s==null)return false;
    JSONObject a=new JSONObject(s);
-   AlarmHistory.record(ctx,id,"snooze");
    AlarmManager alarm=manager(ctx);
    long when=System.currentTimeMillis()+minutes*60000L;
    if(Build.VERSION.SDK_INT<31||alarm.canScheduleExactAlarms())
      alarm.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,when,pendingSnooze(ctx,id));
    else alarm.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,when,pendingSnooze(ctx,id));
    ctx.getSharedPreferences("ns_alarm_snoozes",0).edit().putLong(SNOOZE_PREFIX+id,when).apply();
+   AlarmOptionsStore.consumed(ctx,id);
+   AlarmHistory.record(ctx,id,"snooze");
    AlarmAudioService.stop(ctx);
    ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id.hashCode());
-  }catch(Exception ignored){}
+   return true;
+  }catch(Exception ex){android.util.Log.w("NeuroSync","Error al posponer alarma",ex);return false;}
+ }
+ /** Diagnóstico de los registros locales: no afirma una garantía de ejecución del SO. */
+ public static JSONObject diagnostics(Context ctx){
+  JSONObject result=new JSONObject();
+  int count=0,invalid=0;long next=Long.MAX_VALUE;
+  try{
+   for(Map.Entry<String,?> row:ctx.getSharedPreferences("ns_alarms",0).getAll().entrySet()){
+    if(!row.getKey().startsWith(PREFIX))continue;
+    try{
+     JSONObject alarm=new JSONObject((String)row.getValue());
+     String id=alarm.optString("id","");
+     long at=alarm.optLong("when",-1);
+     if(id.length()<2||at<=0){invalid++;continue;}
+     count++;
+     if(at>System.currentTimeMillis()&&at<next)next=at;
+    }catch(Exception malformed){invalid++;}
+   }
+   result.put("count",count).put("invalid",invalid).put("nextAt",next==Long.MAX_VALUE?0:next);
+  }catch(Exception e){android.util.Log.w("NeuroSync","No se pudieron contar alarmas locales",e);}
+  return result;
  }
  private static void restore(Context ctx){
   long now=System.currentTimeMillis();
@@ -191,9 +265,13 @@ public final class AlarmReceiver extends BroadcastReceiver {
     if("none".equals(AlarmChallengeStore.get(ctx,alarmId)))dismiss(ctx,alarmId);
     return;
   }
-  if(POSTPONE.equals(intent.getAction())){snooze(ctx,intent.getStringExtra("id"),5);return;}
+  if(POSTPONE.equals(intent.getAction())){
+    String id=intent.getStringExtra("id");
+    snooze(ctx,id,AlarmOptionsStore.minutes(ctx,id));return;
+  }
   if(!FIRE.equals(intent.getAction())&&!SNOOZE.equals(intent.getAction()))return;
   String id=intent.getStringExtra("id");if(id==null)return;
+  if(FIRE.equals(intent.getAction()))AlarmOptionsStore.reset(ctx,id);
   if(SNOOZE.equals(intent.getAction()))
     ctx.getSharedPreferences("ns_alarm_snoozes",0).edit().remove(SNOOZE_PREFIX+id).apply();
   String raw=ctx.getSharedPreferences("ns_alarms",0).getString(PREFIX+id,null);if(raw==null)return;
@@ -218,8 +296,9 @@ public final class AlarmReceiver extends BroadcastReceiver {
     .setPriority(Notification.PRIORITY_MAX)
     .setVisibility(Notification.VISIBILITY_PUBLIC)
     .setAutoCancel(false).setOngoing(true)
-    .addAction(android.R.drawable.ic_menu_recent_history,"Posponer",snoozePending)
     .setContentIntent(full).setFullScreenIntent(full,true);
+   if(AlarmOptionsStore.canSnooze(ctx,id))
+     builder.addAction(android.R.drawable.ic_menu_recent_history,"Posponer",snoozePending);
    if("none".equals(AlarmChallengeStore.get(ctx,id))){
      builder.addAction(android.R.drawable.ic_media_pause,"Detener",stopPending);
    }
@@ -230,7 +309,11 @@ public final class AlarmReceiver extends BroadcastReceiver {
 
    String repeat=a.optString("repeat",a.optBoolean("daily")?"daily":"none");
    if(!"none".equals(repeat) && FIRE.equals(intent.getAction())){
-    long next=nextRepeat(a.optLong("when"),repeat,System.currentTimeMillis());
+    long original=a.optLong("when");
+    // Al sonar, avanzar siempre DESPUÉS de la ocurrencia original.
+    // Impide reprogramar exactamente el mismo instante si Android entrega
+    // el broadcast unos milisegundos antes de lo previsto.
+    long next=nextRepeat(original,repeat,Math.max(System.currentTimeMillis(),original));
     if(next>System.currentTimeMillis() && program(ctx,id,next)){
       a.put("when",next);
       ctx.getSharedPreferences("ns_alarms",0).edit().putString(PREFIX+id,a.toString()).apply();
