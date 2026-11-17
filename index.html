@@ -2039,7 +2039,9 @@ function nsNextAlarmDate(a,now){
     !/^\d{2}:\d{2}$/.test(a.time||''))return null;
  var dates=a.date.split('-').map(Number),hours=a.time.split(':').map(Number);
  var date=new Date(dates[0],dates[1]-1,dates[2],hours[0],hours[1],0,0);
- if(!Number.isFinite(date.getTime()))return null;
+ if(!Number.isFinite(date.getTime())||date.getFullYear()!==dates[0]||
+    date.getMonth()!==dates[1]-1||date.getDate()!==dates[2]||
+    date.getHours()!==hours[0]||date.getMinutes()!==hours[1])return null;
  var repeat=a.repeat|| (a.daily?'daily':'none');
  if(repeat==='none')return date.getTime()>now?date:null;
  var amount={daily:1,weekly:7,every2:2,every3:3}[repeat];
