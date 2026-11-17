@@ -235,6 +235,65 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
 .ns-hero-missions>span:first-child{background:#e5f7ff;color:#078fe3;border-radius:50%;width:23px;height:23px;display:grid;place-items:center}
 @media(max-width:670px){.ns-brand-hero{min-height:147px;padding:18px;border-radius:24px}.ns-brand-hero h2{font-size:22px;max-width:230px}.ns-brand-hero img{width:108px;height:108px;border-radius:29px;margin-right:-18px}.ns-hero-missions{font-size:10px;padding:7px 10px}.ns-brand-hero-copy{max-width:73%}}
 @media(max-width:360px){.ns-brand-hero img{width:84px;height:84px}.ns-brand-hero h2{font-size:19px}}
+
+/* DrakoPlan: animación por transform/opacity, sin render loop ni dependencias externas.
+   No cambia el SVG base; su aspecto definitivo se ajustará con la referencia aprobada. */
+.ns-dragon-tail{transform-box:fill-box;transform-origin:10% 30%;animation:ns-tail-sway 3.4s ease-in-out infinite}
+@keyframes ns-tail-sway{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(7deg)}}
+.ns-dragon-scene[data-dragon-action="walk"] .ns-dragon-figure{animation:ns-dragon-walk .45s ease-in-out 4}
+.ns-dragon-scene[data-dragon-action="sleep"] .ns-dragon-figure{animation:ns-dragon-rest 5.2s ease-in-out infinite}
+.ns-dragon-scene[data-dragon-action="sleep"] .ns-dragon-eye{animation:none;transform:scaleY(.12)}
+.ns-dragon-scene[data-dragon-action="eat"] .ns-dragon-figure{animation:ns-dragon-eat .32s ease-in-out 3}
+.ns-dragon-scene[data-dragon-action="play"] .ns-dragon-figure{animation:ns-dragon-play .65s ease-in-out 2}
+.ns-dragon-scene[data-dragon-action="celebrate"] .ns-dragon-figure{animation:ns-dragon-celebrate .65s ease-in-out 2}
+.ns-dragon-scene[data-dragon-action="sleep"] .ns-dragon-wing{animation:none}
+.ns-dragon-play-controls{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.ns-dragon-play-controls .btn{flex:1 1 90px;min-height:38px;font-size:12px}
+.ns-dragon-energy{font-size:12px;font-weight:650;color:#1b4778;margin:8px 0}
+@keyframes ns-dragon-walk{0%,100%{transform:translateX(-8px) rotate(-3deg)}50%{transform:translateX(9px) translateY(-6px) rotate(3deg)}}
+@keyframes ns-dragon-eat{50%{transform:translateY(5px) scale(.96,1.04)}}
+@keyframes ns-dragon-play{25%{transform:translateY(-12px) rotate(-7deg)}75%{transform:translateY(-9px) rotate(7deg)}}
+@media(prefers-reduced-motion:reduce){.ns-dragon-tail,.ns-dragon-scene[data-dragon-action] .ns-dragon-figure,.ns-dragon-scene[data-dragon-action] .ns-dragon-eye{animation:none!important}}
+
+
+/* Sprites evolutivos generados para Azul: conserva el SVG como fallback. */
+.ns-dragon-figure .ns-dragon-sprite{display:none;max-width:100%;max-height:220px;width:auto;height:auto;object-fit:contain;margin:0 auto;filter:drop-shadow(0 4px 8px #11245c40)}
+.ns-dragon-figure.has-sprite .ns-dragon-sprite{display:block}
+.ns-dragon-figure.has-sprite svg{display:none}
+.ns-dragon-scene[data-dragon-action="sleep"] .ns-dragon-figure.has-sprite img{filter:brightness(.82) saturate(.85)}
+.ns-dragon-scene[data-dragon-action="eat"] .ns-dragon-figure.has-sprite img{filter:saturate(1.14)}
+.ns-dragon-scene[data-dragon-action="celebrate"] .ns-dragon-figure.has-sprite img{filter:drop-shadow(0 0 15px #2ae8ffbb)}
+@media(prefers-reduced-motion:reduce){.ns-dragon-figure,.ns-dragon-figure.has-sprite img{animation:none!important}}
+
+/* Ciclos visuales 2D del sprite; no deforman el SVG de respaldo.
+   No son animaciones esqueléticas: se mueven capas completas y brillo. */
+.ns-dragon-figure.has-sprite{transform-origin:50% 86%}
+.ns-dragon-figure.has-sprite .ns-dragon-sprite{transform-origin:50% 80%;will-change:transform}
+.ns-dragon-scene[data-dragon-action="idle"] .ns-dragon-figure.has-sprite,
+.ns-dragon-scene[data-dragon-action="tired"] .ns-dragon-figure.has-sprite{animation:ns-azul-breathe 3.4s ease-in-out infinite}
+.ns-dragon-scene[data-dragon-action="tired"] .ns-dragon-figure.has-sprite{filter:brightness(.9)}
+.ns-dragon-scene[data-dragon-action="sleep"] .ns-dragon-figure.has-sprite{animation:ns-azul-sleep 4.3s ease-in-out infinite}
+.ns-dragon-scene[data-dragon-action="walk"] .ns-dragon-figure.has-sprite{animation:ns-azul-walk .42s ease-in-out 4}
+.ns-dragon-scene[data-dragon-action="eat"] .ns-dragon-figure.has-sprite{animation:ns-azul-eat .47s ease-in-out 3}
+.ns-dragon-scene[data-dragon-action="play"] .ns-dragon-figure.has-sprite{animation:ns-azul-play .52s ease-in-out 3}
+.ns-dragon-scene[data-dragon-action="celebrate"] .ns-dragon-figure.has-sprite{animation:ns-azul-cheer .56s ease-in-out 3}
+.ns-dragon-scene[data-dragon-action="evolve"] .ns-dragon-figure.has-sprite{animation:ns-azul-evolve 2.6s ease-in-out 1}
+.ns-dragon-scene[data-dragon-action="evolve"] .ns-dragon-glow{animation:ns-azul-evolve-glow .55s ease-in-out 5}
+@keyframes ns-azul-breathe{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-3px) scale(1.018,1.022)}}
+@keyframes ns-azul-walk{0%,100%{transform:translate(-4px,0) rotate(-2deg)}50%{transform:translate(5px,-7px) rotate(3deg)}}
+@keyframes ns-azul-sleep{0%,100%{transform:translateY(4px) scale(1,.96) rotate(-2deg)}50%{transform:translateY(6px) scale(1.018,.94) rotate(-3deg)}}
+@keyframes ns-azul-eat{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(6px) rotate(5deg) scale(.98)}}
+@keyframes ns-azul-play{0%,100%{transform:translateY(0) rotate(-3deg)}40%{transform:translateY(-13px) rotate(4deg)}70%{transform:translateY(-3px) rotate(-4deg)}}
+@keyframes ns-azul-cheer{0%,100%{transform:translateY(0) scale(1)}45%{transform:translateY(-17px) scale(1.08) rotate(4deg)}75%{transform:translateY(-5px) rotate(-4deg)}}
+@keyframes ns-azul-evolve{0%{transform:scale(.83);opacity:.45;filter:brightness(2)}38%{transform:scale(1.14);opacity:1;filter:brightness(1.8)}70%{transform:scale(.98);filter:brightness(1.2)}100%{transform:scale(1);filter:brightness(1)}}
+@keyframes ns-azul-evolve-glow{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.32)}}
+@media(prefers-reduced-motion:reduce){.ns-dragon-scene .ns-dragon-figure.has-sprite,.ns-dragon-scene .ns-dragon-glow{animation:none!important;transition:none!important}}
+
+/* Atlas compatible con imágenes evolutivas: ocho celdas 4×2. */
+.ns-dragon-figure .ns-dragon-atlas{display:none;width:100%;max-width:220px;aspect-ratio:1/1;background-repeat:no-repeat;background-size:400% 200%;background-position:0% 0%;margin:auto;filter:drop-shadow(0 6px 8px #12276455)}
+.ns-dragon-figure.has-atlas .ns-dragon-atlas{display:block}
+.ns-dragon-figure.has-atlas > .ns-dragon-sprite,.ns-dragon-figure.has-atlas > svg{display:none}
+@media(prefers-reduced-motion:reduce){.ns-dragon-figure.has-atlas,.ns-dragon-figure.has-atlas .ns-dragon-atlas{animation:none!important;transition:none!important}}
 </style></head><body>
 <div id="login" class="login ns-login-v3">
  <div class="ns-login-wrap">
@@ -308,6 +367,8 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
   <h2 style="margin-top:12px" id="pet-headline">Tu dragón está creciendo</h2>
   <p class="muted" id="pet-detail">Cada tarea completada alimenta tu progreso.</p>
   <div class="ns-dragon-xp"><div class="between"><span id="dragon-stage">Huevo místico</span><span id="pet-level" class="chip">Nivel 1</span></div><div class="progress"><div id="dragon-xp-fill" style="width:0%"></div></div><small id="dragon-xp-label">0 XP</small></div>
+  <div class="ns-dragon-energy" id="ns-dragon-energy" aria-live="polite">Energía: 100/100</div>
+  <div class="ns-dragon-play-controls" id="ns-dragon-play-controls" role="group" aria-label="Acciones del dragón"></div>
   <div class="ns-dragon-actions">
    <button class="btn" id="pet-feed" type="button">🍎 Alimentar · 20</button>
    <button class="btn secondary" id="dragon-pet" type="button">♡ Acariciar</button>
@@ -734,6 +795,9 @@ function nsDragonData(){
  p.xp=Math.max(0,Number(p.xp)||0);
  p.food=Math.max(0,Number(p.food)||0);
  p.feeds=Math.max(0,Number(p.feeds)||0);
+  // Campo nuevo opcional: las copias antiguas de la mascota siguen siendo compatibles.
+  p.energy=Math.min(100,Math.max(0,Number.isFinite(Number(p.energy))?Number(p.energy):100));
+  p.plays=Math.max(0,Number(p.plays)||0);
  p.name=String(p.name||'Azul').trim().slice(0,18)||'Azul';
  p.accessory=['none','star','scarf'].includes(p.accessory)?p.accessory:'none';
  p.pets=p.pets&&typeof p.pets==='object'?p.pets:{};
@@ -747,14 +811,20 @@ function nsDragonData(){
 function nsDragonStage(xp){for(var i=nsDragonStages.length-1;i>=0;i--)if(xp>=nsDragonStages[i].min)return i;return 0}
 function nsDragonSvg(stage,accessory){
  var spec=nsDragonStages[stage],egg=stage===0;
+ var stageTone=['#264ea9','#3475cc','#3b82d8','#2875d7','#255bba','#194aaf'][stage]||'#3475cc';
+ var stageGlow=stage>=3?'<ellipse cx="133" cy="117" rx="100" ry="101" fill="none" stroke="#77dfff" stroke-width="'+(stage===5?'3':'2')+'" opacity="'+(stage===5?'.47':'.23')+'"/>':'';
+ var stageOrnaments=stage>=2?'<path d="M100 153 l-7 10 9 -2 5 11 5 -11 9 2 -8 -10" fill="#8ddfff" opacity=".8"/>':'';
+ if(stage>=3)stageOrnaments+='<path d="M73 151 l-10 -10 -7 12 M186 146 l11 -13 9 12" fill="none" stroke="#81dbff" stroke-width="5" stroke-linecap="round"/>';
+ if(stage>=4)stageOrnaments+='<path d="M126 56 L134 28 L141 56 L135 67 Z" fill="#9cecff" stroke="#2a61bb" stroke-width="2"/><circle cx="129" cy="154" r="6" fill="#a2edff"/>';
+ if(stage>=5)stageOrnaments+='<path d="M42 44 L45 36 48 44 56 47 48 50 45 58 42 50 34 47Z M206 32 L210 24 214 32 222 36 214 40 210 47 206 40 198 36Z" fill="#7be9ff"/><path d="M65 180 Q35 160 36 118 M198 180 Q223 150 224 113" stroke="#66cfff" stroke-width="3" fill="none" opacity=".55"/>';
  var wing=spec.wings?'<path class="ns-dragon-wing ns-wing-left" d="M109 132 Q82 64 32 84 Q45 99 31 115 Q72 111 98 156 Z" fill="#638df0" stroke="#3653b8" stroke-width="4"/><path class="ns-dragon-wing ns-wing-right" d="M164 134 Q195 65 228 84 Q217 111 233 122 Q190 117 168 159 Z" fill="#5a85e2" stroke="#3653b8" stroke-width="4"/>':'';
  var fins=spec.wings>1?'<path d="M37 96 L48 81 L67 106 M213 97 L201 78 L185 111" stroke="#9be7ff" stroke-width="7" fill="none" stroke-linecap="round"/>':'';
  var horns=spec.horns?'<path d="M102 81 Q94 '+(spec.horns===3?'38':'53')+' 80 50 Q114 52 116 79 Z M151 80 Q168 '+(spec.horns===3?'39':'54')+' 182 53 Q159 51 139 83 Z" fill="#9de7f7" stroke="#407cb6" stroke-width="3"/>':'';
  var crest=spec.horns>1?'<path d="M124 62 L133 39 L143 65 Z" fill="#a0edff" stroke="#407cb6" stroke-width="3"/>':'';
  var stars=stage>=4?'<circle cx="56" cy="52" r="3" fill="#5a9dff"/><path d="M212 50 l0 -9 m-5 5 h10" stroke="#6eaaff" stroke-width="3"/>':'';
  var costume=accessory==='scarf'?'<path d="M99 151 Q132 166 164 148 L164 164 Q128 182 99 164 Z" fill="#f3a0b7"/><path d="M156 158 L173 186 L162 193 L141 165 Z" fill="#e16a91"/>':accessory==='star'?'<path d="M132 149 l6 12 13 2 -10 9 2 13 -11 -6 -11 6 2 -13 -10 -9 13 -2Z" fill="#ffca66" stroke="#d39c31" stroke-width="2"/>':'';
- if(egg)return '<svg viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><ellipse cx="130" cy="199" rx="66" ry="10" fill="#819bd43a"/><path d="M130 34 C75 34 62 105 76 155 C86 196 175 196 186 152 C202 99 176 34 130 34Z" fill="#d5edff" stroke="#6a8ecb" stroke-width="5"/><path d="M90 128 L113 114 L133 137 L150 118 L179 139" fill="none" stroke="#608ccc" stroke-width="6" stroke-linecap="round"/><path d="M90 157 Q129 185 169 154" stroke="#abcdf5" stroke-width="4" fill="none"/><circle cx="103" cy="91" r="6" fill="#b1d7ff"/><circle cx="158" cy="88" r="5" fill="#b1d7ff"/><path d="M132 24 l0 -12 m-5 6 h10" stroke="#7aa5f5" stroke-width="3"/></svg>';
- return '<svg viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><ellipse cx="131" cy="208" rx="73" ry="9" fill="#819bd43a"/>'+wing+fins+'<path d="M169 162 Q224 144 228 179 Q230 202 202 189" fill="none" stroke="#3b70ce" stroke-width="24" stroke-linecap="round"/><path d="M202 188 L218 175 L220 195 Z" fill="#9be9fa"/><ellipse cx="135" cy="163" rx="59" ry="46" fill="#3f83d3" stroke="#2e58a9" stroke-width="4"/><ellipse cx="133" cy="172" rx="39" ry="33" fill="#a8dffd"/><path d="M92 180 Q74 183 79 203 L106 203 Q116 185 110 177Z M158 178 Q182 180 181 201 L155 203 Q143 188 148 177Z" fill="#4388de" stroke="#2e58a9" stroke-width="3"/>'+horns+crest+'<path d="M86 104 C84 64 109 54 133 57 C168 55 188 86 177 121 C194 135 172 155 143 151 L108 151 C76 150 68 126 86 104Z" fill="#5599ed" stroke="#2c61b5" stroke-width="4"/><ellipse cx="133" cy="133" rx="40" ry="21" fill="#9dd8fb"/><ellipse class="ns-dragon-eye" cx="108" cy="105" rx="15" ry="18" fill="#fff"/><ellipse class="ns-dragon-eye" cx="155" cy="105" rx="15" ry="18" fill="#fff"/><ellipse cx="111" cy="108" rx="7" ry="10" fill="#253c75"/><ellipse cx="152" cy="108" rx="7" ry="10" fill="#253c75"/><circle cx="114" cy="104" r="3" fill="#fff"/><circle cx="155" cy="104" r="3" fill="#fff"/><ellipse cx="118" cy="130" rx="4" ry="3" fill="#417eb9"/><ellipse cx="149" cy="130" rx="4" ry="3" fill="#417eb9"/><path d="M123 140 Q133 147 143 140" stroke="#345c96" stroke-width="3" stroke-linecap="round" fill="none"/><circle cx="85" cy="122" r="7" fill="#f99dbb" opacity=".65"/><circle cx="178" cy="122" r="7" fill="#f99dbb" opacity=".65"/>'+costume+stars+'</svg>';
+ if(egg)return '<svg viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><ellipse cx="130" cy="199" rx="66" ry="10" fill="#819bd43a"/><path d="M130 34 C75 34 62 105 76 155 C86 196 175 196 186 152 C202 99 176 34 130 34Z" fill="#2a59b8" stroke="#7edbff" stroke-width="5"/><path d="M90 128 L113 114 L133 137 L150 118 L179 139" fill="none" stroke="#b7eeff" stroke-width="6" stroke-linecap="round"/><path d="M90 157 Q129 185 169 154" stroke="#6fcafa" stroke-width="4" fill="none"/><circle cx="103" cy="91" r="6" fill="#b1d7ff"/><circle cx="158" cy="88" r="5" fill="#b1d7ff"/><path d="M132 24 l0 -12 m-5 6 h10" stroke="#7aa5f5" stroke-width="3"/></svg>';
+ return '<svg viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><ellipse cx="131" cy="208" rx="73" ry="9" fill="#819bd43a"/>'+stageGlow+wing+fins+'<path class="ns-dragon-tail" d="M169 162 Q224 144 228 179 Q230 202 202 189" fill="none" stroke="#3b70ce" stroke-width="24" stroke-linecap="round"/><path d="M202 188 L218 175 L220 195 Z" fill="#9be9fa"/><ellipse cx="135" cy="163" rx="59" ry="46" fill="'+stageTone+'" stroke="#2e58a9" stroke-width="4"/><ellipse cx="133" cy="172" rx="39" ry="33" fill="#a8dffd"/><path d="M92 180 Q74 183 79 203 L106 203 Q116 185 110 177Z M158 178 Q182 180 181 201 L155 203 Q143 188 148 177Z" fill="#4388de" stroke="#2e58a9" stroke-width="3"/>'+horns+crest+'<path d="M86 104 C84 64 109 54 133 57 C168 55 188 86 177 121 C194 135 172 155 143 151 L108 151 C76 150 68 126 86 104Z" fill="#5599ed" stroke="#2c61b5" stroke-width="4"/><ellipse cx="133" cy="133" rx="40" ry="21" fill="#9dd8fb"/><ellipse class="ns-dragon-eye" cx="108" cy="105" rx="15" ry="18" fill="#fff"/><ellipse class="ns-dragon-eye" cx="155" cy="105" rx="15" ry="18" fill="#fff"/><ellipse cx="111" cy="108" rx="7" ry="10" fill="#253c75"/><ellipse cx="152" cy="108" rx="7" ry="10" fill="#253c75"/><circle cx="114" cy="104" r="3" fill="#fff"/><circle cx="155" cy="104" r="3" fill="#fff"/><ellipse cx="118" cy="130" rx="4" ry="3" fill="#417eb9"/><ellipse cx="149" cy="130" rx="4" ry="3" fill="#417eb9"/><path d="M123 140 Q133 147 143 140" stroke="#345c96" stroke-width="3" stroke-linecap="round" fill="none"/><circle cx="85" cy="122" r="7" fill="#f99dbb" opacity=".65"/><circle cx="178" cy="122" r="7" fill="#f99dbb" opacity=".65"/>'+costume+stageOrnaments+stars+'</svg>';
 }
 function nsDragonMessage(text,animate){
  var message=by('dragon-message');if(message)message.textContent=text;
@@ -762,7 +832,34 @@ function nsDragonMessage(text,animate){
 }
 function nsDragonRender(){
  if(!session||!model)return;var p=nsDragonData(),idx=nsDragonStage(p.xp),spec=nsDragonStages[idx],next=nsDragonStages[idx+1];
- by('pet-face').innerHTML=nsDragonSvg(idx,p.accessory);
+ var figure=by('pet-face');
+ // Mantener el mismo nodo evita parpadeos y reinicios del sprite al actualizar tareas.
+ if(figure.dataset.stage!==String(idx)||figure.dataset.accessory!==p.accessory){
+  figure.dataset.stage=String(idx);
+  figure.dataset.accessory=p.accessory;
+  figure.classList.remove('has-sprite','has-atlas');
+  figure.innerHTML=nsDragonSvg(idx,p.accessory); // SVG seguro si falla WebP.
+  // Accesorios antiguos mantienen su SVG equipado: los atlas aún no tienen estas capas.
+  if(p.accessory==='none'){
+   var image=document.createElement('img');
+  image.className='ns-dragon-sprite';
+  image.alt='';
+  image.decoding='async';
+  image.onload=function(){if(image.parentNode===figure){figure.classList.add('has-sprite');nsDragonPoseSet(nsDragonActionState)}};
+  image.onerror=function(){
+   if(image.parentNode!==figure)return;
+   // Si falla una pose, volver a la ilustración base y finalmente al SVG.
+   if(image.src.indexOf('/poses/')!==-1&&!image.dataset.poseDisabled){
+    image.dataset.poseDisabled='true';
+    image.src='assets/dragon/etapa-'+(idx+1)+'.webp';
+   }else{figure.classList.remove('has-sprite');figure.removeChild(image)}
+  };
+  image.src='assets/dragon/etapa-'+(idx+1)+'.webp';
+   figure.appendChild(image);
+   nsDragonPoseSet(nsDragonActionState);
+  }
+ }
+ nsDragonCheckEvolution(idx);
  by('pet-face').setAttribute('aria-label',p.name+', '+spec.name);
  by('pet-headline').textContent=p.name+' · Tu compañero';
  by('dragon-stage').textContent=spec.name;
@@ -1030,7 +1127,7 @@ function nsDragonInit(){
  by('dragon-advice-toggle').onclick=nsDragonToggleAdvice;
  by('dragon-room-select').onchange=function(){nsDragonSelectRoom(this.value)};
  by('dragon-furniture-select').onchange=function(){nsDragonSelectFurniture(this.value)};
- by('dragon-scene').onclick=function(){nsDragonMessage('¡Qué gusto verte! Sigamos a nuestro ritmo.',true)};
+ by('dragon-scene').onclick=function(){nsDragonMessage('¡Qué gusto verte! Sigamos a nuestro ritmo.',true);nsDragonAnimate('play')};
  by('dragon-pet').onclick=function(){
   var p=nsDragonData(),today=day(),n=Number(p.pets[today])||0;
   if(n>=3){nsDragonMessage('Ya recibí mis caricias de hoy. ¡Sigamos con una tarea pequeña!',true);return}
@@ -1185,7 +1282,7 @@ function nsFocusSaveSession(completed){
   if(completed&&elapsed>=5*60000){var p=nsDragonData();p.xp+=Math.max(5,Math.min(50,Math.floor(elapsed/60000)*0.8));p.food+=10;save();}
  }
  nsFocusState=null;nsFocusPersist();nsFocusStats();nsFocusRender();nsHealthRender();nsDragonRender();
- if(completed&&elapsed>=5*60000)nsDragonMessage('¡Entrenamos juntos! Tu enfoque hizo crecer a nuestro dragón.',true);
+ if(completed&&elapsed>=5*60000){nsDragonMessage('¡Entrenamos juntos! Tu enfoque hizo crecer a nuestro dragón.',true);nsDragonAnimate('celebrate')}
 }
 function nsFocusPulse(){if(!nsFocusState)return;if(nsFocusElapsed()>=nsFocusState.duration*60000){nsFocusSaveSession(true);say('¡Sesión completada! Tu avance quedó registrado.')}else nsFocusRender()}
 function nsFocusInit(){
@@ -1280,7 +1377,7 @@ function renderFocus(){
    if(target.doneDates.indexOf(key)<0){target.doneDates.push(key);model.pet.food+=10;model.pet.xp+=10}
    model.focusId=null;
   }
-  mark(target);save();render();if(step.index<0)nsDragonMessage('¡Terminaste tu misión! Estoy orgulloso de nuestro avance.',true);
+  mark(target);save();render();if(step.index<0){nsDragonMessage('¡Terminaste tu misión! Estoy orgulloso de nuestro avance.',true);nsDragonAnimate('celebrate')}
  };
  by('focus-other').onclick=function(){
   var choices=actionable();if(choices.length<2){say('Solo tienes una tarea para hoy');return}
@@ -1327,7 +1424,7 @@ by('quick-capture-form').onsubmit=function(event){
 };
 function taskItem(t){var yes=taskDone(t),el=document.createElement('div');el.className='task'+(yes?' done':'');var meta=esc(t.date)+(t.time?' · '+esc(t.time):'')+' · '+esc(t.owner||'Yo')+' · '+esc(t.category||'Sin categoría')+((t.tags||[]).length?' · #'+(t.tags||[]).map(esc).join(' #'):'')+(t.repeat&&t.repeat!=='none'?' · '+(t.repeat==='daily'?'Diaria':t.repeat==='weekly'?'Semanal':t.repeat==='every2'?'Cada 2 días':'Cada 3 días'):'');
 el.innerHTML='<input type="checkbox" aria-label="Completar tarea" '+(yes?'checked':'')+'><div class="task-main"><div class="task-title">'+esc(t.title)+'</div><div class="task-meta">'+meta+'</div></div><button class="iconbtn edit-task" type="button" aria-label="Editar tarea" title="Editar">✎</button><button class="iconbtn delete-task" type="button" aria-label="Eliminar tarea" title="Eliminar">×</button>';
-el.querySelector('input').onchange=function(e){var k=t.repeat==='none'?t.date:day();t.doneDates=t.doneDates||[];if(e.target.checked){if(t.doneDates.indexOf(k)<0){t.doneDates.push(k);model.pet.food+=10;model.pet.xp+=10;say('¡Buen trabajo! +10 puntos para tu dragón 🐉')}}else{t.doneDates=t.doneDates.filter(function(v){return v!==k})}mark(t);save();render();if(e.target.checked)nsDragonMessage('¡Una tarea menos! Tu esfuerzo me hace crecer.',true)};
+el.querySelector('input').onchange=function(e){var k=t.repeat==='none'?t.date:day(),awarded=false;t.doneDates=t.doneDates||[];if(e.target.checked){if(t.doneDates.indexOf(k)<0){t.doneDates.push(k);model.pet.food+=10;model.pet.xp+=10;awarded=true;say('¡Buen trabajo! +10 puntos para tu dragón 🐉')}}else{t.doneDates=t.doneDates.filter(function(v){return v!==k})}mark(t);save();render();if(awarded){nsDragonMessage('¡Una tarea menos! Tu esfuerzo me hace crecer.',true);nsDragonAnimate('celebrate')}};
 el.querySelector('.edit-task').onclick=function(){editTask(t)};
 el.querySelector('.delete-task').onclick=function(){if(session.role!=='admin'&&t.owner==='todos'){say('Una tarea compartida solo puede eliminarla el administrador');return}nsConfirm('Eliminar tarea','Se eliminará esta tarea.','Eliminar').then(function(ok){if(ok){t.deleted=true;mark(t);save();render()}})};
 if((t.steps||[]).length){
@@ -1536,7 +1633,7 @@ by('open-minimal-home').onclick=function(){
 };
 by('pet-feed').onclick=function(){
  var p=nsDragonData();if(p.food<20){nsDragonMessage('Nos faltan puntos. ¿Hacemos una tarea pequeña?');return}
- p.food-=20;p.xp+=15;p.feeds++;save();render();nsDragonMessage('¡Qué rico! Gracias por cuidarme. +15 XP',true)
+ p.food-=20;p.xp+=15;p.feeds++;p.energy=Math.min(100,p.energy+20);save();render();nsDragonMessage('¡Qué rico! Gracias por cuidarme. +15 XP',true);nsDragonAnimate('eat')
 };
 var syncing=false;
 window.neuroSyncOnSync=function(payload,requestingUser){
@@ -1714,11 +1811,214 @@ by('jump-challenge').onclick=function(){show('alarms');say('Crea una alarma y el
 by('jump-progress').onclick=function(){show('habits')};
 nsFocusInit();
 nsDragonInit();
+nsDragonInitActions();
 nsBrandLoginInit();
 nsTaskOrganizerInit();
 nsPlanInit();
 nsSleepInit();
 updateInstalledBuild();
+
+/* DrakoPlan / Azul: máquina de estados sin bucles de render ni servicios externos.
+   Estado animado efímero: no se guarda en la copia de seguridad, ni crea recompensas.
+   Las transiciones son deterministas y las acciones de menor prioridad se encolan. */
+var nsDragonActionTimer=null;
+var nsDragonActionState='idle';
+var nsDragonPending=[];
+var nsDragonDisplayedStage=null;
+var nsDragonStageOwner='';
+/* Selector de ocho poses Higgsfield para la evolución Cría (etapa 2).
+   Las demás cinco etapas siguen mostrando sus ilustraciones propias.
+   El cambio de fotogramas usa imágenes WebP locales, sin un render loop continuo. */
+/* Un atlas por evolución (4 columnas × 2 filas; 8 poses; WebP RGBA).
+   Fuente: variantes generadas con referencias recortadas de cada etapa aprobada.
+   El dibujo base de la evolución se conserva como fallback si no carga el atlas. */
+var nsDragonPoseFrameTimer=null,nsDragonPoseBlinkTimer=null;
+var nsDragonPoseNames=['idle','blink','walk-a','walk-b','flap','sleep','eat','celebrate'];
+var nsDragonAtlasCache={};
+function nsDragonStopPoseTimers(){
+ if(nsDragonPoseFrameTimer!==null){clearInterval(nsDragonPoseFrameTimer);nsDragonPoseFrameTimer=null}
+ if(nsDragonPoseBlinkTimer!==null){clearTimeout(nsDragonPoseBlinkTimer);nsDragonPoseBlinkTimer=null}
+}
+function nsDragonAtlasFrame(figure,idx){
+ var tile=figure.querySelector('.ns-dragon-atlas');
+ if(!tile)return;
+ idx=Math.max(0,Math.min(7,Number(idx)||0));
+ tile.style.backgroundPosition=((idx%4)*100/3)+'% '+(Math.floor(idx/4)*100)+'%';
+ tile.dataset.pose=nsDragonPoseNames[idx];
+}
+function nsDragonPoseSet(state){
+ nsDragonStopPoseTimers();
+ var figure=by('pet-face');
+ if(!figure||!session||!model||figure.dataset.accessory!=='none')return;
+ var index=Number(figure.dataset.stage);
+ if(!Number.isInteger(index)||index<0||index>5)return;
+ var key=String(index+1);
+ var url='assets/dragon/atlases/etapa-'+key+'.webp';
+ var tile=figure.querySelector('.ns-dragon-atlas');
+ if(!tile){
+  var status=nsDragonAtlasCache[key];
+  if(status==='failed')return;
+  if(status!=='loaded'){
+   if(status!=='loading'){
+    nsDragonAtlasCache[key]='loading';
+    var preload=new Image();
+    preload.onload=function(){
+     nsDragonAtlasCache[key]='loaded';
+     if(figure.isConnected&&figure.dataset.stage===String(index))nsDragonPoseSet(nsDragonActionState);
+    };
+    preload.onerror=function(){nsDragonAtlasCache[key]='failed'};
+    preload.src=url;
+   }
+   return;
+  }
+  tile=document.createElement('span');
+  tile.className='ns-dragon-atlas';
+  tile.setAttribute('aria-hidden','true');
+  tile.style.backgroundImage='url("'+url+'")';
+  figure.appendChild(tile);
+  figure.classList.add('has-atlas');
+ }
+ var reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ if(reduced||document.hidden){nsDragonAtlasFrame(figure,0);return}
+ if(state==='walk'){
+  var step=0;nsDragonAtlasFrame(figure,2);
+  nsDragonPoseFrameTimer=setInterval(function(){
+   if(!session||!model||document.hidden){nsDragonStopPoseTimers();return}
+   step=1-step;nsDragonAtlasFrame(figure,step?3:2)
+  },340);
+ }else if(state==='idle'){
+  nsDragonAtlasFrame(figure,0);
+  function blink(){
+   if(!session||!model||nsDragonActionState!=='idle'||document.hidden)return;
+   nsDragonAtlasFrame(figure,1);
+   nsDragonPoseBlinkTimer=setTimeout(function(){
+    if(!session||!model||nsDragonActionState!=='idle')return;
+    nsDragonAtlasFrame(figure,0);
+    nsDragonPoseBlinkTimer=setTimeout(blink,4800);
+   },170);
+  }
+  nsDragonPoseBlinkTimer=setTimeout(blink,4800);
+ }else{
+  var idx={tired:5,sleep:5,eat:6,play:4,celebrate:7,evolve:4}[state];
+  nsDragonAtlasFrame(figure,idx===undefined?0:idx);
+ }
+}
+document.addEventListener('visibilitychange',function(){
+ if(session&&model)nsDragonPoseSet(nsDragonActionState);
+});
+
+var nsDragonAnimations={
+ idle:{duration:0,priority:0},
+ tired:{duration:0,priority:1},
+ walk:{duration:1750,priority:2},
+ sleep:{duration:0,priority:2},
+ eat:{duration:1400,priority:3},
+ play:{duration:1600,priority:3},
+ celebrate:{duration:1700,priority:4},
+ evolve:{duration:2700,priority:5}
+};
+function nsDragonSetState(state){
+ var scene=by('dragon-scene');if(!scene)return;
+ nsDragonActionState=state;
+ scene.dataset.dragonAction=state;
+ scene.setAttribute('aria-label','Azul: '+state);
+ nsDragonPoseSet(state);
+}
+function nsDragonClearTimer(){
+ if(nsDragonActionTimer!==null){clearTimeout(nsDragonActionTimer);nsDragonActionTimer=null}
+}
+function nsDragonNextAction(){
+ nsDragonClearTimer();
+ var next=nsDragonPending.shift();
+ if(next){nsDragonStartAction(next);return}
+ var energy=session&&model?nsDragonData().energy:100;
+ nsDragonSetState(energy<20?'tired':'idle');
+}
+function nsDragonStartAction(action){
+ var info=nsDragonAnimations[action];if(!info)return false;
+ nsDragonClearTimer();nsDragonSetState(action);
+ if(info.duration>0){
+  nsDragonActionTimer=setTimeout(function(){
+   nsDragonActionTimer=null;nsDragonNextAction()
+  },info.duration);
+ }
+ return true;
+}
+function nsDragonAnimate(action){
+ if(!nsDragonAnimations[action])return false;
+ if(!session||!model||!by('dragon-scene'))return false;
+ if(action==='idle'){nsDragonPending.length=0;nsDragonStartAction('idle');return true}
+ var active=nsDragonAnimations[nsDragonActionState]||nsDragonAnimations.idle;
+ var incoming=nsDragonAnimations[action];
+ if(nsDragonActionState==='evolve'&&action!=='evolve'){
+  if(nsDragonPending.length<3)nsDragonPending.push(action);
+  return true;
+ }
+ // Dormir es persistente, pero despertar con cualquier interacción es inmediato.
+ if(nsDragonActionState==='sleep'||nsDragonActionState==='tired')return nsDragonStartAction(action);
+ if(nsDragonActionTimer!==null&&incoming.priority<active.priority){
+  if(nsDragonPending.length<3)nsDragonPending.push(action);
+  return true;
+ }
+ nsDragonPending.length=0;
+ return nsDragonStartAction(action);
+}
+function nsDragonCheckEvolution(idx){
+ if(!session||!model)return;
+ var owner=session.username||'';
+ if(nsDragonStageOwner!==owner){nsDragonStageOwner=owner;nsDragonDisplayedStage=idx;nsDragonAnimate('idle');return}
+ if(nsDragonDisplayedStage!==null&&idx>nsDragonDisplayedStage){
+  nsDragonAnimate('evolve');
+  nsDragonMessage('¡Evolución desbloqueada! '+nsDragonStages[idx].name+'.',false)
+ }
+ nsDragonDisplayedStage=idx;
+}
+function nsDragonPlay(){
+ if(!session||!model)return;
+ var p=nsDragonData();
+ if(p.energy<15){nsDragonMessage('Tengo sueño. Primero vamos a descansar.');nsDragonAnimate('tired');return}
+ p.energy-=15;p.plays++;
+ // El juego es una interacción afectiva, NO genera monedas ni XP: evita farmear recompensas.
+ save();nsDragonAnimate('play');nsDragonMessage('¡Qué divertido! Juguemos otra vez después de descansar.',false);
+ nsDragonUpdateEnergy();
+}
+function nsDragonRest(){
+ if(!session||!model)return;
+ var p=nsDragonData();
+ p.energy=Math.min(100,p.energy+25);save();
+ nsDragonAnimate('sleep');nsDragonMessage('Un descanso merecido. Mi energía se recupera sin penalizaciones.',false);
+ nsDragonUpdateEnergy();
+}
+function nsDragonUpdateEnergy(){
+ if(!session||!model)return;
+ var p=nsDragonData(),element=by('ns-dragon-energy');
+ if(element)element.textContent='Energía: '+Math.round(p.energy)+'/100 · Evolución '+(nsDragonStage(p.xp)+1)+'/6';
+}
+function nsDragonInitActions(){
+ var actions=by('ns-dragon-play-controls');
+ if(!actions)return;
+ // Evita duplicar controles si el módulo se vuelve a inicializar.
+ if(actions.dataset.dragonInitialized==='true')return;
+ actions.dataset.dragonInitialized='true';
+ [['walk','Caminar'],['play','Jugar'],['sleep','Dormir'],['eat','Comer'],['celebrate','Celebrar'],['idle','Despertar']].forEach(function(entry){
+  var button=document.createElement('button');
+  button.type='button';button.className='btn secondary';button.textContent=entry[1];
+  button.onclick=function(){
+   if(!session||!model)return;
+   if(entry[0]==='play')return nsDragonPlay();
+   if(entry[0]==='sleep')return nsDragonRest();
+   if(entry[0]==='eat'){
+    var feed=by('pet-feed');if(feed)feed.click();return;
+   }
+   nsDragonAnimate(entry[0]);
+   nsDragonMessage(entry[0]==='walk'?'¡Vamos a explorar!':entry[0]==='celebrate'?'¡Celebremos nuestros avances!':'¡Estoy contigo!',false);
+  };
+  actions.append(button);
+ });
+ var originalRender=nsDragonRender;
+ nsDragonRender=function(){originalRender();nsDragonUpdateEnergy()};
+}
+
 function logout(){if(nsFocusState)nsFocusSaveSession(false);nsLauncherFocusSync();syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
 by('logout').onclick=logout;by('avatar').onclick=async function(){if(await nsConfirm('Cerrar sesión','¿Quieres cerrar esta sesión?','Cerrar sesión'))logout()};
 document.addEventListener('visibilitychange',function(){if(!document.hidden){sync();refreshFocusClock()}});setInterval(sync,60000);

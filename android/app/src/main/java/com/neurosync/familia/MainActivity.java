@@ -65,6 +65,18 @@ public final class MainActivity extends Activity {
     settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
     web.setWebChromeClient(new WebChromeClient());
     web.setWebViewClient(new WebViewClient(){
+      // Solo recursos locales de la mascota; no altera la red, cuentas ni las alarmas.
+      @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request){
+        String path=request.getUrl().getPath();
+        if("appassets.androidplatform.net".equals(request.getUrl().getHost())
+            && path!=null && path.matches("/assets/dragon/(?:etapa-[1-6]|atlases/etapa-[1-6])\\.webp")){
+          try{
+            String file=path.substring("/assets/".length());
+            return new WebResourceResponse("image/webp",null,getAssets().open(file));
+          }catch(IOException e){return null;}
+        }
+        return super.shouldInterceptRequest(view,request);
+      }
       @Override public boolean shouldOverrideUrlLoading(WebView view,WebResourceRequest request){
         return !request.getUrl().toString().startsWith("https://appassets.androidplatform.net/");
       }
