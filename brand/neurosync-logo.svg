@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="NeuroSync: dragón y lista de tareas">
+<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#063674"/><stop offset=".55" stop-color="#0866c6"/><stop offset="1" stop-color="#03c4ec"/></linearGradient><linearGradient id="wing" x2="0" y2="1"><stop stop-color="#45eeff"/><stop offset="1" stop-color="#0d7fe6"/></linearGradient><linearGradient id="paper" x2="0" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#c8f2ff"/></linearGradient></defs>
+<rect x="4" y="4" width="248" height="248" rx="58" fill="url(#bg)"/>
+<path d="M28 158Q32 78 103 63Q63 103 75 152Q95 104 151 77Q107 127 113 175Q88 205 55 201Q37 184 28 158Z" fill="url(#wing)"/>
+<path d="M77 43Q109 73 128 75Q115 51 119 33Q142 61 166 65Q195 76 203 103Q209 118 193 128Q181 135 160 121Q144 116 124 128Q100 147 102 182Q78 156 87 132Q91 113 113 101Q87 98 59 122Q73 81 109 87Q87 67 77 43Z" fill="#f7feff"/>
+<path d="M159 103Q171 101 178 107Q170 116 159 108Z" fill="#073878"/>
+<rect x="128" y="127" width="100" height="90" rx="18" fill="url(#paper)"/>
+<g stroke="#078fe6" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="m143 149 8 8 13-15"/><path d="m143 173 8 8 13-15"/><path d="m143 196 8 8 13-15"/><path d="M175 151h37M175 175h37M175 199h27"/></g>
+<path d="M44 207Q111 251 190 220" fill="none" stroke="#5ff0fd" stroke-width="16" stroke-linecap="round"/>
+<path d="m219 58 6 16 16 6-16 6-6 16-6-16-16-6 16-6Z" fill="#94ffff"/>
+</svg>
