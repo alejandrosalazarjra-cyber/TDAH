@@ -50,6 +50,14 @@
 .ns-health-bar-shell{width:100%;max-width:40px;height:116px;background:var(--bg,#f2f5fd);border-radius:8px;display:flex;align-items:flex-end;overflow:hidden}
 .ns-health-bar{width:100%;min-height:2px;background:var(--blue,#4258db);border-radius:8px 8px 0 0}
 .ns-health-column small{color:var(--muted,#69788f);font-size:10px}
+
+.ns-task-tools{display:grid;grid-template-columns:minmax(0,1.4fr) repeat(2,minmax(0,1fr));gap:10px;margin:15px 0 9px}
+.ns-task-tools .field{min-width:0}.ns-task-tools input,.ns-task-tools select{min-height:43px}
+.ns-category-summary{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}
+.ns-category-chip{border:1px solid var(--border,#e5eaf3);background:var(--paper,#fff);color:var(--ink,#1b2540);border-radius:999px;padding:8px 12px;font-size:12px}
+.ns-category-chip.selected{border-color:var(--blue,#4258db);background:#eaf0ff;color:#344dba}
+.ns-category-chip strong{font-variant-numeric:tabular-nums;margin-left:4px}
+@media(max-width:670px){.ns-task-tools{grid-template-columns:1fr 1fr}.ns-task-tools .field:first-child{grid-column:1/-1}}
 </style></head><body>
 <div id="login" class="login">
  <form id="login-form" class="card login-card">
@@ -141,7 +149,13 @@
     <p class="hint">Aquí puedes guardar ideas sin fecha. Cuando estés preparado, convierte una en tarea de hoy.</p>
     <div id="inbox-list"></div>
    </div>
-   <div class="card" style="margin-top:15px"><div class="between"><h2>Tareas organizadas</h2><button class="btn" data-open="task">+ Crear tarea</button></div><div class="tabs" id="task-filters"><button class="tab active" data-filter="all">Todas</button><button class="tab" data-filter="pending">Pendientes</button><button class="tab" data-filter="done">Realizadas</button></div><div id="tasks-list"></div></div></section>
+   <div class="card" style="margin-top:15px"><div class="between"><h2>Tareas organizadas</h2><button class="btn" data-open="task">+ Crear tarea</button></div><div class="tabs" id="task-filters"><button class="tab active" data-filter="all">Todas</button><button class="tab" data-filter="pending">Pendientes</button><button class="tab" data-filter="done">Realizadas</button></div>
+<div class="ns-task-tools">
+ <label class="field">Buscar tareas<input id="ns-task-search" type="search" maxlength="100" placeholder="Nombre, categoría o paso…"></label>
+ <label class="field">Categoría<select id="ns-category-filter"><option value="all">Todas las categorías</option></select></label>
+ <label class="field">Ordenar<select id="ns-task-sort"><option value="date">Por fecha</option><option value="priority">Por prioridad</option><option value="name">Por nombre</option></select></label>
+</div>
+<div id="ns-category-summary" class="ns-category-summary"></div><div id="tasks-list"></div></div></section>
   <section class="view" id="view-calendar"><div class="grid"><div class="card"><div class="between"><button class="btn ghost" id="prev-month">‹</button><h2 id="month-title" style="margin:0"></h2><button class="btn ghost" id="next-month">›</button></div><div class="calendar-grid" id="calendar" style="margin-top:20px"></div></div><div class="card"><h2 id="selected-title">Actividades del día</h2><div id="day-tasks"></div><button class="btn secondary" data-open="task">+ Agregar</button></div></div></section>
   <section class="view" id="view-bags"><div class="card"><div class="between"><h2>Listas para salir</h2><button class="btn" data-open="bag">+ Nueva lista</button></div><p class="muted small">Prepara lo que llevarás al gimnasio, al trabajo, al estudio o a cualquier destino.</p><div id="bags-list"></div></div></section>
   <section class="view" id="view-alarms">
@@ -301,6 +315,60 @@ function nsWidgetAlarmSummary(){
  });
  var label=next?next.toLocaleDateString('es-CO',{day:'2-digit',month:'short'})+' '+next.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}):'';
  try{nat.updateWidgetNextAlarm(label)}catch(e){}
+}
+
+
+/* Categorías independientes del dispositivo: se guardan dentro de cada tarea y viajan con su sincronización existente. */
+var nsCategoryFilter='all',nsTaskQuery='',nsTaskSort='date';
+function nsCleanCategory(raw){
+ var text=String(raw||'').replace(/\\s+/g,' ').trim().slice(0,36);
+ return text||'Personal';
+}
+function nsRenderTaskOrganizer(tasks){
+ var all=tasks.filter(function(t){return !t.inbox});
+ var names=new Map();
+ all.forEach(function(t){
+  var category=String(t.category||'Sin categoría').trim()||'Sin categoría';
+  var k=category.toLocaleLowerCase('es-CO');
+  if(!names.has(k))names.set(k,{name:category,count:0});
+  names.get(k).count++;
+ });
+ var categories=Array.from(names.values()).sort(function(a,b){return a.name.localeCompare(b.name,'es')});
+ var selector=by('ns-category-filter'),previous=nsCategoryFilter;
+ selector.replaceChildren();var base=document.createElement('option');base.value='all';base.textContent='Todas las categorías';selector.append(base);
+ categories.forEach(function(c){
+  var o=document.createElement('option');o.value=c.name.toLocaleLowerCase('es-CO');o.textContent=c.name+' ('+c.count+')';selector.append(o);
+ });
+ if(previous!=='all'&&!categories.some(function(c){return c.name.toLocaleLowerCase('es-CO')===previous}))nsCategoryFilter='all';
+ selector.value=nsCategoryFilter;
+ var summary=by('ns-category-summary');summary.replaceChildren();
+ categories.forEach(function(c){
+  var button=document.createElement('button');button.type='button';button.className='ns-category-chip'+(nsCategoryFilter===c.name.toLocaleLowerCase('es-CO')?' selected':'');
+  button.textContent=c.name+' · '+c.count;
+  button.onclick=function(){nsCategoryFilter=nsCategoryFilter===c.name.toLocaleLowerCase('es-CO')?'all':c.name.toLocaleLowerCase('es-CO');nsRenderTaskOrganizer(tasks)};
+  summary.append(button);
+ });
+ var q=nsTaskQuery.trim().toLocaleLowerCase('es-CO');
+ var shown=all.filter(function(t){
+  if(filter==='done'&&!taskDone(t))return false;
+  if(filter==='pending'&&taskDone(t))return false;
+  var category=String(t.category||'Sin categoría');
+  if(nsCategoryFilter!=='all'&&category.toLocaleLowerCase('es-CO')!==nsCategoryFilter)return false;
+  if(!q)return true;
+  return [t.title,category,t.owner].concat(t.steps||[]).some(function(x){return String(x||'').toLocaleLowerCase('es-CO').includes(q)});
+ });
+ var weight={high:0,normal:1,low:2};
+ shown.sort(function(a,b){
+  if(nsTaskSort==='name')return String(a.title||'').localeCompare(String(b.title||''),'es');
+  if(nsTaskSort==='priority')return (weight[a.priority]??1)-(weight[b.priority]??1)||(a.date||'').localeCompare(b.date||'');
+  return (a.date||'').localeCompare(b.date||'')||(a.time||'').localeCompare(b.time||'');
+ });
+ fill('tasks-list',shown,taskItem,'No hay tareas con estos filtros.');
+}
+function nsTaskOrganizerInit(){
+ by('ns-task-search').oninput=function(){nsTaskQuery=this.value;render()};
+ by('ns-category-filter').onchange=function(){nsCategoryFilter=this.value;render()};
+ by('ns-task-sort').onchange=function(){nsTaskSort=this.value;render()};
 }
 
 function nsSleepKey(){return 'ns_sleep_private_v1_'+(session?session.username:'visitante')}
@@ -528,7 +596,7 @@ by('quick-capture-form').onsubmit=function(event){
    date:day(),repeat:'none',priority:'normal',energy:'low',steps:[],doneDates:[],updatedAt:stamp()});
  input.value='';save();render();say('Anotado. No tienes que hacerlo ahora.');
 };
-function taskItem(t){var yes=taskDone(t),el=document.createElement('div');el.className='task'+(yes?' done':'');var meta=esc(t.date)+(t.time?' · '+esc(t.time):'')+' · '+esc(t.owner||'Yo')+(t.repeat&&t.repeat!=='none'?' · '+(t.repeat==='daily'?'Diaria':'Semanal'):'');
+function taskItem(t){var yes=taskDone(t),el=document.createElement('div');el.className='task'+(yes?' done':'');var meta=esc(t.date)+(t.time?' · '+esc(t.time):'')+' · '+esc(t.owner||'Yo')+' · '+esc(t.category||'Sin categoría')+(t.repeat&&t.repeat!=='none'?' · '+(t.repeat==='daily'?'Diaria':'Semanal'):'');
 el.innerHTML='<input type="checkbox" aria-label="Completar tarea" '+(yes?'checked':'')+'><div class="task-main"><div class="task-title">'+esc(t.title)+'</div><div class="task-meta">'+meta+'</div></div><button class="iconbtn edit-task" type="button" aria-label="Editar tarea" title="Editar">✎</button><button class="iconbtn delete-task" type="button" aria-label="Eliminar tarea" title="Eliminar">×</button>';
 el.querySelector('input').onchange=function(e){var k=t.repeat==='none'?t.date:day();t.doneDates=t.doneDates||[];if(e.target.checked){if(t.doneDates.indexOf(k)<0){t.doneDates.push(k);model.pet.food+=10;model.pet.xp+=10;say('¡Buen trabajo! +10 puntos para tu mascota 🐣')}}else{t.doneDates=t.doneDates.filter(function(v){return v!==k})}mark(t);save();render()};
 el.querySelector('.edit-task').onclick=function(){editTask(t)};
@@ -557,7 +625,7 @@ by('pet-detail').textContent='Tienes '+model.pet.food+' puntos. Completa tus tar
 by('daily-summary').textContent='Completaste '+completed+' de '+current.length+' actividades de hoy';
 by('daily-bar').style.width=(current.length?Math.round(100*completed/current.length):0)+'%';
 fill('home-tasks',actionable().slice(0,3),taskItem,'Tu día está al día. ¡Bien hecho!');
-fill('tasks-list',tasks.filter(function(t){return !t.inbox&&(filter==='all'||(filter==='done'?taskDone(t):!taskDone(t)))}),taskItem,'No hay tareas en esta categoría.');
+nsRenderTaskOrganizer(tasks);
 fill('home-alarms',active(model.alarms).filter(owned).slice(0,3),alarmItem,'No tienes alarmas próximas');
 fill('home-bags',active(model.packs).filter(owned).slice(0,2),miniBag,'Aún no tienes listas');
 renderFocus();renderInbox();refreshFocusClock();renderCalendar();renderBags();renderAlarms();if(session.role==='admin')renderUsers();
@@ -592,7 +660,7 @@ if(kind==='alarm'&&nat&&nat.requestAlarmPermissions){
 }
 var head={task:'Nueva tarea / flujo',bag:'Nueva lista de salida',alarm:'Nueva alarma',user:'Crear cuenta familiar'};by('modal-title').textContent=head[kind];var body=by('modal-body'),users=(session.role==='admin'?getUsers():[]),who=session.role==='admin'?[['todos','Todos']].concat(users.map(function(u){return [u.username,u.username]})):[[session.username,session.username]];
 var html='<form id="popup-form" class="form-grid">';
-if(kind==='task')html+=field('Actividad','title')+field('Responsable','owner','select',who)+field('Fecha','date','date')+field('Hora','time','time')+field('Repetición','repeat','select',[['none','Una vez'],['daily','Diario'],['weekly','Semanal']])+field('Prioridad','priority','select',[['normal','Normal'],['high','Importante'],['low','Puede esperar']])+field('Energía necesaria','energy','select',[['low','Poca energía'],['medium','Media'],['high','Alta']])+'<label class="field wide">Primeros pasos (separados por punto y coma)<textarea name="steps" placeholder="Preparar mochila; Revisar llaves; Salir"></textarea></label>';
+if(kind==='task')html+=field('Actividad','title')+field('Responsable','owner','select',who)+field('Fecha','date','date')+field('Hora','time','time')+field('Repetición','repeat','select',[['none','Una vez'],['daily','Diario'],['weekly','Semanal']])+field('Prioridad','priority','select',[['normal','Normal'],['high','Importante'],['low','Puede esperar']])+field('Energía necesaria','energy','select',[['low','Poca energía'],['medium','Media'],['high','Alta']])+'<label class="field wide">Categoría<input name="category" maxlength="36" list="ns-task-categories" placeholder="Ej. Trabajo, estudio, familia"><datalist id="ns-task-categories"><option value="Personal"><option value="Trabajo"><option value="Estudio"><option value="Hogar"><option value="Familia"><option value="Salud"></datalist></label>'+'<label class="field wide">Primeros pasos (separados por punto y coma)<textarea name="steps" placeholder="Preparar mochila; Revisar llaves; Salir"></textarea></label>';
 if(kind==='bag')html+=field('Lugar o destino','place')+field('Responsable','owner','select',who)+'<label class="field wide">Objetos separados por punto y coma<textarea name="items" required placeholder="Agua; Toalla; Candado"></textarea></label>';
 if(kind==='alarm')html+=field('Nombre de la alarma','title')+field('Fecha','date','date')+field('Hora','time','time')+field('Desafío para detener','challenge','select',[['none','Sin desafío'],['math','Resolver 3 sumas'],['taps','Tocar 12 veces'],['memory','Recordar un código'],['typing','Escribir una frase'],['shake','Mover el teléfono 12 veces'],['math_hard','Matemáticas avanzadas'],['qr','Escanear QR físico'],['routine_focus','Rutina mental: sumas y escritura'],['routine_active','Rutina activa: memoria, movimiento y sumas']])+'<div id="qr-enroll" class="field wide hidden"><span>QR para desactivar esta alarma</span><input name="qrValue" type="hidden"><button class="btn secondary" id="qr-enroll-button" type="button">Escanear QR de referencia</button><p class="hint" id="qr-enroll-status">Elige un QR físico que tengas lejos de la cama. No se comparte con otras cuentas.</p></div><label class="field wide"><span class="row"><input type="checkbox" name="daily" style="width:20px"> Repetir todos los días</span></label>';
 if(kind==='user')html+=field('Usuario (sin espacios)','username')+field('Contraseña (mínimo 10 caracteres)','password','password');
@@ -612,7 +680,7 @@ form.onsubmit=function(ev){ev.preventDefault();var values=Object.fromEntries(new
 if(kind==='user'){if(!nat||!nat.createAccount){say('Crea cuentas desde el APK Android');return}try{var r=JSON.parse(nat.createAccount(values.username,values.password));if(!r.ok){say(r.error||'No se pudo crear la cuenta');return}say('Cuenta creada: '+values.username);renderUsers()}catch(e){say('Error creando usuario')}closeModal();return}
 if(kind==='task'){
  var title=(values.title||'').trim();if(!title)return;
- var task={id:uid(),title:title,owner:values.owner||session.username,date:values.date||day(),time:values.time||'',repeat:values.repeat||'none',priority:values.priority||'normal',energy:values.energy||'medium',steps:(values.steps||'').split(';').map(function(s){return s.trim()}).filter(Boolean),doneDates:[],updatedAt:stamp()};
+ var task={id:uid(),title:title,owner:values.owner||session.username,date:values.date||day(),time:values.time||'',repeat:values.repeat||'none',priority:values.priority||'normal',energy:values.energy||'medium',category:nsCleanCategory(values.category),steps:(values.steps||'').split(';').map(function(s){return s.trim()}).filter(Boolean),doneDates:[],updatedAt:stamp()};
  model.tasks.push(task);
  if(task.time){
   var reminder={id:'task_'+task.id,title:task.title,date:task.date,time:task.time,daily:task.repeat==='daily',repeat:task.repeat,owner:task.owner,updatedAt:stamp()};
@@ -640,6 +708,7 @@ function editTask(t){
  form.elements.repeat.value=t.repeat||'none';
  form.elements.priority.value=t.priority||'normal';
  form.elements.energy.value=t.energy||'medium';
+ form.elements.category.value=t.category||'';
  form.elements.steps.value=(t.steps||[]).join('; ');
  form.onsubmit=function(e){
   e.preventDefault();
@@ -650,7 +719,7 @@ function editTask(t){
   t.title=value.title.trim();
   t.owner=value.owner||session.username;t.date=value.date||day();
   t.time=value.time||'';t.repeat=value.repeat||'none';
-  t.priority=value.priority||'normal';t.energy=value.energy||'medium';
+  t.priority=value.priority||'normal';t.energy=value.energy||'medium';t.category=nsCleanCategory(value.category);
   t.steps=steps;if(changedSteps)t.stepDates={};
   mark(t);
   var linked=(model.alarms||[]).find(function(a){return a.id==='task_'+t.id});
@@ -881,6 +950,7 @@ function updateInstalledBuild(){
 by('jump-challenge').onclick=function(){show('alarms');say('Crea una alarma y elige el desafío para detenerla')};
 by('jump-progress').onclick=function(){show('habits')};
 nsFocusInit();
+nsTaskOrganizerInit();
 nsSleepInit();
 updateInstalledBuild();
 function logout(){if(nsFocusState)nsFocusSaveSession(false);nsLauncherFocusSync();syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
