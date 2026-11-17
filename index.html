@@ -526,6 +526,11 @@ html,body{background:#f8fbff;color:var(--ink)}
 @media(prefers-reduced-motion:reduce){
  #app .view .btn{transition:none!important}
 }
+</style><style id="ns-local-recovery-menu">
+#ns-check-local-copy{display:block;width:100%;text-align:left;padding:10px 12px;
+ border:0;background:transparent;color:#0876ba;min-height:43px;font-weight:650}
+#ns-check-local-copy:focus-visible{outline:2px solid #0876ba;outline-offset:2px}
+#ns-local-copy-result{padding:2px 12px;font-size:12px;line-height:1.45}
 </style></head><body>
 <div id="login" class="login ns-login-v3">
  <div class="ns-login-wrap">
@@ -598,7 +603,7 @@ html,body{background:#f8fbff;color:var(--ink)}
     <div id="ns-user-permission-container"></div>
    </details>
    <details class="ns-user-section" id="ns-account-launcher"><summary>⌂ Inicio minimalista</summary><div id="ns-user-launcher-container"></div></details>
-   <details class="ns-user-section" id="ns-account-backup"><summary>☁ Respaldo y datos</summary><div id="ns-user-backup-container"></div></details>
+   <details class="ns-user-section" id="ns-account-backup"><summary>☁ Respaldo y datos</summary><div id="ns-user-backup-container"></div><button type="button" class="ns-backup-check" id="ns-check-local-copy">Comprobar copia en este teléfono</button><p class="hint" id="ns-local-copy-result" aria-live="polite"></p></details>
    <div class="ns-user-menu-actions"><button type="button" id="ns-account-logout">Cerrar sesión</button></div>
   </aside>
   <section class="view active" id="view-home">
@@ -2409,6 +2414,20 @@ document.querySelectorAll('[data-native-permission]').forEach(function(button){b
  if(nat&&nat.openPermissionsPanel)nat.openPermissionsPanel(button.dataset.nativePermission);
  else say('Esta función solo está disponible en la APK Android');
 }});
+by('ns-check-local-copy').onclick=function(){
+ var status=by('ns-local-copy-result');
+ if(!session||!nat||!nat.recoverNativeSnapshot){
+  status.textContent='La copia protegida requiere la APK Android.';
+  return;
+ }
+ try{
+  var result=JSON.parse(nat.recoverNativeSnapshot(session.username));
+  status.textContent=result.ok
+   ?'Copia local protegida disponible'+(result.previous?' (revisión anterior)':'')+
+    '. Solo sirve para recuperar datos en esta instalación.'
+   :'No hay copia recuperable en Android. Los datos del WebView se conservan.';
+ }catch(err){status.textContent='No se pudo comprobar la copia de Android.'}
+};
 by('ns-user-alarm-permissions').onclick=function(){if(nat&&nat.requestAlarmPermissions)nat.requestAlarmPermissions()};
 document.addEventListener('click',function(e){
  var menu=by('ns-user-popover');
