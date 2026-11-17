@@ -219,8 +219,18 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
      Button stop=button("Detener alarma");root.addView(stop);
      stop.setOnClickListener(v->finishAlarm());
    }
-   Button snooze=button("Posponer 5 minutos");root.addView(snooze);
-   snooze.setOnClickListener(v->{AlarmReceiver.snooze(this,id,5);finish();});
+   final int snoozeMinutes=AlarmOptionsStore.minutes(this,id);
+   final int remainingSnoozes=Math.max(0,AlarmOptionsStore.max(this,id)-AlarmOptionsStore.used(this,id));
+   if(remainingSnoozes>0){
+     Button snooze=button("Posponer "+snoozeMinutes+" min · "+remainingSnoozes+" disponible(s)");
+     android.graphics.drawable.GradientDrawable subdued=new android.graphics.drawable.GradientDrawable();
+     subdued.setColor(0xFF283851);subdued.setCornerRadius(dp(16));snooze.setBackground(subdued);
+     root.addView(snooze);
+     snooze.setOnClickListener(v->{
+       if(AlarmReceiver.snooze(this,id,snoozeMinutes))finish();
+       else Toast.makeText(this,"No se pudo posponer. Puedes terminar la alarma.",Toast.LENGTH_LONG).show();
+     });
+   }
    if(!"none".equals(challenge)){
      Button emergency=button("Detener sin desafío");
      emergency.setTextColor(0xFFD5E4F4);
