@@ -255,6 +255,15 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
 @keyframes ns-dragon-play{25%{transform:translateY(-12px) rotate(-7deg)}75%{transform:translateY(-9px) rotate(7deg)}}
 @media(prefers-reduced-motion:reduce){.ns-dragon-tail,.ns-dragon-scene[data-dragon-action] .ns-dragon-figure,.ns-dragon-scene[data-dragon-action] .ns-dragon-eye{animation:none!important}}
 
+
+/* Sprites evolutivos generados para Azul: conserva el SVG como fallback. */
+.ns-dragon-figure .ns-dragon-sprite{display:none;max-width:100%;max-height:220px;width:auto;height:auto;object-fit:contain;margin:0 auto;filter:drop-shadow(0 4px 8px #11245c40)}
+.ns-dragon-figure.has-sprite .ns-dragon-sprite{display:block}
+.ns-dragon-figure.has-sprite svg{display:none}
+.ns-dragon-scene[data-dragon-action="sleep"] .ns-dragon-figure.has-sprite img{filter:brightness(.82) saturate(.85)}
+.ns-dragon-scene[data-dragon-action="eat"] .ns-dragon-figure.has-sprite img{filter:saturate(1.14)}
+.ns-dragon-scene[data-dragon-action="celebrate"] .ns-dragon-figure.has-sprite img{filter:drop-shadow(0 0 15px #2ae8ffbb)}
+@media(prefers-reduced-motion:reduce){.ns-dragon-figure,.ns-dragon-figure.has-sprite img{animation:none!important}}
 </style></head><body>
 <div id="login" class="login ns-login-v3">
  <div class="ns-login-wrap">
@@ -793,7 +802,17 @@ function nsDragonMessage(text,animate){
 }
 function nsDragonRender(){
  if(!session||!model)return;var p=nsDragonData(),idx=nsDragonStage(p.xp),spec=nsDragonStages[idx],next=nsDragonStages[idx+1];
- by('pet-face').innerHTML=nsDragonSvg(idx,p.accessory);
+ var figure=by('pet-face');
+ figure.classList.remove('has-sprite');
+ figure.innerHTML=nsDragonSvg(idx,p.accessory); // SVG seguro cuando no se carga el recurso.
+ var image=document.createElement('img');
+ image.className='ns-dragon-sprite';
+ image.alt='';
+ image.decoding='async';
+ image.onload=function(){if(image.parentNode===figure)figure.classList.add('has-sprite')};
+ image.onerror=function(){if(image.parentNode===figure)figure.removeChild(image)};
+ image.src='assets/dragon/etapa-'+(idx+1)+'.webp';
+ figure.appendChild(image);
  by('pet-face').setAttribute('aria-label',p.name+', '+spec.name);
  by('pet-headline').textContent=p.name+' · Tu compañero';
  by('dragon-stage').textContent=spec.name;
