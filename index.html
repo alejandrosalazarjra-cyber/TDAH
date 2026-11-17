@@ -550,9 +550,9 @@ body.ns-pomodoro-active{overflow:hidden}
     <h2>Historial privado</h2><div id="streak-history"></div>
    </div>
   </section>
-  <section class="view" id="view-admin"><div class="grid"><div class="stack"><div class="card"><div class="between"><h2>Miembros de la familia</h2><button class="btn" data-open="user">+ Crear cuenta</button></div><p class="muted small">Cada persona tiene su propio usuario. Las actividades se asignan por responsable.</p><div id="users-list"></div></div><div class="card"><h2>Flujos de trabajo</h2><p class="small muted">Crea una tarea recurrente y asígnala a un miembro. Puedes añadir subtareas, horario y fecha.</p><button class="btn secondary" data-open="task">+ Crear flujo / tarea</button></div></div><div class="stack"><div class="card"><h2>Respaldo personal</h2>
+  <section class="view" id="view-admin"><div class="grid"><div class="stack"><div class="card"><div class="between"><h2>Miembros de la familia</h2></div><p class="muted small">Cada integrante utiliza su propia cuenta de Google. Los datos personales se guardan por separado. Compartir tareas entre cuentas requiere una sincronización familiar adicional.</p><div id="users-list" class="hidden"></div></div><div class="card"><h2>Flujos de trabajo</h2><p class="small muted">Crea una tarea recurrente y asígnala a un miembro. Puedes añadir subtareas, horario y fecha.</p><button class="btn secondary" data-open="task">+ Crear flujo / tarea</button></div></div><div class="stack"><div class="card"><h2>Respaldo personal</h2>
 <p class="hint">Guarda y recupera tus tareas, listas, alarmas y progreso de mascota antes de reinstalar una APK.</p>
-<div class="row"><button class="btn secondary" type="button" id="backup-export">Exportar respaldo</button><button class="btn ghost" type="button" id="backup-import">Importar respaldo</button></div></div><div class="card"><h2>Seguridad</h2><p class="muted small">Cambia la contraseña inicial del administrador. Usa una diferente para cada persona.</p><form id="password-form" class="stack" style="gap:10px"><label class="field">Contraseña actual<input id="current-pass" type="password" required></label><label class="field">Contraseña nueva (mín. 10 caracteres)<input id="new-pass" type="password" minlength="10" required></label><button class="btn" type="submit">Cambiar contraseña</button></form></div><div class="card"><h2>Teléfono principal</h2><p class="muted small">La sincronización por internet usa una base central en Cloudflare cuando esté activada. Tu cuenta controla miembros y tareas; no necesitas Netlify, Tailscale ni Play Store.</p><button class="btn secondary" id="configure-network">Configurar conexión</button></div></div></div></section>
+<div class="row"><button class="btn secondary" type="button" id="backup-export">Exportar respaldo</button><button class="btn ghost" type="button" id="backup-import">Importar respaldo</button></div></div><div class="card"><h2>Seguridad</h2><p class="muted small">Cambia la contraseña inicial del administrador. Usa una diferente para cada persona.</p><form id="password-form" class="stack" style="gap:10px"><label class="field">Contraseña actual<input id="current-pass" type="password" required></label><label class="field">Contraseña nueva (mín. 10 caracteres)<input id="new-pass" type="password" minlength="10" required></label><button class="btn" type="submit">Cambiar contraseña</button></form></div></div></div></section>
  </main>
  <nav class="nav-mobile" aria-label="Navegación principal">
   <button class="active" data-view="home"><span>⌂</span>Hoy</button><button data-view="tasks"><span>☑</span>Tareas</button><button data-view="calendar"><span>▦</span>Agenda</button><button data-view="bags"><span>▣</span>Listas</button><button data-view="alarms"><span>◷</span>Alarmas</button><button data-view="habits"><span>◉</span>Progreso</button><button class="admin-only" data-view="admin"><span>♙</span>Admin</button>
@@ -1761,15 +1761,6 @@ if(nat&&nat.loginOwner){try{var res=JSON.parse(nat.loginOwner(username,password)
         return}catch(err){by('login-error').textContent='Error de conexión con el teléfono principal';return}}
 
 by('login-error').textContent='El acceso de administrador requiere la APK Android.'};
-by('configure-network').onclick=async function(){
- if(!nat){say('Configura el servidor desde la APK Android');return}
- var choice=await nsConfirm('Sincronización por internet','Cancelar conserva la configuración anterior.','Continuar');
- if(!choice)return;
- var url=await nsPrompt('Dirección HTTPS del servidor','',{type:'url'});
- if(!url)return;
- try{var result=JSON.parse(nat.configureCloud(url));say(result.message||result.error||'Sin cambios')}
- catch(e){say('No se pudo configurar el servidor')}
-};
 by('password-form').onsubmit=function(e){e.preventDefault();if(!nat||!nat.changePassword){say('Cambia contraseñas desde el APK Android');return}try{var r=JSON.parse(nat.changePassword(by('current-pass').value,by('new-pass').value));say(r.ok?'Contraseña actualizada. Inicia sesión de nuevo.':(r.error||'Error'));if(r.ok){by('password-form').reset();setTimeout(logout,1100)}}catch(err){say('No se pudo cambiar la contraseña')}};
 window.neuroBackupMessage=function(message){say(message)};
 window.neuroImportData=async function(raw){
