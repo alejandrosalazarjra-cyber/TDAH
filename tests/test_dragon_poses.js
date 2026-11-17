@@ -1,50 +1,67 @@
 #!/usr/bin/env node
-/* Comprueba el selector de poses con temporizadores controlados (sin WebView).
-   Las imágenes reales se comprueban con test_dragon_module.py. */
+/* Pruebas de los atlas de las seis evoluciones: carga, poses y temporizadores. */
 'use strict';
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
 const html=fs.readFileSync('index.html','utf8');
-const from=html.indexOf('var nsDragonPoseFrameTimer=null');
-const to=html.indexOf('var nsDragonAnimations={',from);
-assert(from>0&&to>from,'No existe el módulo de poses');
-let counter=0;
-const timeout=new Map(),interval=new Map();
-const image={dataset:{},isConnected:true,src:''};
-const figure={dataset:{stage:'1'},querySelector(selector){
-  assert.equal(selector,'img.ns-dragon-sprite');return image;
-}};
-const browser={
- by(id){return id==='pet-face'?figure:null},
- window:{matchMedia(){return {matches:browser.reduced}}},
- document:{hidden:false,addEventListener(){}},
- setInterval(fn,ms){const id=++counter;interval.set(id,{fn,ms});return id},
- clearInterval(id){interval.delete(id)},
- setTimeout(fn,ms){const id=++counter;timeout.set(id,{fn,ms});return id},
- clearTimeout(id){timeout.delete(id)},
- nsDragonActionState:'idle',
- session:{username:'tester'},
- model:{pet:{}},
- reduced:false
+const a=html.indexOf('var nsDragonPoseFrameTimer=null');
+const b=html.indexOf('var nsDragonAnimations={',a);
+assert(a>0&&b>a,'No se encontró el renderizador de los atlas de Azul');
+const timeouts=new Map(),intervals=new Map(),loaders=[];
+let id=0,stage='0',tile=null;
+const figure={
+ dataset:{stage},isConnected:true,
+ classList:{add(x){figure.hasAtlas=x==='has-atlas'}},
+ querySelector(sel){return sel==='.ns-dragon-atlas'?tile:null},
+ appendChild(node){tile=node}
 };
-vm.createContext(browser);
-vm.runInContext(html.slice(from,to),browser,{timeout:2000});
-function state(s){browser.nsDragonActionState=s;browser.nsDragonPoseSet(s)}
-function expect(name){assert.equal(image.src,'assets/dragon/poses/'+name+'.webp')}
-state('walk');expect('walk-a');assert.equal(interval.size,1);
-[...interval.values()][0].fn();expect('walk-b');
-state('sleep');expect('sleep');assert.equal(interval.size,0);
-state('eat');expect('eat');
-state('play');expect('flap');
-state('celebrate');expect('celebrate');
-state('evolve');expect('flap');
-state('idle');expect('idle');assert.equal(timeout.size,1);
-const first=[...timeout.entries()][0];timeout.delete(first[0]);
-first[1].fn();expect('blink');
-browser.document.hidden=true;state('idle');expect('idle');assert.equal(timeout.size,0);
-browser.document.hidden=false;browser.reduced=true;state('walk');
-expect('idle');assert.equal(interval.size,0);
-browser.reduced=false;figure.dataset.stage='2';state('sleep');
-expect('idle');assert.equal(timeout.size,0);
-console.log('OK: 8 poses, caminata alterna, parpadeo, segundo plano, accesibilidad y etapas');
+let action='idle',reduced=false,hidden=false;
+const context={
+ session:{username:'tester'},model:{pet:{}},
+ nsDragonActionState:action,
+ by(name){return name==='pet-face'?figure:null},
+ window:{matchMedia(){return {matches:reduced}}},
+ document:{
+  get hidden(){return hidden},
+  addEventListener(){},
+  createElement(name){assert.equal(name,'span');return {className:'',style:{},dataset:{},setAttribute(){}}}
+ },
+ Image:function(){loaders.push(this)},
+ setInterval(fn,ms){const i=++id;intervals.set(i,{fn,ms});return i},
+ clearInterval(i){intervals.delete(i)},
+ setTimeout(fn,ms){const i=++id;timeouts.set(i,{fn,ms});return i},
+ clearTimeout(i){timeouts.delete(i)}
+};
+vm.createContext(context);
+vm.runInContext(html.slice(a,b),context,{timeout:2000});
+function choose(state){context.nsDragonActionState=state;context.nsDragonPoseSet(state)}
+function load(){const item=loaders.shift();assert(item,'Debe solicitar un atlas');item.onload()}
+function expect(frame,selectedStage){
+ assert.equal(tile.dataset.pose,frame);
+ assert(tile.style.backgroundImage.includes('etapa-'+selectedStage+'.webp'));
+}
+for(let s=0;s<6;s++){
+ figure.dataset.stage=String(s);
+ tile=null;
+ choose('idle');
+ load();expect('idle',s+1);
+ assert.equal(context.nsDragonAtlasCache[String(s+1)],'loaded');
+ choose('walk');expect('walk-a',s+1);
+ assert.equal(intervals.size,1);
+ [...intervals.values()][0].fn();expect('walk-b',s+1);
+ choose('sleep');expect('sleep',s+1);
+ assert.equal(intervals.size,0);
+ choose('eat');expect('eat',s+1);
+ choose('play');expect('flap',s+1);
+ choose('celebrate');expect('celebrate',s+1);
+ choose('evolve');expect('flap',s+1);
+ choose('idle');expect('idle',s+1);
+ assert.equal(timeouts.size,1);
+ const [key,blink]=[...timeouts.entries()][0];timeouts.delete(key);blink.fn();
+ expect('blink',s+1);
+ hidden=true;choose('idle');expect('idle',s+1);assert.equal(timeouts.size,0);
+ hidden=false;reduced=true;choose('walk');expect('idle',s+1);assert.equal(intervals.size,0);
+ reduced=false;
+}
+console.log('OK: seis atlas, 8 poses, parpadeo, caminata, segundo plano y reducir movimiento');
