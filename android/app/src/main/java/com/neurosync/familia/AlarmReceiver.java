@@ -14,7 +14,7 @@ import java.util.Map;
  */
 public final class AlarmReceiver extends BroadcastReceiver {
  public AlarmReceiver(){}
- private static final String CHANNEL="neurosync_alarms_v3";
+ private static final String CHANNEL="neurosync_alarms_v4_visual";
  private static final String DISMISS="com.neurosync.familia.alarm.DISMISS";
  private static final String POSTPONE="com.neurosync.familia.alarm.POSTPONE";
  private static final String PREFIX="alarm_";
@@ -143,9 +143,10 @@ public final class AlarmReceiver extends BroadcastReceiver {
   NotificationManager manager=(NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE);
   NotificationChannel c=new NotificationChannel(CHANNEL,"Alarmas de NeuroSync",NotificationManager.IMPORTANCE_HIGH);
   c.setDescription("Alarmas con sonido y visualización en pantalla de bloqueo");
-  c.enableVibration(true);
-  c.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM),
-    new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
+  // El sonido y la vibración se gestionan en AlarmAudioService para que
+  // detener o posponer silencie la alarma inmediatamente, sin audio duplicado.
+  c.enableVibration(false);
+  c.setSound(null,null);
   c.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
   manager.createNotificationChannel(c);
  }
