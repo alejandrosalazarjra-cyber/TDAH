@@ -60,12 +60,29 @@ class DragonContract(unittest.TestCase):
         self.assertIn("figure.classList.add('has-sprite')", HTML)
         self.assertIn("image.onerror=function()", HTML)
 
+    def test_eight_higgsfield_pose_frames(self):
+        poses = ("idle", "blink", "walk-a", "walk-b", "flap",
+                 "sleep", "eat", "celebrate")
+        for name in poses:
+            asset = ROOT / "assets" / "dragon" / "poses" / (name + ".webp")
+            self.assertTrue(asset.is_file(), f"Falta {asset}")
+            self.assertGreater(asset.stat().st_size, 3000)
+            self.assertEqual(asset.read_bytes()[0:4], b"RIFF")
+            self.assertEqual(asset.read_bytes()[8:12], b"WEBP")
+        self.assertIn("function nsDragonPoseSet(state)", HTML)
+        self.assertIn("figure.dataset.stage!=='1'", HTML)
+        self.assertIn("nsDragonPoseFrameTimer=setInterval", HTML)
+        self.assertIn("use('blink')", HTML)
+        self.assertIn("nsDragonStopPoseTimers()", HTML)
+
     def test_android_packages_and_serves_offline_sprites(self):
         workflow = (ROOT / ".github" / "workflows" / "android-apk.yml").read_text(encoding="utf-8")
         java = (ROOT / "android" / "app" / "src" / "main" / "java"
                 / "com" / "neurosync" / "familia" / "MainActivity.java").read_text(encoding="utf-8")
         self.assertIn("cp assets/dragon/etapa-{1..6}.webp", workflow)
-        self.assertIn('path.matches("/assets/dragon/etapa-[1-6]\\\\.webp")', java)
+        self.assertIn('path.matches("/assets/dragon/', java)
+        self.assertIn('poses/(?:idle|blink|walk-a|walk-b|flap|sleep|eat|celebrate)', java)
+        self.assertIn('cp assets/dragon/poses/*.webp', workflow)
         self.assertIn('getAssets().open(file)', java)
 
     def test_exactly_one_initializer_and_script(self):
