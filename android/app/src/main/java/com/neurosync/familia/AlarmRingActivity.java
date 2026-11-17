@@ -31,7 +31,9 @@ public final class AlarmRingActivity extends Activity {
  private Button button(String text){
    Button result=new Button(this);result.setText(text);result.setAllCaps(false);
    result.setMinHeight(dp(54));result.setTextSize(15);
-   result.setTextColor(Color.WHITE);result.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF465FD6));
+   result.setTextColor(Color.WHITE);
+   android.graphics.drawable.GradientDrawable bg=new android.graphics.drawable.GradientDrawable();
+   bg.setColor(0xFF465FD6);bg.setCornerRadius(dp(16));result.setBackground(bg);
    LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-1,dp(54));
    params.setMargins(0,dp(5),0,dp(5));result.setLayoutParams(params);
    return result;
@@ -53,7 +55,9 @@ public final class AlarmRingActivity extends Activity {
    root.setOrientation(LinearLayout.VERTICAL);
    root.setGravity(Gravity.CENTER);
    root.setPadding(dp(22),dp(24),dp(22),dp(24));
-   root.setBackgroundColor(0xFF101A31);
+   android.graphics.drawable.GradientDrawable background=new android.graphics.drawable.GradientDrawable(
+     android.graphics.drawable.GradientDrawable.Orientation.TL_BR,new int[]{0xFF101A31,0xFF233963,0xFF131C34});
+   root.setBackground(background);
    ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.addView(root);
    setContentView(scroll);
    root.addView(label("☀",52));
@@ -124,11 +128,15 @@ public final class AlarmRingActivity extends Activity {
    if(!"none".equals(challenge)){
      Button emergency=button("Detener sin desafío");
      root.addView(emergency);
-     emergency.setOnClickListener(v->new android.app.AlertDialog.Builder(this)
-       .setTitle("¿Detener sin completar?")
-       .setMessage("Puedes detener la alarma sin el desafío si lo necesitas. Esta opción siempre estará disponible.")
-       .setNegativeButton("Volver al desafío",null)
-       .setPositiveButton("Detener ahora",(d,w)->finishAlarm()).show());
+     emergency.setOnClickListener(v->{
+       emergency.setVisibility(android.view.View.GONE);
+       TextView message=label("Puedes detener la alarma sin completar el reto.",15);
+       root.addView(message);
+       Button confirm=button("Sí, detener ahora");root.addView(confirm);
+       confirm.setOnClickListener(w->finishAlarm());
+       Button back=button("Volver al desafío");root.addView(back);
+       back.setOnClickListener(w->{root.removeView(message);root.removeView(confirm);root.removeView(back);emergency.setVisibility(android.view.View.VISIBLE);});
+     });
    }
  }
  @Override protected void onDestroy(){uiHandler.removeCallbacksAndMessages(null);super.onDestroy();}
@@ -142,8 +150,6 @@ public final class AlarmRingActivity extends Activity {
  @Override public void onBackPressed(){
    // Si necesita detenerse, el botón seguro está siempre visible.
    if("none".equals(challenge))finishAlarm();
-   else new android.app.AlertDialog.Builder(this).setTitle("Alarma activa")
-     .setMessage("Elige Posponer o Detener sin desafío si no puedes continuar.")
-     .setPositiveButton("Entendido",null).show();
+   else Toast.makeText(this,"Usa Posponer o Detener sin desafío",Toast.LENGTH_LONG).show();
  }
 }
