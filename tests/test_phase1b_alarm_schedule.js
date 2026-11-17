@@ -21,14 +21,14 @@ let previous='2025-03-15',reference=new Date(previous+'T06:45:00').getTime();
 assert.equal(sandbox.scheduleAlarm({id:'daily1',title:'Despertar',date:previous,time:'06:45',repeat:'daily'}),true);
 assert.equal(scheduled.when,reference,'Pasar la hora original al Calendar nativo');
 assert.equal(scheduled.repeat,'daily');
-assert.equal(sandbox.scheduleAlarm({id:'once1',title:'Ya pasó',date:previous,time:'06:45',repeat:'none'}),true,
- 'Android conserva la validación del horario único en su capa nativa');
+assert.equal(sandbox.scheduleAlarm({id:'once1',title:'Ya pasó',date:previous,time:'06:45',repeat:'none'}),false,
+ 'Una alarma única vencida debe rechazarse antes de entrar a Android');
 assert.equal(sandbox.scheduleAlarm({id:'invalid',date:'invalid',time:'xx:xx',repeat:'daily'}),false);
 assert(warning.some(x=>x.includes('inválida')));
 const receiver=fs.readFileSync('android/app/src/main/java/com/neurosync/familia/AlarmReceiver.java','utf8');
 assert(receiver.includes('calendar.add(unit,amount)'),'Las repeticiones deben usar Calendar');
 assert(receiver.includes('public static JSONObject diagnostics(Context ctx)'));
-assert(receiver.includes('"every2".equals(repeat)&&')===false);
+assert(receiver.includes('"every2".equals(repeat)'),'La repetición personalizada debe validarse');
 const main=fs.readFileSync('android/app/src/main/java/com/neurosync/familia/MainActivity.java','utf8');
 assert(main.includes('alarmScheduleDiagnostics()'),'Falta diagnóstico Android en JS bridge');
 console.log('Fase 1b: horarios locales, validación y diagnóstico Android OK');
