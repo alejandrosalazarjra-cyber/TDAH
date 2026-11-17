@@ -60,6 +60,7 @@ jobs:
           node tests/test_dragon_motion.js
           node tests/test_dragon_poses.js
           node tests/test_phase1_persistence.js
+          node tests/test_phase1b_alarm_schedule.js
 
       - name: Validar interfaz antes de compilar
         shell: bash
