@@ -1624,11 +1624,35 @@ function nsReadNativeSnapshot(){
   return response.ok&&nsValidModel(response.model)?response.model:null;
  }catch(e){return null}
 }
+/* Copias secundarias agrupadas: el guardado principal continúa siendo inmediato.
+ * Se evita cifrar y escribir SQLite en cada tecla o cambio visual.
+ * El último contenido válido reemplaza los cambios pendientes de la misma cuenta.
+ */
+var nsNativePending=null,nsNativeTimer=null,nsNativeDelayMs=1300;
+function nsFlushNativeSnapshot(){
+ if(nsNativeTimer!==null){clearTimeout(nsNativeTimer);nsNativeTimer=null}
+ var pending=nsNativePending;nsNativePending=null;
+ if(!pending||!nat||!nat.saveNativeSnapshot)return false;
+ // No permitir que una cuenta utilice por accidente el respaldo de otra.
+ if(!session||session.username!==pending.username)return false;
+ try{
+  var ok=!!nat.saveNativeSnapshot(pending.username,pending.json);
+  if(!ok){nsNativePending=pending;return false}
+  return true;
+ }catch(err){nsNativePending=pending;return false}
+}
+function nsQueueNativeSnapshot(data){
+ if(!session||!nat||!nat.saveNativeSnapshot||!nsValidModel(data))return;
+ var json=JSON.stringify(data);
+ nsNativePending={username:session.username,json:json};
+ if(nsNativeTimer!==null)clearTimeout(nsNativeTimer);
+ nsNativeTimer=setTimeout(nsFlushNativeSnapshot,nsNativeDelayMs);
+}
 function nsSeedNativeSnapshot(data){
  if(!session||!nat||!nat.saveNativeSnapshot||!nsValidModel(data))return;
  try{
   if(nsReadNativeSnapshot())return; // No reemplazar un respaldo anterior al abrir.
-  nat.saveNativeSnapshot(session.username,JSON.stringify(data));
+  nsQueueNativeSnapshot(data);
  }catch(e){}
 }
 function nsLocalSave(data){
@@ -1642,16 +1666,9 @@ function nsLocalSave(data){
  }
  localStorage.setItem(key,json);
  if(localStorage.getItem(key)!==json)throw Error('No se pudo verificar el guardado');
- // El respaldo secundario puede fallar sin destruir la escritura local válida.
- // Un error aquí no se declara como éxito de SQLite.
- if(nat&&nat.saveNativeSnapshot){
-  try{
-   if(!nat.saveNativeSnapshot(session.username,json)){
-    var indicator=by('sync-status');
-    if(indicator)indicator.textContent='Guardado local; copia Android pendiente';
-   }
-  }catch(e){}
- }
+ // La copia SQLite es secundaria. Se agrupan escrituras consecutivas
+ // y al ocultar/salir se fuerza la última versión, sin borrar localStorage.
+ nsQueueNativeSnapshot(data);
  return true;
 }
 function load(){
@@ -2415,6 +2432,8 @@ document.querySelectorAll('[data-native-permission]').forEach(function(button){b
  else say('Esta función solo está disponible en la APK Android');
 }});
 by('ns-check-local-copy').onclick=function(){
+ // Antes de comprobar, intentar escribir el último estado local pendiente.
+ nsFlushNativeSnapshot();
  var status=by('ns-local-copy-result');
  if(!session||!nat||!nat.recoverNativeSnapshot){
   status.textContent='La copia protegida requiere la APK Android.';
@@ -2649,13 +2668,15 @@ function nsDragonInitActions(){
 }
 
 function logout(){
+ nsFlushNativeSnapshot();
  try{localStorage.setItem('ns_last_session_provider','signed_out')}catch(e){}
  clearTimeout(nsDriveBackupTimer);nsUploadDriveNow();if(session&&session.google&&nat&&nat.logoutGoogle)nat.logoutGoogle();if(nsFocusState)nsFocusSaveSession(false);nsLauncherFocusSync();syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
 by('logout').onclick=logout;by('avatar').onclick=async function(){if(await nsConfirm('Cerrar sesión','¿Quieres cerrar esta sesión?','Cerrar sesión'))logout()};
 document.addEventListener('visibilitychange',function(){
- if(document.hidden){clearTimeout(nsDriveBackupTimer);nsUploadDriveNow()}
+ if(document.hidden){nsFlushNativeSnapshot();clearTimeout(nsDriveBackupTimer);nsUploadDriveNow()}
  else{sync();refreshFocusClock()}
-});setInterval(sync,60000);
+});
+window.addEventListener('pagehide',function(){nsFlushNativeSnapshot()});setInterval(sync,60000);
 var nsGoogleRestored=false,nsPreferredProvider='';
 try{nsPreferredProvider=localStorage.getItem('ns_last_session_provider')||''}catch(e){}
 if(nsPreferredProvider!=='owner'&&nsPreferredProvider!=='signed_out'&&nat&&nat.restoreGoogleSession){
