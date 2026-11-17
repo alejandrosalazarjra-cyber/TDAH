@@ -697,7 +697,8 @@ function nsFocusSaveSession(completed){
   data.sessions=data.sessions.slice(-500);nsFocusWrite(data);
   if(completed&&elapsed>=5*60000){var p=nsDragonData();p.xp+=Math.max(5,Math.min(50,Math.floor(elapsed/60000)*0.8));p.food+=10;save();}
  }
- nsFocusState=null;nsFocusPersist();nsFocusStats();nsFocusRender();nsHealthRender();
+ nsFocusState=null;nsFocusPersist();nsFocusStats();nsFocusRender();nsHealthRender();nsDragonRender();
+ if(completed&&elapsed>=5*60000)nsDragonMessage('¡Entrenamos juntos! Tu enfoque hizo crecer a nuestro dragón.',true);
 }
 function nsFocusPulse(){if(!nsFocusState)return;if(nsFocusElapsed()>=nsFocusState.duration*60000){nsFocusSaveSession(true);say('¡Sesión completada! Tu avance quedó registrado.')}else nsFocusRender()}
 function nsFocusInit(){
@@ -792,7 +793,7 @@ function renderFocus(){
    if(target.doneDates.indexOf(key)<0){target.doneDates.push(key);model.pet.food+=10;model.pet.xp+=10}
    model.focusId=null;
   }
-  mark(target);save();render();
+  mark(target);save();render();if(step.index<0)nsDragonMessage('¡Terminaste tu misión! Estoy orgulloso de nuestro avance.',true);
  };
  by('focus-other').onclick=function(){
   var choices=actionable();if(choices.length<2){say('Solo tienes una tarea para hoy');return}
@@ -839,7 +840,7 @@ by('quick-capture-form').onsubmit=function(event){
 };
 function taskItem(t){var yes=taskDone(t),el=document.createElement('div');el.className='task'+(yes?' done':'');var meta=esc(t.date)+(t.time?' · '+esc(t.time):'')+' · '+esc(t.owner||'Yo')+' · '+esc(t.category||'Sin categoría')+((t.tags||[]).length?' · #'+(t.tags||[]).map(esc).join(' #'):'')+(t.repeat&&t.repeat!=='none'?' · '+(t.repeat==='daily'?'Diaria':t.repeat==='weekly'?'Semanal':t.repeat==='every2'?'Cada 2 días':'Cada 3 días'):'');
 el.innerHTML='<input type="checkbox" aria-label="Completar tarea" '+(yes?'checked':'')+'><div class="task-main"><div class="task-title">'+esc(t.title)+'</div><div class="task-meta">'+meta+'</div></div><button class="iconbtn edit-task" type="button" aria-label="Editar tarea" title="Editar">✎</button><button class="iconbtn delete-task" type="button" aria-label="Eliminar tarea" title="Eliminar">×</button>';
-el.querySelector('input').onchange=function(e){var k=t.repeat==='none'?t.date:day();t.doneDates=t.doneDates||[];if(e.target.checked){if(t.doneDates.indexOf(k)<0){t.doneDates.push(k);model.pet.food+=10;model.pet.xp+=10;say('¡Buen trabajo! +10 puntos para tu mascota 🐣')}}else{t.doneDates=t.doneDates.filter(function(v){return v!==k})}mark(t);save();render()};
+el.querySelector('input').onchange=function(e){var k=t.repeat==='none'?t.date:day();t.doneDates=t.doneDates||[];if(e.target.checked){if(t.doneDates.indexOf(k)<0){t.doneDates.push(k);model.pet.food+=10;model.pet.xp+=10;say('¡Buen trabajo! +10 puntos para tu dragón 🐉')}}else{t.doneDates=t.doneDates.filter(function(v){return v!==k})}mark(t);save();render();if(e.target.checked)nsDragonMessage('¡Una tarea menos! Tu esfuerzo me hace crecer.',true)};
 el.querySelector('.edit-task').onclick=function(){editTask(t)};
 el.querySelector('.delete-task').onclick=function(){if(session.role!=='admin'&&t.owner==='todos'){say('Una tarea compartida solo puede eliminarla el administrador');return}nsConfirm('Eliminar tarea','Se eliminará esta tarea.','Eliminar').then(function(ok){if(ok){t.deleted=true;mark(t);save();render()}})};
 if((t.steps||[]).length){
