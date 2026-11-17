@@ -1,5 +1,17 @@
 # NeuroSync Familia — Android
 
+## Avisos flotantes y notificaciones — segunda implementación
+
+La sección **NeuroSync Inicio → Ajustes** incorpora controles originales de DrakoPlan:
+- **Recordatorio flotante personalizado:** mensaje de hasta 90 caracteres, visible 20 segundos, con cierre inmediato.
+- **Pausa flotante voluntaria:** 5, 10, 20 o 30 segundos, con texto de concentración.
+- **Aviso flotante al abrir apps marcadas:** desactivado por defecto. Solo actúa cuando el usuario abre desde el launcher una aplicación marcada para concentración, la sesión/horario está activo y Android autorizó superposiciones. No vigila aplicaciones abiertas desde otros launchers.
+- **Notificación de prueba:** canal independiente de recordatorios de concentración, con acceso a la app. La autorización de notificaciones se solicita solo al pulsar la prueba.
+
+Estas funciones no reemplazan las alarmas, no alteran el bloqueo del dispositivo y no requieren Accesibilidad. Son acciones opcionales y cerrables. Las ventanas se retiran automáticamente al finalizar su duración. Android o el fabricante pueden bloquearlas. No se ha implementado aún la lectura de notificaciones ajenas ni un bloqueo universal de otras apps.
+
+**Pruebas pendientes:** compilación con Gradle, instalación con firma compatible, inicio de sesión y persistencia previos, pruebas de superposición con permisos concedidos/denegados, pantalla bloqueada, batería, app en segundo plano y compatibilidad Google Play. **No desinstales una APK que tenga datos hasta verificar un respaldo recuperable.**
+
 ## Permisos especiales y superposición — primera implementación
 
 - En el launcher **Ajustes → Permisos y ventanas flotantes** se muestra el estado de la autorización `SYSTEM_ALERT_WINDOW` y el acceso de uso.
