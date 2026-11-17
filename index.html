@@ -149,7 +149,7 @@
     <p class="hint">Aquí puedes guardar ideas sin fecha. Cuando estés preparado, convierte una en tarea de hoy.</p>
     <div id="inbox-list"></div>
    </div>
-   <div class="card" style="margin-top:15px"><div class="between"><h2>Tareas organizadas</h2><button class="btn" data-open="task">+ Crear tarea</button></div><div class="tabs" id="task-filters"><button class="tab active" data-filter="all">Todas</button><button class="tab" data-filter="pending">Pendientes</button><button class="tab" data-filter="done">Realizadas</button></div>
+   <div class="card" style="margin-top:15px"><div class="between"><h2>Tareas organizadas</h2><button class="btn" data-open="task">+ Crear tarea</button></div><div class="tabs" id="task-filters"><button class="tab active" data-filter="all">Todas</button><button class="tab" data-filter="pending">Pendientes</button><button class="tab" data-filter="overdue">Vencidas</button><button class="tab" data-filter="done">Realizadas</button></div>
 <div class="ns-task-tools">
  <label class="field">Buscar tareas<input id="ns-task-search" type="search" maxlength="100" placeholder="Nombre, categoría o paso…"></label>
  <label class="field">Categoría<select id="ns-category-filter"><option value="all">Todas las categorías</option></select></label>
@@ -352,6 +352,7 @@ function nsRenderTaskOrganizer(tasks){
  var shown=all.filter(function(t){
   if(filter==='done'&&!taskDone(t))return false;
   if(filter==='pending'&&taskDone(t))return false;
+  if(filter==='overdue'&&(taskDone(t)||t.repeat&&t.repeat!=='none'||!t.date||t.date>=day()))return false;
   var category=String(t.category||'Sin categoría');
   if(nsCategoryFilter!=='all'&&category.toLocaleLowerCase('es-CO')!==nsCategoryFilter)return false;
   if(!q)return true;
