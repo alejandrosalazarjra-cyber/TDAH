@@ -54,6 +54,8 @@ public final class AlarmReceiver extends BroadcastReceiver {
  public static boolean scheduleRepeat(Context ctx,String id,String title,long at,String repeat){
   try{
    if(id==null||id.length()<2||id.length()>100||at<=0)return false;
+   if(!("none".equals(repeat)||"daily".equals(repeat)||"weekly".equals(repeat)
+        ||"every2".equals(repeat)||"every3".equals(repeat)))return false;
    if(title==null||title.trim().isEmpty())title="Recordatorio";
    long when=at;
    if(!"none".equals(repeat)){
