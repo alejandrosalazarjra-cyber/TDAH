@@ -93,6 +93,15 @@ public final class AlarmReceiver extends BroadcastReceiver {
    return true;
   }catch(Exception ex){android.util.Log.e("NeuroSync","No se pudo programar alarma",ex);return false;}
  }
+ /** Desactiva sin eliminar los retos ni el QR vinculados a esa alarma. */
+ public static void pause(Context ctx,String id){
+  if(id==null)return;
+  manager(ctx).cancel(pending(ctx,id));
+  manager(ctx).cancel(pendingSnooze(ctx,id));
+  ctx.getSharedPreferences("ns_alarm_snoozes",0).edit().remove(SNOOZE_PREFIX+id).apply();
+  ctx.getSharedPreferences("ns_alarms",0).edit().remove(PREFIX+id).apply();
+  ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id.hashCode());
+ }
  public static void cancel(Context ctx,String id){
   if(id==null)return;
   manager(ctx).cancel(pending(ctx,id));
