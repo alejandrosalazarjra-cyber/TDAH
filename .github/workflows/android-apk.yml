@@ -201,7 +201,6 @@ jobs:
           mkdir -p android/app/src/main/assets/dragon/atlases
           cp assets/dragon/atlases/etapa-{1..6}.webp android/app/src/main/assets/dragon/atlases/
           for n in {1..6}; do test -s "android/app/src/main/assets/dragon/atlases/etapa-${n}.webp"; done
-          done
 
       - name: Compilar APK de prueba independiente (no sustituye tu instalación)
         working-directory: android
