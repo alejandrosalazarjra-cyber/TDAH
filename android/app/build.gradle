@@ -37,3 +37,6 @@ android {
         }
     }
 }
+
+// ZXing Android Embedded: escáner QR de código abierto, sin aplicación externa.
+dependencies { implementation 'com.journeyapps:zxing-android-embedded:4.3.0' }
