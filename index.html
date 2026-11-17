@@ -741,6 +741,7 @@ html,body{background:#f8fbff;color:var(--ink)}
    <div class="card"><div class="between"><h2>Alarmas y recordatorios</h2><button class="btn" data-open="alarm">+ Crear alarma</button></div><div style="margin:14px 0 17px;border:1px solid var(--border);border-radius:16px;padding:14px;background:#fafbfe">
 <div class="between" style="margin-bottom:9px"><b style="font-size:14px">Sonido y pantalla de alarma</b><span class="chip" id="alarm-permission-indicator">Android</span></div>
 <p class="hint" id="alarm-permission-status">Los permisos se solicitan cuando programas una alarma.</p>
+<p class="hint" id="ns-alarm-schedule-summary" aria-live="polite">Comprobando registros de alarmas…</p>
 <div class="row" style="margin-top:12px">
 <button type="button" class="btn secondary" id="alarm-permissions-open">Permitir pantalla completa</button>
 <button type="button" class="btn secondary" id="alarm-test">Probar en 1 min</button>
@@ -1950,15 +1951,16 @@ function scheduleAlarm(a){
  if(!nat||!nat.scheduleAlarm)return;
  var when=new Date(a.date+'T'+a.time+':00').getTime();
  var repeat=a.repeat|| (a.daily?'daily':'none');
- if(repeat==='weekly')while(when<Date.now())when+=7*86400000;
- else if(repeat==='daily')while(when<Date.now())when+=86400000;
- else if(repeat==='every2')while(when<Date.now())when+=2*86400000;
- else if(repeat==='every3')while(when<Date.now())when+=3*86400000;
+ // No sumar milisegundos para repeticiones: en cambios de zona horaria o DST
+ // esa aritmética desplaza la hora de despertar. Android usa Calendar local.
+ // El primer día/hora es la referencia y AlarmReceiver.nextRepeat calcula el siguiente.
+ if(!Number.isFinite(when)){say('La alarma tiene una fecha u hora inválida');return false}
  try{
   if(nat.setAlarmChallenge)nat.setAlarmChallenge(a.id,a.challenge||'none');
   var ok=nat.scheduleAlarmRepeat?nat.scheduleAlarmRepeat(a.id,a.title,when,repeat):nat.scheduleAlarm(a.id,a.title,when,repeat==='daily');
-  if(!ok)say('No se pudo programar la alarma: revisa la fecha y los permisos');
- }catch(e){say('Error al programar alarma')}
+  if(!ok){say('No se pudo programar la alarma: revisa la fecha y los permisos');return false}
+  return true;
+ }catch(e){say('Error al programar alarma');return false}
 }
 function checkAlarmPermissions(){
  var status=by('alarm-permission-status');
@@ -1966,10 +1968,26 @@ function checkAlarmPermissions(){
  if(!nat||!nat.alarmPermissions){status.textContent='Disponible desde la aplicación Android.';return;}
  try{
   var a=JSON.parse(nat.alarmPermissions());
-  var count=[a.notifications,a.exact,a.fullScreen].filter(Boolean).length;
-  status.textContent=count===3&&a.channelHigh!==false?'Permisos disponibles. Bloquea el teléfono para probar la apertura completa. Con pantalla desbloqueada Android muestra un aviso emergente.':'Faltan permisos o la prioridad del canal de alarma es baja. Usa Permitir pantalla completa y comprueba los ajustes de notificaciones.';
+  var missing=[];
+  if(!a.notifications)missing.push('notificaciones');
+  if(!a.exact)missing.push('alarmas exactas');
+  if(!a.fullScreen)missing.push('pantalla completa');
+  if(a.channelHigh===false)missing.push('prioridad de notificaciones');
+  status.textContent=missing.length
+   ?'Revisar: '+missing.join(', ')+'. Algunas alarmas podrían retrasarse o no abrir la pantalla de bloqueo.'
+   :'Permisos principales disponibles. Prueba con la pantalla bloqueada; el resultado también depende de Android.';
   var badge=by('alarm-permission-indicator');
-  if(badge)badge.textContent=count===3?'Listo':'Permisos '+count+'/3';
+  if(badge)badge.textContent=missing.length?'Revisar '+missing.length:'Permisos listos';
+  if(nat.alarmScheduleDiagnostics){
+   try{
+    var d=JSON.parse(nat.alarmScheduleDiagnostics());
+    var details=by('ns-alarm-schedule-summary');
+    if(details){
+     details.textContent=d.count===0?'No hay registros nativos de alarma en este dispositivo':
+      d.count+' registro(s) nativo(s) de alarma'+(d.nextAt>0?' · próxima: '+new Date(d.nextAt).toLocaleString('es-CO',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):'');
+    }
+   }catch(e){}
+  }
  }catch(err){status.textContent='No se pudo verificar los permisos'}
 }
 by('alarm-permissions-open').onclick=function(){
