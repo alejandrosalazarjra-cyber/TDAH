@@ -651,6 +651,13 @@ html,body{background:#f8fbff;color:var(--ink)}
  border:1px solid #29415b;background:#1b2c40;color:#a4bed9;min-height:39px;font-weight:650;font-size:13px}
 #modal.ns-alarm-modal #ns-weekdays input:checked+span{background:#168bfa;color:#fff;border-color:#168bfa}
 #modal.ns-alarm-modal #ns-weekdays input:focus-visible+span{outline:2px solid #adddff;outline-offset:2px}
+</style><style id="ns-alarm-home-preview">
+#view-home .ns-home-alarm-preview{display:flex;align-items:center;gap:12px;width:100%;padding:12px 4px;
+ color:#153a60;background:transparent;border:0;border-bottom:1px solid #dce8f3;min-height:45px;text-align:left}
+#view-home .ns-home-alarm-preview strong{font:750 20px system-ui,sans-serif;font-variant-numeric:tabular-nums}
+#view-home .ns-home-alarm-preview span:nth-child(2){flex:1;font-size:13px}
+#view-home .ns-home-alarm-preview span:last-child{font-size:20px;color:#168bfa}
+#view-home .ns-home-alarm-preview:focus-visible{outline:2px solid #168bfa;outline-offset:2px}
 </style></head><body>
 <div id="login" class="login ns-login-v3">
  <div class="ns-login-wrap">
@@ -2023,7 +2030,7 @@ by('daily-summary').textContent='Completaste '+completed+' de '+current.length+'
 by('daily-bar').style.width=(current.length?Math.round(100*completed/current.length):0)+'%';
 fill('home-tasks',actionable().slice(0,3),taskItem,'Tu día está al día. ¡Bien hecho!');
 nsRenderTaskOrganizer(tasks);
-fill('home-alarms',active(model.alarms).filter(owned).slice(0,3),alarmItem,'No tienes alarmas próximas');
+fill('home-alarms',active(model.alarms).filter(owned).slice(0,3),nsHomeAlarmPreview,'No tienes alarmas próximas');
 fill('home-bags',active(model.packs).filter(owned).slice(0,2),miniBag,'Aún no tienes listas');
 renderFocus();renderInbox();refreshFocusClock();nsPlanRender();renderCalendar();renderBags();renderAlarms();if(session.role==='admin')renderUsers();
 }
@@ -2167,6 +2174,12 @@ function nsAlarmDuplicate(a){
  // Nunca copiar QR de seguridad: necesita registrarse otra vez para el nuevo ID.
  if(form._selectMission)form._selectMission(a.challenge==='qr'?'none':a.challenge||'none');
 }
+function nsHomeAlarmPreview(a){
+ var e=document.createElement('button');e.type='button';e.className='ns-home-alarm-preview';
+ e.innerHTML='<strong>'+esc(a.time||'--:--')+'</strong><span>'+esc(a.title||'Alarma')+'</span><span aria-hidden="true">›</span>';
+ e.onclick=function(){show('alarms');nsAlarmEdit(a)};
+ return e;
+}
 function alarmItem(a){
  var e=document.createElement('div');e.className='ns-alarm-list-item'+(a.enabled===false?' ns-alarm-off':'');
  var repeat=a.repeat|| (a.daily?'daily':'none');
@@ -2178,7 +2191,7 @@ function alarmItem(a){
  e.innerHTML='<div class="ns-alarm-line-main"><button type="button" class="ns-alarm-open" aria-label="Editar '+esc(a.title||'alarma')+'">'+
  '<strong class="ns-alarm-line-hour">'+esc(a.time||'--:--')+'</strong><span class="ns-alarm-line-label">'+esc(a.title||'Alarma')+'</span>'+
  '<small>'+esc(cadence)+' · '+esc(mission)+'</small></button>'+
- '<label class="ns-alarm-switch" aria-label="Alarma activa"><input type="checkbox" '+(a.enabled!==false?'checked':'')+'><span></span></label></div>'+
+ '<label class="ns-alarm-switch"><input type="checkbox" aria-label="'+esc((a.enabled===false?'Activar ':'Desactivar ')+(a.title||'alarma'))+'" '+(a.enabled!==false?'checked':'')+'><span></span></label></div>'+
  '<div class="ns-alarm-line-actions"><button type="button" data-ns-edit>Editar</button>'+
  '<button type="button" data-ns-duplicate>Duplicar</button><button type="button" data-ns-delete>Eliminar</button></div>';
  e.querySelector('.ns-alarm-open').onclick=function(){nsAlarmEdit(a)};
@@ -2461,6 +2474,9 @@ document.querySelectorAll('[data-ns-alarm-tab]').forEach(function(btn){
 });
 by('ns-alarm-test-quick').onclick=function(){nsAlarmTab('settings');by('alarm-test').click()};
 by('ns-alarm-open-sleep').onclick=function(){show('habits');by('ns-sleep-form').scrollIntoView({behavior:'smooth',block:'start'})};
+window.setInterval(function(){
+ if(session&&by('view-alarms').classList.contains('active'))nsNextAlarmSummary();
+},60000);
 by('ns-alarm-system-permissions').onclick=function(){
  if(nat&&nat.openPermissionsPanel)nat.openPermissionsPanel('app');
  else say('Los permisos se gestionan en Ajustes de Android');
