@@ -1913,24 +1913,141 @@ e.querySelector('.iconbtn').onclick=function(){nsConfirm('Eliminar lista','Se el
 var c=e.querySelector('.bag-checks');(b.items||[]).forEach(function(it,i){var l=document.createElement('label');l.className='check';var input=document.createElement('input');input.type='checkbox';input.checked=!!(b.checked||{})[i];input.onchange=function(){b.checked=b.checked||{};b.checked[i]=input.checked;mark(b);save()};l.append(input,document.createTextNode(it));c.append(l)});
 e.querySelector('.btn').onclick=function(){b.checked={};mark(b);save();render()};return e}
 function renderBags(){fill('bags-list',active(model.packs).filter(owned),bagItem,'Crea una lista para tu próxima salida.')}
-function alarmItem(a){
- var e=document.createElement('div');e.className='list-row ns-alarm-line';
- var time=(a.time||'--:--').slice(0,5);
+/* Próxima alarma: cálculo por fechas locales sin sumar 24 h fijas. */
+function nsNextAlarmDate(a,now){
+ if(!a||a.enabled===false||a.deleted||!/^\\d{4}-\\d{2}-\\d{2}$/.test(a.date||'')||
+    !/^\\d{2}:\\d{2}$/.test(a.time||''))return null;
+ var dates=a.date.split('-').map(Number),hours=a.time.split(':').map(Number);
+ var date=new Date(dates[0],dates[1]-1,dates[2],hours[0],hours[1],0,0);
+ if(!Number.isFinite(date.getTime()))return null;
  var repeat=a.repeat|| (a.daily?'daily':'none');
- var cadence=repeat==='daily'?'Cada día':repeat==='weekly'?'Cada semana':repeat==='every2'?'Cada 2 días':repeat==='every3'?'Cada 3 días':'Una vez';
- e.innerHTML='<div class="ns-alarm-row"><div class="ns-alarm-core"><span class="ns-alarm-hour">'+esc(time)+'</span><div class="ns-alarm-meta"><strong>'+esc(a.title||'Alarma')+'</strong><small>'+esc(a.date||'')+' · '+cadence+'</small></div></div><button class="iconbtn ns-alarm-remove" type="button" aria-label="Eliminar alarma '+esc(a.title||'')+'">×</button></div>';
- e.querySelector('button').onclick=function(){
-  if(session.role!=='admin'&&a.owner==='todos'){say('Esta alarma compartida solo puede eliminarla el administrador');return}
+ if(repeat==='none')return date.getTime()>now?date:null;
+ var amount={daily:1,weekly:7,every2:2,every3:3}[repeat];
+ if(!amount)return null;
+ // Calendario local; el día/hora se mantiene a través de cambios de horario.
+ for(var i=0;i<16000&&date.getTime()<=now;i++)date.setDate(date.getDate()+amount);
+ return date.getTime()>now?date:null;
+}
+function nsNextAlarmSummary(){
+ var hour=by('ns-next-hour'),description=by('ns-next-description'),countdown=by('ns-next-countdown');
+ if(!hour||!session)return;
+ var upcoming=active(model.alarms).filter(owned).map(function(a){
+  return {alarm:a,date:nsNextAlarmDate(a,Date.now())};
+ }).filter(function(x){return !!x.date}).sort(function(a,b){return a.date-b.date});
+ if(!upcoming.length){hour.textContent='--:--';description.textContent='No tienes próximas alarmas activas';countdown.textContent='Crea una alarma para empezar';return}
+ var next=upcoming[0],remaining=Math.max(0,next.date.getTime()-Date.now());
+ hour.textContent=next.alarm.time;
+ description.textContent=next.alarm.title||'Alarma';
+ var minutes=Math.ceil(remaining/60000),days=Math.floor(minutes/1440);
+ countdown.textContent=days?('Sonará en '+days+' d '+Math.floor((minutes%1440)/60)+' h'):
+  'Sonará en '+Math.floor(minutes/60)+' h '+(minutes%60)+' min';
+}
+function nsAlarmTab(name){
+ ['list','report','settings'].forEach(function(key){
+  var active=key===name,tab=by('ns-alarms-tab-'+key),
+     panel=by('ns-alarms-'+key+'-view');
+  if(tab){tab.classList.toggle('active',active);tab.setAttribute('aria-selected',String(active))}
+  if(panel)panel.classList.toggle('hidden',!active);
+ });
+ if(name==='report')nsWakeRender();
+ if(name==='settings')checkAlarmPermissions();
+}
+function nsAlarmCanEdit(a){
+ return !!session&&(a.owner===session.username||session.role==='admin');
+}
+function nsAlarmToggle(a){
+ if(!nsAlarmCanEdit(a)){say('No puedes cambiar esta alarma');return}
+ if(a.enabled===false){
+  var candidate=Object.assign({},a,{enabled:true});
+  if(nat&&(nat.scheduleAlarm||nat.scheduleAlarmRepeat)&&!scheduleAlarm(candidate)){
+   say('Android no permitió activar esta alarma');return;
+  }
+  a.enabled=true;
+ }else{
+  if(nat&&nat.cancelAlarm)nat.cancelAlarm(a.id);
+  a.enabled=false;
+ }
+ mark(a);save();render();
+}
+function nsAlarmEdit(a){
+ if(!nsAlarmCanEdit(a)){say('Esta alarma no se puede editar desde tu cuenta');return}
+ openModal('alarm');
+ by('modal-title').textContent='Editar alarma';
+ var form=by('popup-form');
+ form.elements.title.value=a.title||'Alarma';
+ form.elements.time.value=a.time||'08:00';
+ form.elements.date.value=a.date||day();
+ form.elements.repeat.value=a.repeat|| (a.daily?'daily':'none');
+ if(form._selectMission)form._selectMission(a.challenge||'none');
+ form.onsubmit=function(e){
+  e.preventDefault();
+  var v=Object.fromEntries(new FormData(form).entries());
+  if(v.challenge==='qr'&&!v.qrValue&&a.challenge!=='qr'){
+   say('Registra un QR físico antes de guardar');return
+  }
+  var next=Object.assign({},a,{title:(v.title||'').trim()||'Alarma',
+   date:v.date,time:v.time,repeat:v.repeat,daily:v.repeat==='daily',
+   challenge:v.challenge||'none',updatedAt:stamp()});
+  if(!nsNextAlarmDate(Object.assign({},next,{enabled:true}),Date.now())){
+   say('Revisa la fecha y hora de esta alarma');return
+  }
+  if(next.enabled!==false&&nat&&(nat.scheduleAlarm||nat.scheduleAlarmRepeat)&&!scheduleAlarm(next)){
+   say('Android no pudo actualizar la alarma');return
+  }
+  // No mutar la fuente hasta comprobar la programación nativa.
+  Object.assign(a,next);
+  if(v.challenge==='qr'&&v.qrValue&&nat&&nat.setAlarmQrCode)nat.setAlarmQrCode(a.id,v.qrValue);
+  if(v.challenge!=='qr'&&nat&&nat.setAlarmQrCode)nat.setAlarmQrCode(a.id,'');
+  save();closeModal();render();say('Alarma actualizada');
+ };
+}
+function nsAlarmDuplicate(a){
+ if(!nsAlarmCanEdit(a)){say('No puedes duplicar esta alarma');return}
+ openModal('alarm');
+ by('modal-title').textContent='Duplicar alarma';
+ var form=by('popup-form');
+ form.elements.title.value=(a.title||'Alarma')+' · copia';
+ form.elements.time.value=a.time||'08:00';
+ form.elements.date.value=day();
+ form.elements.repeat.value=a.repeat|| (a.daily?'daily':'none');
+ // Nunca copiar QR de seguridad: necesita registrarse otra vez para el nuevo ID.
+ if(form._selectMission)form._selectMission(a.challenge==='qr'?'none':a.challenge||'none');
+}
+function alarmItem(a){
+ var e=document.createElement('div');e.className='ns-alarm-list-item'+(a.enabled===false?' ns-alarm-off':'');
+ var repeat=a.repeat|| (a.daily?'daily':'none');
+ var cadence={none:'Una vez',daily:'Cada día',weekly:'Cada semana',every2:'Cada 2 días',every3:'Cada 3 días'}[repeat]||'Personalizada';
+ var mission={none:'Sin desafío',math:'Matemáticas',math_hard:'Matemáticas difíciles',taps:'12 toques',
+  memory:'Memoria',typing:'Escritura',shake:'Movimiento',qr:'Código QR',
+  routine_focus:'Rutina mental',routine_active:'Rutina activa'}[a.challenge||'none']||'Desafío';
+ e.innerHTML='<div class="ns-alarm-line-main"><button type="button" class="ns-alarm-open" aria-label="Editar '+esc(a.title||'alarma')+'">'+
+ '<strong class="ns-alarm-line-hour">'+esc(a.time||'--:--')+'</strong><span class="ns-alarm-line-label">'+esc(a.title||'Alarma')+'</span>'+
+ '<small>'+esc(cadence)+' · '+esc(mission)+'</small></button>'+
+ '<label class="ns-alarm-switch" aria-label="Alarma activa"><input type="checkbox" '+(a.enabled!==false?'checked':'')+'><span></span></label></div>'+
+ '<div class="ns-alarm-line-actions"><button type="button" data-ns-edit>Editar</button>'+
+ '<button type="button" data-ns-duplicate>Duplicar</button><button type="button" data-ns-delete>Eliminar</button></div>';
+ e.querySelector('.ns-alarm-open').onclick=function(){nsAlarmEdit(a)};
+ e.querySelector('.ns-alarm-switch input').onchange=function(){nsAlarmToggle(a)};
+ e.querySelector('[data-ns-edit]').onclick=function(){nsAlarmEdit(a)};
+ e.querySelector('[data-ns-duplicate]').onclick=function(){nsAlarmDuplicate(a)};
+ e.querySelector('[data-ns-delete]').onclick=function(){
+  if(!nsAlarmCanEdit(a)){say('No puedes eliminar esta alarma');return}
   nsConfirm('Eliminar alarma','¿Eliminar '+(a.title||'esta alarma')+'?','Eliminar').then(function(ok){
    if(!ok)return;
-   a.deleted=true;mark(a);
-   try{nat&&nat.cancelAlarm&&nat.cancelAlarm(a.id)}catch(err){}
-   save();render();
+   if(nat&&nat.cancelAlarm)nat.cancelAlarm(a.id);
+   a.deleted=true;mark(a);save();render()
   });
  };
  return e;
 }
-function renderAlarms(){fill('alarms-list',active(model.alarms).filter(owned),alarmItem,'No hay alarmas. Crea una para recordar algo importante.')}
+function renderAlarms(){
+ var alarms=active(model.alarms).filter(owned).slice().sort(function(a,b){
+  var x=nsNextAlarmDate(a,Date.now()),y=nsNextAlarmDate(b,Date.now());
+  return (x?x.getTime():Infinity)-(y?y.getTime():Infinity)
+ });
+ fill('alarms-list',alarms,alarmItem,'Aún no tienes alarmas. Crea la primera para comenzar.');
+ nsNextAlarmSummary();
+}
 function renderCalendar(){var grid=by('calendar');grid.replaceChildren();by('month-title').textContent=month.toLocaleDateString('es-CO',{month:'long',year:'numeric'});var wd=['L','M','M','J','V','S','D'];wd.forEach(function(w){var e=document.createElement('span');e.className='week-label';e.textContent=w;grid.append(e)});
 var first=new Date(month.getFullYear(),month.getMonth(),1),offset=(first.getDay()+6)%7,last=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();
 for(var j=0;j<offset;j++){grid.append(document.createElement('span'))}
@@ -2160,6 +2277,15 @@ function checkAlarmPermissions(){
 by('alarm-permissions-open').onclick=function(){
  if(nat&&nat.requestAlarmPermissions)nat.requestAlarmPermissions();
  else say('Solo disponible en la APK Android');
+};
+document.querySelectorAll('[data-ns-alarm-tab]').forEach(function(btn){
+ btn.onclick=function(){nsAlarmTab(btn.dataset.nsAlarmTab)};
+});
+by('ns-alarm-test-quick').onclick=function(){nsAlarmTab('settings');by('alarm-test').click()};
+by('ns-alarm-open-sleep').onclick=function(){show('habits');by('ns-sleep-form').scrollIntoView({behavior:'smooth',block:'start'})};
+by('ns-alarm-system-permissions').onclick=function(){
+ if(nat&&nat.openPermissionsPanel)nat.openPermissionsPanel('app');
+ else say('Los permisos se gestionan en Ajustes de Android');
 };
 by('alarm-test').onclick=function(){
  if(nat&&nat.testAlarm){
