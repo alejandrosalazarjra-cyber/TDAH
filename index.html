@@ -1949,8 +1949,22 @@ window.neuroQrEnrollment=function(raw){
 };
 function scheduleAlarm(a){
  if(!nat||(!nat.scheduleAlarm&&!nat.scheduleAlarmRepeat))return false;
- var when=new Date(a.date+'T'+a.time+':00').getTime();
+ var dateText=String(a.date||''),timeText=String(a.time||'');
+ if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(dateText)||!/^\\d{2}:\\d{2}$/.test(timeText)){
+  say('La alarma tiene una fecha u hora inválida');return false
+ }
+ var pieces=dateText.split('-').map(Number),clock=timeText.split(':').map(Number);
+ if(clock[0]>23||clock[1]>59||pieces[1]<1||pieces[1]>12||pieces[2]<1||pieces[2]>31){
+  say('La alarma tiene una fecha u hora inválida');return false
+ }
+ var local=new Date(pieces[0],pieces[1]-1,pieces[2],clock[0],clock[1]);
+ if(local.getFullYear()!==pieces[0]||local.getMonth()!==pieces[1]-1||
+    local.getDate()!==pieces[2]||local.getHours()!==clock[0]||local.getMinutes()!==clock[1]){
+  say('Esa fecha u hora no existe en el calendario local');return false
+ }
+ var when=local.getTime();
  var repeat=a.repeat|| (a.daily?'daily':'none');
+ if(!['none','daily','weekly','every2','every3'].includes(repeat)){say('Repetición no válida');return false}
  // No sumar milisegundos para repeticiones: en cambios de zona horaria o DST
  // esa aritmética desplaza la hora de despertar. Android usa Calendar local.
  // El primer día/hora es la referencia y AlarmReceiver.nextRepeat calcula el siguiente.
