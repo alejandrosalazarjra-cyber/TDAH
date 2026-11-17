@@ -345,8 +345,6 @@ body.ns-pomodoro-active{overflow:hidden}
 #ns-google-developer-info.hidden{display:none}
 #ns-google-developer-info summary{font-size:13px;font-weight:700;cursor:pointer}
 #ns-google-fingerprint{font-family:monospace;font-size:12px;line-height:1.6}
-.ns-music-clock-card{margin:12px 0}
-.ns-music-clock-card h3{margin-bottom:8px}
 </style>
 <style id="ns-text-first-2026">
 /* Línea visual: navegación por palabras, sin tarjetas; conservar affordances y accesibilidad. */
@@ -356,7 +354,7 @@ html,body{background:#f8fbff;color:var(--ink)}
 #app .view{max-width:100%;padding-bottom:9px}
 #app .view .card,#app .view .stat,#app .view .ns-feature-tile,
 #app .view .ns-dragon-quest-card,#app .view .ns-wake-insights,
-#app .view .ns-music-clock-card,#app .view .ns-health-summary,
+ #app .view .ns-health-summary,
 #app .view .ns-task-tools,#app .view .ns-home-extra,
 #app .view .ns-dragon-room-controls,
 #app .view .ns-dragon-coach,#app .view .ns-dragon-day-plan{
@@ -914,12 +912,6 @@ body.ns-alarm-active .top{margin-bottom:5px!important}
         <summary>Sonido y vibración</summary>
         <p class="ns-alarm-explain">Selecciona un tono local. Si no puede reproducirse, Android utilizará un tono de respaldo.</p>
         <button type="button" class="btn secondary" id="alarm-local-sound">Elegir sonido</button>
-      </details>
-      <details class="ns-alarm-setting-group">
-        <summary>Alarma con YouTube Music</summary>
-        <p class="ns-alarm-explain">La música de YouTube Music Premium se configura en Reloj de Google. Sus alarmas no usan los desafíos de NeuroSync.</p>
-        <button type="button" class="btn secondary" id="ns-create-music-alarm">Configurar en Reloj</button>
-        <button type="button" class="btn ghost" id="alarm-clock-music">Abrir Reloj</button>
       </details>
       <details class="ns-alarm-setting-group">
         <summary>Seguridad y funcionamiento</summary>
@@ -2520,14 +2512,6 @@ window.neuroAlarmSoundSelected=function(){say('Sonido guardado para próximas al
 by('alarm-local-sound').onclick=function(){
  if(nat&&nat.chooseAlarmSound)nat.chooseAlarmSound();
  else say('La selección de audio necesita la APK Android');
-};
-by('ns-create-music-alarm').onclick=function(){
- if(nat&&nat.createYouTubeMusicClockAlarm)nat.createYouTubeMusicClockAlarm();
- else say('Abre Reloj de Android → Alarma → Sonido → YouTube Music');
-};
-by('alarm-clock-music').onclick=function(){
- if(nat&&nat.openSystemClock){nat.openSystemClock()}
- else say('En Reloj de Google abre una alarma → Sonido → YouTube Music (Premium para canciones)');
 };
 document.addEventListener('visibilitychange',function(){if(!document.hidden)checkAlarmPermissions()});
 checkAlarmPermissions();
