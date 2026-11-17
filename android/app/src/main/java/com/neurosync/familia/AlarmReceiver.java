@@ -130,6 +130,26 @@ public final class AlarmReceiver extends BroadcastReceiver {
    ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id.hashCode());
   }catch(Exception ignored){}
  }
+ /** Diagnóstico de los registros locales: no afirma una garantía de ejecución del SO. */
+ public static JSONObject diagnostics(Context ctx){
+  JSONObject result=new JSONObject();
+  int count=0,invalid=0;long next=Long.MAX_VALUE;
+  try{
+   for(Map.Entry<String,?> row:ctx.getSharedPreferences("ns_alarms",0).getAll().entrySet()){
+    if(!row.getKey().startsWith(PREFIX))continue;
+    try{
+     JSONObject alarm=new JSONObject((String)row.getValue());
+     String id=alarm.optString("id","");
+     long at=alarm.optLong("when",-1);
+     if(id.length()<2||at<=0){invalid++;continue;}
+     count++;
+     if(at>System.currentTimeMillis()&&at<next)next=at;
+    }catch(Exception malformed){invalid++;}
+   }
+   result.put("count",count).put("invalid",invalid).put("nextAt",next==Long.MAX_VALUE?0:next);
+  }catch(Exception e){android.util.Log.w("NeuroSync","No se pudieron contar alarmas locales",e);}
+  return result;
+ }
  private static void restore(Context ctx){
   long now=System.currentTimeMillis();
   for(Map.Entry<String,?> row:ctx.getSharedPreferences("ns_alarms",0).getAll().entrySet()){
