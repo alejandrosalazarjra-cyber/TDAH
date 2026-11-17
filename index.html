@@ -8,7 +8,14 @@
 @media(max-width:670px){.sidebar{display:none}.main{margin:0;padding:18px 13px 96px}.nav-mobile{display:flex;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);padding:7px 7px calc(7px + env(safe-area-inset-bottom));z-index:9;justify-content:space-around;gap:4px}.nav-mobile button{border:0;background:transparent;color:#7c8ba4;font-size:10px;font-weight:650;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;flex:1;padding:6px 0}.nav-mobile button span{font-size:21px}.nav-mobile button.active{color:var(--blue)}.grid{grid-template-columns:minmax(0,1fr)}.hero{min-height:160px}.hero h2{font-size:20px}.pet{font-size:76px}.stats{gap:8px}.stat{padding:11px}.stat strong{font-size:22px}.top{margin-bottom:18px}.top h1{font-size:23px}.top-right .sync-state{display:none}.card{padding:15px}.form-grid{gap:10px}.calendar-grid{gap:3px}.day{min-height:56px;padding:7px 3px;font-size:12px;border-radius:8px}}
 @media(max-width:370px){.form-grid{grid-template-columns:1fr}.day{min-height:48px}.hero p{font-size:11px}.hero h2{font-size:18px}.pet{font-size:60px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
-.ns-overlay{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:16px;background:#14203c99;backdrop-filter:blur(4px)}.ns-box{font-family:Inter,system-ui,sans-serif;background:var(--paper,#fff);color:var(--ink,#18243b);width:min(430px,100%);padding:24px;border-radius:24px;border:1px solid var(--border,#dde4ef);box-shadow:0 20px 65px #0a193c33}.ns-box h2{font-size:20px;margin:0 0 12px;font-family:inherit}.ns-box p{color:var(--muted,#697891);font-size:14px;line-height:1.6;margin:0 0 16px;font-family:inherit}.ns-box input{font:16px Inter,system-ui!important;min-height:48px;background:var(--paper,#fff);color:var(--ink,#18243b)}.ns-buttons{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}.ns-buttons button{min-height:44px;border-radius:12px;padding:11px 15px;font:600 14px Inter,system-ui}.ns-buttons button:first-child{background:transparent;border:1px solid var(--border,#dde4ef);color:var(--ink,#18243b)}.ns-buttons button:last-child{background:var(--blue,#4258db);color:white;border:1px solid var(--blue,#4258db)}</style></head><body>
+.ns-overlay{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:16px;background:#14203c99;backdrop-filter:blur(4px)}.ns-box{font-family:Inter,system-ui,sans-serif;background:var(--paper,#fff);color:var(--ink,#18243b);width:min(430px,100%);padding:24px;border-radius:24px;border:1px solid var(--border,#dde4ef);box-shadow:0 20px 65px #0a193c33}.ns-box h2{font-size:20px;margin:0 0 12px;font-family:inherit}.ns-box p{color:var(--muted,#697891);font-size:14px;line-height:1.6;margin:0 0 16px;font-family:inherit}.ns-box input{font:16px Inter,system-ui!important;min-height:48px;background:var(--paper,#fff);color:var(--ink,#18243b)}.ns-buttons{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}.ns-buttons button{min-height:44px;border-radius:12px;padding:11px 15px;font:600 14px Inter,system-ui}.ns-buttons button:first-child{background:transparent;border:1px solid var(--border,#dde4ef);color:var(--ink,#18243b)}.ns-buttons button:last-child{background:var(--blue,#4258db);color:white;border:1px solid var(--blue,#4258db)}
+/* Estudio de concentración, diseñado con CSS y sin imágenes externas. */
+.ns-focus-ring{width:178px;height:178px;border-radius:50%;margin:17px auto;display:grid;place-items:center;background:conic-gradient(var(--blue,#4258db) var(--ns-progress,0%),#e8edfa 0);box-shadow:0 7px 30px #384fa21c;position:relative}
+.ns-focus-ring:before{content:'';position:absolute;inset:10px;border-radius:50%;background:var(--paper,#fff)}
+.ns-focus-ring>div{z-index:1;text-align:center}.ns-focus-ring strong{font-size:37px;font-variant-numeric:tabular-nums;display:block;letter-spacing:-1px}.ns-focus-ring span{font-size:11px;color:var(--muted,#64738b)}
+.ns-focus-options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.ns-focus-options button{font:600 13px Inter,system-ui,sans-serif;border:1px solid var(--border,#e1e7f2);border-radius:11px;background:var(--paper,#fff);color:var(--ink,#1b2540);padding:11px 3px;min-width:0}.ns-focus-options button.selected{background:var(--blue,#4258db);color:#fff;border-color:var(--blue,#4258db)}
+.ns-focus-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:18px 0}.ns-focus-metrics>div{background:var(--bg,#f5f7fe);border:1px solid var(--border,#e4e9f2);padding:13px 6px;border-radius:12px;text-align:center;min-width:0}.ns-focus-metrics strong{display:block;font-size:17px}.ns-focus-metrics span{display:block;font-size:10px;color:var(--muted,#69758d);margin-top:3px}
+</style></head><body>
 <div id="login" class="login">
  <form id="login-form" class="card login-card">
   <span class="logo">🪷</span><h1>Bienvenido a NeuroSync</h1><p class="muted">Tu espacio para organizar la vida en familia</p>
@@ -65,7 +72,24 @@
       <div id="next-action"></div>
       <div class="row" style="margin-top:12px"><button class="btn secondary" type="button" id="focus-five">Comenzar 5 minutos</button><span class="hint" id="focus-clock">Un inicio pequeño es suficiente.</span></div>
      </div>
-     <div class="card"><div class="between"><h2>Mis 3 prioridades</h2><button class="btn secondary" data-open="task">+ Nueva tarea</button></div><div id="home-tasks"></div></div>
+     <div class="card ns-focus-studio" id="focus-studio">
+       <div class="between"><h2>Estudio de concentración</h2><span class="chip">Sin distracciones</span></div>
+       <p class="hint">Trabaja en una sola actividad. Tu tiempo y tu historial se guardan únicamente en este dispositivo.</p>
+       <div class="ns-focus-ring" aria-live="polite"><div><strong id="ns-focus-time">25:00</strong><span id="ns-focus-phase">Listo para comenzar</span></div></div>
+       <div class="ns-focus-options" role="group" aria-label="Duración de la sesión">
+        <button type="button" data-focus-minutes="5">5 min</button><button type="button" data-focus-minutes="15">15 min</button><button type="button" class="selected" data-focus-minutes="25">25 min</button><button type="button" data-focus-minutes="45">45 min</button>
+       </div>
+       <label class="field" style="margin:12px 0 0">¿En qué te concentrarás?
+        <select id="ns-focus-task"><option value="">Una tarea a la vez</option></select>
+       </label>
+       <div class="row" style="margin-top:13px">
+        <button type="button" class="btn" id="ns-focus-toggle">Iniciar enfoque</button>
+        <button type="button" class="btn secondary" id="ns-focus-stop">Terminar sesión</button>
+       </div>
+       <div class="ns-focus-metrics"><div><strong id="ns-focus-today">0 min</strong><span>Hoy</span></div><div><strong id="ns-focus-sessions">0</strong><span>Sesiones terminadas</span></div><div><strong id="ns-focus-week">0 min</strong><span>Últimos 7 días</span></div></div>
+       <p class="hint" id="ns-focus-hint">Puedes pausar y continuar sin perder tu tiempo.</p>
+      </div>
+      <div class="card"><div class="between"><h2>Mis 3 prioridades</h2><button class="btn secondary" data-open="task">+ Nueva tarea</button></div><div id="home-tasks"></div></div>
     </div>
     <div class="stack">
      <div class="card"><div class="between"><h2>Inicio minimalista de Android</h2><span class="chip">Nuevo</span></div><p class="hint">Sustituye voluntariamente la pantalla de inicio de tu celular. Incluye aplicaciones, favoritos, reloj y acceso a tareas. Puedes volver al inicio original cuando quieras.</p><div class="row"><button type="button" class="btn" id="open-minimal-home">Vista previa del inicio</button><button type="button" class="btn secondary" id="set-default-home">Usar como inicio predeterminado</button></div><p class="hint" style="margin-top:10px">Podrás volver a tu pantalla anterior desde Ajustes → Aplicaciones predeterminadas → Inicio.</p></div>
@@ -129,6 +153,59 @@ var stamp=function(){return Date.now()}, uid=function(){return String(Date.now()
 var day=function(d){var x=d||new Date();return x.getFullYear()+'-'+('0'+(x.getMonth()+1)).slice(-2)+'-'+('0'+x.getDate()).slice(-2)};
 var blank=function(){return {tasks:[],packs:[],alarms:[],pet:{xp:0,food:0,feeds:0}}};
 function say(msg){var e=by('notice');e.textContent=msg;e.classList.remove('hidden');clearTimeout(say.timer);say.timer=setTimeout(function(){e.classList.add('hidden')},3400)}
+
+/* Registro de concentración aislado por cuenta. No se sincroniza con cuentas familiares. */
+var nsFocusDuration=25,nsFocusState=null,nsFocusTick=null;
+function nsFocusKey(){return 'ns_focus_private_v1_'+(session?session.username:'visitante')}
+function nsFocusRead(){try{var x=JSON.parse(localStorage.getItem(nsFocusKey()));return x&&Array.isArray(x.sessions)?x:{sessions:[]}}catch(e){return {sessions:[]}}}
+function nsFocusWrite(v){localStorage.setItem(nsFocusKey(),JSON.stringify(v))}
+function nsFocusFormat(ms){var seconds=Math.ceil(Math.max(0,ms)/1000);return String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0')}
+function nsFocusElapsed(){if(!nsFocusState)return 0;return nsFocusState.elapsed+(nsFocusState.running?Math.max(0,Date.now()-nsFocusState.since):0)}
+function nsFocusTasks(){
+ var select=by('ns-focus-task');if(!select||!session||!model)return;
+ var chosen=select.value;select.replaceChildren();var generic=document.createElement('option');generic.value='';generic.textContent='Una tarea a la vez';select.append(generic);
+ allTasks().filter(function(t){return !t.inbox&&!taskDone(t)}).slice(0,35).forEach(function(t){var option=document.createElement('option');option.value=String(t.id);option.textContent=String(t.title||'Actividad').slice(0,95);select.append(option)});
+ if(Array.from(select.options).some(function(o){return o.value===chosen}))select.value=chosen;
+}
+function nsFocusStats(){
+ if(!session)return;var records=nsFocusRead().sessions,now=Date.now(),today=day();
+ var todayMs=0,weekMs=0;records.forEach(function(x){var duration=Math.max(0,Number(x.ms)||0);if(x.day===today)todayMs+=duration;if(Number(x.at)>=now-7*86400000)weekMs+=duration});
+ by('ns-focus-today').textContent=Math.floor(todayMs/60000)+' min';
+ by('ns-focus-week').textContent=Math.floor(weekMs/60000)+' min';
+ by('ns-focus-sessions').textContent=records.filter(function(x){return x.completed}).length;
+}
+function nsFocusRender(){
+ var state=nsFocusState,total=(state?state.duration:nsFocusDuration)*60000,remaining=Math.max(0,total-nsFocusElapsed());
+ by('ns-focus-time').textContent=nsFocusFormat(remaining);
+ by('ns-focus-phase').textContent=!state?'Listo para comenzar':state.running?'Concentrándote':'En pausa';
+ by('ns-focus-toggle').textContent=state?(state.running?'Pausar':'Continuar'):'Iniciar enfoque';
+ by('ns-focus-hint').textContent=state?'Tiempo registrado: '+Math.floor(nsFocusElapsed()/60000)+' minutos · Puedes pausar cuando lo necesites.':'Selecciona una duración y una tarea.';
+ var ring=by('focus-studio').querySelector('.ns-focus-ring');ring.style.setProperty('--ns-progress',(100*nsFocusElapsed()/total).toFixed(1)+'%');
+ document.querySelectorAll('[data-focus-minutes]').forEach(function(b){b.classList.toggle('selected',Number(b.dataset.focusMinutes)===(state?state.duration:nsFocusDuration));b.disabled=!!state});
+}
+function nsFocusSaveSession(completed){
+ if(!nsFocusState||!session)return;
+ var elapsed=Math.min(nsFocusElapsed(),nsFocusState.duration*60000);
+ if(elapsed>=1000){
+  var data=nsFocusRead();data.sessions.push({at:Date.now(),day:day(),ms:elapsed,completed:!!completed,taskId:nsFocusState.taskId||''});
+  data.sessions=data.sessions.slice(-500);nsFocusWrite(data);
+ }
+ nsFocusState=null;nsFocusStats();nsFocusRender();
+}
+function nsFocusPulse(){if(!nsFocusState)return;if(nsFocusElapsed()>=nsFocusState.duration*60000){nsFocusSaveSession(true);say('¡Sesión completada! Tu avance quedó registrado.')}else nsFocusRender()}
+function nsFocusInit(){
+ document.querySelectorAll('[data-focus-minutes]').forEach(function(b){b.onclick=function(){if(nsFocusState)return;nsFocusDuration=Number(b.dataset.focusMinutes);nsFocusRender()}});
+ by('ns-focus-toggle').onclick=function(){
+  if(!session)return;
+  if(!nsFocusState){nsFocusState={duration:nsFocusDuration,taskId:by('ns-focus-task').value,elapsed:0,since:Date.now(),running:true}}
+  else if(nsFocusState.running){nsFocusState.elapsed=nsFocusElapsed();nsFocusState.running=false}
+  else{nsFocusState.since=Date.now();nsFocusState.running=true}
+  nsFocusRender()
+ };
+ by('ns-focus-stop').onclick=async function(){if(!nsFocusState)return;if(await nsConfirm('Terminar enfoque','Se guardará el tiempo que hayas dedicado a esta sesión.','Terminar')){nsFocusSaveSession(false);say('Tiempo de concentración guardado')}};
+ nsFocusTick=setInterval(nsFocusPulse,1000);nsFocusRender()
+}
+
 function nsDialog(o){return new Promise(function(resolve){
  var previous=document.activeElement,shade=document.createElement('div'),box=document.createElement('section'),h=document.createElement('h2'),p=document.createElement('p');
  shade.className='ns-overlay';box.className='ns-box';box.setAttribute('role','dialog');box.setAttribute('aria-modal','true');h.id='ns-dialog-heading';h.textContent=o.title||'Confirmar';box.setAttribute('aria-labelledby',h.id);p.textContent=o.message||'';box.append(h,p);
@@ -270,7 +347,7 @@ var wrap=document.createElement('div');wrap.style.cssText='flex-basis:100%;margi
 return el}
 function fill(id,items,renderer,empty){var el=by(id);el.replaceChildren();if(!items.length){var p=document.createElement('div');p.className='empty';p.textContent=empty||'Nada pendiente por aquí';el.appendChild(p);return}items.forEach(function(t){el.appendChild(renderer(t))})}
 function render(){
-if(!session)return;
+if(!session)return;nsFocusTasks();nsFocusStats();
 var tasks=allTasks(),current=tasks.filter(todayTask),completed=current.filter(taskDone).length;
 by('stat-today').textContent=completed;by('stat-pending').textContent=tasks.filter(function(t){return !t.inbox&&!taskDone(t)}).length;by('stat-food').textContent=model.pet.food;
 if(nat&&nat.updateWidget){try{nat.updateWidget(tasks.filter(function(t){return !t.inbox&&!taskDone(t)}).length)}catch(e){}}
@@ -468,7 +545,7 @@ function sync(){
 }
 by('sync-btn').onclick=sync;
 function getUsers(){if(!nat||!nat.getUsers)return [{username:session.username,role:session.role}];try{var r=JSON.parse(nat.getUsers());return r.users||[]}catch(e){return []}}
-function enter(u){session=u;model=load();model.pet=model.pet||{xp:0,food:0,feeds:0};by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=u.username.slice(0,1).toUpperCase();by('greeting').textContent='Hola, '+u.username+'. Hoy puedes avanzar a tu ritmo.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
+function enter(u){session=u;model=load();nsFocusState=null;nsFocusTasks();nsFocusStats();nsFocusRender();model.pet=model.pet||{xp:0,food:0,feeds:0};by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=u.username.slice(0,1).toUpperCase();by('greeting').textContent='Hola, '+u.username+'. Hoy puedes avanzar a tu ritmo.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
 by('login-form').onsubmit=function(e){e.preventDefault();var username=by('login-user').value.trim().toLowerCase(),password=by('login-pass').value;
 if(nat&&nat.login){try{var res=JSON.parse(nat.login(username,password));if(!res.ok){by('login-error').textContent=res.error||'Usuario o contraseña incorrectos';return}enter(res.user);
         if(res.mustChangePassword){show('admin');say('Por seguridad, cambia la clave provisional antes de crear cuentas familiares.');}
@@ -584,8 +661,9 @@ function updateInstalledBuild(){
 }
 by('jump-challenge').onclick=function(){show('alarms');say('Crea una alarma y elige el desafío para detenerla')};
 by('jump-progress').onclick=function(){show('habits')};
+nsFocusInit();
 updateInstalledBuild();
-function logout(){syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
+function logout(){if(nsFocusState)nsFocusSaveSession(false);syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
 by('logout').onclick=logout;by('avatar').onclick=async function(){if(await nsConfirm('Cerrar sesión','¿Quieres cerrar esta sesión?','Cerrar sesión'))logout()};
 document.addEventListener('visibilitychange',function(){if(!document.hidden){sync();refreshFocusClock()}});setInterval(sync,60000);
 if(nat&&nat.restoreSession){
