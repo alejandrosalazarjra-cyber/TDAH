@@ -1671,27 +1671,32 @@ function nsLocalSave(data){
  nsQueueNativeSnapshot(data);
  return true;
 }
+function nsRecoveryCandidate(key){
+ // Elegir el snapshot válido más reciente: no preferir una copia SQLite antigua
+ // sobre un historial WebView que contiene tareas creadas después.
+ var candidates=[
+  {model:nsReadNativeSnapshot(),source:'Android'},
+  {model:nsReadModel(localStorage.getItem(key+'_anterior')),source:'historial local'},
+  {model:nsReadModel(localStorage.getItem(key+'_rescate')),source:'historial local'}
+ ].filter(function(c){return !!c.model});
+ if(!candidates.length)return null;
+ candidates.sort(function(a,b){
+  return (Number(b.model._localUpdatedAt)||0)-(Number(a.model._localUpdatedAt)||0)
+ });
+ return candidates[0];
+}
 function load(){
  var key=localKey(),current=localStorage.getItem(key),saved=nsReadModel(current);
  if(saved){nsSeedNativeSnapshot(saved);return saved;}
- // En corrupción del WebView preferimos una copia cifrada de Android si existe.
- var nativeRecovery=nsReadNativeSnapshot();
- if(nativeRecovery){
+ var recovered=nsRecoveryCandidate(key);
+ if(recovered){
   if(current){try{localStorage.setItem(key+'_corrupto_'+Date.now(),current)}catch(e){}}
-  try{localStorage.setItem(key,JSON.stringify(nativeRecovery))}
-  catch(e){nsStorageRecoveryBlocked=true}
-  setTimeout(function(){say('Recuperamos tu información desde la copia protegida de Android.')},100);
-  return nativeRecovery;
- }
- var safe=nsReadModel(localStorage.getItem(key+'_anterior'))||
-          nsReadModel(localStorage.getItem(key+'_rescate'));
- if(safe){
-  // Preservar el registro dañado sin sobrescribir la última copia recuperable.
-  if(current){try{localStorage.setItem(key+'_corrupto_'+Date.now(),current)}catch(e){}}
-  try{localStorage.setItem(key,JSON.stringify(safe));nsSeedNativeSnapshot(safe)}
-  catch(e){nsStorageRecoveryBlocked=true}
-  setTimeout(function(){say('Se recuperaron datos de una copia local anterior. Revisa tus últimas tareas.')},100);
-  return safe;
+  try{
+   localStorage.setItem(key,JSON.stringify(recovered.model));
+   if(recovered.source!=='Android')nsSeedNativeSnapshot(recovered.model);
+  }catch(e){nsStorageRecoveryBlocked=true}
+  setTimeout(function(){say('Se recuperó la última copia válida desde '+recovered.source+'. Comprueba tus tareas y alarmas.')},100);
+  return recovered.model;
  }
  if(current){
   // Bloquear escrituras que podrían destruir el último archivo recuperable.
