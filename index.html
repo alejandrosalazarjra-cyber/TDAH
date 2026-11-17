@@ -1131,6 +1131,7 @@ function nsDragonRender(){
  nsDragonCheckEvolution(idx);
  by('pet-face').setAttribute('aria-label',p.name+', '+spec.name);
  by('pet-headline').textContent=p.name+' · Tu compañero';
+ var companionName=by('ns-companion-title');if(companionName)companionName.textContent=p.name+' está contigo';
  by('dragon-stage').textContent=spec.name;
  by('pet-level').textContent='Etapa '+(idx+1)+' / 6';
  var current=spec.min,goal=next?next.min:current;
