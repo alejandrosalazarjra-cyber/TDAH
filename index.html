@@ -340,6 +340,13 @@ body.ns-pomodoro-active{overflow:hidden}
 #ns-user-launcher-container>.card,#ns-user-backup-container>.card,#ns-user-permission-container>div{margin:8px 0;box-shadow:none}
 #ns-user-popover .btn{font-size:13px;min-height:42px}
 @media(max-width:340px){#view-home .ns-feature-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style><style>
+#ns-google-developer-info{margin-top:12px;text-align:left;border-radius:15px;background:#fff8eb;border:1px solid #e4c995;padding:12px;color:#674a12}
+#ns-google-developer-info.hidden{display:none}
+#ns-google-developer-info summary{font-size:13px;font-weight:700;cursor:pointer}
+#ns-google-fingerprint{font-family:monospace;font-size:12px;line-height:1.6}
+.ns-music-clock-card{margin:12px 0}
+.ns-music-clock-card h3{margin-bottom:8px}
 </style></head><body>
 <div id="login" class="login ns-login-v3">
  <div class="ns-login-wrap">
@@ -371,6 +378,12 @@ body.ns-pomodoro-active{overflow:hidden}
     <button type="submit" class="btn ns-login-submit">Iniciar sesión <span aria-hidden="true">→</span></button>
     </div>
     <p id="login-error" class="hint ns-login-error" role="alert"></p>
+    <details id="ns-google-developer-info" class="hidden ns-google-diagnostics">
+      <summary>Detalles técnicos para configurar Google</summary>
+      <p class="hint">Registra un cliente OAuth de tipo Android con estos datos en Google Cloud. Es una configuración del desarrollador, no debes cambiar tu contraseña.</p>
+      <pre id="ns-google-fingerprint" style="white-space:pre-wrap;overflow-wrap:anywhere;user-select:text"></pre>
+      <p class="hint">Para la versión publicada en Play Store registra también el SHA-1 del certificado de firma de Play, que puede ser diferente.</p>
+    </details>
     <p id="login-build" class="hint ns-login-build">Versión de la aplicación: verificando…</p>
 
 
@@ -544,7 +557,12 @@ body.ns-pomodoro-active{overflow:hidden}
 <button type="button" class="btn secondary" id="alarm-test">Probar en 1 min</button>
 <button type="button" class="btn ghost" id="alarm-local-sound">Elegir sonido</button>
 <button type="button" class="btn ghost" id="alarm-clock-music">Abrir Reloj de Google</button></div>
-</div><p class="hint" style="margin-top:10px">Para usar canciones de YouTube Music, configura una alarma en Reloj de Google. Las alarmas propias de NeuroSync tienen desafíos y tonos locales, pero no pueden reproducir directamente YouTube Music.</p><div id="alarms-list"></div></div></section>
+</div><p class="hint" style="margin-top:10px">Para usar canciones de YouTube Music, configura una alarma en Reloj de Google. Las alarmas propias de NeuroSync tienen desafíos y tonos locales, pero no pueden reproducir directamente YouTube Music.</p><div class="card ns-music-clock-card">
+  <h3>Despertar con YouTube Music</h3>
+  <p class="hint">Configura la canción desde Reloj de Google con YouTube Music Premium. Esta alarma sonará en Reloj y no utilizará los desafíos de NeuroSync.</p>
+  <button type="button" class="btn secondary" id="ns-create-music-alarm">Crear alarma musical en Reloj</button>
+  <p class="hint">Para las alarmas con retos de NeuroSync, usa un archivo de audio local autorizado o un tono del teléfono.</p>
+ </div><div id="alarms-list"></div></div></section>
   <section class="view" id="view-habits">
    <div class="card ns-health-summary">
     <div class="between"><h2>Mi panorama semanal</h2><span class="chip">Solo en mi cuenta</span></div>
@@ -1720,6 +1738,10 @@ by('alarm-local-sound').onclick=function(){
  if(nat&&nat.chooseAlarmSound)nat.chooseAlarmSound();
  else say('La selección de audio necesita la APK Android');
 };
+by('ns-create-music-alarm').onclick=function(){
+ if(nat&&nat.createYouTubeMusicClockAlarm)nat.createYouTubeMusicClockAlarm();
+ else say('Abre Reloj de Android → Alarma → Sonido → YouTube Music');
+};
 by('alarm-clock-music').onclick=function(){
  if(nat&&nat.openSystemClock){nat.openSystemClock()}
  else say('En Reloj de Google abre una alarma → Sonido → YouTube Music (Premium para canciones)');
@@ -1781,8 +1803,22 @@ by('ns-google-login').onclick=function(){
 window.neuroGoogleLogin=function(json){
  try{
   var result=JSON.parse(json);
-  if(result.ok&&result.user&&result.user.google){enter(result.user);by('sync-status').textContent='Google conectado · comprobando Drive'}
-  else by('login-error').textContent=result.error||'Acceso Google no autorizado';
+  var info=by('ns-google-developer-info');
+  info.classList.add('hidden');
+  if(result.ok&&result.user&&result.user.google){
+   by('login-error').textContent='';
+   enter(result.user);
+   by('sync-status').textContent='Google conectado · comprobando Drive';
+  }else{
+   by('login-error').textContent=result.error||'No se pudo iniciar sesión con Google';
+   if(result.configurationRequired&&nat&&nat.googleOAuthDiagnostics){
+    try{
+     var diagnostics=JSON.parse(nat.googleOAuthDiagnostics());
+     by('ns-google-fingerprint').textContent='Identificador: '+(diagnostics.packageName||'No disponible')+'\nSHA-1: '+(diagnostics.sha1||'No disponible');
+     info.classList.remove('hidden');
+    }catch(err){}
+   }
+  }
  }catch(e){by('login-error').textContent='No se pudo validar la identidad'}
 };
 window.neuroDriveStatus=function(message){if(by('sync-status'))by('sync-status').textContent=message};
