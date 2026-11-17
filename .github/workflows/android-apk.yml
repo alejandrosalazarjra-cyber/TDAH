@@ -10,9 +10,11 @@ on:
       - 'android/**'
       - 'assets/dragon/**'
   push:
-    branches: [main, integration/dragon-azul-alarmas-2026-11-16]
+    branches: [main]
     paths:
       - '.github/workflows/android-apk.yml'
+      - 'tests/test_dragon_motion.js'
+      - 'tests/test_dragon_poses.js'
 
 concurrency:
   group: neurosync-build-${{ github.ref }}
