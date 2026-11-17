@@ -32,6 +32,13 @@
 .hero .pet{animation:ns-pet-breathe 3.2s ease-in-out infinite;transform-origin:center bottom}
 @keyframes ns-orbit{50%{transform:translateY(-6px)}}@keyframes ns-pet-breathe{50%{transform:translateY(-5px) scale(1.025)}}
 @media(prefers-reduced-motion:reduce){.ns-orb,.hero .pet{animation:none!important}}
+
+.ns-sleep-diary{margin-bottom:17px}.ns-sleep-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:18px 0}
+.ns-sleep-metrics>div{border-radius:13px;background:var(--bg,#f5f7fc);padding:17px 12px;border:1px solid var(--border,#e4eaf4)}
+.ns-sleep-metrics strong{display:block;font-size:27px;font-variant-numeric:tabular-nums}
+.ns-sleep-metrics span{font-size:11px;color:var(--muted,#71809c)}
+.ns-sleep-entry{padding:12px 2px;border-bottom:1px solid var(--border,#e5eaf3);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ns-sleep-entry small{display:block;color:var(--muted,#73809a);margin-top:4px}
 </style></head><body>
 <div id="login" class="login">
  <form id="login-form" class="card login-card">
@@ -135,6 +142,25 @@
 <button type="button" class="btn ghost" id="alarm-clock-music">Abrir Reloj de Google</button></div>
 </div><p class="hint" style="margin-top:10px">Para usar canciones de YouTube Music, configura una alarma en Reloj de Google. Las alarmas propias de NeuroSync tienen desafíos y tonos locales, pero no pueden reproducir directamente YouTube Music.</p><div id="alarms-list"></div></div></section>
   <section class="view" id="view-habits">
+   <div class="card ns-sleep-diary">
+     <div class="between"><h2>Mi diario del sueño</h2><span class="chip">Privado</span></div>
+     <p class="hint">Registra tu descanso de forma voluntaria. No se comparte con tu familia y no sustituye una evaluación médica.</p>
+     <form id="ns-sleep-form" class="form-grid">
+       <label class="field">Fecha del despertar<input id="ns-sleep-day" type="date" required></label>
+       <label class="field">Hora de acostarte<input id="ns-sleep-bed" type="time" required></label>
+       <label class="field">Hora de despertar<input id="ns-sleep-wake" type="time" required></label>
+       <label class="field">Calidad percibida
+        <select id="ns-sleep-quality"><option value="1">1 · Muy baja</option><option value="2">2 · Baja</option><option value="3" selected>3 · Regular</option><option value="4">4 · Buena</option><option value="5">5 · Excelente</option></select>
+       </label>
+       <label class="field wide">Nota opcional<textarea id="ns-sleep-note" maxlength="240" placeholder="¿Cómo te sentiste al despertar?"></textarea></label>
+       <div class="row wide"><button type="submit" class="btn">Guardar descanso</button></div>
+     </form>
+     <div class="ns-sleep-metrics">
+       <div><strong id="ns-sleep-average">—</strong><span>Promedio de horas · 7 días</span></div>
+       <div><strong id="ns-sleep-quality-average">—</strong><span>Calidad media · 7 días</span></div>
+     </div>
+     <h3>Mis últimos registros</h3><div id="ns-sleep-history"></div>
+   </div>
    <div class="card" style="max-width:600px;margin:auto">
     <span class="chip">Solo en este teléfono</span>
     <h2 style="margin-top:14px">Mi contador NoFap</h2>
@@ -175,6 +201,51 @@ function say(msg){var e=by('notice');e.textContent=msg;e.classList.remove('hidde
 
 /* Registro de concentración aislado por cuenta. No se sincroniza con cuentas familiares. */
 var nsFocusDuration=25,nsFocusState=null,nsFocusTick=null;
+
+/* Diario local privado; no se incluye en cargas de sincronización familiar. */
+function nsSleepKey(){return 'ns_sleep_private_v1_'+(session?session.username:'visitante')}
+function nsSleepRecords(){if(!session)return [];try{var x=JSON.parse(localStorage.getItem(nsSleepKey()));return Array.isArray(x)?x:[]}catch(e){return []}}
+function nsSleepMinutes(bed,wake){
+ if(!/^\\d{2}:\\d{2}$/.test(bed)||!/^\\d{2}:\\d{2}$/.test(wake))return null;
+ var a=bed.split(':').map(Number),b=wake.split(':').map(Number);
+ if(a[0]>23||b[0]>23||a[1]>59||b[1]>59)return null;
+ var minutes=(b[0]*60+b[1])-(a[0]*60+a[1]);
+ if(minutes<=0)minutes+=1440;
+ return minutes>0&&minutes<=1440?minutes:null;
+}
+function nsSleepRender(){
+ if(!session)return;
+ var items=nsSleepRecords().sort(function(a,b){return b.date.localeCompare(a.date)});
+ var since=day(new Date(Date.now()-6*86400000)),last=items.filter(function(x){return x.date>=since&&x.date<=day()});
+ var total=last.reduce(function(n,x){return n+x.minutes},0);
+ by('ns-sleep-average').textContent=last.length?(total/last.length/60).toFixed(1)+' h':'—';
+ by('ns-sleep-quality-average').textContent=last.length?(last.reduce(function(n,x){return n+x.quality},0)/last.length).toFixed(1)+'/5':'—';
+ var list=by('ns-sleep-history');list.replaceChildren();
+ if(!items.length){var empty=document.createElement('p');empty.className='hint';empty.textContent='Todavía no tienes registros de descanso.';list.append(empty);return}
+ items.slice(0,14).forEach(function(item){
+  var row=document.createElement('div');row.className='ns-sleep-entry';
+  var desc=document.createElement('div'),title=document.createElement('strong'),meta=document.createElement('small');
+  title.textContent=item.date+' · '+(item.minutes/60).toFixed(1)+' h';
+  meta.textContent=item.bed+' – '+item.wake+' · Calidad '+item.quality+'/5'+(item.note?' · '+item.note:'');
+  desc.append(title,meta);var remove=document.createElement('button');remove.type='button';remove.className='btn ghost';remove.textContent='Eliminar';
+  remove.onclick=async function(){if(!await nsConfirm('Eliminar descanso','Se eliminará este registro privado.','Eliminar'))return;
+   var rows=nsSleepRecords().filter(function(v){return v.date!==item.date});
+   localStorage.setItem(nsSleepKey(),JSON.stringify(rows));nsSleepRender()};
+  row.append(desc,remove);list.append(row)
+ });
+}
+function nsSleepInit(){
+ by('ns-sleep-day').value=day();by('ns-sleep-day').max=day();
+ by('ns-sleep-form').onsubmit=function(e){
+  e.preventDefault();if(!session)return;
+  var date=by('ns-sleep-day').value,bed=by('ns-sleep-bed').value,wake=by('ns-sleep-wake').value,mins=nsSleepMinutes(bed,wake);
+  if(!date||date>day()||!mins){say('Revisa la fecha y las horas de descanso');return}
+  var item={date:date,bed:bed,wake:wake,minutes:mins,quality:Number(by('ns-sleep-quality').value),note:by('ns-sleep-note').value.trim()};
+  var rows=nsSleepRecords().filter(function(x){return x.date!==date});rows.push(item);rows.sort(function(a,b){return a.date.localeCompare(b.date)});
+  localStorage.setItem(nsSleepKey(),JSON.stringify(rows.slice(-365)));by('ns-sleep-note').value='';nsSleepRender();say('Descanso guardado en este teléfono')
+ }
+}
+
 function nsSceneKey(){return 'ns_focus_scene_v1_'+(session?session.username:'visitante')}
 function nsSceneApply(name){var allowed=['calma','bosque','noche'];if(allowed.indexOf(name)<0)name='calma';by('focus-studio').dataset.scene=name;
  document.querySelectorAll('[data-ns-scene]').forEach(function(b){b.classList.toggle('selected',b.dataset.nsScene===name);b.setAttribute('aria-pressed',String(b.dataset.nsScene===name))});
@@ -422,7 +493,7 @@ var head={task:'Nueva tarea / flujo',bag:'Nueva lista de salida',alarm:'Nueva al
 var html='<form id="popup-form" class="form-grid">';
 if(kind==='task')html+=field('Actividad','title')+field('Responsable','owner','select',who)+field('Fecha','date','date')+field('Hora','time','time')+field('Repetición','repeat','select',[['none','Una vez'],['daily','Diario'],['weekly','Semanal']])+field('Prioridad','priority','select',[['normal','Normal'],['high','Importante'],['low','Puede esperar']])+field('Energía necesaria','energy','select',[['low','Poca energía'],['medium','Media'],['high','Alta']])+'<label class="field wide">Primeros pasos (separados por punto y coma)<textarea name="steps" placeholder="Preparar mochila; Revisar llaves; Salir"></textarea></label>';
 if(kind==='bag')html+=field('Lugar o destino','place')+field('Responsable','owner','select',who)+'<label class="field wide">Objetos separados por punto y coma<textarea name="items" required placeholder="Agua; Toalla; Candado"></textarea></label>';
-if(kind==='alarm')html+=field('Nombre de la alarma','title')+field('Fecha','date','date')+field('Hora','time','time')+field('Desafío para detener','challenge','select',[['none','Sin desafío'],['math','Resolver 3 sumas'],['taps','Tocar 12 veces'],['memory','Recordar un código'],['typing','Escribir una frase']])+'<label class="field wide"><span class="row"><input type="checkbox" name="daily" style="width:20px"> Repetir todos los días</span></label>';
+if(kind==='alarm')html+=field('Nombre de la alarma','title')+field('Fecha','date','date')+field('Hora','time','time')+field('Desafío para detener','challenge','select',[['none','Sin desafío'],['math','Resolver 3 sumas'],['taps','Tocar 12 veces'],['memory','Recordar un código'],['typing','Escribir una frase'],['shake','Mover el teléfono 12 veces'],['math_hard','Matemáticas avanzadas']])+'<label class="field wide"><span class="row"><input type="checkbox" name="daily" style="width:20px"> Repetir todos los días</span></label>';
 if(kind==='user')html+=field('Usuario (sin espacios)','username')+field('Contraseña (mínimo 10 caracteres)','password','password');
 html+='<div class="wide row" style="justify-content:flex-end"><button type="button" id="cancel-popup" class="btn ghost">Cancelar</button><button class="btn" type="submit">Guardar</button></div></form>';body.innerHTML=html;by('modal').classList.remove('hidden');
 by('cancel-popup').onclick=closeModal;var form=by('popup-form');if(form.elements.date)form.elements.date.value=day();
@@ -573,7 +644,7 @@ function sync(){
 }
 by('sync-btn').onclick=sync;
 function getUsers(){if(!nat||!nat.getUsers)return [{username:session.username,role:session.role}];try{var r=JSON.parse(nat.getUsers());return r.users||[]}catch(e){return []}}
-function enter(u){session=u;model=load();nsSceneRestore();nsFocusRestore();nsFocusTasks();nsFocusStats();nsFocusRender();model.pet=model.pet||{xp:0,food:0,feeds:0};by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=u.username.slice(0,1).toUpperCase();by('greeting').textContent='Hola, '+u.username+'. Hoy puedes avanzar a tu ritmo.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
+function enter(u){session=u;model=load();nsSleepRender();nsSceneRestore();nsFocusRestore();nsFocusTasks();nsFocusStats();nsFocusRender();model.pet=model.pet||{xp:0,food:0,feeds:0};by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=u.username.slice(0,1).toUpperCase();by('greeting').textContent='Hola, '+u.username+'. Hoy puedes avanzar a tu ritmo.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
 by('login-form').onsubmit=function(e){e.preventDefault();var username=by('login-user').value.trim().toLowerCase(),password=by('login-pass').value;
 if(nat&&nat.login){try{var res=JSON.parse(nat.login(username,password));if(!res.ok){by('login-error').textContent=res.error||'Usuario o contraseña incorrectos';return}enter(res.user);
         if(res.mustChangePassword){show('admin');say('Por seguridad, cambia la clave provisional antes de crear cuentas familiares.');}
@@ -690,6 +761,7 @@ function updateInstalledBuild(){
 by('jump-challenge').onclick=function(){show('alarms');say('Crea una alarma y elige el desafío para detenerla')};
 by('jump-progress').onclick=function(){show('habits')};
 nsFocusInit();
+nsSleepInit();
 updateInstalledBuild();
 function logout(){if(nsFocusState)nsFocusSaveSession(false);syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
 by('logout').onclick=logout;by('avatar').onclick=async function(){if(await nsConfirm('Cerrar sesión','¿Quieres cerrar esta sesión?','Cerrar sesión'))logout()};
