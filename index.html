@@ -73,6 +73,27 @@
 .ns-week-pips{display:flex;justify-content:center;gap:3px;flex-wrap:wrap;margin-top:8px}
 .ns-week-pips i{width:5px;height:5px;border-radius:50%;background:var(--blue)}
 @media(max-width:670px){.ns-plan-panels{grid-template-columns:1fr}.ns-week-grid{gap:3px}.ns-week-day{min-height:82px;padding:8px 2px;border-radius:9px}}
+
+.ns-dragon-hero{align-items:stretch;min-height:290px;gap:18px;background:linear-gradient(125deg,#edf3ff,#f4f2ff 65%,#e8f8ff)}
+.ns-dragon-copy{position:relative;z-index:1;flex:1;min-width:220px}
+.ns-dragon-copy h2{max-width:100%;font-size:clamp(21px,3vw,27px)}
+.ns-dragon-xp{max-width:390px;margin:10px 0 14px}
+.ns-dragon-xp .between{margin-bottom:8px;font-size:12px;font-weight:700;color:#4d5994}
+.ns-dragon-xp small{font-size:11px;color:var(--muted);display:block;margin-top:6px}
+.ns-dragon-actions{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin:7px 0}
+.ns-dragon-actions .btn{font-size:12px;min-height:35px;padding:8px 11px}
+.ns-dragon-message{font-size:12px;color:#334a76;background:#fff9;border:1px solid #d9e3fa;border-radius:12px;padding:9px 12px;margin:12px 0 0;max-width:400px}
+.ns-dragon-scene{position:relative;align-self:center;flex:0 0 clamp(175px,29%,245px);height:220px;display:grid;place-items:center;border-radius:45%;background:radial-gradient(ellipse at 50% 75%,#b6dbff99,transparent 65%)}
+.ns-dragon-glow{position:absolute;width:165px;height:165px;border-radius:50%;background:radial-gradient(circle,#a7e4ffbb,#b5c9ff33 65%,transparent 75%);filter:blur(7px)}
+.ns-dragon-scenery{position:absolute;right:10px;top:25px;color:#7aa2ff;font-size:30px;animation:ns-dragon-twinkle 3s ease-in-out infinite}
+.ns-dragon-figure{position:relative;z-index:1;display:block;width:100%;max-width:240px;font-size:initial;line-height:normal;animation:ns-dragon-float 3.8s ease-in-out infinite;filter:drop-shadow(0 15px 11px #283b8750)}
+.ns-dragon-figure svg{display:block;width:100%;height:auto;max-height:220px;overflow:visible}
+.ns-dragon-figure.ns-happy{animation:ns-dragon-celebrate .65s ease}
+@keyframes ns-dragon-float{50%{transform:translateY(-7px) rotate(1.5deg)}}
+@keyframes ns-dragon-celebrate{0%,100%{transform:translateY(0)}40%{transform:translateY(-17px) rotate(-5deg)}70%{transform:translateY(-4px) rotate(5deg)}}
+@keyframes ns-dragon-twinkle{50%{opacity:.25;transform:scale(.75)}}
+@media(max-width:620px){.ns-dragon-hero{flex-direction:column-reverse;gap:4px;padding:15px}.ns-dragon-scene{height:160px;flex:none;width:100%}.ns-dragon-figure{max-width:180px}.ns-dragon-figure svg{max-height:168px}.ns-dragon-copy{min-width:0;width:100%}.ns-dragon-actions .btn{flex:1}}
+@media(prefers-reduced-motion:reduce){.ns-dragon-figure,.ns-dragon-scenery{animation:none!important}}
 </style></head><body>
 <div id="login" class="login">
  <form id="login-form" class="card login-card">
@@ -108,7 +129,25 @@
   <section class="view active" id="view-home">
    <div class="grid">
     <div class="stack">
-     <div class="card hero"><div><span class="chip">TU COMPAÑERO</span><h2 style="margin-top:12px" id="pet-headline">Cada pequeño paso cuenta.</h2><p class="muted" id="pet-detail">Completa tareas para alimentar y evolucionar a tu mascota.</p><div class="row"><button class="btn" id="pet-feed">🍎 Dar comida · 20 puntos</button><span class="chip" id="pet-level">Nivel 1</span></div></div><div class="pet" id="pet-face" aria-label="Mascota evolutiva">🥚</div></div>
+     <div class="card hero ns-dragon-hero">
+ <div class="ns-dragon-copy">
+  <span class="chip">TU DRAGÓN DE PRODUCTIVIDAD</span>
+  <h2 style="margin-top:12px" id="pet-headline">Tu dragón está creciendo</h2>
+  <p class="muted" id="pet-detail">Cada tarea completada alimenta tu progreso.</p>
+  <div class="ns-dragon-xp"><div class="between"><span id="dragon-stage">Huevo místico</span><span id="pet-level" class="chip">Nivel 1</span></div><div class="progress"><div id="dragon-xp-fill" style="width:0%"></div></div><small id="dragon-xp-label">0 XP</small></div>
+  <div class="ns-dragon-actions">
+   <button class="btn" id="pet-feed" type="button">🍎 Alimentar · 20</button>
+   <button class="btn secondary" id="dragon-pet" type="button">♡ Acariciar</button>
+   <button class="btn secondary" id="dragon-next" type="button">Mi siguiente paso</button>
+  </div>
+  <div class="ns-dragon-actions">
+   <button class="btn ghost" id="dragon-name" type="button">Cambiar nombre</button>
+   <button class="btn ghost" id="dragon-decorate" type="button">Personalizar</button>
+  </div>
+  <p class="ns-dragon-message" id="dragon-message" aria-live="polite">Estoy contigo. ¿Qué hacemos primero?</p>
+ </div>
+ <div class="ns-dragon-scene" id="dragon-scene"><div class="ns-dragon-glow"></div><div class="pet ns-dragon-figure" id="pet-face" role="img" aria-label="Dragón de productividad en evolución"></div><span class="ns-dragon-scenery">✦</span></div>
+ </div>
      <div class="stats"><div class="stat"><strong id="stat-today">0</strong><span>Hechas hoy</span></div><div class="stat"><strong id="stat-pending">0</strong><span>Pendientes</span></div><div class="stat"><strong id="stat-food">0</strong><span>Puntos para comida</span></div></div>
      <div class="card" style="border:1px solid var(--border);background:var(--paper)">
        <div class="between"><h2>Accesos a funciones</h2><span id="feature-status" class="chip">Versión en revisión</span></div>
@@ -491,6 +530,87 @@ function nsPlanInit(){
  by('ns-week-today').onclick=function(){nsWeekOffset=0;selected=new Date();renderCalendar()};
 }
 
+
+/* Módulo mascota aislado: arte SVG original, sin recursos externos ni permisos especiales. */
+var nsDragonStages=[
+ {name:'Huevo místico',min:0,size:.75,horns:0,wings:0},
+ {name:'Cría de dragón',min:80,size:.80,horns:1,wings:1},
+ {name:'Dragón joven',min:200,size:.9,horns:2,wings:1},
+ {name:'Guardián azul',min:420,size:1,horns:2,wings:2},
+ {name:'Dragón ancestral',min:750,size:1.05,horns:3,wings:2},
+ {name:'Dragón celestial',min:1200,size:1.1,horns:3,wings:3}
+];
+var nsDragonLines=['Un paso pequeño también cuenta.','¿Empezamos por algo de cinco minutos?','Me gusta cuando avanzamos a tu ritmo.','Descansar también forma parte de progresar.'];
+function nsDragonData(){
+ if(!model)return null;
+ var p=model.pet&&typeof model.pet==='object'?model.pet:{};
+ p.xp=Math.max(0,Number(p.xp)||0);
+ p.food=Math.max(0,Number(p.food)||0);
+ p.feeds=Math.max(0,Number(p.feeds)||0);
+ p.name=String(p.name||'Azul').trim().slice(0,18)||'Azul';
+ p.accessory=['none','star','scarf'].includes(p.accessory)?p.accessory:'none';
+ p.pets=p.pets&&typeof p.pets==='object'?p.pets:{};
+ model.pet=p;return p;
+}
+function nsDragonStage(xp){for(var i=nsDragonStages.length-1;i>=0;i--)if(xp>=nsDragonStages[i].min)return i;return 0}
+function nsDragonSvg(stage,accessory){
+ var spec=nsDragonStages[stage],egg=stage===0;
+ var wing=spec.wings?'<path d="M109 132 Q82 64 32 84 Q45 99 31 115 Q72 111 98 156 Z" fill="#638df0" stroke="#3653b8" stroke-width="4"/><path d="M164 134 Q195 65 228 84 Q217 111 233 122 Q190 117 168 159 Z" fill="#5a85e2" stroke="#3653b8" stroke-width="4"/>':'';
+ var fins=spec.wings>1?'<path d="M37 96 L48 81 L67 106 M213 97 L201 78 L185 111" stroke="#9be7ff" stroke-width="7" fill="none" stroke-linecap="round"/>':'';
+ var horns=spec.horns?'<path d="M102 81 Q94 '+(spec.horns===3?'38':'53')+' 80 50 Q114 52 116 79 Z M151 80 Q168 '+(spec.horns===3?'39':'54')+' 182 53 Q159 51 139 83 Z" fill="#9de7f7" stroke="#407cb6" stroke-width="3"/>':'';
+ var crest=spec.horns>1?'<path d="M124 62 L133 39 L143 65 Z" fill="#a0edff" stroke="#407cb6" stroke-width="3"/>':'';
+ var stars=stage>=4?'<circle cx="56" cy="52" r="3" fill="#5a9dff"/><path d="M212 50 l0 -9 m-5 5 h10" stroke="#6eaaff" stroke-width="3"/>':'';
+ var costume=accessory==='scarf'?'<path d="M99 151 Q132 166 164 148 L164 164 Q128 182 99 164 Z" fill="#f3a0b7"/><path d="M156 158 L173 186 L162 193 L141 165 Z" fill="#e16a91"/>':accessory==='star'?'<path d="M132 149 l6 12 13 2 -10 9 2 13 -11 -6 -11 6 2 -13 -10 -9 13 -2Z" fill="#ffca66" stroke="#d39c31" stroke-width="2"/>':'';
+ if(egg)return '<svg viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><ellipse cx="130" cy="199" rx="66" ry="10" fill="#819bd43a"/><path d="M130 34 C75 34 62 105 76 155 C86 196 175 196 186 152 C202 99 176 34 130 34Z" fill="#d5edff" stroke="#6a8ecb" stroke-width="5"/><path d="M90 128 L113 114 L133 137 L150 118 L179 139" fill="none" stroke="#608ccc" stroke-width="6" stroke-linecap="round"/><path d="M90 157 Q129 185 169 154" stroke="#abcdf5" stroke-width="4" fill="none"/><circle cx="103" cy="91" r="6" fill="#b1d7ff"/><circle cx="158" cy="88" r="5" fill="#b1d7ff"/><path d="M132 24 l0 -12 m-5 6 h10" stroke="#7aa5f5" stroke-width="3"/></svg>';
+ return '<svg viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><ellipse cx="131" cy="208" rx="73" ry="9" fill="#819bd43a"/>'+wing+fins+'<path d="M169 162 Q224 144 228 179 Q230 202 202 189" fill="none" stroke="#3b70ce" stroke-width="24" stroke-linecap="round"/><path d="M202 188 L218 175 L220 195 Z" fill="#9be9fa"/><ellipse cx="135" cy="163" rx="59" ry="46" fill="#3f83d3" stroke="#2e58a9" stroke-width="4"/><ellipse cx="133" cy="172" rx="39" ry="33" fill="#a8dffd"/><path d="M92 180 Q74 183 79 203 L106 203 Q116 185 110 177Z M158 178 Q182 180 181 201 L155 203 Q143 188 148 177Z" fill="#4388de" stroke="#2e58a9" stroke-width="3"/>'+horns+crest+'<path d="M86 104 C84 64 109 54 133 57 C168 55 188 86 177 121 C194 135 172 155 143 151 L108 151 C76 150 68 126 86 104Z" fill="#5599ed" stroke="#2c61b5" stroke-width="4"/><ellipse cx="133" cy="133" rx="40" ry="21" fill="#9dd8fb"/><ellipse cx="108" cy="105" rx="15" ry="18" fill="#fff"/><ellipse cx="155" cy="105" rx="15" ry="18" fill="#fff"/><ellipse cx="111" cy="108" rx="7" ry="10" fill="#253c75"/><ellipse cx="152" cy="108" rx="7" ry="10" fill="#253c75"/><circle cx="114" cy="104" r="3" fill="#fff"/><circle cx="155" cy="104" r="3" fill="#fff"/><ellipse cx="118" cy="130" rx="4" ry="3" fill="#417eb9"/><ellipse cx="149" cy="130" rx="4" ry="3" fill="#417eb9"/><path d="M123 140 Q133 147 143 140" stroke="#345c96" stroke-width="3" stroke-linecap="round" fill="none"/><circle cx="85" cy="122" r="7" fill="#f99dbb" opacity=".65"/><circle cx="178" cy="122" r="7" fill="#f99dbb" opacity=".65"/>'+costume+stars+'</svg>';
+}
+function nsDragonMessage(text,animate){
+ var message=by('dragon-message');if(message)message.textContent=text;
+ var figure=by('pet-face');if(figure&&animate){figure.classList.remove('ns-happy');void figure.offsetWidth;figure.classList.add('ns-happy')}
+}
+function nsDragonRender(){
+ if(!session||!model)return;var p=nsDragonData(),idx=nsDragonStage(p.xp),spec=nsDragonStages[idx],next=nsDragonStages[idx+1];
+ by('pet-face').innerHTML=nsDragonSvg(idx,p.accessory);
+ by('pet-face').setAttribute('aria-label',p.name+', '+spec.name);
+ by('pet-headline').textContent=p.name+' · Tu compañero';
+ by('dragon-stage').textContent=spec.name;
+ by('pet-level').textContent='Etapa '+(idx+1)+' / 6';
+ var current=spec.min,goal=next?next.min:current;
+ by('dragon-xp-fill').style.width=(next?Math.min(100,100*(p.xp-current)/(goal-current)):100)+'%';
+ by('dragon-xp-label').textContent=next?p.xp+' / '+goal+' XP para evolucionar':p.xp+' XP · Evolución máxima';
+ by('pet-detail').textContent=next?'Completa tareas y sesiones de concentración para ayudar a '+p.name+' a crecer.':'¡Evolución máxima! Puedes seguir reuniendo XP y cuidando a tu dragón.';
+ by('stat-food').textContent=Math.floor(p.food);
+}
+function nsDragonInit(){
+ by('dragon-pet').onclick=function(){
+  var p=nsDragonData(),today=day(),n=Number(p.pets[today])||0;
+  if(n>=3){nsDragonMessage('Ya recibí mis caricias de hoy. ¡Sigamos con una tarea pequeña!',true);return}
+  p.pets[today]=n+1;
+  var keys=Object.keys(p.pets).sort();if(keys.length>45)keys.slice(0,keys.length-45).forEach(function(k){delete p.pets[k]});
+  save();nsDragonMessage('¡Gracias por la caricia! Me encanta acompañarte. ♡',true)
+ };
+ by('dragon-next').onclick=function(){
+  var t=actionable()[0];if(!t){nsDragonMessage('Hoy estás al día. ¿Quieres planificar algo nuevo?',true);return}
+  model.focusId=t.id;save();renderFocus();nsDragonMessage('Empecemos con: '+nextStep(t).label,true)
+ };
+ by('dragon-name').onclick=async function(){
+  var p=nsDragonData(),name=await nsPrompt('Nombre de tu dragón',p.name,{message:'Elige un nombre de máximo 18 caracteres.'});
+  if(name===null)return;name=String(name).trim().slice(0,18);if(!name){say('Escribe un nombre');return}
+  p.name=name;save();nsDragonRender();nsDragonMessage('¡Me gusta mi nuevo nombre!',true)
+ };
+ by('dragon-decorate').onclick=async function(){
+  var p=nsDragonData();
+  var pick=await nsPrompt('Personaliza tu dragón','1',{message:'0 = sin accesorio · 1 = estrella (30 puntos) · 2 = bufanda (30 puntos). La compra se realiza una sola vez.'});
+  if(pick===null)return;var options={0:'none',1:'star',2:'scarf'},value=options[String(pick).trim()];
+  if(!value){say('Elige 0, 1 o 2');return}
+  p.unlocked=p.unlocked||['none'];if(value!=='none'&&!p.unlocked.includes(value)){
+   if(p.food<30){say('Necesitas 30 puntos para desbloquear el accesorio');return}
+   p.food-=30;p.unlocked.push(value);
+  }
+  p.accessory=value;save();nsDragonRender();nsDragonMessage('¡Nuevo estilo equipado!',true)
+ };
+}
+
 function nsSleepKey(){return 'ns_sleep_private_v1_'+(session?session.username:'visitante')}
 function nsSleepRecords(){if(!session)return [];try{var x=JSON.parse(localStorage.getItem(nsSleepKey()));return Array.isArray(x)?x:[]}catch(e){return []}}
 function nsSleepMinutes(bed,wake){
@@ -575,6 +695,7 @@ function nsFocusSaveSession(completed){
  if(elapsed>=1000){
   var data=nsFocusRead();data.sessions.push({at:Date.now(),day:day(),ms:elapsed,completed:!!completed,taskId:nsFocusState.taskId||''});
   data.sessions=data.sessions.slice(-500);nsFocusWrite(data);
+  if(completed&&elapsed>=5*60000){var p=nsDragonData();p.xp+=Math.max(5,Math.min(50,Math.floor(elapsed/60000)*0.8));p.food+=10;save();}
  }
  nsFocusState=null;nsFocusPersist();nsFocusStats();nsFocusRender();nsHealthRender();
 }
@@ -739,9 +860,7 @@ var tasks=allTasks(),current=tasks.filter(todayTask),completed=current.filter(ta
 by('stat-today').textContent=completed;by('stat-pending').textContent=tasks.filter(function(t){return !t.inbox&&!taskDone(t)}).length;by('stat-food').textContent=model.pet.food;
 if(nat&&nat.updateWidget){try{nat.updateWidget(tasks.filter(function(t){return !t.inbox&&!taskDone(t)}).length)}catch(e){}}
 nsWidgetAlarmSummary();
-var phases=['🥚','🐣','🐥','🦊','🐉'];var p=Math.min(4,Math.floor((model.pet.xp||0)/70));
-by('pet-face').textContent=phases[p];by('pet-level').textContent='Nivel '+(p+1);by('pet-headline').textContent=p===0?'Cada paso te hace crecer.':p>=3?'¡Mira cuánto has crecido!':'Tu compañero está evolucionando.';
-by('pet-detail').textContent='Tienes '+model.pet.food+' puntos. Completa tus tareas y aliméntalo para evolucionar.';
+nsDragonRender();
 by('daily-summary').textContent='Completaste '+completed+' de '+current.length+' actividades de hoy';
 by('daily-bar').style.width=(current.length?Math.round(100*completed/current.length):0)+'%';
 fill('home-tasks',actionable().slice(0,3),taskItem,'Tu día está al día. ¡Bien hecho!');
@@ -926,7 +1045,10 @@ by('open-minimal-home').onclick=function(){
  if(nat&&nat.openMinimalHome)nat.openMinimalHome();
  else say('Disponible cuando instales la APK Android');
 };
-by('pet-feed').onclick=function(){if(model.pet.food<20){say('Necesitas completar tareas para conseguir 20 puntos');return}model.pet.food-=20;model.pet.xp+=15;model.pet.feeds++;save();render();say('🍎 ¡Tu mascota comió y ganó experiencia!')};
+by('pet-feed').onclick=function(){
+ var p=nsDragonData();if(p.food<20){nsDragonMessage('Nos faltan puntos. ¿Hacemos una tarea pequeña?');return}
+ p.food-=20;p.xp+=15;p.feeds++;save();render();nsDragonMessage('¡Qué rico! Gracias por cuidarme. +15 XP',true)
+};
 var syncing=false;
 window.neuroSyncOnSync=function(payload,requestingUser){
  syncing=false;if(!session||!model||(requestingUser&&session.username!==requestingUser))return;
@@ -956,7 +1078,7 @@ function sync(){
 }
 by('sync-btn').onclick=sync;
 function getUsers(){if(!nat||!nat.getUsers)return [{username:session.username,role:session.role}];try{var r=JSON.parse(nat.getUsers());return r.users||[]}catch(e){return []}}
-function enter(u){session=u;model=load();nsSleepRender();nsSceneRestore();nsFocusRestore();nsLauncherFocusSync();nsFocusTasks();nsFocusStats();nsFocusRender();model.pet=model.pet||{xp:0,food:0,feeds:0};by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=u.username.slice(0,1).toUpperCase();by('greeting').textContent='Hola, '+u.username+'. Hoy puedes avanzar a tu ritmo.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
+function enter(u){session=u;model=load();nsSleepRender();nsSceneRestore();nsFocusRestore();nsLauncherFocusSync();nsFocusTasks();nsFocusStats();nsFocusRender();nsDragonData();by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=u.username.slice(0,1).toUpperCase();by('greeting').textContent='Hola, '+u.username+'. Hoy puedes avanzar a tu ritmo.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
 by('login-form').onsubmit=function(e){e.preventDefault();var username=by('login-user').value.trim().toLowerCase(),password=by('login-pass').value;
 if(nat&&nat.login){try{var res=JSON.parse(nat.login(username,password));if(!res.ok){by('login-error').textContent=res.error||'Usuario o contraseña incorrectos';return}enter(res.user);
         if(res.mustChangePassword){show('admin');say('Por seguridad, cambia la clave provisional antes de crear cuentas familiares.');}
@@ -1074,6 +1196,7 @@ function updateInstalledBuild(){
 by('jump-challenge').onclick=function(){show('alarms');say('Crea una alarma y elige el desafío para detenerla')};
 by('jump-progress').onclick=function(){show('habits')};
 nsFocusInit();
+nsDragonInit();
 nsTaskOrganizerInit();
 nsPlanInit();
 nsSleepInit();
