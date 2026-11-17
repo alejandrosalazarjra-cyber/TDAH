@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_focus_root" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:orientation="vertical"
+    android:gravity="center_vertical" android:padding="16dp"
+    android:background="@drawable/widget_background">
+  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+      android:text="◎ NEUROSYNC · ENFOQUE" android:textColor="#4258DB"
+      android:textStyle="bold" android:textSize="12sp"/>
+  <TextView android:id="@+id/widget_focus_minutes" android:layout_width="match_parent"
+      android:layout_height="wrap_content" android:text="Sin sesión activa"
+      android:textColor="#1B2540" android:textSize="20sp" android:textStyle="bold"
+      android:layout_marginTop="6dp"/>
+  <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+      android:text="Abre el organizador o el inicio minimalista"
+      android:textColor="#6A7893" android:textSize="11sp" android:layout_marginTop="4dp"/>
+  <LinearLayout android:orientation="horizontal" android:layout_width="match_parent"
+      android:layout_height="wrap_content" android:layout_marginTop="9dp">
+    <TextView android:id="@+id/widget_focus_open_app" android:layout_width="0dp"
+        android:layout_height="wrap_content" android:layout_weight="1"
+        android:gravity="center" android:padding="9dp" android:text="Organizar"
+        android:textColor="#4258DB" android:textSize="12sp" android:textStyle="bold"/>
+    <TextView android:id="@+id/widget_focus_open_home" android:layout_width="0dp"
+        android:layout_height="wrap_content" android:layout_weight="1"
+        android:gravity="center" android:padding="9dp" android:text="Modo minimal"
+        android:textColor="#4258DB" android:textSize="12sp" android:textStyle="bold"/>
+  </LinearLayout>
+</LinearLayout>
