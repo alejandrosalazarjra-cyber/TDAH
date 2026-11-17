@@ -531,6 +531,116 @@ html,body{background:#f8fbff;color:var(--ink)}
  border:0;background:transparent;color:#0876ba;min-height:43px;font-weight:650}
 #ns-check-local-copy:focus-visible{outline:2px solid #0876ba;outline-offset:2px}
 #ns-local-copy-result{padding:2px 12px;font-size:12px;line-height:1.45}
+</style><style id="ns-alarm-premium-theme">
+/* Alarmas: referencias de jerarquía de Alarmy; diseño y componentes originales NeuroSync. */
+#view-alarms.ns-alarms-page{--a-bg:#0d1422;--a-line:#28344a;--a-blue:#168bfa;
+ color:#f5f8ff;background:var(--a-bg);border-radius:24px;
+ padding:19px 16px 26px;margin:0 0 15px;min-height:65vh}
+#view-alarms.ns-alarms-page .ns-alarm-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#view-alarms .ns-alarm-heading h2{font-size:26px!important;color:#fff!important;margin:2px 0 0!important}
+#view-alarms .ns-alarm-kicker,.ns-next-caption{font-size:10px;letter-spacing:.12em;font-weight:750;color:#91a8c4}
+#view-alarms .ns-alarm-add,#view-alarms .ns-alarm-add.btn{background:#168bfa!important;color:#fff!important;border-radius:13px!important;min-height:42px;padding:8px 14px!important}
+#view-alarms .ns-next-alarm{display:flex;flex-direction:column;gap:7px;align-items:center;
+ padding:33px 12px 26px;text-align:center;background:transparent;border:0}
+#view-alarms .ns-next-hour{font-family:system-ui,sans-serif;line-height:1.03;font-size:clamp(60px,14vw,82px);
+ letter-spacing:-.075em;font-weight:750;color:#168bfa;font-variant-numeric:tabular-nums}
+#view-alarms #ns-next-description{font-size:16px;color:#f4f7fc;margin:3px 0 0}
+#view-alarms .ns-next-countdown{font-size:13px;color:#94a9c2}
+#view-alarms .ns-alarm-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;
+ border-bottom:1px solid #2a364a;margin:7px 0 12px}
+#view-alarms .ns-alarm-tab{min-height:49px;font-size:14px;font-weight:650;color:#98aac4;
+ border:0;border-radius:0;background:transparent;position:relative}
+#view-alarms .ns-alarm-tab.active{color:#fff}
+#view-alarms .ns-alarm-tab.active:after{content:"";position:absolute;bottom:0;left:20%;right:20%;height:3px;
+ border-radius:3px;background:#168bfa}
+#view-alarms .ns-alarm-list-item{border-bottom:1px solid #263044;padding:13px 0 10px}
+#view-alarms .ns-alarm-line-main{display:flex;align-items:center;gap:10px}
+#view-alarms .ns-alarm-open{display:flex;flex:1;flex-direction:column;align-items:flex-start;gap:5px;
+ padding:4px 0;min-height:62px;text-align:left;background:transparent;border:0;color:#fff;min-width:0}
+#view-alarms .ns-alarm-line-hour{font-family:system-ui,sans-serif;font-size:clamp(35px,9vw,46px);
+ letter-spacing:-.055em;font-variant-numeric:tabular-nums;line-height:1.07;color:#fff}
+#view-alarms .ns-alarm-line-label{font-size:14px;font-weight:650;color:#e3edfa}
+#view-alarms .ns-alarm-open small{font-size:12px;color:#8ea5c1}
+#view-alarms .ns-alarm-off .ns-alarm-line-hour,#view-alarms .ns-alarm-off .ns-alarm-line-label{opacity:.46}
+#view-alarms .ns-alarm-switch{position:relative;width:50px;height:30px;flex:0 0 50px;display:block;cursor:pointer}
+#view-alarms .ns-alarm-switch input{position:absolute;opacity:0;width:100%;height:100%;z-index:1;margin:0}
+#view-alarms .ns-alarm-switch span{position:absolute;inset:0;border-radius:24px;background:#354359;transition:background .14s}
+#view-alarms .ns-alarm-switch span:after{content:"";position:absolute;top:4px;left:4px;width:22px;height:22px;border-radius:50%;background:#eaf2fa;transition:transform .14s}
+#view-alarms .ns-alarm-switch input:checked+span{background:#168bfa}
+#view-alarms .ns-alarm-switch input:checked+span:after{transform:translateX(20px)}
+#view-alarms .ns-alarm-switch input:focus-visible+span{outline:3px solid #8dd3ff;outline-offset:2px}
+#view-alarms .ns-alarm-line-actions{display:flex;align-items:center;gap:20px;margin-top:5px}
+#view-alarms .ns-alarm-line-actions button,#view-alarms .ns-alarm-text-action{
+ background:transparent!important;color:#9eb5cf!important;border:0!important;border-radius:0!important;
+ padding:9px 0!important;min-height:42px;font-size:12px;font-weight:550;box-shadow:none!important}
+#view-alarms .ns-alarm-line-actions button:active,#view-alarms .ns-alarm-text-action:active{color:#fff!important}
+#view-alarms .ns-alarms-tab-panel.hidden{display:none!important}
+#view-alarms .ns-alarms-tab-panel{padding-top:5px}
+#view-alarms .ns-alarm-report-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#view-alarms .ns-alarm-report-heading span{font-size:11px;color:#9cb0c8;text-align:right}
+#view-alarms h3{font-size:16px;color:#f5f8ff;margin:15px 0 8px}
+#view-alarms .ns-wake-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 22px}
+#view-alarms .ns-wake-grid>div{display:flex;flex-direction:column;gap:5px;border:0!important;
+ background:transparent!important;padding:7px 1px!important}
+#view-alarms .ns-wake-grid strong{font:750 34px/1 system-ui,sans-serif;color:#fff}
+#view-alarms .ns-wake-grid span{font-size:11px;color:#a2b7ce}
+#view-alarms .ns-wake-event{display:flex;justify-content:space-between;gap:8px;
+ border-bottom:1px solid #26344b;padding:14px 3px;color:#d9e8fa;font-size:13px}
+#view-alarms .ns-wake-event time{color:#94abc5;font-size:11px}
+#view-alarms .ns-report-disclaimer,#view-alarms .ns-alarm-explain{font-size:12px;color:#9eb2c8;
+ line-height:1.5;margin:9px 0}
+#view-alarms .ns-alarm-setting-group{padding:7px 0;border-bottom:1px solid #2c3950}
+#view-alarms .ns-alarm-setting-group>summary{display:flex;align-items:center;justify-content:space-between;
+ gap:14px;padding:15px 2px;font-size:15px;font-weight:650;cursor:pointer;color:#fff}
+#view-alarms .ns-alarm-setting-group>summary span{font-size:10px;color:#96b1cb}
+#view-alarms .ns-alarm-setting-group .btn{margin:7px 5px 10px 0}
+#view-alarms .ns-alarms-tab-panel .btn.secondary{background:#243b59!important;border:1px solid #335474!important;
+ color:#cfe8ff!important;border-radius:12px!important}
+#view-alarms .ns-alarm-list-item button:focus-visible,#view-alarms .ns-alarm-tab:focus-visible{outline:2px solid #168bfa;outline-offset:3px}
+#view-alarms .empty{color:#9bafc8!important;text-align:center;margin:32px 0}
+#modal.ns-alarm-modal{background:rgba(4,10,22,.85)}
+#modal.ns-alarm-modal>.card{background:#111827!important;border:1px solid #293a52!important;
+ color:#f8fbff!important;border-radius:22px!important;max-width:560px!important;
+ max-height:92dvh!important;overflow-y:auto!important;padding:21px!important}
+#modal.ns-alarm-modal #modal-title{color:#fff!important;font-size:23px!important}
+#modal.ns-alarm-modal #popup-form{gap:14px!important}
+#modal.ns-alarm-modal #popup-form .field{color:#b6c7db!important;font-size:13px}
+#modal.ns-alarm-modal #popup-form input:not([type=checkbox]),#modal.ns-alarm-modal #popup-form select{
+ border:0!important;border-bottom:1px solid #42536d!important;background:#192236!important;color:#fff!important;
+ border-radius:10px!important;padding:11px!important;min-height:47px!important}
+#modal.ns-alarm-modal #popup-form input:focus-visible,#modal.ns-alarm-modal #popup-form select:focus-visible{outline:2px solid #168bfa!important}
+#modal.ns-alarm-modal .ns-alarm-editor-top{display:grid;gap:4px;border:0!important;padding-top:5px}
+#modal.ns-alarm-modal .ns-alarm-editor-top span{font-size:11px;letter-spacing:.1em;color:#83a0c2}
+#modal.ns-alarm-modal .ns-alarm-editor-top strong{font-size:23px;color:#fff}
+#modal.ns-alarm-modal .ns-alarm-time-field input{font:750 clamp(25px,7vw,38px)/1.3 system-ui,sans-serif;
+ color:#168bfa!important;font-variant-numeric:tabular-nums}
+#modal.ns-alarm-modal .ns-mission-editor{border-top:1px solid #303d52;padding-top:11px}
+#modal.ns-alarm-modal .ns-mission-editor h3{color:#fff;font-size:16px;margin:3px 0 8px}
+#modal.ns-alarm-modal .ns-mission-current{width:100%;display:flex;justify-content:space-between;align-items:center;
+ background:#1e2c42;color:#e7f3ff;border:1px solid #304a68;border-radius:13px;min-height:50px;
+ padding:13px;font-weight:600;text-align:left}
+#modal.ns-alarm-modal #ns-mission-options{max-height:38vh;overflow-y:auto;
+ background:#151f30;border-radius:12px;padding:8px 13px}
+#modal.ns-alarm-modal #ns-mission-options.hidden{display:none}
+#modal.ns-alarm-modal #ns-mission-options button{width:100%;display:block;text-align:left;min-height:47px;
+ border:0;border-bottom:1px solid #2a3850;background:transparent;color:#edf6ff;padding:10px 3px;font-size:13px}
+#modal.ns-alarm-modal .ns-mission-category{font-size:11px;color:#77a9d8;text-transform:uppercase;
+ letter-spacing:.07em;font-weight:700;padding-top:9px;margin:7px 0 5px}
+#modal.ns-alarm-modal .ns-alarm-editor-note{display:grid;gap:3px;padding:12px 0;border-top:1px solid #2d3d53}
+#modal.ns-alarm-modal .ns-alarm-editor-note strong{font-size:14px;color:#ecf5ff}
+#modal.ns-alarm-modal .ns-alarm-editor-note span{font-size:12px;color:#9eb6d0}
+#modal.ns-alarm-modal #cancel-popup{color:#a9c8e2!important}
+#modal.ns-alarm-modal #popup-form button[type=submit]{background:#168bfa!important;color:#fff!important;
+ border-radius:13px!important;padding:13px 22px!important;min-height:48px}
+#modal.ns-alarm-modal #qr-enroll{padding:11px 0}
+#modal.ns-alarm-modal #qr-enroll.hidden{display:none}
+@media(max-width:390px){
+ #view-alarms.ns-alarms-page{padding:16px 11px}
+ #view-alarms .ns-next-hour{font-size:58px}
+ #view-alarms .ns-alarm-line-hour{font-size:34px}
+ #view-alarms .ns-alarm-line-actions{gap:14px}
+}
+@media(prefers-reduced-motion:reduce){#view-alarms .ns-alarm-switch span,#view-alarms .ns-alarm-switch span:after{transition:none}}
 </style></head><body>
 <div id="login" class="login ns-login-v3">
  <div class="ns-login-wrap">
@@ -2102,7 +2212,7 @@ if(kind==='alarm')html+=
  '<div class="ns-alarm-editor-note wide"><strong>Sonido</strong><span>El tono del teléfono se configura en Ajustes de alarma.</span></div>'+
  '<div class="ns-alarm-editor-note wide"><strong>Posponer</strong><span>5 minutos · comportamiento predeterminado de Android en NeuroSync</span></div>';
 if(kind==='user')html+=field('Usuario (sin espacios)','username')+field('Contraseña (mínimo 10 caracteres)','password','password');
-html+='<div class="wide row" style="justify-content:flex-end"><button type="button" id="cancel-popup" class="btn ghost">Cancelar</button><button class="btn" type="submit">Guardar</button></div></form>';body.innerHTML=html;by('modal').classList.remove('hidden');
+html+='<div class="wide row" style="justify-content:flex-end"><button type="button" id="cancel-popup" class="btn ghost">Cancelar</button><button class="btn" type="submit">Guardar</button></div></form>';body.innerHTML=html;by('modal').classList.remove('hidden');by('modal').classList.toggle('ns-alarm-modal',kind==='alarm');
 by('cancel-popup').onclick=closeModal;var form=by('popup-form');if(form.elements.date)form.elements.date.value=day();
 if(kind==='alarm'){
  var challengeSelect=form.elements.challenge,qrBlock=by('qr-enroll');
@@ -2206,7 +2316,7 @@ function editTask(t){
   save();closeModal();render();say('Cambios guardados');
  };
 }
-function closeModal(){by('modal').classList.add('hidden')}
+function closeModal(){by('modal').classList.add('hidden');by('modal').classList.remove('ns-alarm-modal')}
 by('close-modal').onclick=closeModal;by('modal').onclick=function(e){if(e.target===by('modal'))closeModal()};
 document.querySelectorAll('[data-open]').forEach(function(b){b.onclick=function(){openModal(b.dataset.open)}});
 window.neuroQrEnrollment=function(raw){
