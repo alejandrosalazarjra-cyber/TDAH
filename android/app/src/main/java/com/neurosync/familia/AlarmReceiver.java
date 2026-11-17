@@ -62,8 +62,18 @@ public final class AlarmReceiver extends BroadcastReceiver {
    }
    if(when<=System.currentTimeMillis())return false;
    JSONObject entry=new JSONObject().put("id",id).put("title",title).put("when",when).put("repeat",repeat);
-   if(!program(ctx,id,when))return false;
-   ctx.getSharedPreferences("ns_alarms",0).edit().putString(PREFIX+id,entry.toString()).apply();
+   // Guardar primero el registro para que el receptor encuentre la alarma si se dispara
+   // inmediatamente. commit() verifica persistencia antes de anunciar programación correcta.
+   android.content.SharedPreferences prefs=ctx.getSharedPreferences("ns_alarms",0);
+   String previous=prefs.getString(PREFIX+id,null);
+   if(!prefs.edit().putString(PREFIX+id,entry.toString()).commit())return false;
+   if(!program(ctx,id,when)){
+    android.content.SharedPreferences.Editor rollback=prefs.edit();
+    if(previous==null)rollback.remove(PREFIX+id);
+    else rollback.putString(PREFIX+id,previous);
+    rollback.commit();
+    return false;
+   }
    return true;
   }catch(Exception e){return false;}
  }
