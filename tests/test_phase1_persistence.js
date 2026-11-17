@@ -15,7 +15,7 @@ const store={
   removeItem:key=>state.delete(key)
 };
 const session={username:'google_prueba',role:'user'};
-const context={localStorage:store,session,nsStorageRecoveryBlocked:false,
+const context={localStorage:store,session,nat:null,nsStorageRecoveryBlocked:false,
   localKey:()=> 'ns_v2_'+session.username,blank:()=>({tasks:[],packs:[],alarms:[],pet:{xp:0}}),
   setTimeout:()=>0,say:()=>{},day:()=> '2026-11-17',stamp:Date.now,
   Date,JSON,Number,String,Array,Error,Math};
