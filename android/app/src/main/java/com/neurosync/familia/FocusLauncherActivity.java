@@ -510,6 +510,82 @@ public final class FocusLauncherActivity extends Activity {
       Toast.makeText(this,"Android no permitió abrir la superposición",Toast.LENGTH_LONG).show();
     }
   }
+  /** Una superposición es opcional y siempre se inicia desde una acción del usuario. */
+  private void showOverlay(String mode, String message, int seconds){
+    if(!hasOverlayPermission()){
+      new AlertDialog.Builder(this).setTitle("Superposición desactivada")
+        .setMessage("Puedes continuar sin ventanas flotantes. Si quieres probarlas, activa el permiso desde Android.")
+        .setPositiveButton("Ver permisos",(d,w)->showSpecialPermissions())
+        .setNegativeButton("Cerrar",null).show();
+      return;
+    }
+    try{
+      Intent overlay=new Intent(this,FocusOverlayService.class)
+        .putExtra("mode",mode).putExtra("message",message).putExtra("seconds",seconds);
+      startService(overlay);
+    }catch(RuntimeException ex){
+      android.util.Log.w("DrakoPlan","No se pudo iniciar ventana flotante",ex);
+      Toast.makeText(this,"Android restringió la ventana flotante",Toast.LENGTH_LONG).show();
+    }
+  }
+  private void chooseFloatingReminder(){
+    final EditText input=new EditText(this);
+    input.setSingleLine(false);
+    input.setMaxLines(2);
+    input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(90)});
+    input.setText("Recuerda tu próxima tarea");
+    new AlertDialog.Builder(this)
+      .setTitle("Recordatorio flotante")
+      .setMessage("El texto aparecerá durante 20 segundos. Puedes cerrar el aviso en cualquier momento.")
+      .setView(input)
+      .setPositiveButton("Mostrar",(d,w)->{
+        String content=input.getText().toString().trim();
+        if(content.isEmpty())content="Vuelve a tu objetivo";
+        showOverlay("reminder",content,20);
+      })
+      .setNegativeButton("Cancelar",null).show();
+  }
+  private void chooseFloatingPause(){
+    final String[] labels={"5 segundos","10 segundos","20 segundos","30 segundos"};
+    final int[] values={5,10,20,30};
+    new AlertDialog.Builder(this).setTitle("Pausa flotante voluntaria")
+      .setMessage("Muestra una sugerencia de pausa encima de otras aplicaciones. No bloquea la pantalla ni impide abrir aplicaciones.")
+      .setItems(labels,(d,which)->showOverlay("focus","¿Es lo que necesitas hacer ahora?",values[which]))
+      .setNegativeButton("Cancelar",null).show();
+  }
+  private void testFocusNotification(){
+    if(android.os.Build.VERSION.SDK_INT>=33 &&
+        checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED){
+      new AlertDialog.Builder(this).setTitle("Notificaciones desactivadas")
+        .setMessage("Autoriza notificaciones para recibir recordatorios. Esta prueba no afecta a las alarmas existentes.")
+        .setPositiveButton("Solicitar permiso",(d,w)->requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS},212))
+        .setNegativeButton("Cancelar",null).show();
+      return;
+    }
+    try{
+      NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+      final String channel="drakoplan_focus_reminders";
+      if(android.os.Build.VERSION.SDK_INT>=26){
+        NotificationChannel ch=new NotificationChannel(channel,"Recordatorios de concentración",NotificationManager.IMPORTANCE_DEFAULT);
+        ch.setDescription("Avisos voluntarios para retomar tareas y hábitos");
+        nm.createNotificationChannel(ch);
+      }
+      Intent open=new Intent(this,MainActivity.class)
+        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP);
+      PendingIntent pending=PendingIntent.getActivity(this,412,open,
+        PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+      Notification.Builder builder=new Notification.Builder(this,channel)
+        .setSmallIcon(android.R.drawable.ic_popup_reminder)
+        .setContentTitle("DrakoPlan · Recordatorio")
+        .setContentText("Puedes volver a tus tareas cuando quieras")
+        .setAutoCancel(true).setContentIntent(pending);
+      nm.notify(412,builder.build());
+      Toast.makeText(this,"Notificación de prueba enviada",Toast.LENGTH_SHORT).show();
+    }catch(Exception ex){
+      android.util.Log.w("DrakoPlan","No se pudo publicar notificación",ex);
+      Toast.makeText(this,"No se pudo mostrar la notificación",Toast.LENGTH_LONG).show();
+    }
+  }
   private void requestUsageAccess(){
     if(hasUsagePermission()){
       Toast.makeText(this,"El acceso al tiempo de uso ya está activado",Toast.LENGTH_SHORT).show();
@@ -614,7 +690,10 @@ public final class FocusLauncherActivity extends Activity {
     TextView explanation=text("La pausa se aplica únicamente a las aplicaciones que marques al abrirlas desde NeuroSync. No bloquea aplicaciones desde otros accesos.",12,MUTED,false);
     view.addView(explanation);view.addView(gap(22));
     view.addView(text("Permisos especiales",18,WHITE,true));view.addView(gap(10));
-    view.addView(action("Permisos y ventanas flotantes",this::showSpecialPermissions));view.addView(gap(20));
+    view.addView(action("Permisos y ventanas flotantes",this::showSpecialPermissions));view.addView(gap(10));
+    view.addView(action("Recordatorio flotante personalizado",this::chooseFloatingReminder));view.addView(gap(10));
+    view.addView(action("Pausa flotante voluntaria",this::chooseFloatingPause));view.addView(gap(10));
+    view.addView(action("Enviar notificación de prueba",this::testFocusNotification));view.addView(gap(20));
     view.addView(text("Bienestar digital",18,WHITE,true));view.addView(gap(10));
     view.addView(action("Administrar notificaciones por aplicación",this::showNotificationControls));
     view.addView(gap(12));
