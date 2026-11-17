@@ -20,6 +20,10 @@ import java.util.concurrent.Executors;
  */
 public final class MainActivity extends Activity {
   private WebView web;
+  private GoogleAccountBridge googleAccounts;
+  void googleCallback(String name,String json){
+    if(web!=null)web.evaluateJavascript("window."+name+" && window."+name+"("+JSONObject.quote(json)+")",null);
+  }
   private String backupPending="";
   private boolean qrEnrollmentPending=false;
   private final ExecutorService networkWorker=Executors.newSingleThreadExecutor();
@@ -54,6 +58,7 @@ public final class MainActivity extends Activity {
   @Override public void onCreate(Bundle state){
     super.onCreate(state);
     restoreNativeSession();
+    googleAccounts=new GoogleAccountBridge(this);
     getWindow().setStatusBarColor(Color.rgb(246,248,252));
     getWindow().setNavigationBarColor(Color.rgb(255,255,255));
     getWindow().getDecorView().setSystemUiVisibility(android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
@@ -92,6 +97,9 @@ public final class MainActivity extends Activity {
   }
   @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
     super.onActivityResult(requestCode,resultCode,data);
+    if(requestCode==GoogleAccountBridge.REQUEST_SIGNIN){
+      googleAccounts.onResult(data);return;
+    }
     // Registro de referencia QR iniciado desde el formulario web.
     if(qrEnrollmentPending){
       com.google.zxing.integration.android.IntentResult scan=
@@ -306,6 +314,43 @@ public final class MainActivity extends Activity {
       }
       return result.toString();
     }
+    @JavascriptInterface public void loginGoogle(){
+      runOnUiThread(()->googleAccounts.login());
+    }
+    @JavascriptInterface public String restoreGoogleSession(){
+      return googleAccounts.restored().toString();
+    }
+    @JavascriptInterface public void backupGoogleDrive(String json){
+      googleAccounts.backup(json);
+    }
+    @JavascriptInterface public void refreshGoogleDrive(){
+      googleAccounts.restoreDrive();
+    }
+    @JavascriptInterface public void logoutGoogle(){
+      googleAccounts.logout();
+    }
+    @JavascriptInterface public boolean adminModeEnabled(){
+      return localHost() || currentMode().isEmpty();
+    }
+    @JavascriptInterface public String loginOwner(String username,String password){
+      if(currentMode().isEmpty()){
+        getPreferences(0).edit().putString("mode","host").apply();
+        runOnUiThread(()->startServer());
+      }
+      if(!localHost())return AccountStore.fail("El acceso de administrador solo es local").toString();
+      JSONObject result=AccountStore.authenticate(MainActivity.this,username,password);
+      if(!result.optBoolean("ok"))return result.toString();
+      JSONObject user=result.optJSONObject("user");
+      if(user==null||!"admin".equals(user.optString("role"))){
+        AccountStore.revoke(MainActivity.this,result.optString("token"));
+        return AccountStore.fail("Esta opción es exclusiva del administrador").toString();
+      }
+      sessionToken=result.optString("token","");
+      sessionUser=user;
+      SessionVault.save(MainActivity.this,sessionToken,sessionUser,currentMode(),currentEndpoint());
+      result.remove("token");
+      return result.toString();
+    }
     @JavascriptInterface public String restoreSession(){
       try{
         if(sessionUser==null||sessionToken.isEmpty())return AccountStore.fail("No hay sesión guardada").toString();
@@ -350,7 +395,10 @@ public final class MainActivity extends Activity {
         boolean notifications=Build.VERSION.SDK_INT<33 || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED;
         boolean exact=Build.VERSION.SDK_INT<31 || ((AlarmManager)getSystemService(ALARM_SERVICE)).canScheduleExactAlarms();
         boolean full=Build.VERSION.SDK_INT<34 || n.canUseFullScreenIntent();
-        return j.put("notifications",notifications).put("exact",exact).put("fullScreen",full).toString();
+        boolean allowed=n.areNotificationsEnabled();
+        android.app.NotificationChannel alarmChannel=Build.VERSION.SDK_INT>=26?n.getNotificationChannel("neurosync_alarms_v4_visual"):null;
+        boolean high=alarmChannel==null||alarmChannel.getImportance()>=NotificationManager.IMPORTANCE_HIGH;
+        return j.put("notifications",notifications&&allowed).put("exact",exact).put("fullScreen",full).put("channelHigh",high).toString();
       }catch(Exception e){return "{}";}
     }
     @JavascriptInterface public void requestAlarmPermissions(){
@@ -514,5 +562,5 @@ public final class MainActivity extends Activity {
     if(web.canGoBack())web.goBack();else new AlertDialog.Builder(this).setMessage("¿Cerrar NeuroSync?")
       .setNegativeButton("Cancelar",null).setPositiveButton("Salir",(d,w)->finish()).show();
   }
-  @Override public void onDestroy(){networkWorker.shutdownNow();if(web!=null)web.destroy();super.onDestroy();}
+  @Override public void onDestroy(){if(googleAccounts!=null)googleAccounts.shutdown();networkWorker.shutdownNow();if(web!=null)web.destroy();super.onDestroy();}
 }
