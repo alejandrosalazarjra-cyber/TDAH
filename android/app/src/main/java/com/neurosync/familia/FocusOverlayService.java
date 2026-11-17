@@ -38,6 +38,15 @@ public final class FocusOverlayService extends Service {
       return START_NOT_STICKY;
     }
     removeFloating();
+    String mode = intent == null ? "reminder" : intent.getStringExtra("mode");
+    if (!"focus".equals(mode)) mode="reminder";
+    final boolean focusMode="focus".equals(mode);
+    String requested=intent == null ? null : intent.getStringExtra("message");
+    final String title=(requested == null || requested.trim().isEmpty())
+      ? (focusMode ? "Haz una pausa consciente" : "Vuelve a tu objetivo")
+      : requested.trim().substring(0,Math.min(90,requested.trim().length()));
+    int requestedSeconds=intent == null ? 20 : intent.getIntExtra("seconds",20);
+    final int seconds=Math.max(3,Math.min(focusMode ? 60 : 30,requestedSeconds));
     try {
       manager = (WindowManager) getSystemService(WINDOW_SERVICE);
       LinearLayout panel = new LinearLayout(this);
@@ -53,8 +62,10 @@ public final class FocusOverlayService extends Service {
       panel.setElevation(dp(9));
 
       TextView message = new TextView(this);
-      message.setText("DrakoPlan · Vuelve a tu objetivo");
+      message.setText("DrakoPlan · "+title);
       message.setTextSize(14);
+      message.setMaxLines(2);
+      message.setEllipsize(android.text.TextUtils.TruncateAt.END);
       message.setTextColor(Color.WHITE);
       message.setGravity(Gravity.CENTER_VERTICAL);
       panel.addView(message,new LinearLayout.LayoutParams(0,dp(42),1f));
@@ -88,7 +99,7 @@ public final class FocusOverlayService extends Service {
       manager.addView(panel,params);
       floating=panel;
       handler.removeCallbacks(timeout);
-      handler.postDelayed(timeout,20000);
+      handler.postDelayed(timeout,seconds*1000L);
     } catch (RuntimeException e) {
       android.util.Log.w("DrakoPlan","Superposición no disponible",e);
       stopSelf();
