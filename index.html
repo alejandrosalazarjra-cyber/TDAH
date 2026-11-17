@@ -159,6 +159,9 @@ var nsFocusDuration=25,nsFocusState=null,nsFocusTick=null;
 function nsFocusKey(){return 'ns_focus_private_v1_'+(session?session.username:'visitante')}
 function nsFocusRead(){try{var x=JSON.parse(localStorage.getItem(nsFocusKey()));return x&&Array.isArray(x.sessions)?x:{sessions:[]}}catch(e){return {sessions:[]}}}
 function nsFocusWrite(v){localStorage.setItem(nsFocusKey(),JSON.stringify(v))}
+function nsFocusActiveKey(){return nsFocusKey()+'_active'}
+function nsFocusPersist(){if(!session)return;if(nsFocusState)localStorage.setItem(nsFocusActiveKey(),JSON.stringify(nsFocusState));else localStorage.removeItem(nsFocusActiveKey())}
+function nsFocusRestore(){nsFocusState=null;if(!session)return;try{var x=JSON.parse(localStorage.getItem(nsFocusActiveKey()));if(x&&[5,15,25,45].includes(x.duration)&&Number.isFinite(x.elapsed)&&Number.isFinite(x.since)&&typeof x.running==='boolean'){nsFocusState=x;nsFocusDuration=x.duration;if(nsFocusElapsed()>=x.duration*60000){nsFocusSaveSession(true)}}}catch(e){localStorage.removeItem(nsFocusActiveKey())}}
 function nsFocusFormat(ms){var seconds=Math.ceil(Math.max(0,ms)/1000);return String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0')}
 function nsFocusElapsed(){if(!nsFocusState)return 0;return nsFocusState.elapsed+(nsFocusState.running?Math.max(0,Date.now()-nsFocusState.since):0)}
 function nsFocusTasks(){
@@ -190,7 +193,7 @@ function nsFocusSaveSession(completed){
   var data=nsFocusRead();data.sessions.push({at:Date.now(),day:day(),ms:elapsed,completed:!!completed,taskId:nsFocusState.taskId||''});
   data.sessions=data.sessions.slice(-500);nsFocusWrite(data);
  }
- nsFocusState=null;nsFocusStats();nsFocusRender();
+ nsFocusState=null;nsFocusPersist();nsFocusStats();nsFocusRender();
 }
 function nsFocusPulse(){if(!nsFocusState)return;if(nsFocusElapsed()>=nsFocusState.duration*60000){nsFocusSaveSession(true);say('¡Sesión completada! Tu avance quedó registrado.')}else nsFocusRender()}
 function nsFocusInit(){
@@ -200,10 +203,10 @@ function nsFocusInit(){
   if(!nsFocusState){nsFocusState={duration:nsFocusDuration,taskId:by('ns-focus-task').value,elapsed:0,since:Date.now(),running:true}}
   else if(nsFocusState.running){nsFocusState.elapsed=nsFocusElapsed();nsFocusState.running=false}
   else{nsFocusState.since=Date.now();nsFocusState.running=true}
-  nsFocusRender()
+  nsFocusPersist();nsFocusRender()
  };
  by('ns-focus-stop').onclick=async function(){if(!nsFocusState)return;if(await nsConfirm('Terminar enfoque','Se guardará el tiempo que hayas dedicado a esta sesión.','Terminar')){nsFocusSaveSession(false);say('Tiempo de concentración guardado')}};
- nsFocusTick=setInterval(nsFocusPulse,1000);nsFocusRender()
+ nsFocusTick=setInterval(nsFocusPulse,1000);document.addEventListener('visibilitychange',function(){if(!document.hidden)nsFocusPulse()});nsFocusRender()
 }
 
 function nsDialog(o){return new Promise(function(resolve){
@@ -545,7 +548,7 @@ function sync(){
 }
 by('sync-btn').onclick=sync;
 function getUsers(){if(!nat||!nat.getUsers)return [{username:session.username,role:session.role}];try{var r=JSON.parse(nat.getUsers());return r.users||[]}catch(e){return []}}
-function enter(u){session=u;model=load();nsFocusState=null;nsFocusTasks();nsFocusStats();nsFocusRender();model.pet=model.pet||{xp:0,food:0,feeds:0};by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=u.username.slice(0,1).toUpperCase();by('greeting').textContent='Hola, '+u.username+'. Hoy puedes avanzar a tu ritmo.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
+function enter(u){session=u;model=load();nsFocusRestore();nsFocusTasks();nsFocusStats();nsFocusRender();model.pet=model.pet||{xp:0,food:0,feeds:0};by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=u.username.slice(0,1).toUpperCase();by('greeting').textContent='Hola, '+u.username+'. Hoy puedes avanzar a tu ritmo.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
 by('login-form').onsubmit=function(e){e.preventDefault();var username=by('login-user').value.trim().toLowerCase(),password=by('login-pass').value;
 if(nat&&nat.login){try{var res=JSON.parse(nat.login(username,password));if(!res.ok){by('login-error').textContent=res.error||'Usuario o contraseña incorrectos';return}enter(res.user);
         if(res.mustChangePassword){show('admin');say('Por seguridad, cambia la clave provisional antes de crear cuentas familiares.');}
