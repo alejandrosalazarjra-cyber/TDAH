@@ -312,6 +312,34 @@ body.ns-pomodoro-active{overflow:hidden}
 .ns-google-note{font-size:12px;text-align:center!important;margin:12px 0 6px}
 .ns-owner-access{display:block;margin:12px auto 4px;background:transparent;border:0;color:#52799a;text-decoration:underline;font-size:13px;cursor:pointer;padding:11px}
 #ns-admin-login{margin-top:12px}
+</style><style>
+/* Portada compacta: mantener la actividad principal visible y el resto plegado. */
+#view-home .ns-brand-hero{display:none}
+#view-home>.grid{display:block}
+#view-home>.grid>.stack:empty{display:none}
+#view-home .ns-feature-tiles{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+#view-home .ns-feature-tile{min-width:0;padding:11px 6px}
+#view-home .ns-feature-tile strong{font-size:12px}
+#view-home .ns-feature-tile small{font-size:10px}
+.ns-home-extra{margin:14px 0;border:1px solid #d5e4f0;border-radius:20px;background:#f6fbff;padding:12px}
+.ns-home-extra>summary{cursor:pointer;padding:7px 9px;color:#143e69;font-weight:750;font-size:15px}
+.ns-home-extra[open]>summary{margin-bottom:12px}
+.ns-home-extra>.card,.ns-home-extra>.stats{margin:12px 0}
+#ns-user-popover{position:fixed;z-index:100090;top:66px;right:10px;width:min(370px,calc(100vw - 20px));max-height:calc(100dvh - 82px);overflow-y:auto;background:#fff;border:1px solid #d1e3f2;box-shadow:0 24px 68px #113b6450;border-radius:23px;padding:15px;color:#173959}
+#ns-user-popover.hidden{display:none}
+.ns-user-menu-header{display:flex;align-items:center;gap:12px;padding:4px 3px 15px;border-bottom:1px solid #e1ebf3}
+.ns-user-menu-header>div:nth-child(2){min-width:0;flex:1}
+.ns-user-menu-header small{display:block;font-size:12px;color:#54758f;overflow-wrap:anywhere}
+.ns-user-avatar{width:41px;height:41px;border-radius:50%;background:#e5f2ff;display:grid;place-items:center;color:#087cc8}
+#ns-close-account{font-size:23px;border:0;background:transparent;color:#456684;padding:6px}
+.ns-user-menu-actions{display:grid;gap:5px;margin:9px 0}
+.ns-user-menu-actions button{background:transparent;border:0;border-radius:12px;min-height:43px;text-align:left;padding:9px 12px;color:#173b60;font-size:14px}
+.ns-user-menu-actions button:active,.ns-user-menu-actions button:focus-visible{background:#e4f3ff}
+.ns-user-section{padding:6px 0;border-top:1px solid #e0edf6}
+.ns-user-section>summary{padding:10px;cursor:pointer;font-weight:700}
+#ns-user-launcher-container>.card,#ns-user-backup-container>.card,#ns-user-permission-container>div{margin:8px 0;box-shadow:none}
+#ns-user-popover .btn{font-size:13px;min-height:42px}
+@media(max-width:340px){#view-home .ns-feature-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style></head><body>
 <div id="login" class="login ns-login-v3">
  <div class="ns-login-wrap">
@@ -364,7 +392,23 @@ body.ns-pomodoro-active{overflow:hidden}
  <main class="main">
   <header class="top"><div class="ns-top-title"><div class="ns-mobile-brand"><img src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%20role%3D%22img%22%20aria-label%3D%22NeuroSync%3A%20drag%C3%B3n%20y%20lista%20de%20tareas%22%3E%0A%3Cdefs%3E%3ClinearGradient%20id%3D%22bg%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23063674%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%230866c6%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2303c4ec%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22wing%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2345eeff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%230d7fe6%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22paper%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ffffff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23c8f2ff%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%0A%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%22248%22%20height%3D%22248%22%20rx%3D%2258%22%20fill%3D%22url(%23bg)%22%2F%3E%0A%3Cpath%20d%3D%22M28%20158Q32%2078%20103%2063Q63%20103%2075%20152Q95%20104%20151%2077Q107%20127%20113%20175Q88%20205%2055%20201Q37%20184%2028%20158Z%22%20fill%3D%22url(%23wing)%22%2F%3E%0A%3Cpath%20d%3D%22M77%2043Q109%2073%20128%2075Q115%2051%20119%2033Q142%2061%20166%2065Q195%2076%20203%20103Q209%20118%20193%20128Q181%20135%20160%20121Q144%20116%20124%20128Q100%20147%20102%20182Q78%20156%2087%20132Q91%20113%20113%20101Q87%2098%2059%20122Q73%2081%20109%2087Q87%2067%2077%2043Z%22%20fill%3D%22%23f7feff%22%2F%3E%0A%3Cpath%20d%3D%22M159%20103Q171%20101%20178%20107Q170%20116%20159%20108Z%22%20fill%3D%22%23073878%22%2F%3E%0A%3Crect%20x%3D%22128%22%20y%3D%22127%22%20width%3D%22100%22%20height%3D%2290%22%20rx%3D%2218%22%20fill%3D%22url(%23paper)%22%2F%3E%0A%3Cg%20stroke%3D%22%23078fe6%22%20stroke-width%3D%228%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m143%20149%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20173%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20196%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22M175%20151h37M175%20175h37M175%20199h27%22%2F%3E%3C%2Fg%3E%0A%3Cpath%20d%3D%22M44%20207Q111%20251%20190%20220%22%20fill%3D%22none%22%20stroke%3D%22%235ff0fd%22%20stroke-width%3D%2216%22%20stroke-linecap%3D%22round%22%2F%3E%0A%3Cpath%20d%3D%22m219%2058%206%2016%2016%206-16%206-6%2016-6-16-16-6%2016-6Z%22%20fill%3D%22%2394ffff%22%2F%3E%0A%3C%2Fsvg%3E" alt=""><span>Neuro<b>Sync</b></span></div><h1 id="page-title">Mi día</h1><div class="sub" id="greeting">Organiza tus próximos pasos</div>
   <div class="hint" id="installed-build" aria-live="polite">Comprobando versión instalada…</div></div>
-   <div class="top-right"><span class="sync-state" id="sync-status">Guardado local</span><button id="sync-btn" class="btn secondary" aria-label="Sincronizar">↻</button><button class="avatar" id="avatar" type="button" aria-label="Cerrar sesión de mi cuenta" title="Mi cuenta">A</button></div></header>
+   <div class="top-right"><span class="sync-state" id="sync-status">Guardado local</span><button id="sync-btn" class="btn secondary" aria-label="Sincronizar">↻</button><button class="avatar" id="avatar" type="button" aria-label="Abrir menú de mi cuenta" aria-controls="ns-user-popover" aria-expanded="false" title="Mi cuenta">A</button></div></header>
+  <aside id="ns-user-popover" class="hidden" role="dialog" aria-label="Cuenta y configuración">
+   <div class="ns-user-menu-header"><div class="ns-user-avatar">◉</div><div><strong id="ns-account-name">Mi cuenta</strong><small id="ns-account-email">Ajustes personales</small></div><button type="button" id="ns-close-account" aria-label="Cerrar menú">×</button></div>
+   <div class="ns-user-menu-actions">
+    <button type="button" data-account-go="tasks">☑ Mis tareas</button>
+    <button type="button" data-account-go="calendar">▦ Mi agenda</button>
+    <button type="button" data-account-go="habits">◉ Mi progreso</button>
+    <button type="button" data-account-go="alarms">◷ Mis alarmas</button>
+   </div>
+   <details class="ns-user-section" id="ns-account-permissions"><summary>⚙ Permisos y configuración</summary>
+    <div class="ns-user-menu-actions"><button type="button" id="ns-user-alarm-permissions">Permisos de alarmas</button><button type="button" data-native-permission="notifications">Notificaciones</button><button type="button" data-native-permission="overlay">Ventanas flotantes</button><button type="button" data-native-permission="usage">Acceso de uso (opcional)</button><button type="button" data-native-permission="app">Ajustes de Android</button></div>
+    <div id="ns-user-permission-container"></div>
+   </details>
+   <details class="ns-user-section" id="ns-account-launcher"><summary>⌂ Inicio minimalista</summary><div id="ns-user-launcher-container"></div></details>
+   <details class="ns-user-section" id="ns-account-backup"><summary>☁ Respaldo y datos</summary><div id="ns-user-backup-container"></div></details>
+   <div class="ns-user-menu-actions"><button type="button" id="ns-account-logout">Cerrar sesión</button></div>
+  </aside>
   <section class="view active" id="view-home">
    <div class="ns-home-intro"><div><span class="ns-eyebrow">TU DÍA EN EQUILIBRIO</span><h2 id="ns-home-welcome">Tu día está listo para avanzar</h2><p>Avanza a tu ritmo. Tu dragón te acompaña hoy.</p></div></div>
    <div class="ns-brand-hero"><div class="ns-brand-hero-copy"><span class="ns-eyebrow">TU DRAGÓN DE PRODUCTIVIDAD</span><h2>Tu dragón te acompaña hoy</h2><span class="ns-hero-missions"><span aria-hidden="true">✓</span><span id="ns-hero-missions">Tus misiones están listas</span></span></div><img src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%20role%3D%22img%22%20aria-label%3D%22NeuroSync%3A%20drag%C3%B3n%20y%20lista%20de%20tareas%22%3E%0A%3Cdefs%3E%3ClinearGradient%20id%3D%22bg%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23063674%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%230866c6%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2303c4ec%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22wing%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2345eeff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%230d7fe6%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22paper%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ffffff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23c8f2ff%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%0A%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%22248%22%20height%3D%22248%22%20rx%3D%2258%22%20fill%3D%22url(%23bg)%22%2F%3E%0A%3Cpath%20d%3D%22M28%20158Q32%2078%20103%2063Q63%20103%2075%20152Q95%20104%20151%2077Q107%20127%20113%20175Q88%20205%2055%20201Q37%20184%2028%20158Z%22%20fill%3D%22url(%23wing)%22%2F%3E%0A%3Cpath%20d%3D%22M77%2043Q109%2073%20128%2075Q115%2051%20119%2033Q142%2061%20166%2065Q195%2076%20203%20103Q209%20118%20193%20128Q181%20135%20160%20121Q144%20116%20124%20128Q100%20147%20102%20182Q78%20156%2087%20132Q91%20113%20113%20101Q87%2098%2059%20122Q73%2081%20109%2087Q87%2067%2077%2043Z%22%20fill%3D%22%23f7feff%22%2F%3E%0A%3Cpath%20d%3D%22M159%20103Q171%20101%20178%20107Q170%20116%20159%20108Z%22%20fill%3D%22%23073878%22%2F%3E%0A%3Crect%20x%3D%22128%22%20y%3D%22127%22%20width%3D%22100%22%20height%3D%2290%22%20rx%3D%2218%22%20fill%3D%22url(%23paper)%22%2F%3E%0A%3Cg%20stroke%3D%22%23078fe6%22%20stroke-width%3D%228%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m143%20149%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20173%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20196%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22M175%20151h37M175%20175h37M175%20199h27%22%2F%3E%3C%2Fg%3E%0A%3Cpath%20d%3D%22M44%20207Q111%20251%20190%20220%22%20fill%3D%22none%22%20stroke%3D%22%235ff0fd%22%20stroke-width%3D%2216%22%20stroke-linecap%3D%22round%22%2F%3E%0A%3Cpath%20d%3D%22m219%2058%206%2016%2016%206-16%206-6%2016-6-16-16-6%2016-6Z%22%20fill%3D%22%2394ffff%22%2F%3E%0A%3C%2Fsvg%3E" alt="" aria-hidden="true"></div>
@@ -1723,7 +1767,7 @@ function sync(){
 }
 by('sync-btn').onclick=sync;
 function getUsers(){if(!nat||!nat.getUsers)return [{username:session.username,role:session.role}];try{var r=JSON.parse(nat.getUsers());return r.users||[]}catch(e){return []}}
-function enter(u){session=u;model=load();nsSleepRender();nsSceneRestore();nsFocusRestore();nsLauncherFocusSync();nsFocusTasks();nsFocusStats();nsFocusRender();nsDragonData();by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=(u.displayName||u.username).slice(0,1).toUpperCase();by('greeting').textContent='Tu día está listo para avanzar a tu ritmo.';by('ns-home-welcome').textContent='Hola, '+(u.displayName||u.email||u.username)+'. Tu día te espera.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
+function enter(u){session=u;model=load();nsSleepRender();nsSceneRestore();nsFocusRestore();nsLauncherFocusSync();nsFocusTasks();nsFocusStats();nsFocusRender();nsDragonData();by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=(u.displayName||u.username).slice(0,1).toUpperCase();by('greeting').textContent='Tu día está listo para avanzar a tu ritmo.';by('ns-home-welcome').textContent='Hola, '+(u.displayName||u.email||u.username)+'. Tu día te espera.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');if(nsPendingRoute){var route=nsPendingRoute;nsPendingRoute='';nsNavigate(route)}sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
 by('ns-owner-access').onclick=function(){
  var panel=by('ns-admin-login'),showing=!panel.classList.toggle('hidden');
  by('ns-owner-access').setAttribute('aria-expanded',String(showing));
@@ -1872,6 +1916,81 @@ function updateInstalledBuild(){
  by('installed-build').textContent=label;
  by('feature-status').textContent=label;
 }
+
+/* Organiza los módulos una sola vez; mueve nodos, no los clona, para conservar sus listeners. */
+function nsMoveTo(id,container){
+ var source=by(id),dest=by(container);
+ if(source&&dest)dest.appendChild(source);
+}
+function nsHomeExtra(title,id){
+ var details=document.createElement('details');
+ details.className='ns-home-extra';details.id=id;
+ var label=document.createElement('summary');label.textContent=title;details.appendChild(label);
+ by('view-home').appendChild(details);
+ return details;
+}
+function nsOrganizeHome(){
+ var dragon=nsHomeExtra('Misiones y aventuras de Azul','ns-extra-dragon');
+ var focus=nsHomeExtra('Temporizador Pomodoro y concentración','ns-extra-focus');
+ var more=nsHomeExtra('Ver más de mi día','ns-extra-day');
+ function move(selector,dest){var item=document.querySelector(selector);if(item)dest.appendChild(item)}
+ move('#view-home .ns-dragon-quest-card',dragon);
+ move('#focus-studio',focus);
+ move('#view-home .stats',more);
+ move('#view-home #quick-capture-card',by('view-home').querySelector('.grid>.stack'));
+ // Las tareas y el dragón permanecen visibles en la portada.
+ move('#view-home .card:has(#jump-challenge)',more);
+ move('#view-home .card:has(#daily-summary)',more);
+ move('#view-home .card:has(#home-alarms)',more);
+ move('#view-home .card:has(#home-bags)',more);
+ move('#view-home .card:has(#open-minimal-home)',by('ns-user-launcher-container'));
+ move('#view-admin .card:has(#backup-export)',by('ns-user-backup-container'));
+ var permissions=by('alarm-permission-status');
+ if(permissions&&permissions.parentElement)by('ns-user-permission-container').appendChild(permissions.parentElement);
+}
+function nsAccountVisible(visible){
+ var dialog=by('ns-user-popover');
+ dialog.classList.toggle('hidden',!visible);
+ by('avatar').setAttribute('aria-expanded',String(visible));
+ if(visible){
+  by('ns-account-name').textContent=session?(session.displayName||session.username):'Mi cuenta';
+  by('ns-account-email').textContent=session?(session.email||'Administrador local'):'Ajustes personales';
+  checkAlarmPermissions();
+ }
+}
+function nsOpenFocusStudio(){
+ show('home');
+ var detail=by('ns-extra-focus');
+ if(detail)detail.open=true;
+ by('focus-studio').scrollIntoView({behavior:'auto',block:'start'});
+}
+var nsPendingRoute='';
+function nsNavigate(route){
+ if(!session){nsPendingRoute=route;return}
+ if(['home','tasks','calendar','bags','alarms','habits','admin'].includes(route))show(route);
+ else if(route==='focus')nsOpenFocusStudio();
+ else if(route==='dragon'){show('home');by('dragon-scene').scrollIntoView({behavior:'auto',block:'start'})}
+ else return;
+ nsAccountVisible(false);
+}
+window.neuroNavigateFromLauncher=function(route){if(typeof route==='string')nsNavigate(route)};
+nsOrganizeHome();
+by('avatar').onclick=function(){nsAccountVisible(by('ns-user-popover').classList.contains('hidden'))};
+by('ns-close-account').onclick=function(){nsAccountVisible(false)};
+by('ns-account-logout').onclick=function(){nsAccountVisible(false);by('logout').click()};
+document.querySelectorAll('[data-account-go]').forEach(function(button){button.onclick=function(){nsNavigate(button.dataset.accountGo)}});
+document.querySelectorAll('[data-native-permission]').forEach(function(button){button.onclick=function(){
+ if(nat&&nat.openPermissionsPanel)nat.openPermissionsPanel(button.dataset.nativePermission);
+ else say('Esta función solo está disponible en la APK Android');
+}});
+by('ns-user-alarm-permissions').onclick=function(){if(nat&&nat.requestAlarmPermissions)nat.requestAlarmPermissions()};
+document.addEventListener('click',function(e){
+ var menu=by('ns-user-popover');
+ if(!menu.classList.contains('hidden')&&!menu.contains(e.target)&&!by('avatar').contains(e.target))nsAccountVisible(false);
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')nsAccountVisible(false)});
+by('ns-tile-focus-open').onclick=nsOpenFocusStudio;
+
 by('jump-challenge').onclick=function(){show('alarms');say('Crea una alarma y elige el desafío para detenerla')};
 by('jump-progress').onclick=function(){show('habits')};
 nsFocusInit();
