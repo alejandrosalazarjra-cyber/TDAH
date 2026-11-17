@@ -37,6 +37,7 @@ final class GoogleAccountBridge {
  private final Handler main=new Handler(Looper.getMainLooper());
  private final GoogleSignInClient client;
  private volatile boolean busy=false;
+ private String pendingBackup=null; // Última versión pendiente, sin perder cambios mientras se sube otra.
 
  GoogleAccountBridge(MainActivity activity){
   this.activity=activity;
@@ -126,36 +127,60 @@ final class GoogleAccountBridge {
   JSONArray files=list.optJSONArray("files");
   return files!=null&&files.length()>0?files.getJSONObject(0).getString("id"):null;
  }
+ /** Una única subida activa y una pendiente (siempre la más reciente).
+  * La petición anterior no descarta cambios realizados durante la subida.
+  */
  void backup(String json){
-  if(json==null||json.length()>1200000||busy)return;
-  busy=true;
-  io.execute(()->{
-   try{
-    GoogleSignInAccount a=account();String access=token(a);
-    JSONObject payload=new JSONObject(json);
-    if(!a.getId().equals(payload.optString("googleId")))throw new IOException("La copia no corresponde a la cuenta activa");
-    String id=fileId(access),out;
-    if(id==null){
-     String boundary="ns"+Long.toHexString(System.nanoTime());
-     String metadata=new JSONObject().put("name",FILE).put("parents",new JSONArray().put("appDataFolder")).toString();
-     ByteArrayOutputStream body=new ByteArrayOutputStream();
-     body.write(("--"+boundary+"\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"+metadata+
-      "\r\n--"+boundary+"\r\nContent-Type: application/json\r\n\r\n").getBytes(StandardCharsets.UTF_8));
-     body.write(json.getBytes(StandardCharsets.UTF_8));
-     body.write(("\r\n--"+boundary+"--\r\n").getBytes(StandardCharsets.UTF_8));
-     out=request("POST","https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id",
-       access,"multipart/related; boundary="+boundary,body.toByteArray());
-    }else{
-     out=request("PATCH","https://www.googleapis.com/upload/drive/v3/files/"+URLEncoder.encode(id,"UTF-8")+"?uploadType=media",
-       access,"application/json; charset=UTF-8",json.getBytes(StandardCharsets.UTF_8));
+  if(json==null||json.length()>1200000)return;
+  synchronized(this){
+   pendingBackup=json;
+   if(busy)return;
+   busy=true;
+  }
+  try{
+   io.execute(()->{
+    while(true){
+     String copy;
+     synchronized(GoogleAccountBridge.this){
+      copy=pendingBackup;
+      pendingBackup=null;
+      if(copy==null){busy=false;return;}
+     }
+     try{
+      uploadBackup(copy);
+      emit("neuroDriveStatus","Copia de Drive actualizada");
+     }catch(Exception ex){
+      Log.w("NeuroSync","No se pudo respaldar en Drive",ex);
+      emit("neuroDriveStatus","Respaldo local guardado; Drive pendiente de autorización o conexión");
+     }
     }
-    emit("neuroDriveStatus","Copia de Drive actualizada");
-   }catch(Exception ex){
-    Log.w("NeuroSync","No se pudo respaldar en Drive",ex);
-    emit("neuroDriveStatus","Respaldo local guardado; Drive pendiente de autorización o conexión");
-   }finally{busy=false;}
-  });
+   });
+  }catch(java.util.concurrent.RejectedExecutionException ex){
+   synchronized(this){busy=false;}
+   emit("neuroDriveStatus","Drive no disponible; respaldo local conservado");
+  }
  }
+ private void uploadBackup(String json) throws Exception {
+  GoogleSignInAccount a=account();String access=token(a);
+  JSONObject payload=new JSONObject(json);
+  if(!a.getId().equals(payload.optString("googleId")))throw new IOException("La copia no corresponde a la cuenta activa");
+  String id=fileId(access);
+  if(id==null){
+   String boundary="ns"+Long.toHexString(System.nanoTime());
+   String metadata=new JSONObject().put("name",FILE).put("parents",new JSONArray().put("appDataFolder")).toString();
+   ByteArrayOutputStream body=new ByteArrayOutputStream();
+   body.write(("--"+boundary+"\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"+metadata+
+    "\r\n--"+boundary+"\r\nContent-Type: application/json\r\n\r\n").getBytes(StandardCharsets.UTF_8));
+   body.write(json.getBytes(StandardCharsets.UTF_8));
+   body.write(("\r\n--"+boundary+"--\r\n").getBytes(StandardCharsets.UTF_8));
+   request("POST","https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id",
+     access,"multipart/related; boundary="+boundary,body.toByteArray());
+  }else{
+   request("PATCH","https://www.googleapis.com/upload/drive/v3/files/"+URLEncoder.encode(id,"UTF-8")+"?uploadType=media",
+     access,"application/json; charset=UTF-8",json.getBytes(StandardCharsets.UTF_8));
+  }
+ }
+
  void restoreDrive(){
   io.execute(()->{
    try{
