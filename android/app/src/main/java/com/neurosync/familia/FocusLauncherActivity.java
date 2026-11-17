@@ -444,6 +444,72 @@ public final class FocusLauncherActivity extends Activity {
     }
     launchIntent(new Intent(Settings.ACTION_HOME_SETTINGS));
   }
+  /** Permisos especiales: nunca los solicites en segundo plano ni al abrir la app. */
+  private boolean hasOverlayPermission(){
+    return Settings.canDrawOverlays(this);
+  }
+  private void showSpecialPermissions(){
+    drawer=true;
+    LinearLayout view=vertical();pad(view,16,17);
+    view.addView(action("‹  Volver a ajustes",this::showSettings));
+    view.addView(gap(22));
+    view.addView(text("Permisos y ventanas",25,WHITE,true));
+    view.addView(gap(10));
+    view.addView(text("Activa solamente las opciones que necesites. Android controla su autorización; ninguna es necesaria para acceder a tus tareas y alarmas.",13,MUTED,false));
+    view.addView(gap(19));
+    view.addView(text("Superposición · "+(hasOverlayPermission()?"Autorizada":"Sin autorizar"),17,WHITE,true));
+    view.addView(gap(8));
+    view.addView(text("Permite mostrar un recordatorio pequeño sobre otras aplicaciones. No sustituye la pantalla de bloqueo ni permite leer lo que haces en ellas.",13,MUTED,false));
+    view.addView(gap(10));
+    view.addView(action(hasOverlayPermission()?"Ver configuración de superposición":"Autorizar superposición",this::requestOverlayPermission));
+    view.addView(gap(10));
+    if(hasOverlayPermission()){
+      view.addView(action("Probar ventana flotante durante 20 segundos",this::previewOverlay));
+      view.addView(gap(10));
+    }
+    view.addView(gap(20));
+    view.addView(text("Estadísticas de uso · "+(hasUsagePermission()?"Autorizadas":"Opcionales"),17,WHITE,true));
+    view.addView(gap(8));
+    view.addView(text("Solo si deseas consultar el tiempo empleado en otras aplicaciones. Algunas instalaciones manuales son restringidas por Android.",13,MUTED,false));
+    view.addView(gap(10));
+    view.addView(action("Información y ajustes de tiempo de uso",this::requestUsageAccess));
+    view.addView(gap(20));
+    view.addView(text("Notificaciones y alarmas",17,WHITE,true));
+    view.addView(gap(8));
+    view.addView(text("Las notificaciones y las alarmas exactas usan sus propios permisos. Se gestionan cuando configuras o pruebas una alarma.",13,MUTED,false));
+    view.addView(gap(10));
+    view.addView(action("Configuración de notificaciones",()->openNotificationSettingsFor(getPackageName())));
+    view.addView(gap(15));
+    view.addView(action("Actualizar estados",this::showSpecialPermissions));
+    showContent(view);
+  }
+  private void requestOverlayPermission(){
+    new AlertDialog.Builder(this)
+      .setTitle("Mostrar sobre otras aplicaciones")
+      .setMessage("DrakoPlan puede mostrar un recordatorio voluntario sobre otras apps. La ventana puede cerrarse en cualquier momento y la prueba termina automáticamente. Android puede restringir esta función en algunas pantallas. ¿Deseas abrir el ajuste del sistema?")
+      .setNegativeButton("Cancelar",null)
+      .setPositiveButton("Abrir ajustes",(d,w)->{
+        try{
+          Intent intent=new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+             android.net.Uri.parse("package:"+getPackageName()));
+          startActivity(intent);
+        }catch(Exception ex){
+          launchIntent(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION));
+        }
+      }).show();
+  }
+  private void previewOverlay(){
+    if(!hasOverlayPermission()){
+      showSpecialPermissions();
+      return;
+    }
+    try{
+      startService(new Intent(this,FocusOverlayService.class));
+      Toast.makeText(this,"Vista flotante iniciada: puedes cerrarla con ✕",Toast.LENGTH_LONG).show();
+    }catch(RuntimeException ex){
+      Toast.makeText(this,"Android no permitió abrir la superposición",Toast.LENGTH_LONG).show();
+    }
+  }
   private void requestUsageAccess(){
     if(hasUsagePermission()){
       Toast.makeText(this,"El acceso al tiempo de uso ya está activado",Toast.LENGTH_SHORT).show();
@@ -547,6 +613,8 @@ public final class FocusLauncherActivity extends Activity {
     view.addView(allDay);view.addView(gap(12));
     TextView explanation=text("La pausa se aplica únicamente a las aplicaciones que marques al abrirlas desde NeuroSync. No bloquea aplicaciones desde otros accesos.",12,MUTED,false);
     view.addView(explanation);view.addView(gap(22));
+    view.addView(text("Permisos especiales",18,WHITE,true));view.addView(gap(10));
+    view.addView(action("Permisos y ventanas flotantes",this::showSpecialPermissions));view.addView(gap(20));
     view.addView(text("Bienestar digital",18,WHITE,true));view.addView(gap(10));
     view.addView(action("Administrar notificaciones por aplicación",this::showNotificationControls));
     view.addView(gap(12));
