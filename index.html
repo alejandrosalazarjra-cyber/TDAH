@@ -839,7 +839,9 @@ function nsDragonRender(){
   figure.dataset.accessory=p.accessory;
   figure.classList.remove('has-sprite','has-atlas');
   figure.innerHTML=nsDragonSvg(idx,p.accessory); // SVG seguro si falla WebP.
-  var image=document.createElement('img');
+  // Accesorios antiguos mantienen su SVG equipado: los atlas aún no tienen estas capas.
+  if(p.accessory==='none'){
+   var image=document.createElement('img');
   image.className='ns-dragon-sprite';
   image.alt='';
   image.decoding='async';
@@ -853,8 +855,9 @@ function nsDragonRender(){
    }else{figure.classList.remove('has-sprite');figure.removeChild(image)}
   };
   image.src='assets/dragon/etapa-'+(idx+1)+'.webp';
-  figure.appendChild(image);
-  nsDragonPoseSet(nsDragonActionState);
+   figure.appendChild(image);
+   nsDragonPoseSet(nsDragonActionState);
+  }
  }
  nsDragonCheckEvolution(idx);
  by('pet-face').setAttribute('aria-label',p.name+', '+spec.name);
@@ -1846,7 +1849,7 @@ function nsDragonAtlasFrame(figure,idx){
 function nsDragonPoseSet(state){
  nsDragonStopPoseTimers();
  var figure=by('pet-face');
- if(!figure||!session||!model)return;
+ if(!figure||!session||!model||figure.dataset.accessory!=='none')return;
  var index=Number(figure.dataset.stage);
  if(!Number.isInteger(index)||index<0||index>5)return;
  var key=String(index+1);
