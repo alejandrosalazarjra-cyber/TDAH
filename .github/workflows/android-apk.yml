@@ -65,6 +65,7 @@ jobs:
           node tests/test_phase1d_native_recovery.js
           node tests/test_phase1e_snapshot_batch.js
           node tests/test_phase1e_restart_recovery.js
+          node tests/test_alarm_ui_redesign.js
 
       - name: Validar interfaz antes de compilar
         shell: bash
