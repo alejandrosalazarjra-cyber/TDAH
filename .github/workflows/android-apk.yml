@@ -2,8 +2,15 @@ name: Compilar APK NeuroSync
 # Compilación manual para no gastar minutos por cada cambio pequeño.
 on:
   workflow_dispatch:
-  push:
+  pull_request:
     branches: [main]
+    paths:
+      - '.github/workflows/android-apk.yml'
+      - 'index.html'
+      - 'android/**'
+      - 'assets/dragon/**'
+  push:
+    branches: [main, integration/dragon-azul-alarmas-2026-11-16]
     paths:
       - '.github/workflows/android-apk.yml'
 
@@ -42,6 +49,14 @@ jobs:
           test -f "$ANDROID_HOME/platforms/android-35/android.jar"
           test -x "$ANDROID_HOME/build-tools/35.0.0/aapt"
           echo "SDK Android 35 y herramientas APK disponibles"
+
+      - name: Validar ciclos y evoluciones de Azul
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_dragon_module.py' -v
+          node tests/test_dragon_motion.js
+          node tests/test_dragon_poses.js
 
       - name: Validar interfaz antes de compilar
         shell: bash
@@ -187,6 +202,12 @@ jobs:
           set -euo pipefail
           cp index.html android/app/src/main/assets/index.html
           test -s android/app/src/main/assets/index.html
+          mkdir -p android/app/src/main/assets/dragon
+          cp assets/dragon/etapa-{1..6}.webp android/app/src/main/assets/dragon/
+          for n in {1..6}; do test -s "android/app/src/main/assets/dragon/etapa-${n}.webp"; done
+          mkdir -p android/app/src/main/assets/dragon/atlases
+          cp assets/dragon/atlases/etapa-{1..6}.webp android/app/src/main/assets/dragon/atlases/
+          for n in {1..6}; do test -s "android/app/src/main/assets/dragon/atlases/etapa-${n}.webp"; done
 
       - name: Compilar APK de prueba independiente (no sustituye tu instalación)
         working-directory: android
