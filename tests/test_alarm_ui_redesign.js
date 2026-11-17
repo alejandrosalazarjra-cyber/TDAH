@@ -59,6 +59,6 @@ assert(receiver.includes('Math.max(System.currentTimeMillis(),original)'),
  'Una alarma sonada temprano no puede reprogramarse en la misma ocurrencia');
 assert(bridge.includes('setAlarmOptions(')&&bridge.includes('pauseAlarm('));
 assert(bridge.includes('setAlarmSoundBehavior('),'Falta puente de volumen y despertar gradual');
-assert(!html.includes('ns-create-music-alarm') && !html.includes('alarm-clock-music'),'La interfaz no debe abrir servicios musicales externos');
-assert(!bridge.includes('createYouTubeMusicClockAlarm') && !bridge.includes('openSystemClock'),'No conservar puentes de música externa');
+assert(html.includes('id="alarm-local-sound"'),'Debe existir el selector de tonos locales');
+assert(bridge.includes('chooseAlarmSound'),'Debe mantenerse el selector de tonos Android');
 console.log('Alarmas UI OK: tabs, próxima hora, editor, misiones, posponer y seguridad nativa');
