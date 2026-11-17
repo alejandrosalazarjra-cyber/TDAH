@@ -457,6 +457,10 @@ public final class MainActivity extends Activity {
         }catch(Exception ignored){openAppSettings();}
       });
     }
+    @JavascriptInterface public String alarmScheduleDiagnostics(){
+      try{return AlarmReceiver.diagnostics(MainActivity.this).toString();}
+      catch(Exception e){return "{}";}
+    }
     @JavascriptInterface public String alarmPermissions(){
       try{
         JSONObject j=new JSONObject();
