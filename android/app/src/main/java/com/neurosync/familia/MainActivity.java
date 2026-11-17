@@ -399,11 +399,27 @@ public final class MainActivity extends Activity {
       result.remove("token");
       return result.toString();
     }
-    /** Copia SQLite cifrada por cuenta; evita guardar tokens y contraseñas. */
+    /** Las copias nativas se limitan a la identidad autenticada en Android.
+     * El identificador recibido del WebView NO concede acceso a otras cuentas.
+     */
+    private boolean canAccessSnapshot(String username){
+      if(username==null||username.isEmpty())return false;
+      if(sessionUser!=null&&username.equals(sessionUser.optString("username"))&&
+          !sessionToken.isEmpty()&&
+          (!localHost()||AccountStore.identity(MainActivity.this,sessionToken)!=null))return true;
+      try{
+        JSONObject google=googleAccounts.restored();
+        JSONObject account=google.optJSONObject("user");
+        return google.optBoolean("ok")&&account!=null&&
+          username.equals(account.optString("username"));
+      }catch(Exception ignored){return false;}
+    }
     @JavascriptInterface public boolean saveNativeSnapshot(String username,String json){
+      if(!canAccessSnapshot(username))return false;
       return NativeSnapshotStore.get(MainActivity.this).save(username,json);
     }
     @JavascriptInterface public String recoverNativeSnapshot(String username){
+      if(!canAccessSnapshot(username))return "{\"ok\":false,\"reason\":\"unauthorized\"}";
       return NativeSnapshotStore.get(MainActivity.this).recover(username);
     }
     @JavascriptInterface public String restoreSession(){
