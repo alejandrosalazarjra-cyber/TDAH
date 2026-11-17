@@ -1641,9 +1641,9 @@ function nsFlushNativeSnapshot(){
   return true;
  }catch(err){nsNativePending=pending;return false}
 }
-function nsQueueNativeSnapshot(data){
+function nsQueueNativeSnapshot(data,serialized){
  if(!session||!nat||!nat.saveNativeSnapshot||!nsValidModel(data))return;
- var json=JSON.stringify(data);
+ var json=serialized||JSON.stringify(data);
  nsNativePending={username:session.username,json:json};
  if(nsNativeTimer!==null)clearTimeout(nsNativeTimer);
  nsNativeTimer=setTimeout(nsFlushNativeSnapshot,nsNativeDelayMs);
@@ -1668,7 +1668,7 @@ function nsLocalSave(data){
  if(localStorage.getItem(key)!==json)throw Error('No se pudo verificar el guardado');
  // La copia SQLite es secundaria. Se agrupan escrituras consecutivas
  // y al ocultar/salir se fuerza la última versión, sin borrar localStorage.
- nsQueueNativeSnapshot(data);
+ nsQueueNativeSnapshot(data,json);
  return true;
 }
 function nsRecoveryCandidate(key){
