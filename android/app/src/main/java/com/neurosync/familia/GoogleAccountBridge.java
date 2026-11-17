@@ -136,7 +136,10 @@ final class GoogleAccountBridge {
   * La petición anterior no descarta cambios realizados durante la subida.
   */
  void backup(String json){
-  if(json==null||json.length()>1200000)return;
+  if(json==null||json.length()>1200000){
+   emit("neuroDriveStatus","Respaldo de Drive demasiado grande; conserva una copia local.");
+   return;
+  }
   synchronized(this){
    pendingBackup=json;
    if(busy)return;
@@ -156,7 +159,15 @@ final class GoogleAccountBridge {
       emit("neuroDriveStatus","Copia de Drive actualizada");
      }catch(Exception ex){
       Log.w("NeuroSync","No se pudo respaldar en Drive",ex);
-      emit("neuroDriveStatus","Respaldo local guardado; Drive pendiente de autorización o conexión");
+      // Conservar la última copia en memoria hasta otro intento explícito.
+      // No reintentar en bucle ni guardar información personal sin cifrar
+      // en nuevas preferencias persistentes.
+      synchronized(GoogleAccountBridge.this){
+       if(pendingBackup==null)pendingBackup=copy;
+       busy=false;
+      }
+      emit("neuroDriveStatus","Respaldo local guardado; Drive pendiente de conexión. Se reintentará al guardar.");
+      return;
      }
     }
    });
