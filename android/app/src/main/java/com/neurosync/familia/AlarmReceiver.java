@@ -109,6 +109,7 @@ public final class AlarmReceiver extends BroadcastReceiver {
   ctx.getSharedPreferences("ns_alarm_snoozes",0).edit().remove(SNOOZE_PREFIX+id).apply();
   ctx.getSharedPreferences("ns_alarms",0).edit().remove(PREFIX+id).apply();
   AlarmChallengeStore.remove(ctx,id);
+  AlarmOptionsStore.delete(ctx,id);
   ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id.hashCode());
  }
  public static void dismiss(Context ctx,String id){
@@ -116,6 +117,7 @@ public final class AlarmReceiver extends BroadcastReceiver {
   manager(ctx).cancel(pendingSnooze(ctx,id));
   ctx.getSharedPreferences("ns_alarm_snoozes",0).edit().remove(SNOOZE_PREFIX+id).apply();
   AlarmHistory.record(ctx,id,"dismiss");
+  AlarmOptionsStore.reset(ctx,id);
   AlarmAudioService.stop(ctx);
   ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id.hashCode());
   // No borrar la siguiente repetición diaria/semanal.
@@ -126,20 +128,23 @@ public final class AlarmReceiver extends BroadcastReceiver {
       ctx.getSharedPreferences("ns_alarms",0).edit().remove(PREFIX+id).apply();
   }catch(Exception ignored){}
  }
- public static void snooze(Context ctx,String id,int minutes){
+ public static boolean snooze(Context ctx,String id,int minutes){
+  if(id==null||!AlarmOptionsStore.canSnooze(ctx,id))return false;
   try{
-   String s=ctx.getSharedPreferences("ns_alarms",0).getString(PREFIX+id,null);if(s==null)return;
+   String s=ctx.getSharedPreferences("ns_alarms",0).getString(PREFIX+id,null);if(s==null)return false;
    JSONObject a=new JSONObject(s);
-   AlarmHistory.record(ctx,id,"snooze");
    AlarmManager alarm=manager(ctx);
    long when=System.currentTimeMillis()+minutes*60000L;
    if(Build.VERSION.SDK_INT<31||alarm.canScheduleExactAlarms())
      alarm.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,when,pendingSnooze(ctx,id));
    else alarm.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,when,pendingSnooze(ctx,id));
    ctx.getSharedPreferences("ns_alarm_snoozes",0).edit().putLong(SNOOZE_PREFIX+id,when).apply();
+   AlarmOptionsStore.consumed(ctx,id);
+   AlarmHistory.record(ctx,id,"snooze");
    AlarmAudioService.stop(ctx);
    ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id.hashCode());
-  }catch(Exception ignored){}
+   return true;
+  }catch(Exception ex){android.util.Log.w("NeuroSync","Error al posponer alarma",ex);return false;}
  }
  /** Diagnóstico de los registros locales: no afirma una garantía de ejecución del SO. */
  public static JSONObject diagnostics(Context ctx){
@@ -232,9 +237,13 @@ public final class AlarmReceiver extends BroadcastReceiver {
     if("none".equals(AlarmChallengeStore.get(ctx,alarmId)))dismiss(ctx,alarmId);
     return;
   }
-  if(POSTPONE.equals(intent.getAction())){snooze(ctx,intent.getStringExtra("id"),5);return;}
+  if(POSTPONE.equals(intent.getAction())){
+    String id=intent.getStringExtra("id");
+    snooze(ctx,id,AlarmOptionsStore.minutes(ctx,id));return;
+  }
   if(!FIRE.equals(intent.getAction())&&!SNOOZE.equals(intent.getAction()))return;
   String id=intent.getStringExtra("id");if(id==null)return;
+  if(FIRE.equals(intent.getAction()))AlarmOptionsStore.reset(ctx,id);
   if(SNOOZE.equals(intent.getAction()))
     ctx.getSharedPreferences("ns_alarm_snoozes",0).edit().remove(SNOOZE_PREFIX+id).apply();
   String raw=ctx.getSharedPreferences("ns_alarms",0).getString(PREFIX+id,null);if(raw==null)return;
@@ -259,8 +268,9 @@ public final class AlarmReceiver extends BroadcastReceiver {
     .setPriority(Notification.PRIORITY_MAX)
     .setVisibility(Notification.VISIBILITY_PUBLIC)
     .setAutoCancel(false).setOngoing(true)
-    .addAction(android.R.drawable.ic_menu_recent_history,"Posponer",snoozePending)
     .setContentIntent(full).setFullScreenIntent(full,true);
+   if(AlarmOptionsStore.canSnooze(ctx,id))
+     builder.addAction(android.R.drawable.ic_menu_recent_history,"Posponer",snoozePending);
    if("none".equals(AlarmChallengeStore.get(ctx,id))){
      builder.addAction(android.R.drawable.ic_media_pause,"Detener",stopPending);
    }
