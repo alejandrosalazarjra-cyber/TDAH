@@ -681,6 +681,9 @@ public final class MainActivity extends Activity {
     @JavascriptInterface public boolean setAlarmOptions(String id,int snoozeMinutes,int snoozeMax){
       return AlarmOptionsStore.configure(MainActivity.this,id,snoozeMinutes,snoozeMax);
     }
+    @JavascriptInterface public boolean setAlarmSoundBehavior(String id,int volumePercent,int fadeSeconds){
+      return AlarmOptionsStore.setAudio(MainActivity.this,id,volumePercent,fadeSeconds);
+    }
     @JavascriptInterface public void pauseAlarm(String id){AlarmReceiver.pause(MainActivity.this,id);}
     @JavascriptInterface public void cancelAlarm(String id){AlarmReceiver.cancel(MainActivity.this,id);}
     @JavascriptInterface public void logout(){forgetNativeSession();}
