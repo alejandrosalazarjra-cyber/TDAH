@@ -1608,6 +1608,24 @@ function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,funct
 /* Fase 1: recuperación local versionada. Los datos corruptos jamás se borran silenciosamente. */
 function nsValidModel(x){return !!(x&&typeof x==='object'&&!Array.isArray(x)&&Array.isArray(x.tasks)&&Array.isArray(x.packs)&&Array.isArray(x.alarms)&&x.pet&&typeof x.pet==='object')}
 function nsReadModel(raw){if(!raw)return null;try{var v=JSON.parse(raw);return nsValidModel(v)?v:null}catch(e){return null}}
+/* Fase 1d: segunda copia independiente del motor WebView.
+ * No borra localStorage: lo complementa con SQLite cifrado de Android.
+ * El servidor de respaldo nunca lee ni conserva contraseñas o tokens.
+ */
+function nsReadNativeSnapshot(){
+ if(!session||!nat||!nat.recoverNativeSnapshot)return null;
+ try{
+  var response=JSON.parse(nat.recoverNativeSnapshot(session.username));
+  return response.ok&&nsValidModel(response.model)?response.model:null;
+ }catch(e){return null}
+}
+function nsSeedNativeSnapshot(data){
+ if(!session||!nat||!nat.saveNativeSnapshot||!nsValidModel(data))return;
+ try{
+  if(nsReadNativeSnapshot())return; // No reemplazar un respaldo anterior al abrir.
+  nat.saveNativeSnapshot(session.username,JSON.stringify(data));
+ }catch(e){}
+}
 function nsLocalSave(data){
  if(!session||!nsValidModel(data))throw Error('Datos no válidos');
  var key=localKey(),previous=localStorage.getItem(key),old=nsReadModel(previous);
@@ -1619,17 +1637,37 @@ function nsLocalSave(data){
  }
  localStorage.setItem(key,json);
  if(localStorage.getItem(key)!==json)throw Error('No se pudo verificar el guardado');
+ // El respaldo secundario puede fallar sin destruir la escritura local válida.
+ // Un error aquí no se declara como éxito de SQLite.
+ if(nat&&nat.saveNativeSnapshot){
+  try{
+   if(!nat.saveNativeSnapshot(session.username,json)){
+    var indicator=by('sync-status');
+    if(indicator)indicator.textContent='Guardado local; copia Android pendiente';
+   }
+  }catch(e){}
+ }
  return true;
 }
 function load(){
  var key=localKey(),current=localStorage.getItem(key),saved=nsReadModel(current);
- if(saved)return saved;
+ if(saved){nsSeedNativeSnapshot(saved);return saved;}
+ // En corrupción del WebView preferimos una copia cifrada de Android si existe.
+ var nativeRecovery=nsReadNativeSnapshot();
+ if(nativeRecovery){
+  if(current){try{localStorage.setItem(key+'_corrupto_'+Date.now(),current)}catch(e){}}
+  try{localStorage.setItem(key,JSON.stringify(nativeRecovery))}
+  catch(e){nsStorageRecoveryBlocked=true}
+  setTimeout(function(){say('Recuperamos tu información desde la copia protegida de Android.')},100);
+  return nativeRecovery;
+ }
  var safe=nsReadModel(localStorage.getItem(key+'_anterior'))||
           nsReadModel(localStorage.getItem(key+'_rescate'));
  if(safe){
   // Preservar el registro dañado sin sobrescribir la última copia recuperable.
   if(current){try{localStorage.setItem(key+'_corrupto_'+Date.now(),current)}catch(e){}}
-  try{localStorage.setItem(key,JSON.stringify(safe))}catch(e){}
+  try{localStorage.setItem(key,JSON.stringify(safe));nsSeedNativeSnapshot(safe)}
+  catch(e){nsStorageRecoveryBlocked=true}
   setTimeout(function(){say('Se recuperaron datos de una copia local anterior. Revisa tus últimas tareas.')},100);
   return safe;
  }
