@@ -49,6 +49,7 @@ jobs:
           set -euo pipefail
           python3 -m unittest discover -s tests -p 'test_dragon_module.py' -v
           node tests/test_dragon_motion.js
+          node tests/test_dragon_poses.js
 
       - name: Validar interfaz antes de compilar
         shell: bash
