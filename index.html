@@ -907,6 +907,9 @@ function nsDragonDayRender(){
 }
 
 function nsDragonInit(){
+ // Actualización ligera: no crea alarmas ni ejecuta comprobaciones continuas en segundo plano.
+ setInterval(function(){if(session&&!document.hidden)nsDragonDayRender()},60000);
+ document.addEventListener('visibilitychange',function(){if(session&&!document.hidden)nsDragonDayRender()});
  by('dragon-advice-toggle').onclick=nsDragonToggleAdvice;
  by('dragon-room-select').onchange=function(){nsDragonSelectRoom(this.value)};
  by('dragon-furniture-select').onchange=function(){nsDragonSelectFurniture(this.value)};
