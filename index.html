@@ -2055,25 +2055,42 @@ by('pet-feed').onclick=function(){
  p.food-=20;p.xp+=15;p.feeds++;p.energy=Math.min(100,p.energy+20);save();render();nsDragonMessage('¡Qué rico! Gracias por cuidarme. +15 XP',true);nsDragonAnimate('eat')
 };
 var syncing=false;
+/* El servidor familiar es una fuente de cambios, nunca autorización para
+ * escribir sobre los datos privados de otra sesión ni saltarse la copia local. */
 window.neuroSyncOnSync=function(payload,requestingUser){
- syncing=false;if(!session||!model||(requestingUser&&session.username!==requestingUser))return;
+ syncing=false;
+ if(!session||!model||(requestingUser&&session.username!==requestingUser))return;
+ if(nsStorageRecoveryBlocked){
+  by('sync-status').textContent='Sincronización detenida para proteger el respaldo local';
+  return;
+ }
  try{
   var res=typeof payload==='string'?JSON.parse(payload):payload;
-  if(!res.ok){by('sync-status').textContent=res.error||'Sin conexión · guardado local';return}
-  var remote=res.data||{};
+  if(!res||!res.ok){by('sync-status').textContent=(res&&res.error)||'Sin conexión · guardado local';return}
+  var remote=res.data||{},staged=Object.assign({},model);
+  var owner=session.username;
   ['tasks','packs','alarms'].forEach(function(k){
+   if(remote[k]!=null&&!Array.isArray(remote[k]))throw Error('Datos remotos inválidos: '+k);
    var found=new Map();
-   (model[k]||[]).concat(remote[k]||[]).forEach(function(item){
-    if(!item||!item.id)return;
+   (model[k]||[]).concat((remote[k]||[]).slice(0,5000)).forEach(function(item){
+    if(!item||typeof item.id!=='string'||item.id.length>140||
+       !item.owner||typeof item.owner!=='string')return;
+    // El servidor solo puede devolver datos propios o compartidos permitidos.
+    if(item.owner!==owner&&item.owner!=='todos')return;
     var current=found.get(item.id);
-    if(!current||(+item.updatedAt||0)>(+current.updatedAt||0))found.set(item.id,item)
+    if(!current||(+item.updatedAt||0)>(+current.updatedAt||0))found.set(item.id,item);
    });
-   model[k]=Array.from(found.values());
+   staged[k]=Array.from(found.values());
   });
-  localStorage.setItem(localKey(),JSON.stringify(model));
-  if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm);
-  by('sync-status').textContent='✓ Sincronizado';render();
- }catch(e){by('sync-status').textContent='Error aplicando cambios'}
+  staged._localUpdatedAt=Date.now();
+  nsLocalSave(staged);
+  model=staged;
+  if(nat&&(nat.scheduleAlarm||nat.scheduleAlarmRepeat))
+   active(model.alarms).filter(function(a){return a.owner===owner||a.owner==='todos'}).forEach(scheduleAlarm);
+  by('sync-status').textContent='Sincronizado y guardado';render();
+ }catch(e){
+  by('sync-status').textContent='No se aplicaron cambios: datos locales conservados';
+ }
 };
 function sync(){
  if(!session||session.google||!nat||syncing)return;
