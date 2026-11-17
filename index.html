@@ -58,6 +58,21 @@
 .ns-category-chip.selected{border-color:var(--blue,#4258db);background:#eaf0ff;color:#344dba}
 .ns-category-chip strong{font-variant-numeric:tabular-nums;margin-left:4px}
 @media(max-width:670px){.ns-task-tools{grid-template-columns:1fr 1fr}.ns-task-tools .field:first-child{grid-column:1/-1}}
+
+.ns-plan-panels{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+.ns-plan-panel{border:1px solid var(--border);border-radius:16px;padding:15px;min-width:0}
+.ns-plan-panel h3{margin:0 0 10px}
+.ns-template-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.ns-template-row small{display:block;color:var(--muted);font-size:11px}
+.ns-stat-row{margin-bottom:13px;font-size:13px}.ns-stat-heading{display:flex;justify-content:space-between;gap:10px;margin-bottom:6px}
+.ns-stat-track{height:8px;background:var(--border);border-radius:10px;overflow:hidden}.ns-stat-fill{height:100%;background:var(--blue);border-radius:10px}
+.ns-weekly-card{margin-bottom:15px}.ns-week-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}
+.ns-week-day{border:1px solid var(--border);border-radius:12px;padding:10px 5px;background:var(--paper);text-align:center;min-height:98px;color:var(--ink)}
+.ns-week-day strong{display:block;font-size:16px;margin:5px 0}.ns-week-day small{font-size:10px;color:var(--muted)}
+.ns-week-day.today{border-color:var(--blue);background:#edf1ff}
+.ns-week-pips{display:flex;justify-content:center;gap:3px;flex-wrap:wrap;margin-top:8px}
+.ns-week-pips i{width:5px;height:5px;border-radius:50%;background:var(--blue)}
+@media(max-width:670px){.ns-plan-panels{grid-template-columns:1fr}.ns-week-grid{gap:3px}.ns-week-day{min-height:82px;padding:8px 2px;border-radius:9px}}
 </style></head><body>
 <div id="login" class="login">
  <form id="login-form" class="card login-card">
@@ -155,8 +170,16 @@
  <label class="field">Categoría<select id="ns-category-filter"><option value="all">Todas las categorías</option></select></label>
  <label class="field">Ordenar<select id="ns-task-sort"><option value="date">Por fecha</option><option value="priority">Por prioridad</option><option value="name">Por nombre</option></select></label>
 </div>
-<div id="ns-category-summary" class="ns-category-summary"></div><div id="tasks-list"></div></div></section>
-  <section class="view" id="view-calendar"><div class="grid"><div class="card"><div class="between"><button class="btn ghost" id="prev-month">‹</button><h2 id="month-title" style="margin:0"></h2><button class="btn ghost" id="next-month">›</button></div><div class="calendar-grid" id="calendar" style="margin-top:20px"></div></div><div class="card"><h2 id="selected-title">Actividades del día</h2><div id="day-tasks"></div><button class="btn secondary" data-open="task">+ Agregar</button></div></div></section>
+<div id="ns-category-summary" class="ns-category-summary"></div><div id="tasks-list"></div>
+<div class="ns-plan-panels">
+ <div class="ns-plan-panel"><div class="between"><h3>Mis plantillas</h3><button type="button" class="btn secondary" id="ns-template-create">Guardar plantilla</button></div>
+ <p class="hint">Reutiliza listas de pasos sin volver a escribirlas. Se guardan en tu cuenta de este dispositivo.</p><div id="ns-templates-list"></div></div>
+ <div class="ns-plan-panel"><h3>Progreso por categoría</h3><div id="ns-category-stats"></div></div>
+</div></div></section>
+  <section class="view" id="view-calendar">
+<div class="card ns-weekly-card"><div class="between"><h2>Agenda semanal</h2><div class="row"><button class="btn ghost" id="ns-week-prev" type="button">‹</button><button class="btn secondary" id="ns-week-today" type="button">Hoy</button><button class="btn ghost" id="ns-week-next" type="button">›</button></div></div>
+<p class="hint" id="ns-week-heading">Tus próximos siete días</p><div id="ns-week-grid" class="ns-week-grid"></div></div>
+<div class="grid"><div class="card"><div class="between"><button class="btn ghost" id="prev-month">‹</button><h2 id="month-title" style="margin:0"></h2><button class="btn ghost" id="next-month">›</button></div><div class="calendar-grid" id="calendar" style="margin-top:20px"></div></div><div class="card"><h2 id="selected-title">Actividades del día</h2><div id="day-tasks"></div><button class="btn secondary" data-open="task">+ Agregar</button></div></div></section>
   <section class="view" id="view-bags"><div class="card"><div class="between"><h2>Listas para salir</h2><button class="btn" data-open="bag">+ Nueva lista</button></div><p class="muted small">Prepara lo que llevarás al gimnasio, al trabajo, al estudio o a cualquier destino.</p><div id="bags-list"></div></div></section>
   <section class="view" id="view-alarms">
    <div class="card ns-wake-insights">
@@ -356,7 +379,7 @@ function nsRenderTaskOrganizer(tasks){
   var category=String(t.category||'Sin categoría');
   if(nsCategoryFilter!=='all'&&category.toLocaleLowerCase('es-CO')!==nsCategoryFilter)return false;
   if(!q)return true;
-  return [t.title,category,t.owner].concat(t.steps||[]).some(function(x){return String(x||'').toLocaleLowerCase('es-CO').includes(q)});
+  return [t.title,category,t.owner].concat(t.steps||[]).concat(t.tags||[]).some(function(x){return String(x||'').toLocaleLowerCase('es-CO').includes(q)});
  });
  var weight={high:0,normal:1,low:2};
  shown.sort(function(a,b){
@@ -370,6 +393,98 @@ function nsTaskOrganizerInit(){
  by('ns-task-search').oninput=function(){nsTaskQuery=this.value;render()};
  by('ns-category-filter').onchange=function(){nsCategoryFilter=this.value;render()};
  by('ns-task-sort').onchange=function(){nsTaskSort=this.value;render()};
+}
+
+
+/* Planificador mejorado: plantillas locales, progreso y agenda semanal. */
+var nsWeekOffset=0;
+function nsTags(value){
+ var seen=new Set();return String(value||'').split(',').map(function(x){return x.trim().replace(/\\s+/g,' ').slice(0,24)}).filter(function(x){
+  var k=x.toLocaleLowerCase('es-CO');if(!k||seen.has(k)||seen.size>=6)return false;seen.add(k);return true;
+ });
+}
+function nsTemplateKey(){return 'ns_task_templates_v1_'+(session?session.username:'guest')}
+function nsTemplateRead(){try{var x=JSON.parse(localStorage.getItem(nsTemplateKey()));return Array.isArray(x)?x:[]}catch(e){return []}}
+function nsTemplateWrite(items){localStorage.setItem(nsTemplateKey(),JSON.stringify(items.slice(-60)))}
+function nsTemplateMerge(imported){
+ var list=nsTemplateRead(),seen=new Set(list.map(function(x){return x.id}));
+ imported.slice(0,60).forEach(function(t){if(!t||typeof t.id!=='string'||typeof t.title!=='string'||seen.has(t.id))return;
+  seen.add(t.id);list.push({id:t.id,title:t.title.slice(0,100),category:nsCleanCategory(t.category),steps:Array.isArray(t.steps)?t.steps.slice(0,20).map(function(v){return String(v).slice(0,140)}):[],tags:nsTags((t.tags||[]).join(',')),priority:['low','normal','high'].includes(t.priority)?t.priority:'normal'});
+ });nsTemplateWrite(list)
+}
+async function nsTemplateCreate(){
+ var title=await nsPrompt('Nueva plantilla','Nombre que usarás para esta rutina.','',{placeholder:'Ej. Preparar salida al trabajo'});
+ if(!title||!title.trim())return;
+ var steps=await nsPrompt('Pasos de la plantilla','Escribe los pasos separados por punto y coma.','',{placeholder:'Llaves; Agua; Documento'});
+ if(steps===null)return;
+ var category=await nsPrompt('Categoría de plantilla','Puedes reutilizarla en cualquier fecha.','Personal',{placeholder:'Trabajo, Estudio…'});
+ if(category===null)return;
+ var list=nsTemplateRead();list.push({id:uid(),title:title.trim().slice(0,100),category:nsCleanCategory(category),steps:steps.split(';').map(function(x){return x.trim().slice(0,140)}).filter(Boolean).slice(0,20),tags:[],priority:'normal'});
+ nsTemplateWrite(list);nsPlanRender();say('Plantilla guardada');
+}
+function nsTemplateCreateTask(template){
+ if(!session||!model)return;
+ var task={id:uid(),title:template.title,owner:session.username,date:day(),time:'',repeat:'none',priority:template.priority||'normal',energy:'medium',category:template.category||'Personal',tags:Array.isArray(template.tags)?template.tags:[],steps:template.steps.slice(),doneDates:[],stepDates:{},updatedAt:stamp()};
+ model.tasks.push(task);save();render();say('Tarea creada desde tu plantilla');
+}
+function nsPlanRender(){
+ if(!session)return;
+ var list=by('ns-templates-list');list.replaceChildren();
+ var items=nsTemplateRead();
+ if(!items.length){var e=document.createElement('p');e.className='hint';e.textContent='Aún no tienes plantillas guardadas.';list.append(e)}
+ items.slice().reverse().forEach(function(t){
+  var row=document.createElement('div');row.className='ns-template-row';
+  var info=document.createElement('div'),name=document.createElement('strong'),count=document.createElement('small');
+  name.textContent=t.title;count.textContent=t.category+' · '+t.steps.length+' pasos';info.append(name,count);
+  var actions=document.createElement('div');actions.className='row';
+  var use=document.createElement('button');use.type='button';use.className='btn secondary';use.textContent='Usar';use.onclick=function(){nsTemplateCreateTask(t)};
+  var del=document.createElement('button');del.type='button';del.className='btn ghost';del.textContent='×';
+  del.setAttribute('aria-label','Eliminar plantilla');del.onclick=async function(){if(!await nsConfirm('Eliminar plantilla','No eliminará las tareas que ya creaste.','Eliminar'))return;nsTemplateWrite(nsTemplateRead().filter(function(x){return x.id!==t.id}));nsPlanRender()};
+  actions.append(use,del);row.append(info,actions);list.append(row);
+ });
+ var stats=by('ns-category-stats');stats.replaceChildren();var buckets=new Map();
+ allTasks().filter(function(t){return !t.inbox}).forEach(function(t){
+  var key=t.category||'Sin categoría',c=buckets.get(key)||{total:0,done:0};c.total++;if(taskDone(t))c.done++;buckets.set(key,c);
+ });
+ if(!buckets.size){var empty=document.createElement('p');empty.className='hint';empty.textContent='Agrega tareas para ver tu progreso.';stats.append(empty)}
+ Array.from(buckets).sort(function(a,b){return b[1].total-a[1].total}).slice(0,12).forEach(function(item){
+  var div=document.createElement('div');div.className='ns-stat-row';
+  var line=document.createElement('div');line.className='ns-stat-heading';var a=document.createElement('span'),b=document.createElement('strong');
+  a.textContent=item[0];b.textContent=item[1].done+' / '+item[1].total;line.append(a,b);
+  var track=document.createElement('div');track.className='ns-stat-track';var bar=document.createElement('div');bar.className='ns-stat-fill';
+  bar.style.width=(100*item[1].done/item[1].total)+'%';track.append(bar);div.append(line,track);stats.append(div)
+ });
+}
+function nsWeekRender(){
+ if(!session)return;
+ var today=new Date(),monday=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+ monday.setDate(monday.getDate()-((monday.getDay()+6)%7)+nsWeekOffset*7);
+ by('ns-week-heading').textContent='Semana del '+monday.toLocaleDateString('es-CO',{day:'numeric',month:'long',year:'numeric'});
+ var root=by('ns-week-grid');root.replaceChildren();
+ for(var i=0;i<7;i++){
+  var d=new Date(monday.getFullYear(),monday.getMonth(),monday.getDate()+i),date=day(d);
+  var tasks=allTasks().filter(function(t){return !t.inbox&&nsTaskDueOn(t,date)});
+  var b=document.createElement('button');b.type='button';b.className='ns-week-day'+(date===day()?' today':'');
+  var weekday=document.createElement('small');weekday.textContent=d.toLocaleDateString('es-CO',{weekday:'short'});
+  var number=document.createElement('strong');number.textContent=String(d.getDate());
+  var summary=document.createElement('small');summary.textContent=tasks.length+' tarea'+(tasks.length===1?'':'s');
+  var pips=document.createElement('div');pips.className='ns-week-pips';
+  tasks.slice(0,5).forEach(function(){pips.append(document.createElement('i'))});
+  b.append(weekday,number,summary,pips);b.onclick=function(){selected=new Date(d);renderCalendar()};
+  root.append(b);
+ }
+}
+function nsTaskDueOn(t,date){
+ if(!t.date||date<t.date)return false;
+ if(t.repeat==='daily')return true;
+ if(t.repeat==='weekly')return new Date(t.date+'T12:00').getDay()===new Date(date+'T12:00').getDay();
+ return t.date===date;
+}
+function nsPlanInit(){
+ by('ns-template-create').onclick=nsTemplateCreate;
+ by('ns-week-prev').onclick=function(){nsWeekOffset--;nsWeekRender()};
+ by('ns-week-next').onclick=function(){nsWeekOffset++;nsWeekRender()};
+ by('ns-week-today').onclick=function(){nsWeekOffset=0;selected=new Date();renderCalendar()};
 }
 
 function nsSleepKey(){return 'ns_sleep_private_v1_'+(session?session.username:'visitante')}
@@ -597,7 +712,7 @@ by('quick-capture-form').onsubmit=function(event){
    date:day(),repeat:'none',priority:'normal',energy:'low',steps:[],doneDates:[],updatedAt:stamp()});
  input.value='';save();render();say('Anotado. No tienes que hacerlo ahora.');
 };
-function taskItem(t){var yes=taskDone(t),el=document.createElement('div');el.className='task'+(yes?' done':'');var meta=esc(t.date)+(t.time?' · '+esc(t.time):'')+' · '+esc(t.owner||'Yo')+' · '+esc(t.category||'Sin categoría')+(t.repeat&&t.repeat!=='none'?' · '+(t.repeat==='daily'?'Diaria':'Semanal'):'');
+function taskItem(t){var yes=taskDone(t),el=document.createElement('div');el.className='task'+(yes?' done':'');var meta=esc(t.date)+(t.time?' · '+esc(t.time):'')+' · '+esc(t.owner||'Yo')+' · '+esc(t.category||'Sin categoría')+((t.tags||[]).length?' · #'+(t.tags||[]).map(esc).join(' #'):'')+(t.repeat&&t.repeat!=='none'?' · '+(t.repeat==='daily'?'Diaria':'Semanal'):'');
 el.innerHTML='<input type="checkbox" aria-label="Completar tarea" '+(yes?'checked':'')+'><div class="task-main"><div class="task-title">'+esc(t.title)+'</div><div class="task-meta">'+meta+'</div></div><button class="iconbtn edit-task" type="button" aria-label="Editar tarea" title="Editar">✎</button><button class="iconbtn delete-task" type="button" aria-label="Eliminar tarea" title="Eliminar">×</button>';
 el.querySelector('input').onchange=function(e){var k=t.repeat==='none'?t.date:day();t.doneDates=t.doneDates||[];if(e.target.checked){if(t.doneDates.indexOf(k)<0){t.doneDates.push(k);model.pet.food+=10;model.pet.xp+=10;say('¡Buen trabajo! +10 puntos para tu mascota 🐣')}}else{t.doneDates=t.doneDates.filter(function(v){return v!==k})}mark(t);save();render()};
 el.querySelector('.edit-task').onclick=function(){editTask(t)};
@@ -629,7 +744,7 @@ fill('home-tasks',actionable().slice(0,3),taskItem,'Tu día está al día. ¡Bie
 nsRenderTaskOrganizer(tasks);
 fill('home-alarms',active(model.alarms).filter(owned).slice(0,3),alarmItem,'No tienes alarmas próximas');
 fill('home-bags',active(model.packs).filter(owned).slice(0,2),miniBag,'Aún no tienes listas');
-renderFocus();renderInbox();refreshFocusClock();renderCalendar();renderBags();renderAlarms();if(session.role==='admin')renderUsers();
+renderFocus();renderInbox();refreshFocusClock();nsPlanRender();renderCalendar();renderBags();renderAlarms();if(session.role==='admin')renderUsers();
 }
 function miniBag(b){var e=document.createElement('div');e.className='list-row';e.innerHTML='<b>'+esc(b.place)+'</b><div class="task-meta">'+(b.items||[]).length+' cosas por llevar</div>';return e}
 function bagItem(b){var e=document.createElement('div');e.className='list-row';e.innerHTML='<div class="between"><b>🎒 '+esc(b.place)+'</b><button class="iconbtn" aria-label="Eliminar lista">×</button></div><div class="bag-checks"></div><button class="btn secondary" style="margin-top:8px">Reiniciar lista</button>';
@@ -644,7 +759,7 @@ var first=new Date(month.getFullYear(),month.getMonth(),1),offset=(first.getDay(
 for(var j=0;j<offset;j++){grid.append(document.createElement('span'))}
 for(var i=1;i<=last;i++){(function(n){var dt=new Date(month.getFullYear(),month.getMonth(),n),k=day(dt),b=document.createElement('button');b.className='day'+(k===day(selected)?' selected':'');b.textContent=n;if(allTasks().some(function(t){return !t.inbox&&t.date===k})){var dot=document.createElement('span');dot.className='dot';b.append(dot)}b.onclick=function(){selected=dt;renderCalendar()};grid.append(b)})(i)}
 by('selected-title').textContent=selected.toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
-fill('day-tasks',allTasks().filter(function(t){return !t.inbox&&t.date===day(selected)}),taskItem,'Sin tareas para esta fecha.')}
+fill('day-tasks',allTasks().filter(function(t){return !t.inbox&&t.date===day(selected)}),taskItem,'Sin tareas para esta fecha.');nsWeekRender()}
 function renderUsers(){
 var list=by('users-list');if(!list)return;
 if(!nat||!nat.getUsers){list.innerHTML='<p class="hint">Las cuentas familiares requieren instalar la APK Android y activar el celular principal.</p>';return}
@@ -661,7 +776,7 @@ if(kind==='alarm'&&nat&&nat.requestAlarmPermissions){
 }
 var head={task:'Nueva tarea / flujo',bag:'Nueva lista de salida',alarm:'Nueva alarma',user:'Crear cuenta familiar'};by('modal-title').textContent=head[kind];var body=by('modal-body'),users=(session.role==='admin'?getUsers():[]),who=session.role==='admin'?[['todos','Todos']].concat(users.map(function(u){return [u.username,u.username]})):[[session.username,session.username]];
 var html='<form id="popup-form" class="form-grid">';
-if(kind==='task')html+=field('Actividad','title')+field('Responsable','owner','select',who)+field('Fecha','date','date')+field('Hora','time','time')+field('Repetición','repeat','select',[['none','Una vez'],['daily','Diario'],['weekly','Semanal']])+field('Prioridad','priority','select',[['normal','Normal'],['high','Importante'],['low','Puede esperar']])+field('Energía necesaria','energy','select',[['low','Poca energía'],['medium','Media'],['high','Alta']])+'<label class="field wide">Categoría<input name="category" maxlength="36" list="ns-task-categories" placeholder="Ej. Trabajo, estudio, familia"><datalist id="ns-task-categories"><option value="Personal"><option value="Trabajo"><option value="Estudio"><option value="Hogar"><option value="Familia"><option value="Salud"></datalist></label>'+'<label class="field wide">Primeros pasos (separados por punto y coma)<textarea name="steps" placeholder="Preparar mochila; Revisar llaves; Salir"></textarea></label>';
+if(kind==='task')html+=field('Actividad','title')+field('Responsable','owner','select',who)+field('Fecha','date','date')+field('Hora','time','time')+field('Repetición','repeat','select',[['none','Una vez'],['daily','Diario'],['weekly','Semanal']])+field('Prioridad','priority','select',[['normal','Normal'],['high','Importante'],['low','Puede esperar']])+field('Energía necesaria','energy','select',[['low','Poca energía'],['medium','Media'],['high','Alta']])+'<label class="field wide">Categoría<input name="category" maxlength="36" list="ns-task-categories" placeholder="Ej. Trabajo, estudio, familia"><datalist id="ns-task-categories"><option value="Personal"><option value="Trabajo"><option value="Estudio"><option value="Hogar"><option value="Familia"><option value="Salud"></datalist></label>'+'<label class="field wide">Etiquetas (separadas por comas)<input name="tags" maxlength="180" placeholder="Importante, comprar, urgente"></label>'+'<label class="field wide">Primeros pasos (separados por punto y coma)<textarea name="steps" placeholder="Preparar mochila; Revisar llaves; Salir"></textarea></label>';
 if(kind==='bag')html+=field('Lugar o destino','place')+field('Responsable','owner','select',who)+'<label class="field wide">Objetos separados por punto y coma<textarea name="items" required placeholder="Agua; Toalla; Candado"></textarea></label>';
 if(kind==='alarm')html+=field('Nombre de la alarma','title')+field('Fecha','date','date')+field('Hora','time','time')+field('Desafío para detener','challenge','select',[['none','Sin desafío'],['math','Resolver 3 sumas'],['taps','Tocar 12 veces'],['memory','Recordar un código'],['typing','Escribir una frase'],['shake','Mover el teléfono 12 veces'],['math_hard','Matemáticas avanzadas'],['qr','Escanear QR físico'],['routine_focus','Rutina mental: sumas y escritura'],['routine_active','Rutina activa: memoria, movimiento y sumas']])+'<div id="qr-enroll" class="field wide hidden"><span>QR para desactivar esta alarma</span><input name="qrValue" type="hidden"><button class="btn secondary" id="qr-enroll-button" type="button">Escanear QR de referencia</button><p class="hint" id="qr-enroll-status">Elige un QR físico que tengas lejos de la cama. No se comparte con otras cuentas.</p></div><label class="field wide"><span class="row"><input type="checkbox" name="daily" style="width:20px"> Repetir todos los días</span></label>';
 if(kind==='user')html+=field('Usuario (sin espacios)','username')+field('Contraseña (mínimo 10 caracteres)','password','password');
@@ -681,7 +796,7 @@ form.onsubmit=function(ev){ev.preventDefault();var values=Object.fromEntries(new
 if(kind==='user'){if(!nat||!nat.createAccount){say('Crea cuentas desde el APK Android');return}try{var r=JSON.parse(nat.createAccount(values.username,values.password));if(!r.ok){say(r.error||'No se pudo crear la cuenta');return}say('Cuenta creada: '+values.username);renderUsers()}catch(e){say('Error creando usuario')}closeModal();return}
 if(kind==='task'){
  var title=(values.title||'').trim();if(!title)return;
- var task={id:uid(),title:title,owner:values.owner||session.username,date:values.date||day(),time:values.time||'',repeat:values.repeat||'none',priority:values.priority||'normal',energy:values.energy||'medium',category:nsCleanCategory(values.category),steps:(values.steps||'').split(';').map(function(s){return s.trim()}).filter(Boolean),doneDates:[],updatedAt:stamp()};
+ var task={id:uid(),title:title,owner:values.owner||session.username,date:values.date||day(),time:values.time||'',repeat:values.repeat||'none',priority:values.priority||'normal',energy:values.energy||'medium',category:nsCleanCategory(values.category),tags:nsTags(values.tags),steps:(values.steps||'').split(';').map(function(s){return s.trim()}).filter(Boolean),doneDates:[],updatedAt:stamp()};
  model.tasks.push(task);
  if(task.time){
   var reminder={id:'task_'+task.id,title:task.title,date:task.date,time:task.time,daily:task.repeat==='daily',repeat:task.repeat,owner:task.owner,updatedAt:stamp()};
@@ -710,6 +825,7 @@ function editTask(t){
  form.elements.priority.value=t.priority||'normal';
  form.elements.energy.value=t.energy||'medium';
  form.elements.category.value=t.category||'';
+ form.elements.tags.value=(t.tags||[]).join(', ');
  form.elements.steps.value=(t.steps||[]).join('; ');
  form.onsubmit=function(e){
   e.preventDefault();
@@ -720,7 +836,7 @@ function editTask(t){
   t.title=value.title.trim();
   t.owner=value.owner||session.username;t.date=value.date||day();
   t.time=value.time||'';t.repeat=value.repeat||'none';
-  t.priority=value.priority||'normal';t.energy=value.energy||'medium';t.category=nsCleanCategory(value.category);
+  t.priority=value.priority||'normal';t.energy=value.energy||'medium';t.category=nsCleanCategory(value.category);t.tags=nsTags(value.tags);
   t.steps=steps;if(changedSteps)t.stepDates={};
   mark(t);
   var linked=(model.alarms||[]).find(function(a){return a.id==='task_'+t.id});
@@ -883,12 +999,13 @@ window.neuroImportData=async function(raw){
     model[kind]=Array.from(items.values());
   }
   if(restored.pet&&typeof restored.pet==='object')model.pet=restored.pet;
+  if(Array.isArray(restored.templates))nsTemplateMerge(restored.templates);
   save();render();say('Respaldo importado correctamente');
  }catch(e){say('No se pudo importar este respaldo')}
 };
 by('backup-export').onclick=function(){
  if(!session||!model)return;
- var data=JSON.stringify({tasks:model.tasks,packs:model.packs,alarms:model.alarms,pet:model.pet});
+ var data=JSON.stringify({version:2,tasks:model.tasks,packs:model.packs,alarms:model.alarms,pet:model.pet,templates:nsTemplateRead()});
  if(nat&&nat.exportBackup)nat.exportBackup(data);
  else{
   var blob=new Blob([data],{type:'application/json'});
@@ -952,6 +1069,7 @@ by('jump-challenge').onclick=function(){show('alarms');say('Crea una alarma y el
 by('jump-progress').onclick=function(){show('habits')};
 nsFocusInit();
 nsTaskOrganizerInit();
+nsPlanInit();
 nsSleepInit();
 updateInstalledBuild();
 function logout(){if(nsFocusState)nsFocusSaveSession(false);nsLauncherFocusSync();syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
