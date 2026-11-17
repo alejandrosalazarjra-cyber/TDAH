@@ -315,19 +315,37 @@ public final class FocusLauncherActivity extends Activity {
     }).setNegativeButton("Cancelar",null).show();
   }
   private void openNotificationSettings(AppEntry app){
-    new AlertDialog.Builder(this).setTitle("Notificaciones de "+app.title)
-      .setMessage("Android controla las notificaciones de cada aplicación. Puedes silenciarlas o desactivarlas aquí sin conceder a NeuroSync acceso a mensajes privados.")
-      .setPositiveButton("Abrir ajustes",(d,w)->{
-        try{
-          Intent settings=new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
-          settings.putExtra(Settings.EXTRA_APP_PACKAGE,app.packageName);
-          startActivity(settings);
-        }catch(Exception error){
-          Intent details=new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-            android.net.Uri.parse("package:"+app.packageName));
-          launchIntent(details);
-        }
-      }).setNegativeButton("Cancelar",null).show();
+    // El usuario gestiona la interrupción desde los ajustes oficiales de Android.
+    openNotificationSettingsFor(app.packageName);
+  }
+  private void openNotificationSettingsFor(String pkg){
+    try{
+      Intent intent=new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
+      intent.putExtra(Settings.EXTRA_APP_PACKAGE,pkg);
+      startActivity(intent);
+    }catch(Exception error){
+      launchIntent(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+        android.net.Uri.parse("package:"+pkg)));
+    }
+  }
+  private void showNotificationControls(){
+    drawer=true;refreshApps();
+    LinearLayout view=vertical();pad(view,16,16);
+    view.addView(action("‹  Volver a ajustes",this::showSettings));view.addView(gap(20));
+    view.addView(text("Notificaciones",25,WHITE,true));view.addView(gap(10));
+    view.addView(text("Reduce interrupciones desde los controles oficiales de Android. NeuroSync no lee mensajes privados ni modifica los avisos sin tu autorización.",13,MUTED,false));
+    view.addView(gap(14));
+    view.addView(action("Notificaciones de NeuroSync",()->openNotificationSettingsFor(getPackageName())));
+    view.addView(gap(14));
+    HashSet<String> added=new HashSet<>();
+    ArrayList<AppEntry> ordered=new ArrayList<>(apps);
+    ordered.sort(Comparator.comparing(a->a.title.toLowerCase(Locale.getDefault())));
+    for(AppEntry app:ordered){
+      if(!added.add(app.packageName))continue;
+      view.addView(action("◌  "+app.title,()->openNotificationSettings(app)));
+      view.addView(gap(7));
+    }
+    showContent(view);
   }
   private void chooseAppLimit(AppEntry app){
     String[] labels={"Sin límite","10 minutos","20 minutos","30 minutos","45 minutos","60 minutos","90 minutos"};
@@ -521,12 +539,7 @@ public final class FocusLauncherActivity extends Activity {
     TextView explanation=text("La pausa se aplica únicamente a las aplicaciones que marques al abrirlas desde NeuroSync. No bloquea aplicaciones desde otros accesos.",12,MUTED,false);
     view.addView(explanation);view.addView(gap(22));
     view.addView(text("Bienestar digital",18,WHITE,true));view.addView(gap(10));
-    view.addView(action("Notificaciones de otras aplicaciones",()->{
-      new AlertDialog.Builder(this).setTitle("Notificaciones")
-        .setMessage("Abre la lista de aplicaciones, toca los tres puntos de una y elige Ajustar notificaciones. Android te deja silenciarlas sin permisos restringidos.")
-        .setPositiveButton("Ver aplicaciones",(d,w)->showDrawer())
-        .setNegativeButton("Cerrar",null).show();
-    }));
+    view.addView(action("Administrar notificaciones por aplicación",this::showNotificationControls));
     view.addView(gap(12));
     view.addView(action("Recordatorio diario: "+(dailyBudget==0?"desactivado":dailyBudget+" minutos"),this::chooseDailyBudget));
     view.addView(gap(12));
