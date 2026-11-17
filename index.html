@@ -1955,18 +1955,58 @@ var head={task:'Nueva tarea / flujo',bag:'Nueva lista de salida',alarm:'Nueva al
 var html='<form id="popup-form" class="form-grid">';
 if(kind==='task')html+=field('Actividad','title')+field('Responsable','owner','select',who)+field('Fecha','date','date')+field('Hora','time','time')+field('Repetición','repeat','select',[['none','Una vez'],['daily','Diario'],['weekly','Semanal'],['every2','Cada 2 días'],['every3','Cada 3 días']])+field('Prioridad','priority','select',[['normal','Normal'],['high','Importante'],['low','Puede esperar']])+field('Energía necesaria','energy','select',[['low','Poca energía'],['medium','Media'],['high','Alta']])+'<label class="field wide">Categoría<input name="category" maxlength="36" list="ns-task-categories" placeholder="Ej. Trabajo, estudio, familia"><datalist id="ns-task-categories"><option value="Personal"><option value="Trabajo"><option value="Estudio"><option value="Hogar"><option value="Familia"><option value="Salud"></datalist></label>'+'<label class="field wide">Etiquetas (separadas por comas)<input name="tags" maxlength="180" placeholder="Importante, comprar, urgente"></label>'+'<label class="field wide">Primeros pasos (separados por punto y coma)<textarea name="steps" placeholder="Preparar mochila; Revisar llaves; Salir"></textarea></label>';
 if(kind==='bag')html+=field('Lugar o destino','place')+field('Responsable','owner','select',who)+'<label class="field wide">Objetos separados por punto y coma<textarea name="items" required placeholder="Agua; Toalla; Candado"></textarea></label>';
-if(kind==='alarm')html+=field('Nombre de la alarma','title')+field('Fecha','date','date')+field('Hora','time','time')+field('Desafío para detener','challenge','select',[['none','Sin desafío'],['math','Resolver 3 sumas'],['taps','Tocar 12 veces'],['memory','Recordar un código'],['typing','Escribir una frase'],['shake','Mover el teléfono 12 veces'],['math_hard','Matemáticas avanzadas'],['qr','Escanear QR físico'],['routine_focus','Rutina mental: sumas y escritura'],['routine_active','Rutina activa: memoria, movimiento y sumas']])+'<div id="qr-enroll" class="field wide hidden"><span>QR para desactivar esta alarma</span><input name="qrValue" type="hidden"><button class="btn secondary" id="qr-enroll-button" type="button">Escanear QR de referencia</button><p class="hint" id="qr-enroll-status">Elige un QR físico que tengas lejos de la cama. No se comparte con otras cuentas.</p></div><label class="field wide"><span class="row"><input type="checkbox" name="daily" style="width:20px"> Repetir todos los días</span></label>';
+if(kind==='alarm')html+=
+ '<div class="ns-alarm-editor-top wide">'+
+ '<span>CONFIGURA TU DESPERTAR</span><strong>¿A qué hora?</strong></div>'+
+ '<label class="field ns-alarm-time-field">Hora<input aria-label="Hora de la alarma" name="time" type="time" required></label>'+
+ '<label class="field ns-alarm-date-field">Fecha inicial<input name="date" type="date" required></label>'+
+ '<label class="field wide">Nombre<input name="title" maxlength="90" required placeholder="Ej. Levantarme temprano"></label>'+
+ '<label class="field wide">Repetición<select name="repeat"><option value="none">Solo una vez</option><option value="daily">Todos los días</option><option value="weekly">Cada semana</option><option value="every2">Cada 2 días</option><option value="every3">Cada 3 días</option></select></label>'+
+ '<section class="ns-mission-editor wide" aria-label="Elegir misión de despertar"><h3>Misión para detener</h3>'+
+ '<input name="challenge" type="hidden" value="none"><button type="button" class="ns-mission-current" id="ns-mission-select">Sin misión <span>›</span></button>'+
+ '<div id="ns-mission-options" class="hidden" role="group" aria-label="Tipos de misión">'+
+ '<p class="ns-mission-category">Despierta tu mente</p>'+
+ '<button type="button" data-mission="math">＋ Matemáticas · 3 ejercicios</button>'+
+ '<button type="button" data-mission="math_hard">＋ Matemáticas avanzadas</button>'+
+ '<button type="button" data-mission="memory">◈ Recordar un código</button>'+
+ '<button type="button" data-mission="typing">✎ Escribir una frase</button>'+
+ '<p class="ns-mission-category">Despierta tu cuerpo</p>'+
+ '<button type="button" data-mission="taps">◎ Tocar la pantalla 12 veces</button>'+
+ '<button type="button" data-mission="shake">↝ Mover el teléfono 12 veces</button>'+
+ '<button type="button" data-mission="qr">▦ Escanear código QR</button>'+
+ '<p class="ns-mission-category">Rutinas combinadas</p>'+
+ '<button type="button" data-mission="routine_focus">✦ Sumas y escritura</button>'+
+ '<button type="button" data-mission="routine_active">✦ Memoria, movimiento y sumas</button>'+
+ '<p class="ns-mission-category">Sin desafío</p>'+
+ '<button type="button" data-mission="none">Sin misión · detener normalmente</button></div>'+
+ '<div id="qr-enroll" class="hidden"><input name="qrValue" type="hidden"><button type="button" class="btn secondary" id="qr-enroll-button">Registrar QR de referencia</button><p class="hint" id="qr-enroll-status">Necesitas un QR físico accesible; se verifica en este teléfono.</p></div></section>'+
+ '<div class="ns-alarm-editor-note wide"><strong>Sonido</strong><span>El tono del teléfono se configura en Ajustes de alarma.</span></div>'+
+ '<div class="ns-alarm-editor-note wide"><strong>Posponer</strong><span>5 minutos · comportamiento predeterminado de Android en NeuroSync</span></div>';
 if(kind==='user')html+=field('Usuario (sin espacios)','username')+field('Contraseña (mínimo 10 caracteres)','password','password');
 html+='<div class="wide row" style="justify-content:flex-end"><button type="button" id="cancel-popup" class="btn ghost">Cancelar</button><button class="btn" type="submit">Guardar</button></div></form>';body.innerHTML=html;by('modal').classList.remove('hidden');
 by('cancel-popup').onclick=closeModal;var form=by('popup-form');if(form.elements.date)form.elements.date.value=day();
 if(kind==='alarm'){
- var qrBlock=by('qr-enroll'),challengeSelect=form.elements.challenge;
- function qrShow(){qrBlock.classList.toggle('hidden',challengeSelect.value!=='qr')}
- challengeSelect.addEventListener('change',qrShow);qrShow();
+ var challengeSelect=form.elements.challenge,qrBlock=by('qr-enroll');
+ var missionLabels={none:'Sin misión',math:'Matemáticas · 3 ejercicios',math_hard:'Matemáticas avanzadas',
+ memory:'Recordar un código',typing:'Escribir una frase',taps:'Tocar 12 veces',shake:'Mover el teléfono',
+ qr:'Escanear QR',routine_focus:'Sumas y escritura',routine_active:'Rutina activa'};
+ function selectMission(value){
+  challengeSelect.value=value;
+  by('ns-mission-select').firstChild.textContent=(missionLabels[value]||'Sin misión')+' ';
+  qrBlock.classList.toggle('hidden',value!=='qr');
+  by('ns-mission-options').classList.add('hidden');
+ }
+ by('ns-mission-select').onclick=function(){by('ns-mission-options').classList.toggle('hidden')};
+ by('ns-mission-options').querySelectorAll('[data-mission]').forEach(function(button){
+  button.onclick=function(){selectMission(button.dataset.mission)}
+ });
+ selectMission('none');
  by('qr-enroll-button').onclick=function(){
   if(!nat||!nat.scanQrReference){say('El escáner QR requiere la APK Android');return}
   nat.scanQrReference();
  };
+ form.elements.time.value=new Date().toTimeString().slice(0,5);
+ form._selectMission=selectMission;
 }
 
 form.onsubmit=function(ev){ev.preventDefault();var values=Object.fromEntries(new FormData(form).entries());
@@ -1986,7 +2026,21 @@ if(kind==='task'){
  }
 }
 if(kind==='bag'){var items=(values.items||'').split(';').map(function(s){return s.trim()}).filter(Boolean);if(!items.length){say('Agrega algo para llevar');return}model.packs.push({id:uid(),place:(values.place||'').trim(),owner:values.owner||session.username,items:items,checked:{},updatedAt:stamp()})}
-if(kind==='alarm'){if(values.challenge==='qr'&&!values.qrValue){say('Escanea primero el QR físico de referencia');return}var d=values.date||day(),time=values.time||'08:00';if(!values.daily&&new Date(d+'T'+time+':00').getTime()<=Date.now()){say('Elige una hora futura para la alarma');return}var alarm={id:uid(),title:(values.title||'').trim()||'Recordatorio',date:d,time:time,daily:!!values.daily,challenge:values.challenge||'none',owner:session.username,updatedAt:stamp()};model.alarms.push(alarm);if(values.challenge==='qr'&&nat&&nat.setAlarmQrCode)nat.setAlarmQrCode(alarm.id,values.qrValue);scheduleAlarm(alarm)}
+if(kind==='alarm'){
+ if(values.challenge==='qr'&&!values.qrValue){say('Escanea primero el QR físico de referencia');return}
+ var d=values.date||day(),time=values.time||'08:00',repeat=values.repeat||'none';
+ if(repeat==='none'&&new Date(d+'T'+time+':00').getTime()<=Date.now()){
+  say('Elige una hora futura para la alarma');return
+ }
+ var alarm={id:uid(),title:(values.title||'').trim()||'Alarma',date:d,time:time,
+  repeat:repeat,daily:repeat==='daily',challenge:values.challenge||'none',
+  owner:session.username,enabled:true,updatedAt:stamp()};
+ if(nat&&(nat.scheduleAlarm||nat.scheduleAlarmRepeat)&&!scheduleAlarm(alarm)){
+  say('No se pudo programar en Android. Revisa la fecha y permisos.');return;
+ }
+ model.alarms.push(alarm);
+ if(values.challenge==='qr'&&nat&&nat.setAlarmQrCode)nat.setAlarmQrCode(alarm.id,values.qrValue);
+}
 save();closeModal();render();say('Guardado correctamente')};
 }
 function editTask(t){
