@@ -41,6 +41,15 @@
 .ns-sleep-entry small{display:block;color:var(--muted,#73809a);margin-top:4px}
 
 .ns-wake-insights{margin-bottom:15px}.ns-wake-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0}.ns-wake-grid>div{border:1px solid var(--border,#e5eaf3);background:var(--bg,#f6f8fc);border-radius:13px;padding:15px 7px;text-align:center}.ns-wake-grid strong{font-size:25px;display:block;font-variant-numeric:tabular-nums}.ns-wake-grid span{font-size:11px;color:var(--muted,#6a7893)}.ns-wake-list{display:grid;gap:7px}.ns-wake-event{border-bottom:1px solid var(--border,#e5eaf3);padding:8px 0;display:flex;justify-content:space-between;gap:12px;font-size:13px}.ns-wake-event time{color:var(--muted,#66758a);font-size:11px}
+
+.ns-health-summary{margin-bottom:17px}.ns-health-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:15px 0 20px}
+.ns-health-grid>div{border:1px solid var(--border,#e5eaf3);border-radius:13px;padding:13px 7px;background:var(--bg,#f6f8fc);text-align:center}
+.ns-health-grid strong{display:block;font-size:clamp(17px,4vw,25px);font-variant-numeric:tabular-nums}.ns-health-grid span{font-size:11px;color:var(--muted,#66758d)}
+.ns-health-chart{height:158px;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;align-items:end;margin-top:14px}
+.ns-health-column{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:end;gap:5px}
+.ns-health-bar-shell{width:100%;max-width:40px;height:116px;background:var(--bg,#f2f5fd);border-radius:8px;display:flex;align-items:flex-end;overflow:hidden}
+.ns-health-bar{width:100%;min-height:2px;background:var(--blue,#4258db);border-radius:8px 8px 0 0}
+.ns-health-column small{color:var(--muted,#69788f);font-size:10px}
 </style></head><body>
 <div id="login" class="login">
  <form id="login-form" class="card login-card">
@@ -151,6 +160,18 @@
 <button type="button" class="btn ghost" id="alarm-clock-music">Abrir Reloj de Google</button></div>
 </div><p class="hint" style="margin-top:10px">Para usar canciones de YouTube Music, configura una alarma en Reloj de Google. Las alarmas propias de NeuroSync tienen desafíos y tonos locales, pero no pueden reproducir directamente YouTube Music.</p><div id="alarms-list"></div></div></section>
   <section class="view" id="view-habits">
+   <div class="card ns-health-summary">
+    <div class="between"><h2>Mi panorama semanal</h2><span class="chip">Solo en mi cuenta</span></div>
+    <p class="hint">Concentración, sueño y alarmas de los últimos siete días. Los registros de descanso y concentración se conservan en este dispositivo y no se comparten con tu familia.</p>
+    <div class="ns-health-grid">
+     <div><strong id="ns-health-focus">—</strong><span>Concentración · 7 días</span></div>
+     <div><strong id="ns-health-sleep">—</strong><span>Sueño promedio</span></div>
+     <div><strong id="ns-health-alarms">—</strong><span>Alarmas detenidas</span></div>
+    </div>
+    <h3>Minutos de concentración por día</h3>
+    <div id="ns-health-chart" class="ns-health-chart" aria-label="Gráfico semanal de concentración"></div>
+    <p id="ns-health-note" class="hint">El gráfico se actualiza con tus sesiones guardadas.</p>
+   </div>
    <div class="card ns-sleep-diary">
      <div class="between"><h2>Mi diario del sueño</h2><span class="chip">Privado</span></div>
      <p class="hint">Registra tu descanso de forma voluntaria. No se comparte con tu familia y no sustituye una evaluación médica.</p>
@@ -239,6 +260,49 @@ function nsLauncherFocusSync(){
  }catch(e){}
 }
 
+
+function nsHealthRender(){
+ if(!session)return;
+ var focus=nsFocusRead().sessions,sleep=nsSleepRecords(),labels=[],minutes=[],today=new Date();
+ for(var i=6;i>=0;i--){
+  var d=new Date(today.getFullYear(),today.getMonth(),today.getDate()-i);
+  var k=day(d),sum=focus.filter(function(x){return x.day===k}).reduce(function(n,x){return n+Math.max(0,Number(x.ms)||0)},0);
+  labels.push(d.toLocaleDateString('es-CO',{weekday:'short'}));minutes.push(Math.round(sum/60000));
+ }
+ var total=minutes.reduce(function(a,b){return a+b},0),max=Math.max(1,...minutes),since=day(new Date(today.getFullYear(),today.getMonth(),today.getDate()-6));
+ var recent=sleep.filter(function(x){return x.date>=since&&x.date<=day()&&Number.isFinite(x.minutes)});
+ var avg=recent.length?recent.reduce(function(a,x){return a+x.minutes},0)/recent.length/60:null;
+ by('ns-health-focus').textContent=total+' min';by('ns-health-sleep').textContent=avg==null?'—':avg.toFixed(1)+' h';
+ var alarms=[];try{if(nat&&nat.alarmEventHistory)alarms=JSON.parse(nat.alarmEventHistory())}catch(e){}
+ if(!Array.isArray(alarms))alarms=[];
+ var ids=new Set((model.alarms||[]).filter(function(a){return a.owner===session.username||a.owner==='todos'}).map(function(a){return String(a.id)}));
+ var done=alarms.filter(function(x){return x.action==='dismiss'&&Number(x.at)>Date.now()-7*86400000&&ids.has(String(x.id))}).length;
+ by('ns-health-alarms').textContent=nat&&nat.alarmEventHistory?String(done):'—';
+ var root=by('ns-health-chart');root.replaceChildren();
+ minutes.forEach(function(v,i){
+  var col=document.createElement('div');col.className='ns-health-column';
+  var shell=document.createElement('div');shell.className='ns-health-bar-shell';
+  var bar=document.createElement('div');bar.className='ns-health-bar';bar.style.height=(v?Math.max(3,100*v/max):0)+'%';
+  bar.title=v+' minutos de concentración';shell.append(bar);
+  var label=document.createElement('small');label.textContent=labels[i];col.append(shell,label);root.append(col)
+ });
+ by('ns-health-note').textContent=total?'Total de la semana: '+total+' minutos registrados.':'Todavía no hay sesiones registradas durante estos siete días.';
+}
+function nsWidgetAlarmSummary(){
+ if(!session||!nat||!nat.updateWidgetNextAlarm)return;
+ var next=null,now=new Date();
+ (model.alarms||[]).filter(function(a){return !a.deleted&&(a.owner===session.username||a.owner==='todos')&&a.date&&a.time}).forEach(function(a){
+  var t=new Date(a.date+'T'+a.time+':00');if(!Number.isFinite(t.getTime()))return;
+  var rep=a.repeat||(a.daily?'daily':'none');
+  if(rep==='daily'){while(t<=now)t.setDate(t.getDate()+1)}
+  else if(rep==='weekly'){while(t<=now)t.setDate(t.getDate()+7)}
+  if(t<=now)return;
+  if(!next||t<next)next=t;
+ });
+ var label=next?next.toLocaleDateString('es-CO',{day:'2-digit',month:'short'})+' '+next.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}):'';
+ try{nat.updateWidgetNextAlarm(label)}catch(e){}
+}
+
 function nsSleepKey(){return 'ns_sleep_private_v1_'+(session?session.username:'visitante')}
 function nsSleepRecords(){if(!session)return [];try{var x=JSON.parse(localStorage.getItem(nsSleepKey()));return Array.isArray(x)?x:[]}catch(e){return []}}
 function nsSleepMinutes(bed,wake){
@@ -266,7 +330,7 @@ function nsSleepRender(){
   desc.append(title,meta);var remove=document.createElement('button');remove.type='button';remove.className='btn ghost';remove.textContent='Eliminar';
   remove.onclick=async function(){if(!await nsConfirm('Eliminar descanso','Se eliminará este registro privado.','Eliminar'))return;
    var rows=nsSleepRecords().filter(function(v){return v.date!==item.date});
-   localStorage.setItem(nsSleepKey(),JSON.stringify(rows));nsSleepRender()};
+   localStorage.setItem(nsSleepKey(),JSON.stringify(rows));nsSleepRender();nsHealthRender()};
   row.append(desc,remove);list.append(row)
  });
 }
@@ -278,7 +342,7 @@ function nsSleepInit(){
   if(!date||date>day()||!mins){say('Revisa la fecha y las horas de descanso');return}
   var item={date:date,bed:bed,wake:wake,minutes:mins,quality:Number(by('ns-sleep-quality').value),note:by('ns-sleep-note').value.trim()};
   var rows=nsSleepRecords().filter(function(x){return x.date!==date});rows.push(item);rows.sort(function(a,b){return a.date.localeCompare(b.date)});
-  localStorage.setItem(nsSleepKey(),JSON.stringify(rows.slice(-365)));by('ns-sleep-note').value='';nsSleepRender();say('Descanso guardado en este teléfono')
+  localStorage.setItem(nsSleepKey(),JSON.stringify(rows.slice(-365)));by('ns-sleep-note').value='';nsSleepRender();nsHealthRender();say('Descanso guardado en este teléfono')
  }
 }
 
@@ -324,7 +388,7 @@ function nsFocusSaveSession(completed){
   var data=nsFocusRead();data.sessions.push({at:Date.now(),day:day(),ms:elapsed,completed:!!completed,taskId:nsFocusState.taskId||''});
   data.sessions=data.sessions.slice(-500);nsFocusWrite(data);
  }
- nsFocusState=null;nsFocusPersist();nsFocusStats();nsFocusRender();
+ nsFocusState=null;nsFocusPersist();nsFocusStats();nsFocusRender();nsHealthRender();
 }
 function nsFocusPulse(){if(!nsFocusState)return;if(nsFocusElapsed()>=nsFocusState.duration*60000){nsFocusSaveSession(true);say('¡Sesión completada! Tu avance quedó registrado.')}else nsFocusRender()}
 function nsFocusInit(){
@@ -486,6 +550,7 @@ if(!session)return;nsFocusTasks();nsFocusStats();
 var tasks=allTasks(),current=tasks.filter(todayTask),completed=current.filter(taskDone).length;
 by('stat-today').textContent=completed;by('stat-pending').textContent=tasks.filter(function(t){return !t.inbox&&!taskDone(t)}).length;by('stat-food').textContent=model.pet.food;
 if(nat&&nat.updateWidget){try{nat.updateWidget(tasks.filter(function(t){return !t.inbox&&!taskDone(t)}).length)}catch(e){}}
+nsWidgetAlarmSummary();
 var phases=['🥚','🐣','🐥','🦊','🐉'];var p=Math.min(4,Math.floor((model.pet.xp||0)/70));
 by('pet-face').textContent=phases[p];by('pet-level').textContent='Nivel '+(p+1);by('pet-headline').textContent=p===0?'Cada paso te hace crecer.':p>=3?'¡Mira cuánto has crecido!':'Tu compañero está evolucionando.';
 by('pet-detail').textContent='Tienes '+model.pet.food+' puntos. Completa tus tareas y aliméntalo para evolucionar.';
@@ -516,7 +581,7 @@ var list=by('users-list');if(!list)return;
 if(!nat||!nat.getUsers){list.innerHTML='<p class="hint">Las cuentas familiares requieren instalar la APK Android y activar el celular principal.</p>';return}
 try{var data=JSON.parse(nat.getUsers());if(!data.ok){list.textContent=data.error||'No disponible';return}
 list.replaceChildren();data.users.forEach(function(u){var d=document.createElement('div');d.className='profile-line';d.innerHTML='<span><b>'+esc(u.username)+'</b><br><small class="muted">'+(u.role==='admin'?'Administrador':'Miembro')+'</small></span><span class="chip">'+(u.active?'Activo':'Inactivo')+'</span>';list.append(d)})}catch(e){list.textContent='No se pudo obtener la lista de miembros'}}
-function show(view){if(view==='admin'&&session.role!=='admin')return;document.querySelectorAll('.view').forEach(function(v){v.classList.toggle('active',v.id==='view-'+view)});document.querySelectorAll('[data-view]').forEach(function(b){b.classList.toggle('active',b.dataset.view===view)});by('page-title').textContent=labels[view];render();if(view==='habits')renderStreak();if(view==='alarms')nsWakeRender()}
+function show(view){if(view==='admin'&&session.role!=='admin')return;document.querySelectorAll('.view').forEach(function(v){v.classList.toggle('active',v.id==='view-'+view)});document.querySelectorAll('[data-view]').forEach(function(b){b.classList.toggle('active',b.dataset.view===view)});by('page-title').textContent=labels[view];render();if(view==='habits'){renderStreak();nsHealthRender()}if(view==='alarms')nsWakeRender()}
 document.querySelectorAll('[data-view]').forEach(function(b){b.addEventListener('click',function(){show(b.dataset.view)})});
 by('prev-month').onclick=function(){month=new Date(month.getFullYear(),month.getMonth()-1,1);renderCalendar()};by('next-month').onclick=function(){month=new Date(month.getFullYear(),month.getMonth()+1,1);renderCalendar()};
 document.querySelectorAll('[data-filter]').forEach(function(b){b.onclick=function(){filter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(function(x){x.classList.toggle('active',x===b)});render()}});
