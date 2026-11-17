@@ -8,7 +8,7 @@
 @media(max-width:670px){.sidebar{display:none}.main{margin:0;padding:18px 13px 96px}.nav-mobile{display:flex;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);padding:7px 7px calc(7px + env(safe-area-inset-bottom));z-index:9;justify-content:space-around;gap:4px}.nav-mobile button{border:0;background:transparent;color:#7c8ba4;font-size:10px;font-weight:650;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;flex:1;padding:6px 0}.nav-mobile button span{font-size:21px}.nav-mobile button.active{color:var(--blue)}.grid{grid-template-columns:minmax(0,1fr)}.hero{min-height:160px}.hero h2{font-size:20px}.pet{font-size:76px}.stats{gap:8px}.stat{padding:11px}.stat strong{font-size:22px}.top{margin-bottom:18px}.top h1{font-size:23px}.top-right .sync-state{display:none}.card{padding:15px}.form-grid{gap:10px}.calendar-grid{gap:3px}.day{min-height:56px;padding:7px 3px;font-size:12px;border-radius:8px}}
 @media(max-width:370px){.form-grid{grid-template-columns:1fr}.day{min-height:48px}.hero p{font-size:11px}.hero h2{font-size:18px}.pet{font-size:60px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
-</style></head><body>
+.ns-overlay{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:16px;background:#14203c99;backdrop-filter:blur(4px)}.ns-box{font-family:Inter,system-ui,sans-serif;background:var(--paper,#fff);color:var(--ink,#18243b);width:min(430px,100%);padding:24px;border-radius:24px;border:1px solid var(--border,#dde4ef);box-shadow:0 20px 65px #0a193c33}.ns-box h2{font-size:20px;margin:0 0 12px;font-family:inherit}.ns-box p{color:var(--muted,#697891);font-size:14px;line-height:1.6;margin:0 0 16px;font-family:inherit}.ns-box input{font:16px Inter,system-ui!important;min-height:48px;background:var(--paper,#fff);color:var(--ink,#18243b)}.ns-buttons{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}.ns-buttons button{min-height:44px;border-radius:12px;padding:11px 15px;font:600 14px Inter,system-ui}.ns-buttons button:first-child{background:transparent;border:1px solid var(--border,#dde4ef);color:var(--ink,#18243b)}.ns-buttons button:last-child{background:var(--blue,#4258db);color:white;border:1px solid var(--blue,#4258db)}</style></head><body>
 <div id="login" class="login">
  <form id="login-form" class="card login-card">
   <span class="logo">🪷</span><h1>Bienvenido a NeuroSync</h1><p class="muted">Tu espacio para organizar la vida en familia</p>
@@ -129,6 +129,18 @@ var stamp=function(){return Date.now()}, uid=function(){return String(Date.now()
 var day=function(d){var x=d||new Date();return x.getFullYear()+'-'+('0'+(x.getMonth()+1)).slice(-2)+'-'+('0'+x.getDate()).slice(-2)};
 var blank=function(){return {tasks:[],packs:[],alarms:[],pet:{xp:0,food:0,feeds:0}}};
 function say(msg){var e=by('notice');e.textContent=msg;e.classList.remove('hidden');clearTimeout(say.timer);say.timer=setTimeout(function(){e.classList.add('hidden')},3400)}
+function nsDialog(o){return new Promise(function(resolve){
+ var previous=document.activeElement,shade=document.createElement('div'),box=document.createElement('section'),h=document.createElement('h2'),p=document.createElement('p');
+ shade.className='ns-overlay';box.className='ns-box';box.setAttribute('role','dialog');box.setAttribute('aria-modal','true');h.id='ns-dialog-heading';h.textContent=o.title||'Confirmar';box.setAttribute('aria-labelledby',h.id);p.textContent=o.message||'';box.append(h,p);
+ var input,error;if(o.input){input=document.createElement('input');input.type=o.type||'text';input.value=o.value||'';input.setAttribute('aria-label',h.textContent);if(o.max)input.max=o.max;if(o.placeholder)input.placeholder=o.placeholder;box.append(input);error=document.createElement('p');error.setAttribute('role','alert');error.style.cssText='display:none;color:#bd3547;margin:6px 0';box.append(error)}
+ var actions=document.createElement('div'),cancel=document.createElement('button'),ok=document.createElement('button');actions.className='ns-buttons';cancel.textContent='Cancelar';ok.textContent=o.ok||'Aceptar';cancel.type=ok.type='button';actions.append(cancel,ok);box.append(actions);shade.append(box);document.body.append(shade);
+ function done(val){document.removeEventListener('keydown',keys,true);shade.remove();if(previous&&previous.focus)previous.focus();resolve(val)}
+ function submit(){if(!input){done(true);return}var val=input.value.trim();if(!val||(o.type==='date'&&((o.max&&val>o.max)||!/^\\d{4}-\\d{2}-\\d{2}$/.test(val)))){error.textContent='Introduce un valor válido';error.style.display='block';input.focus();return}done(val)}
+ function keys(e){if(e.key==='Escape'){e.preventDefault();done(null)}else if(e.key==='Tab'){var n=[input,cancel,ok].filter(Boolean);if(e.shiftKey&&document.activeElement===n[0]){e.preventDefault();n[n.length-1].focus()}else if(!e.shiftKey&&document.activeElement===n[n.length-1]){e.preventDefault();n[0].focus()}}else if(e.key==='Enter'&&document.activeElement!==cancel){e.preventDefault();submit()}}
+ cancel.onclick=function(){done(null)};ok.onclick=submit;shade.onclick=function(e){if(e.target===shade)done(null)};document.addEventListener('keydown',keys,true);(input||ok).focus()
+})}
+function nsConfirm(title,message,ok){return nsDialog({title:title,message:message,ok:ok||'Confirmar'})}
+function nsPrompt(title,value,extra){return nsDialog(Object.assign({title:title,value:value||'',input:true,ok:'Guardar'},extra||{}))}
 function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function load(){
 try{var saved=JSON.parse(localStorage.getItem(localKey()));if(saved&&Array.isArray(saved.tasks)&&Array.isArray(saved.packs)&&Array.isArray(saved.alarms))return saved;}catch(e){}
@@ -244,7 +256,7 @@ function taskItem(t){var yes=taskDone(t),el=document.createElement('div');el.cla
 el.innerHTML='<input type="checkbox" aria-label="Completar tarea" '+(yes?'checked':'')+'><div class="task-main"><div class="task-title">'+esc(t.title)+'</div><div class="task-meta">'+meta+'</div></div><button class="iconbtn edit-task" type="button" aria-label="Editar tarea" title="Editar">✎</button><button class="iconbtn delete-task" type="button" aria-label="Eliminar tarea" title="Eliminar">×</button>';
 el.querySelector('input').onchange=function(e){var k=t.repeat==='none'?t.date:day();t.doneDates=t.doneDates||[];if(e.target.checked){if(t.doneDates.indexOf(k)<0){t.doneDates.push(k);model.pet.food+=10;model.pet.xp+=10;say('¡Buen trabajo! +10 puntos para tu mascota 🐣')}}else{t.doneDates=t.doneDates.filter(function(v){return v!==k})}mark(t);save();render()};
 el.querySelector('.edit-task').onclick=function(){editTask(t)};
-el.querySelector('.delete-task').onclick=function(){if(session.role!=='admin'&&t.owner==='todos'){say('Una tarea compartida solo puede eliminarla el administrador');return}if(confirm('¿Eliminar esta tarea?')){t.deleted=true;mark(t);save();render()}};
+el.querySelector('.delete-task').onclick=function(){if(session.role!=='admin'&&t.owner==='todos'){say('Una tarea compartida solo puede eliminarla el administrador');return}nsConfirm('Eliminar tarea','Se eliminará esta tarea.','Eliminar').then(function(ok){if(ok){t.deleted=true;mark(t);save();render()}})};
 if((t.steps||[]).length){
 var steps=document.createElement('div');steps.style.cssText='width:100%;padding:7px 0 0 30px;display:grid;gap:4px';
 (t.steps||[]).forEach(function(label,i){
@@ -275,7 +287,7 @@ renderFocus();renderInbox();refreshFocusClock();renderCalendar();renderBags();re
 }
 function miniBag(b){var e=document.createElement('div');e.className='list-row';e.innerHTML='<b>'+esc(b.place)+'</b><div class="task-meta">'+(b.items||[]).length+' cosas por llevar</div>';return e}
 function bagItem(b){var e=document.createElement('div');e.className='list-row';e.innerHTML='<div class="between"><b>🎒 '+esc(b.place)+'</b><button class="iconbtn" aria-label="Eliminar lista">×</button></div><div class="bag-checks"></div><button class="btn secondary" style="margin-top:8px">Reiniciar lista</button>';
-e.querySelector('.iconbtn').onclick=function(){if(confirm('¿Eliminar lista?')){b.deleted=true;mark(b);save();render()}};
+e.querySelector('.iconbtn').onclick=function(){nsConfirm('Eliminar lista','Se eliminará esta lista.','Eliminar').then(function(ok){if(ok){b.deleted=true;mark(b);save();render()}})};
 var c=e.querySelector('.bag-checks');(b.items||[]).forEach(function(it,i){var l=document.createElement('label');l.className='check';var input=document.createElement('input');input.type='checkbox';input.checked=!!(b.checked||{})[i];input.onchange=function(){b.checked=b.checked||{};b.checked[i]=input.checked;mark(b);save()};l.append(input,document.createTextNode(it));c.append(l)});
 e.querySelector('.btn').onclick=function(){b.checked={};mark(b);save();render()};return e}
 function renderBags(){fill('bags-list',active(model.packs).filter(owned),bagItem,'Crea una lista para tu próxima salida.')}
@@ -464,36 +476,36 @@ if(nat&&nat.login){try{var res=JSON.parse(nat.login(username,password));if(!res.
 if(username==='administrador'&&password==='admin1234'){enter({username:username,role:'admin'});say('Modo web de demostración: sin cuentas seguras ni sincronización');return}
 by('login-error').textContent='En web solo está disponible la demostración. Las cuentas familiares requieren la APK.'};
 by('setup-host').onclick=function(){if(nat&&nat.configureHost){try{var r=JSON.parse(nat.configureHost());say(r.message||'Configuración guardada')}catch(e){say('No se pudo activar el teléfono principal')}}else say('La configuración del servidor solo funciona en la APK Android')};
-by('setup-client').onclick=function(){
+by('setup-client').onclick=async function(){
  if(!nat||!nat.configureCloud){say('La sincronización por internet requiere la APK Android');return}
- var url=prompt('Pega la dirección HTTPS del servidor familiar en internet (Cloudflare Workers). No necesitas instalar VPN.');
+ var url=await nsPrompt('Servidor familiar HTTPS','',{type:'url',placeholder:'https://servidor.ejemplo.com'});
  if(!url)return;
  try{var response=JSON.parse(nat.configureCloud(url));say(response.message||response.error||'No se pudo conectar')}
  catch(e){say('Dirección no válida')}
 };
-by('setup-lan').onclick=function(){
+by('setup-lan').onclick=async function(){
  if(!nat||!nat.configureRemote){say('Opción disponible solo en Android');return}
- var host=prompt('IP privada de la red local o VPN');
+ var host=await nsPrompt('Servidor de red local','',{placeholder:'192.168.1.10'});
  if(!host)return;
  try{var result=JSON.parse(nat.configureRemote(host));say(result.message||result.error||'Error')}
  catch(e){say('No se pudo configurar la conexión')}
 };
-by('configure-network').onclick=function(){
+by('configure-network').onclick=async function(){
  if(!nat){say('Configura el servidor desde la APK Android');return}
- var choice=confirm('¿Quieres conectar esta cuenta al servidor por internet? Aceptar: internet. Cancelar: conservar configuración actual.');
+ var choice=await nsConfirm('Sincronización por internet','Cancelar conserva la configuración anterior.','Continuar');
  if(!choice)return;
- var url=prompt('Dirección HTTPS del servidor familiar (Cloudflare Workers)');
+ var url=await nsPrompt('Dirección HTTPS del servidor','',{type:'url'});
  if(!url)return;
  try{var result=JSON.parse(nat.configureCloud(url));say(result.message||result.error||'Sin cambios')}
  catch(e){say('No se pudo configurar el servidor')}
 };
 by('password-form').onsubmit=function(e){e.preventDefault();if(!nat||!nat.changePassword){say('Cambia contraseñas desde el APK Android');return}try{var r=JSON.parse(nat.changePassword(by('current-pass').value,by('new-pass').value));say(r.ok?'Contraseña actualizada. Inicia sesión de nuevo.':(r.error||'Error'));if(r.ok){by('password-form').reset();setTimeout(logout,1100)}}catch(err){say('No se pudo cambiar la contraseña')}};
 window.neuroBackupMessage=function(message){say(message)};
-window.neuroImportData=function(raw){
+window.neuroImportData=async function(raw){
  try{
   var restored=JSON.parse(raw);
   if(!Array.isArray(restored.tasks)||!Array.isArray(restored.packs)||!Array.isArray(restored.alarms))throw Error('Formato inválido');
-  if(!confirm('¿Importar este respaldo en la cuenta '+session.username+'? Se combinarán las actividades con las actuales.'))return;
+  if(!await nsConfirm('Importar respaldo','Se combinarán actividades con las actuales de '+session.username+'.','Importar'))return;
   for(var kind of ['tasks','packs','alarms']){
     var items=new Map((model[kind]||[]).map(function(row){return [row.id,row]}));
     restored[kind].slice(0,2000).forEach(function(row){
@@ -544,17 +556,17 @@ function renderStreak(){
   line.textContent='Del '+entry.from+' al '+entry.to;history.append(line);
  });
 }
-by('streak-start').onclick=function(){
+by('streak-start').onclick=async function(){
  if(!session)return;
- var data=readStreak(),date=prompt('Fecha desde la que deseas contar (AAAA-MM-DD)',data.started);
+ var data=readStreak(),date=await nsPrompt('Fecha de inicio',data.started,{type:'date',max:day(),message:'Elige desde qué día quieres contar.'});
  if(!date)return;
  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(new Date(date+'T12:00:00').getTime())||date>day()){say('Elige una fecha válida, no futura');return}
- if(!confirm('¿Guardar esta fecha de inicio en tu contador privado?'))return;
+ if(!await nsConfirm('Guardar fecha','La fecha seguirá siendo privada.','Guardar'))return;
  data.started=date;localStorage.setItem(streakKey(),JSON.stringify(data));renderStreak();
 };
-by('streak-reset').onclick=function(){
+by('streak-reset').onclick=async function(){
  if(!session)return;
- if(!confirm('¿Comenzar a contar desde hoy? Se conservará el historial y no se compartirá con otras cuentas.'))return;
+ if(!await nsConfirm('Nuevo comienzo','Se conservará el historial y permanecerá privado.','Reiniciar'))return;
  var data=readStreak();
  if(data.started!==day())data.history.push({from:data.started,to:day()});
  data.started=day();localStorage.setItem(streakKey(),JSON.stringify(data));
@@ -574,7 +586,7 @@ by('jump-challenge').onclick=function(){show('alarms');say('Crea una alarma y el
 by('jump-progress').onclick=function(){show('habits')};
 updateInstalledBuild();
 function logout(){syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
-by('logout').onclick=logout;by('avatar').onclick=function(){if(confirm('¿Cerrar sesión de esta cuenta?'))logout()};
+by('logout').onclick=logout;by('avatar').onclick=async function(){if(await nsConfirm('Cerrar sesión','¿Quieres cerrar esta sesión?','Cerrar sesión'))logout()};
 document.addEventListener('visibilitychange',function(){if(!document.hidden){sync();refreshFocusClock()}});setInterval(sync,60000);
 if(nat&&nat.restoreSession){
  try{
