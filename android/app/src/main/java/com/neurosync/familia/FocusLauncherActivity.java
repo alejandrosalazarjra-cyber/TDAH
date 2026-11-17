@@ -375,10 +375,9 @@ public final class FocusLauncherActivity extends Activity {
   private void openEntry(AppEntry app){
     int limit=preferences.getInt("app_limit_"+app.packageName,0);
     if(limit>0&&!hasUsagePermission()){
-      new AlertDialog.Builder(this).setTitle("Permiso para contar minutos")
-        .setMessage("El objetivo de "+limit+" minutos para "+app.title+" necesita el acceso voluntario a estadísticas de uso de Android. Sin ese permiso no se puede medir el tiempo.")
-        .setPositiveButton("Configurar permiso",(d,w)->requestUsageAccess())
-        .setNegativeButton("Abrir sin contar",(d,w)->openWithFocus(app)).show();
+      // Un permiso especial denegado nunca debe impedir abrir una app.
+      // No insistir con Ajustes ni mostrar el mismo aviso en cada lanzamiento.
+      openWithFocus(app);
       return;
     }
     long minutes=limit>0?appUsageMinutes(app.packageName):-1;
@@ -445,7 +444,17 @@ public final class FocusLauncherActivity extends Activity {
     }
     launchIntent(new Intent(Settings.ACTION_HOME_SETTINGS));
   }
-  private void requestUsageAccess(){launchIntent(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));}
+  private void requestUsageAccess(){
+    if(hasUsagePermission()){
+      Toast.makeText(this,"El acceso al tiempo de uso ya está activado",Toast.LENGTH_SHORT).show();
+      return;
+    }
+    new AlertDialog.Builder(this)
+      .setTitle("Permiso opcional: tiempo de uso")
+      .setMessage("Este permiso permite calcular cuánto tiempo utilizas otras aplicaciones. No hace falta para tus tareas, alarmas, dragón o modo concentración. Si Android bloquea el acceso por una instalación manual, puedes seguir usando NeuroSync sin concederlo. Solo activa este permiso si confías en la aplicación y comprendes qué datos permite consultar.")
+      .setPositiveButton("Abrir ajustes de Android",(d,w)->launchIntent(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)))
+      .setNegativeButton("Continuar sin permiso",null).show();
+  }
   private boolean hasUsagePermission(){
     android.app.AppOpsManager ops=(android.app.AppOpsManager)getSystemService(APP_OPS_SERVICE);
     return ops!=null&&ops.checkOpNoThrow(android.app.AppOpsManager.OPSTR_GET_USAGE_STATS,
@@ -454,9 +463,9 @@ public final class FocusLauncherActivity extends Activity {
   private void showUsageReport(){
     if(!hasUsagePermission()){
       new AlertDialog.Builder(this).setTitle("Tiempo de uso")
-        .setMessage("Para consultar el tiempo por aplicación, Android debe conceder acceso a estadísticas de uso. No se comparten estos datos con tu familia.")
+        .setMessage("Android no ha concedido el permiso opcional de tiempo de uso. El reporte de otras aplicaciones no está disponible, pero tus tareas, alarmas, hábitos y concentración siguen funcionando. En algunas APK instaladas manualmente Android restringe este acceso.")
         .setNegativeButton("Cancelar",null)
-        .setPositiveButton("Conceder acceso",(d,w)->requestUsageAccess()).show();
+        .setPositiveButton("Más información",(d,w)->requestUsageAccess()).show();
       return;
     }
     UsageStatsManager stats=(UsageStatsManager)getSystemService(USAGE_STATS_SERVICE);
@@ -545,10 +554,12 @@ public final class FocusLauncherActivity extends Activity {
     view.addView(gap(12));
     view.addView(action("Ver uso por aplicación",this::showUsageReport));
     view.addView(gap(12));
-    view.addView(action("Conceder acceso a tiempo de uso",this::requestUsageAccess));view.addView(gap(12));
+    if(!hasUsagePermission()){
+      view.addView(action("Tiempo de uso: permiso opcional (información)",this::requestUsageAccess));view.addView(gap(12));
+    }
     TextView total=text(hasUsagePermission()
       ? "Tiempo aproximado registrado hoy: "+(todayUsageMillis()/60000)+" minutos"
-      : "Tiempo de uso: concede permiso en Android para consultar los minutos",14,MUTED,false);
+      : "Las estadísticas de otras aplicaciones están desactivadas. Las funciones de organización y concentración siguen disponibles.",14,MUTED,false);
     view.addView(total);
     view.addView(gap(26));
     view.addView(text("Pantalla y accesibilidad",18,WHITE,true));view.addView(gap(10));
