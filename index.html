@@ -736,28 +736,61 @@ html,body{background:#f8fbff;color:var(--ink)}
 <p class="hint" id="ns-week-heading">Tus próximos siete días</p><div id="ns-week-grid" class="ns-week-grid"></div></div>
 <div class="grid"><div class="card"><div class="between"><button class="btn ghost" id="prev-month">‹</button><h2 id="month-title" style="margin:0"></h2><button class="btn ghost" id="next-month">›</button></div><div class="calendar-grid" id="calendar" style="margin-top:20px"></div></div><div class="card"><h2 id="selected-title">Actividades del día</h2><div id="day-tasks"></div><button class="btn secondary" data-open="task">+ Agregar</button></div></div></section>
   <section class="view" id="view-bags"><div class="card"><div class="between"><h2>Listas para salir</h2><button class="btn" data-open="bag">+ Nueva lista</button></div><p class="muted small">Prepara lo que llevarás al gimnasio, al trabajo, al estudio o a cualquier destino.</p><div id="bags-list"></div></div></section>
-  <section class="view" id="view-alarms">
-   <div class="card ns-wake-insights">
-    <div class="between"><h2>Cómo van mis despertadores</h2><span class="chip">Registro local</span></div>
-    
-    <div class="ns-wake-grid"><div><strong id="ns-wake-fired">0</strong><span>Sonaron · 7 días</span></div><div><strong id="ns-wake-dismissed">0</strong><span>Detenidas</span></div><div><strong id="ns-wake-snoozed">0</strong><span>Pospuestas</span></div></div>
-    <div id="ns-wake-list" class="ns-wake-list"></div>
-   </div>
-   <div class="card"><div class="between"><h2>Alarmas y recordatorios</h2><button class="btn" data-open="alarm">+ Crear alarma</button></div><div style="margin:14px 0 17px;border:1px solid var(--border);border-radius:16px;padding:14px;background:#fafbfe">
-<div class="between" style="margin-bottom:9px"><b style="font-size:14px">Sonido y pantalla de alarma</b><span class="chip" id="alarm-permission-indicator">Android</span></div>
-<p class="hint" id="alarm-permission-status">Los permisos se solicitan cuando programas una alarma.</p>
-<p class="hint" id="ns-alarm-schedule-summary" aria-live="polite">Comprobando registros de alarmas…</p>
-<div class="row" style="margin-top:12px">
-<button type="button" class="btn secondary" id="alarm-permissions-open">Permitir pantalla completa</button>
-<button type="button" class="btn secondary" id="alarm-test">Probar en 1 min</button>
-<button type="button" class="btn ghost" id="alarm-local-sound">Elegir sonido</button>
-<button type="button" class="btn ghost" id="alarm-clock-music">Abrir Reloj</button></div>
-</div><p class="hint" style="margin-top:10px">Para usar canciones de YouTube Music, configura una alarma en Reloj de Google. Las alarmas propias de NeuroSync tienen desafíos y tonos locales, pero no pueden reproducir directamente YouTube Music.</p><div class="card ns-music-clock-card">
-  <h3>Despertar con YouTube Music</h3>
-  <p class="hint">Configura la canción desde Reloj de Google con YouTube Music Premium. Esta alarma sonará en Reloj y no utilizará los desafíos de NeuroSync.</p>
-  <button type="button" class="btn secondary" id="ns-create-music-alarm">Crear alarma musical en Reloj</button>
-  
- </div><div id="alarms-list"></div></div></section>
+  <section class="view ns-alarms-page" id="view-alarms">
+    <div class="ns-alarm-heading">
+      <div><span class="ns-alarm-kicker">DESPERTAR</span><h2>Mis alarmas</h2></div>
+      <button type="button" class="btn ns-alarm-add" data-open="alarm" aria-label="Crear alarma">+ Nueva</button>
+    </div>
+    <section class="ns-next-alarm" id="ns-next-alarm" aria-label="Próxima alarma">
+      <span class="ns-next-caption">PRÓXIMA ALARMA</span>
+      <strong id="ns-next-hour" class="ns-next-hour">--:--</strong>
+      <p id="ns-next-description">Todavía no hay alarmas programadas.</p>
+      <span id="ns-next-countdown" class="ns-next-countdown"></span>
+    </section>
+    <div class="ns-alarm-tabs" role="tablist" aria-label="Secciones de alarmas">
+      <button type="button" id="ns-alarms-tab-list" class="ns-alarm-tab active" role="tab" aria-selected="true" data-ns-alarm-tab="list">Alarmas</button>
+      <button type="button" id="ns-alarms-tab-report" class="ns-alarm-tab" role="tab" aria-selected="false" data-ns-alarm-tab="report">Informe</button>
+      <button type="button" id="ns-alarms-tab-settings" class="ns-alarm-tab" role="tab" aria-selected="false" data-ns-alarm-tab="settings">Ajustes</button>
+    </div>
+    <div id="ns-alarms-list-view" class="ns-alarms-tab-panel" role="tabpanel" aria-labelledby="ns-alarms-tab-list">
+      <div id="alarms-list" class="ns-premium-alarms-list"></div>
+      <button type="button" class="ns-alarm-text-action" id="ns-alarm-test-quick">Probar el sonido y la pantalla</button>
+    </div>
+    <div id="ns-alarms-report-view" class="ns-alarms-tab-panel hidden" role="tabpanel" aria-labelledby="ns-alarms-tab-report">
+      <div class="ns-alarm-report-heading"><h3>Tu semana</h3><span>Últimos 7 días · datos del teléfono</span></div>
+      <div class="ns-wake-grid"><div><strong id="ns-wake-fired">0</strong><span>Sonaron</span></div><div><strong id="ns-wake-dismissed">0</strong><span>Detenidas</span></div><div><strong id="ns-wake-snoozed">0</strong><span>Pospuestas</span></div></div>
+      <h3>Actividad reciente</h3>
+      <div id="ns-wake-list" class="ns-wake-list"></div>
+      <p class="ns-report-disclaimer">El informe solo muestra alarmas registradas por Android en esta instalación; no calcula horas dormidas sin registros de sueño.</p>
+      <button type="button" class="btn secondary" id="ns-alarm-open-sleep">Ver mi diario del sueño</button>
+    </div>
+    <div id="ns-alarms-settings-view" class="ns-alarms-tab-panel hidden" role="tabpanel" aria-labelledby="ns-alarms-tab-settings">
+      <h3>Ajustes de alarma</h3>
+      <details class="ns-alarm-setting-group" open>
+        <summary>Optimización y permisos <span id="alarm-permission-indicator">Android</span></summary>
+        <p id="alarm-permission-status" class="ns-alarm-explain">Comprobando permisos…</p>
+        <p id="ns-alarm-schedule-summary" class="ns-alarm-explain" aria-live="polite"></p>
+        <button type="button" class="btn secondary" id="alarm-permissions-open">Permitir pantalla completa</button>
+        <button type="button" class="btn secondary" id="alarm-test">Probar en 1 minuto</button>
+      </details>
+      <details class="ns-alarm-setting-group">
+        <summary>Sonido y vibración</summary>
+        <p class="ns-alarm-explain">Selecciona un tono local. Si no puede reproducirse, Android utilizará un tono de respaldo.</p>
+        <button type="button" class="btn secondary" id="alarm-local-sound">Elegir sonido</button>
+      </details>
+      <details class="ns-alarm-setting-group">
+        <summary>Alarma con YouTube Music</summary>
+        <p class="ns-alarm-explain">La música de YouTube Music Premium se configura en Reloj de Google. Sus alarmas no usan los desafíos de NeuroSync.</p>
+        <button type="button" class="btn secondary" id="ns-create-music-alarm">Configurar en Reloj</button>
+        <button type="button" class="btn ghost" id="alarm-clock-music">Abrir Reloj</button>
+      </details>
+      <details class="ns-alarm-setting-group">
+        <summary>Seguridad y funcionamiento</summary>
+        <p class="ns-alarm-explain">La pantalla completa y los avisos dependen de los permisos del sistema. NeuroSync no bloquea la desinstalación ni evita apagar el teléfono.</p>
+        <button type="button" class="btn secondary" id="ns-alarm-system-permissions">Abrir ajustes de Android</button>
+      </details>
+    </div>
+  </section>
   <section class="view" id="view-habits">
    <div class="card ns-health-summary">
     <div class="between"><h2>Mi panorama semanal</h2><span class="chip">Solo en mi cuenta</span></div>
