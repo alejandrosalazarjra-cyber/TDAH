@@ -1050,6 +1050,39 @@ function nsDragonInit(){
  };
 }
 
+
+/* Tarjetas del dashboard: muestran solo datos de la cuenta visible. */
+function nsBrandDashboardRender(){
+ if(!session||!model)return;
+ var ownedTasks=allTasks().filter(function(t){return !t.inbox}),pending=ownedTasks.filter(function(t){return !taskDone(t)}).length;
+ by('ns-tile-tasks').textContent=pending+' tarea'+(pending===1?'':'s')+' pendiente'+(pending===1?'':'s');
+ var sessions=nsFocusRead().sessions.filter(function(x){return x.day===day()}),mins=Math.floor(sessions.reduce(function(n,x){return n+Math.max(0,Number(x.ms)||0)},0)/60000);
+ by('ns-tile-focus').textContent=mins+' min de enfoque hoy';
+ var todayCount=ownedTasks.filter(function(t){return nsTaskDueOn(t,day())}).length;
+ by('ns-tile-calendar').textContent=todayCount+' actividad'+(todayCount===1?'':'es')+' hoy';
+ var alarms=active(model.alarms).filter(owned);
+ by('ns-tile-alarms').textContent=alarms.length+' alarma'+(alarms.length===1?'':'s')+' registrada'+(alarms.length===1?'':'s');
+ var bags=active(model.packs).filter(owned);
+ by('ns-tile-bags').textContent=bags.length+' lista'+(bags.length===1?'':'s')+' para salir';
+ var scheduled=ownedTasks.filter(function(t){return nsTaskDueOn(t,day())}),done=scheduled.filter(taskDone).length;
+ by('ns-tile-progress').textContent=scheduled.length?Math.round(100*done/scheduled.length)+'% del día completado':'Tu día está al día';
+}
+function nsBrandLoginInit(){
+ var pass=by('login-pass'),button=by('login-show-pass');
+ button.onclick=function(){
+  var visible=pass.type==='text';pass.type=visible?'password':'text';
+  button.setAttribute('aria-pressed',String(!visible));button.setAttribute('aria-label',visible?'Mostrar contraseña':'Ocultar contraseña');
+  button.textContent=visible?'◉':'◎';
+ };
+ by('login-help').onclick=function(){
+  nsDialog({title:'Recuperar acceso',message:'Por seguridad, el administrador familiar debe restablecer el acceso desde la configuración autorizada. NeuroSync no envía contraseñas por correo.'});
+ };
+ try{var remembered=localStorage.getItem('ns_login_last_user');if(remembered){by('login-user').value=remembered;by('login-remember').checked=true}}catch(e){}
+ by('ns-tile-focus-open').onclick=function(){
+  var studio=by('focus-studio');if(studio)studio.scrollIntoView({behavior:'smooth',block:'start'});
+ };
+}
+
 function nsSleepKey(){return 'ns_sleep_private_v1_'+(session?session.username:'visitante')}
 function nsSleepRecords(){if(!session)return [];try{var x=JSON.parse(localStorage.getItem(nsSleepKey()));return Array.isArray(x)?x:[]}catch(e){return []}}
 function nsSleepMinutes(bed,wake){
@@ -1302,6 +1335,7 @@ by('stat-today').textContent=completed;by('stat-pending').textContent=tasks.filt
 if(nat&&nat.updateWidget){try{nat.updateWidget(tasks.filter(function(t){return !t.inbox&&!taskDone(t)}).length)}catch(e){}}
 nsWidgetAlarmSummary();
 nsDragonRender();
+nsBrandDashboardRender();
 by('daily-summary').textContent='Completaste '+completed+' de '+current.length+' actividades de hoy';
 by('daily-bar').style.width=(current.length?Math.round(100*completed/current.length):0)+'%';
 fill('home-tasks',actionable().slice(0,3),taskItem,'Tu día está al día. ¡Bien hecho!');
@@ -1519,8 +1553,9 @@ function sync(){
 }
 by('sync-btn').onclick=sync;
 function getUsers(){if(!nat||!nat.getUsers)return [{username:session.username,role:session.role}];try{var r=JSON.parse(nat.getUsers());return r.users||[]}catch(e){return []}}
-function enter(u){session=u;model=load();nsSleepRender();nsSceneRestore();nsFocusRestore();nsLauncherFocusSync();nsFocusTasks();nsFocusStats();nsFocusRender();nsDragonData();by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=u.username.slice(0,1).toUpperCase();by('greeting').textContent='Hola, '+u.username+'. Hoy puedes avanzar a tu ritmo.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
+function enter(u){session=u;model=load();nsSleepRender();nsSceneRestore();nsFocusRestore();nsLauncherFocusSync();nsFocusTasks();nsFocusStats();nsFocusRender();nsDragonData();by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=u.username.slice(0,1).toUpperCase();by('greeting').textContent='Tu día está listo para avanzar a tu ritmo.';by('ns-home-welcome').textContent='Hola, '+u.username+'. Tu día te espera.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
 by('login-form').onsubmit=function(e){e.preventDefault();var username=by('login-user').value.trim().toLowerCase(),password=by('login-pass').value;
+try{if(by('login-remember').checked)localStorage.setItem('ns_login_last_user',username);else localStorage.removeItem('ns_login_last_user')}catch(error){}
 if(nat&&nat.login){try{var res=JSON.parse(nat.login(username,password));if(!res.ok){by('login-error').textContent=res.error||'Usuario o contraseña incorrectos';return}enter(res.user);
         if(res.mustChangePassword){show('admin');say('Por seguridad, cambia la clave provisional antes de crear cuentas familiares.');}
         return}catch(err){by('login-error').textContent='Error de conexión con el teléfono principal';return}}
@@ -1638,6 +1673,7 @@ by('jump-challenge').onclick=function(){show('alarms');say('Crea una alarma y el
 by('jump-progress').onclick=function(){show('habits')};
 nsFocusInit();
 nsDragonInit();
+nsBrandLoginInit();
 nsTaskOrganizerInit();
 nsPlanInit();
 nsSleepInit();
