@@ -1955,6 +1955,7 @@ function scheduleAlarm(a){
  // esa aritmética desplaza la hora de despertar. Android usa Calendar local.
  // El primer día/hora es la referencia y AlarmReceiver.nextRepeat calcula el siguiente.
  if(!Number.isFinite(when)){say('La alarma tiene una fecha u hora inválida');return false}
+ if(repeat==='none'&&when<=Date.now()){say('La fecha de esta alarma ya pasó');return false}
  try{
   if(nat.setAlarmChallenge)nat.setAlarmChallenge(a.id,a.challenge||'none');
   var ok=nat.scheduleAlarmRepeat?nat.scheduleAlarmRepeat(a.id,a.title,when,repeat):nat.scheduleAlarm(a.id,a.title,when,repeat==='daily');
