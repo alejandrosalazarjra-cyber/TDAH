@@ -150,25 +150,122 @@
 .ns-dragon-day-row strong{font-size:12px;display:block}
 .ns-dragon-day-row small{font-size:11px;color:#526991;display:block;margin-top:3px}
 .ns-dragon-day-row>.btn{font-size:11px;padding:7px 9px;min-height:32px;flex-shrink:0}
+
+/* Identidad visual NeuroSync 3: diseño de inicio de sesión y dashboard aprobado */
+:root{--blue:#058ff0;--ink:#0b2856;--muted:#566d8a;--border:#d8e9fa;--paper:#fff;--bg:#eff8ff;--shadow:0 14px 38px rgba(13,73,137,.09);color:#0b2856;background:#eff8ff}
+body{background:linear-gradient(145deg,#f9fdff,#e8f7ff 50%,#e5f1ff)}
+.card{border:1px solid rgba(255,255,255,.9);background:#ffffffed;border-radius:24px;box-shadow:var(--shadow);padding:clamp(15px,2.1vw,23px)}
+.btn{border-radius:14px;background:linear-gradient(108deg,#07438e,#049df5);box-shadow:0 7px 18px #0569bc23}
+.btn.secondary{background:#e9f5ff;color:#06569a;box-shadow:none}
+.btn.ghost{background:transparent;color:#335a88;border:1px solid #d3e6fa;box-shadow:none}
+.chip{background:#edf6ff;color:#235e9e;border:1px solid #d6eafc;border-radius:999px}
+input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff}
+.login.ns-login-v3{display:block;min-height:100dvh;padding:0 18px 28px;background:radial-gradient(ellipse at 90% 22%,#77c9ff80,transparent 45%),linear-gradient(160deg,#fafdff 5%,#d9f2ff 67%,#effaff)}
+.ns-login-wrap{width:min(520px,100%);margin:auto;padding:28px 0 14px}
+.ns-login-brand{display:flex;align-items:center;gap:12px;font-size:clamp(23px,6vw,31px);font-weight:900;letter-spacing:-1px;color:#0a2c62}
+.ns-login-brand img{width:56px;height:56px;box-shadow:0 10px 23px #056bba38;border-radius:18px}
+.ns-login-brand b,.ns-mobile-brand b,.sidebar .brand strong span{color:#079ff3}
+.ns-login-hero{position:relative;min-height:174px;display:flex;align-items:center;margin-top:16px}
+.ns-login-hero-text{position:relative;z-index:1;width:75%}.ns-eyebrow{font-weight:800;font-size:10px;letter-spacing:1.5px;color:#2377b6}
+.ns-login-hero h1{font-size:clamp(27px,7vw,39px);line-height:1.12;letter-spacing:-1px;margin:12px 0}
+.ns-login-hero h1 em{font-style:normal;color:#069fed}.ns-login-hero p{font-size:15px;color:#4a6380;max-width:265px}
+.ns-login-hero-dragon{position:absolute;right:-4%;width:44%;max-width:185px;opacity:.25;transform:rotate(8deg)}
+.ns-login-hero-dragon img{width:100%;border-radius:32px}
+.ns-login-features{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:18px}
+.ns-login-features div{border:1px solid #fff;background:#ffffffc7;box-shadow:0 7px 20px #2c7eb114;text-align:center;border-radius:22px;padding:12px 4px;font-size:11px;font-weight:700;line-height:1.3;color:#17416d}
+.ns-login-features span{display:block;font-size:27px;color:#058feb;line-height:1.2;margin-bottom:4px}
+.ns-login-form.login-card{width:100%;padding:25px 22px;border-radius:30px;box-shadow:0 20px 60px #2469a21a}
+.ns-login-form h2{margin:0 0 5px;font-size:22px;color:#0c2d60}.ns-login-form .hint{text-align:left}
+.ns-auth-fields{gap:13px;margin:21px 0 12px}.ns-auth-fields label{font-size:12px;font-weight:750;color:#385f8b}
+.ns-auth-fields input{height:50px;border-radius:18px;padding:12px 15px;margin-top:5px}
+.ns-password-wrap{display:block;position:relative}.ns-password-wrap input{padding-right:52px}
+.ns-password-toggle{position:absolute;right:7px;top:10px;width:39px;height:39px;border:0;background:#eff8ff;color:#326a9e;border-radius:14px}
+.ns-login-extras{display:flex;justify-content:space-between;gap:8px;align-items:center;margin:14px 0 19px;font-size:12px}
+.ns-remember{display:flex;align-items:center;gap:7px;color:#536a88}.ns-remember input{width:17px;height:17px}
+.ns-login-help{border:0;background:none;color:#037dd3;font-size:12px;font-weight:750;padding:4px 0;text-align:right}
+.ns-login-submit{width:100%;min-height:52px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:16px;border-radius:20px}
+.ns-login-submit span{font-size:21px}.ns-login-error{color:#c04455;margin:10px 0 0}
+.ns-login-build{font-size:10px!important;text-align:center!important;margin:11px 0}
+.ns-connection-details{border-top:1px solid #e0eefb;padding-top:12px;margin-top:12px;color:#1677c8}
+.ns-connection-details summary{text-align:center;cursor:pointer;font-size:12px;font-weight:750}
+.ns-connection-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin:12px 0}
+.ns-connection-actions .btn{font-size:11px;min-height:35px}
+.ns-login-security{margin-top:15px;font-size:11px;text-align:left}
+.ns-login-footer{display:flex;align-items:center;justify-content:center;gap:12px;color:#506b8d;font-style:italic;font-size:12px;padding:19px 20px;text-align:left}
+.ns-login-footer img{width:40px;height:40px;border-radius:13px}
+.sidebar{background:#ffffffed;box-shadow:6px 0 30px #1a72ae0d;border-right:1px solid #e1effa}
+.sidebar .brand{font-size:21px;letter-spacing:-.6px;padding:4px 9px 20px}
+.ns-brand-icon{height:42px;width:42px;border-radius:13px}
+.nav{border-radius:15px}.nav.active{background:#e7f4ff;color:#0765b8}
+.main{background:radial-gradient(ellipse at 90% 3%,#b5e6ff80,transparent 40%),linear-gradient(160deg,#f9fcff,#edf8ff 75%)}
+.top{padding:7px 0 4px}.top h1{color:#092b5d;font-weight:850}
+.top-right .avatar{background:linear-gradient(130deg,#1c68c1,#05a5f4);box-shadow:0 6px 16px #0479db30}
+.ns-mobile-brand{display:none;align-items:center;gap:8px;font-size:22px;font-weight:900;color:#0d2f62;margin-bottom:13px}
+.ns-mobile-brand img{width:34px;height:34px;border-radius:11px}
+.ns-home-intro{margin:0 0 15px;padding:7px 5px}.ns-home-intro h2{margin:6px 0 3px;font-size:clamp(21px,3vw,28px);color:#07366f}.ns-home-intro p{color:#5b7492;font-size:13px;margin:0}
+.ns-feature-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0 19px}
+.ns-feature-tile{border:1px solid #fff;border-radius:23px;background:#ffffffdf;padding:17px;text-align:left;display:grid;gap:6px;box-shadow:0 9px 26px #105c9815;min-width:0;color:#0b2b59}
+.ns-feature-tile>span{font-size:28px;color:#058ff0;line-height:1.1}.ns-feature-tile strong{font-size:14px;line-height:1.3}.ns-feature-tile small{color:#526b8a;font-size:12px;line-height:1.35}
+.ns-feature-tile:active{transform:scale(.985)}
+.ns-dragon-hero{background:linear-gradient(128deg,#f9fdff,#daedff 55%,#a4dbff);border-color:#fff;box-shadow:0 13px 38px #126fac20;border-radius:26px}
+.stat{border-radius:20px;border-color:#e2effa;box-shadow:0 5px 18px #17518a08}
+.ns-login-form,.ns-feature-tile,.nav-mobile{backdrop-filter:blur(8px)}
+@media(max-width:930px){.sidebar .brand strong{display:none}}
+@media(max-width:670px){
+ .main{padding:18px 12px calc(105px + env(safe-area-inset-bottom))}
+ .ns-mobile-brand{display:flex}
+ .top{align-items:flex-start}.top .top-right{padding-top:5px}
+ .ns-feature-tiles{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+ .ns-feature-tile{padding:11px 9px;border-radius:18px}
+ .ns-feature-tile>span{font-size:23px}.ns-feature-tile strong{font-size:12px}
+ .ns-feature-tile small{font-size:11px}
+ .nav-mobile{left:8px;right:8px;bottom:calc(6px + env(safe-area-inset-bottom));border:1px solid #ffffff;background:#ffffffed;border-radius:24px;box-shadow:0 10px 30px #1d66a72a;padding:7px 4px;overflow-x:auto;scrollbar-width:none;justify-content:space-between}
+ .nav-mobile button{min-width:46px;font-size:9px;padding:5px 0}.nav-mobile button span{font-size:20px}
+ .nav-mobile button.active{background:#e1f4ff;border-radius:17px;color:#047bd7}
+}
+@media(max-width:385px){.ns-feature-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.ns-login-hero{min-height:150px}.ns-login-form.login-card{padding:20px 16px}.ns-login-features div{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.ns-feature-tile:active{transform:none}}
 </style></head><body>
-<div id="login" class="login">
- <form id="login-form" class="card login-card">
-  <span class="logo">🪷</span><h1>Bienvenido a NeuroSync</h1><p class="muted">Tu espacio para organizar la vida en familia</p>
-  <div class="alert">La clave inicial del administrador es temporal. Cámbiala después del primer ingreso. No compartas contraseñas por mensajes.</div>
-  <div class="stack" style="gap:13px;margin:20px 0">
-   <label class="field">Usuario<input id="login-user" autocomplete="username" required placeholder="Tu usuario"></label>
-   <label class="field">Contraseña<input id="login-pass" type="password" autocomplete="current-password" required placeholder="Tu contraseña"></label>
-  </div><button type="submit" class="btn" style="width:100%">Iniciar sesión</button>
-  <p id="login-error" class="hint" role="alert" style="color:#c04455;margin:12px 0 0"></p>
-  <p id="login-build" class="hint" style="text-align:center;margin-top:10px">Versión de la aplicación: verificando…</p>
-  <div class="row" style="margin-top:17px;justify-content:center">
-   <button class="btn secondary" id="setup-host" type="button">📱 Soy el administrador</button>
-   <button class="btn ghost" id="setup-client" type="button">🌐 Conectar por internet</button><button class="btn ghost" id="setup-lan" type="button">📱 Red local avanzada</button>
+<div id="login" class="login ns-login-v3">
+ <div class="ns-login-wrap">
+  <div class="ns-login-brand"><img src="./brand/neurosync-logo.svg" alt="Logo NeuroSync"><span>Neuro<b>Sync</b></span></div>
+  <div class="ns-login-hero">
+    <div class="ns-login-hero-text"><span class="ns-eyebrow">TU ESPACIO PARA AVANZAR</span>
+    <h1>Bienvenido a <em>NeuroSync</em></h1>
+    <p>Organiza tu día, enfócate y avanza a tu ritmo.</p></div>
+    <div class="ns-login-hero-dragon" aria-hidden="true"><img src="./brand/neurosync-logo.svg" alt=""></div>
   </div>
- </form>
+  <div class="ns-login-features" aria-label="Ventajas de NeuroSync">
+    <div><span aria-hidden="true">▦</span>Tu día<br>organizado</div>
+    <div><span aria-hidden="true">♧</span>Tu familia<br>conectada</div>
+    <div><span aria-hidden="true">↗</span>Tus metas<br>en progreso</div>
+  </div>
+  <form id="login-form" class="card login-card ns-login-form">
+    <h2>Inicia sesión</h2><p class="hint">Continúa donde quedaste.</p>
+    <div class="stack ns-auth-fields">
+      <label class="field">Usuario<input id="login-user" autocomplete="username" required placeholder="Usuario o correo" inputmode="text"></label>
+      <label class="field">Contraseña
+        <span class="ns-password-wrap"><input id="login-pass" type="password" autocomplete="current-password" required placeholder="Contraseña"><button id="login-show-pass" class="ns-password-toggle" type="button" aria-label="Mostrar contraseña" aria-pressed="false">◉</button></span>
+      </label>
+    </div>
+    <div class="ns-login-extras"><label class="ns-remember"><input type="checkbox" id="login-remember"> Recordar mi usuario</label><button type="button" class="ns-login-help" id="login-help">¿Olvidaste tu contraseña?</button></div>
+    <button type="submit" class="btn ns-login-submit">Iniciar sesión <span aria-hidden="true">→</span></button>
+    <p id="login-error" class="hint ns-login-error" role="alert"></p>
+    <p id="login-build" class="hint ns-login-build">Versión de la aplicación: verificando…</p>
+    <details class="ns-connection-details"><summary>Configurar teléfono principal y conexión</summary>
+      <div class="ns-connection-actions">
+       <button class="btn secondary" id="setup-host" type="button">Soy el administrador</button>
+       <button class="btn ghost" id="setup-client" type="button">Conectar por internet</button>
+       <button class="btn ghost" id="setup-lan" type="button">Red local avanzada</button>
+      </div>
+    </details>
+    <div class="alert ns-login-security">Por seguridad, cambia la clave inicial del administrador después de ingresar. No compartas contraseñas.</div>
+  </form>
+  <div class="ns-login-footer"><img src="./brand/neurosync-logo.svg" alt="">Tu dragón de productividad te acompaña en cada paso.</div>
+ </div>
 </div>
 <div id="app" class="shell hidden">
- <aside class="sidebar"><div class="brand"><i>✦</i><strong>NeuroSync</strong></div>
+ <aside class="sidebar"><div class="brand"><img class="ns-brand-icon" src="./brand/neurosync-logo.svg" alt=""><strong>Neuro<span>Sync</span></strong></div>
   <button class="nav active" data-view="home"><span>⌂</span><span class="nav-label">Mi día</span></button>
   <button class="nav" data-view="tasks"><span>☑</span><span class="nav-label">Tareas</span></button>
   <button class="nav" data-view="calendar"><span>▦</span><span class="nav-label">Calendario</span></button>
@@ -179,10 +276,19 @@
   <div class="sidebar-bottom"><button id="logout" class="btn ghost" style="width:100%">Salir de la cuenta</button></div>
  </aside>
  <main class="main">
-  <header class="top"><div><h1 id="page-title">Mi día</h1><div class="sub" id="greeting">Organiza tus próximos pasos</div>
+  <header class="top"><div class="ns-top-title"><div class="ns-mobile-brand"><img src="./brand/neurosync-logo.svg" alt=""><span>Neuro<b>Sync</b></span></div><h1 id="page-title">Mi día</h1><div class="sub" id="greeting">Organiza tus próximos pasos</div>
   <div class="hint" id="installed-build" aria-live="polite">Comprobando versión instalada…</div></div>
    <div class="top-right"><span class="sync-state" id="sync-status">Guardado local</span><button id="sync-btn" class="btn secondary" aria-label="Sincronizar">↻</button><button class="avatar" id="avatar" type="button" aria-label="Cerrar sesión de mi cuenta" title="Mi cuenta">A</button></div></header>
   <section class="view active" id="view-home">
+   <div class="ns-home-intro"><div><span class="ns-eyebrow">TU DÍA EN EQUILIBRIO</span><h2 id="ns-home-welcome">Tu día está listo para avanzar</h2><p>Avanza a tu ritmo. Tu dragón te acompaña hoy.</p></div></div>
+   <div class="ns-feature-tiles">
+    <button type="button" data-view="tasks" class="ns-feature-tile"><span>☑</span><strong>Tareas de hoy</strong><small id="ns-tile-tasks">Sin tareas pendientes</small></button>
+    <button type="button" data-view="home" class="ns-feature-tile" id="ns-tile-focus-open"><span>◎</span><strong>Concentración</strong><small id="ns-tile-focus">Listo para comenzar</small></button>
+    <button type="button" data-view="calendar" class="ns-feature-tile"><span>▦</span><strong>Agenda</strong><small id="ns-tile-calendar">Revisa tu día</small></button>
+    <button type="button" data-view="alarms" class="ns-feature-tile"><span>◷</span><strong>Alarmas</strong><small id="ns-tile-alarms">Sin alarmas pendientes</small></button>
+    <button type="button" data-view="bags" class="ns-feature-tile"><span>☷</span><strong>Listas</strong><small id="ns-tile-bags">Prepara tus salidas</small></button>
+    <button type="button" data-view="habits" class="ns-feature-tile"><span>▥</span><strong>Progreso</strong><small id="ns-tile-progress">Tu avance semanal</small></button>
+   </div>
    <div class="grid">
     <div class="stack">
      <div class="card hero ns-dragon-hero">
@@ -358,7 +464,7 @@
 <p class="hint">Guarda y recupera tus tareas, listas, alarmas y progreso de mascota antes de reinstalar una APK.</p>
 <div class="row"><button class="btn secondary" type="button" id="backup-export">Exportar respaldo</button><button class="btn ghost" type="button" id="backup-import">Importar respaldo</button></div></div><div class="card"><h2>Seguridad</h2><p class="muted small">Cambia la contraseña inicial del administrador. Usa una diferente para cada persona.</p><form id="password-form" class="stack" style="gap:10px"><label class="field">Contraseña actual<input id="current-pass" type="password" required></label><label class="field">Contraseña nueva (mín. 10 caracteres)<input id="new-pass" type="password" minlength="10" required></label><button class="btn" type="submit">Cambiar contraseña</button></form></div><div class="card"><h2>Teléfono principal</h2><p class="muted small">La sincronización por internet usa una base central en Cloudflare cuando esté activada. Tu cuenta controla miembros y tareas; no necesitas Netlify, Tailscale ni Play Store.</p><button class="btn secondary" id="configure-network">Configurar conexión</button></div></div></div></section>
  </main>
- <nav class="nav-mobile" aria-label="Navegación">
+ <nav class="nav-mobile" aria-label="Navegación principal">
   <button class="active" data-view="home"><span>⌂</span>Hoy</button><button data-view="tasks"><span>☑</span>Tareas</button><button data-view="calendar"><span>▦</span>Agenda</button><button data-view="bags"><span>▣</span>Listas</button><button data-view="alarms"><span>◷</span>Alarmas</button><button data-view="habits"><span>◉</span>Progreso</button><button class="admin-only" data-view="admin"><span>♙</span>Admin</button>
  </nav>
 </div>
