@@ -399,6 +399,13 @@ public final class MainActivity extends Activity {
       result.remove("token");
       return result.toString();
     }
+    /** Copia SQLite cifrada por cuenta; evita guardar tokens y contraseñas. */
+    @JavascriptInterface public boolean saveNativeSnapshot(String username,String json){
+      return NativeSnapshotStore.get(MainActivity.this).save(username,json);
+    }
+    @JavascriptInterface public String recoverNativeSnapshot(String username){
+      return NativeSnapshotStore.get(MainActivity.this).recover(username);
+    }
     @JavascriptInterface public String restoreSession(){
       try{
         if(sessionUser==null||sessionToken.isEmpty())return AccountStore.fail("No hay sesión guardada").toString();
