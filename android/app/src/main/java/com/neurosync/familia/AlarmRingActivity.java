@@ -3,18 +3,25 @@ package com.neurosync.familia;
 import android.app.Activity;
 import android.os.*;
 import android.graphics.Color;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.view.Gravity;
 import android.view.WindowManager;
 import android.widget.*;
 import java.util.Random;
 
 /** Alarma con un desafío opcional. Siempre tiene salida segura sin reto. */
-public final class AlarmRingActivity extends Activity {
+public final class AlarmRingActivity extends Activity implements SensorEventListener {
  private String id;
  private String challenge;
  private int remaining=3, correct=0, tapped=0;
  private int answer;
  private String memoryCode="";
+ private SensorManager sensors;
+ private int shakes=0;
+ private long lastShake=0;
  private final Handler uiHandler=new Handler(Looper.getMainLooper());
  private static final String[] WAKE_PHRASES={"Hoy elijo avanzar paso a paso","Respiro y comienzo mi dia","Una accion pequeña cuenta"};
  private TextView prompt, progress;
@@ -65,7 +72,7 @@ public final class AlarmRingActivity extends Activity {
    root.addView(label(title==null?"Mi alarma":title,29));
    progress=label("",15);root.addView(progress);
    prompt=label("",22);root.addView(prompt);
-   if("math".equals(challenge)){
+   if("math".equals(challenge)||"math_hard".equals(challenge)){
      input=new EditText(this);input.setSingleLine(true);input.setTextColor(Color.WHITE);
      input.setHintTextColor(0xFFB0B0B0);input.setHint("Tu respuesta");
      input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER|android.text.InputType.TYPE_NUMBER_FLAG_SIGNED);
@@ -80,6 +87,17 @@ public final class AlarmRingActivity extends Activity {
        else nextQuestion();
      });
      nextQuestion();
+   }else if("shake".equals(challenge)){
+     progress.setText("Mueve suavemente tu teléfono 12 veces");
+     prompt.setText("0 / 12 movimientos");
+     TextView safety=label("Si no puedes moverlo, usa Detener sin desafío.",13);root.addView(safety);
+     sensors=(SensorManager)getSystemService(SENSOR_SERVICE);
+     Sensor acceleration=sensors==null?null:sensors.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+     if(acceleration==null){
+       prompt.setText("Este teléfono no dispone del sensor necesario");
+     }else{
+       sensors.registerListener(this,acceleration,SensorManager.SENSOR_DELAY_UI);
+     }
    }else if("taps".equals(challenge)){
      progress.setText("Toca el botón 12 veces para desactivar la alarma");
      Button tap=button("Tocar · 0 / 12");root.addView(tap);
@@ -139,12 +157,27 @@ public final class AlarmRingActivity extends Activity {
      });
    }
  }
- @Override protected void onDestroy(){uiHandler.removeCallbacksAndMessages(null);super.onDestroy();}
+ @Override protected void onDestroy(){if(sensors!=null)sensors.unregisterListener(this);uiHandler.removeCallbacksAndMessages(null);super.onDestroy();}
+ @Override public void onAccuracyChanged(Sensor sensor,int accuracy){}
+ @Override public void onSensorChanged(SensorEvent e){
+   if(!"shake".equals(challenge)||e.sensor.getType()!=Sensor.TYPE_ACCELEROMETER)return;
+   float x=e.values[0],y=e.values[1],z=e.values[2];
+   float force=(float)Math.sqrt(x*x+y*y+z*z);
+   long now=SystemClock.elapsedRealtime();
+   // Umbral moderado; limita dobles conteos por la misma sacudida.
+   if(force>17.5f&&now-lastShake>650){
+     lastShake=now;shakes++;prompt.setText(shakes+" / 12 movimientos");
+     if(shakes>=12){sensors.unregisterListener(this);finishAlarm();}
+   }
+ }
  private void nextQuestion(){
-   int x=3+random.nextInt(16),y=2+random.nextInt(14);
-   answer=x+y;
+   int x,y;
+   if("math_hard".equals(challenge)){
+     x=7+random.nextInt(19);y=3+random.nextInt(13);
+     if(random.nextBoolean()){answer=x*y;prompt.setText(x+" × "+y+" = ?");}
+     else{answer=x+y+random.nextInt(16);prompt.setText("Calcula: "+x+" + "+y+" + "+(answer-x-y)+" = ?");}
+   }else{x=3+random.nextInt(16);y=2+random.nextInt(14);answer=x+y;prompt.setText(x+" + "+y+" = ?");}
    progress.setText("Desafío "+(correct+1)+" de "+remaining);
-   prompt.setText(x+" + "+y+" = ?");
    input.setText("");
  }
  @Override public void onBackPressed(){
