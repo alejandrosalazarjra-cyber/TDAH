@@ -24,6 +24,9 @@ assert.equal(scheduled.repeat,'daily');
 assert.equal(sandbox.scheduleAlarm({id:'once1',title:'Ya pasó',date:previous,time:'06:45',repeat:'none'}),false,
  'Una alarma única vencida debe rechazarse antes de entrar a Android');
 assert.equal(sandbox.scheduleAlarm({id:'invalid',date:'invalid',time:'xx:xx',repeat:'daily'}),false);
+assert.equal(sandbox.scheduleAlarm({id:'wrongDay',date:'2026-02-30',time:'08:00',repeat:'daily'}),false);
+assert.equal(sandbox.scheduleAlarm({id:'badClock',date:'2026-12-01',time:'25:00',repeat:'daily'}),false);
+assert.equal(sandbox.scheduleAlarm({id:'badRepeat',date:'2026-12-01',time:'09:00',repeat:'invalid'}),false);
 assert(warning.some(x=>x.includes('inválida')));
 const receiver=fs.readFileSync('android/app/src/main/java/com/neurosync/familia/AlarmReceiver.java','utf8');
 assert(receiver.includes('calendar.add(unit,amount)'),'Las repeticiones deben usar Calendar');
