@@ -340,6 +340,28 @@ public final class MainActivity extends Activity {
       }
       return result.toString();
     }
+    /** Diagnóstico público: paquete y huella del certificado, nunca claves privadas. */
+    @JavascriptInterface public String googleOAuthDiagnostics(){
+      JSONObject info=new JSONObject();
+      try{
+        java.security.MessageDigest digest=java.security.MessageDigest.getInstance("SHA-1");
+        byte[] cert=null;
+        if(Build.VERSION.SDK_INT>=28){
+          android.content.pm.PackageInfo pkg=getPackageManager().getPackageInfo(getPackageName(),PackageManager.GET_SIGNING_CERTIFICATES);
+          android.content.pm.SigningInfo signing=pkg.signingInfo;
+          android.content.pm.Signature[] signatures=signing.hasMultipleSigners()?signing.getApkContentsSigners():signing.getSigningCertificateHistory();
+          if(signatures!=null&&signatures.length>0)cert=signatures[0].toByteArray();
+        }else{
+          android.content.pm.PackageInfo pkg=getPackageManager().getPackageInfo(getPackageName(),PackageManager.GET_SIGNATURES);
+          if(pkg.signatures!=null&&pkg.signatures.length>0)cert=pkg.signatures[0].toByteArray();
+        }
+        StringBuilder hash=new StringBuilder();
+        if(cert!=null){for(byte value:digest.digest(cert)){if(hash.length()>0)hash.append(':');hash.append(String.format(java.util.Locale.US,"%02X",value&255));}}
+        info.put("packageName",getPackageName()).put("sha1",hash.toString())
+          .put("note","Registra este paquete y SHA-1 en un cliente OAuth de Android en Google Cloud. Play App Signing usa otro certificado.");
+      }catch(Exception ex){android.util.Log.w("NeuroSync","Error consultando certificado",ex);}
+      return info.toString();
+    }
     @JavascriptInterface public void loginGoogle(){
       runOnUiThread(()->googleAccounts.login());
     }
@@ -470,6 +492,33 @@ public final class MainActivity extends Activity {
           .put("Bandeja de ideas").put("Launcher minimalista"));
         return result.toString();
       }catch(Exception ex){return "{}";}
+    }
+    /** Configura la hora mediante API oficial; selección musical queda en la app Reloj. */
+    @JavascriptInterface public void createYouTubeMusicClockAlarm(){
+      runOnUiThread(()->{
+        java.util.Calendar now=java.util.Calendar.getInstance();
+        new android.app.TimePickerDialog(MainActivity.this,(picker,hour,minute)->{
+          new AlertDialog.Builder(MainActivity.this)
+           .setTitle("Canción de YouTube Music")
+           .setMessage("Se abrirá Reloj de Android con la hora elegida. Dentro de esa alarma, toca Sonido → YouTube Music y elige tu canción con Premium. La música sonará desde Reloj; los retos de NeuroSync no controlan esa alarma.")
+           .setNegativeButton("Cancelar",null)
+           .setPositiveButton("Abrir Reloj",(dialog,which)->{
+             Intent intent=new Intent(android.provider.AlarmClock.ACTION_SET_ALARM)
+               .putExtra(android.provider.AlarmClock.EXTRA_HOUR,hour)
+               .putExtra(android.provider.AlarmClock.EXTRA_MINUTES,minute)
+               .putExtra(android.provider.AlarmClock.EXTRA_MESSAGE,"NeuroSync · Música")
+               .putExtra(android.provider.AlarmClock.EXTRA_SKIP_UI,false);
+             try{startActivity(intent);}
+             catch(Exception ex){
+               android.util.Log.w("NeuroSync","Reloj no disponible",ex);
+               new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Reloj no disponible")
+                .setMessage("Instala o abre Reloj de Google y elige Sonido → YouTube Music.")
+                .setPositiveButton("Entendido",null).show();
+             }
+           }).show();
+        },now.get(java.util.Calendar.HOUR_OF_DAY),now.get(java.util.Calendar.MINUTE),true).show();
+      });
     }
     @JavascriptInterface public void openSystemClock(){
       runOnUiThread(()->{
