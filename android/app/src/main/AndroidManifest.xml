@@ -10,7 +10,9 @@
  <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
  <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+ <uses-permission android:name="android.permission.VIBRATE"/>
  <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"/>
+ <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
  <queries>
    <package android:name="com.google.android.deskclock"/>
    <intent><action android:name="android.intent.action.SHOW_ALARMS"/></intent>
@@ -34,6 +36,7 @@
   <activity android:name=".AlarmRingActivity" android:exported="false" android:showWhenLocked="true" android:turnScreenOn="true" android:excludeFromRecents="true" android:theme="@android:style/Theme.Material.NoActionBar"/>
   <service android:name=".AlarmAudioService" android:exported="false" android:foregroundServiceType="mediaPlayback"/>
   <service android:name=".SyncService" android:exported="false" android:foregroundServiceType="dataSync"/>
+  <service android:name=".FocusOverlayService" android:exported="false"/>
   <receiver android:name=".TodayWidget" android:exported="true">
     <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter>
     <meta-data android:name="android.appwidget.provider" android:resource="@xml/today_widget_info"/>
@@ -43,7 +46,7 @@
     <meta-data android:name="android.appwidget.provider" android:resource="@xml/focus_widget_info"/>
   </receiver>
   <receiver android:name=".AlarmReceiver" android:exported="false">
-    <intent-filter><action android:name="android.intent.action.BOOT_COMPLETED"/><action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED"/></intent-filter>
+    <intent-filter><action android:name="android.intent.action.BOOT_COMPLETED"/><action android:name="android.intent.action.TIME_SET"/><action android:name="android.intent.action.TIMEZONE_CHANGED"/><action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED"/></intent-filter>
   </receiver>
  </application>
 </manifest>
