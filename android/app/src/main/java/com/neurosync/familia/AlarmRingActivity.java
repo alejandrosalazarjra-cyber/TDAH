@@ -87,6 +87,23 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
        else nextQuestion();
      });
      nextQuestion();
+   }else if("qr".equals(challenge)){
+     if(!AlarmChallengeStore.hasQr(this,id)){
+       progress.setText("No hay un QR registrado en este dispositivo.");
+       prompt.setText("Puedes detener la alarma con la opción de seguridad.");
+     }else{
+       progress.setText("Escanea el QR que registraste cuando creaste la alarma.");
+       prompt.setText("Coloca tu código QR físico frente a la cámara.");
+       Button scan=button("Abrir cámara y escanear QR");root.addView(scan);
+       scan.setOnClickListener(v->{
+         try{
+           new com.google.zxing.integration.android.IntentIntegrator(this)
+             .setDesiredBarcodeFormats(com.google.zxing.integration.android.IntentIntegrator.QR_CODE)
+             .setPrompt("Escanea el QR de tu alarma").setBeepEnabled(false)
+             .setOrientationLocked(false).initiateScan();
+         }catch(Exception ex){Toast.makeText(this,"No se pudo abrir el lector QR",Toast.LENGTH_LONG).show();}
+       });
+     }
    }else if("shake".equals(challenge)){
      progress.setText("Mueve suavemente tu teléfono 12 veces");
      prompt.setText("0 / 12 movimientos");
@@ -156,6 +173,16 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
        back.setOnClickListener(w->{root.removeView(message);root.removeView(confirm);root.removeView(back);emergency.setVisibility(android.view.View.VISIBLE);});
      });
    }
+ }
+ @Override protected void onActivityResult(int requestCode,int resultCode,android.content.Intent data){
+   super.onActivityResult(requestCode,resultCode,data);
+   com.google.zxing.integration.android.IntentResult result=
+       com.google.zxing.integration.android.IntentIntegrator.parseActivityResult(requestCode,resultCode,data);
+   if(result==null||!"qr".equals(challenge))return;
+   String contents=result.getContents();
+   if(contents==null){progress.setText("Lectura cancelada. Puedes intentarlo de nuevo.");return;}
+   if(AlarmChallengeStore.matchesQr(this,id,contents)){finishAlarm();}
+   else{progress.setText("El QR no coincide con el registrado.");prompt.setText("Vuelve a intentarlo con el QR correcto.");}
  }
  @Override protected void onDestroy(){if(sensors!=null)sensors.unregisterListener(this);uiHandler.removeCallbacksAndMessages(null);super.onDestroy();}
  @Override public void onAccuracyChanged(Sensor sensor,int accuracy){}
