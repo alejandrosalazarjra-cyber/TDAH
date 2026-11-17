@@ -39,6 +39,8 @@
 .ns-sleep-metrics span{font-size:11px;color:var(--muted,#71809c)}
 .ns-sleep-entry{padding:12px 2px;border-bottom:1px solid var(--border,#e5eaf3);display:flex;align-items:center;justify-content:space-between;gap:10px}
 .ns-sleep-entry small{display:block;color:var(--muted,#73809a);margin-top:4px}
+
+.ns-wake-insights{margin-bottom:15px}.ns-wake-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0}.ns-wake-grid>div{border:1px solid var(--border,#e5eaf3);background:var(--bg,#f6f8fc);border-radius:13px;padding:15px 7px;text-align:center}.ns-wake-grid strong{font-size:25px;display:block;font-variant-numeric:tabular-nums}.ns-wake-grid span{font-size:11px;color:var(--muted,#6a7893)}.ns-wake-list{display:grid;gap:7px}.ns-wake-event{border-bottom:1px solid var(--border,#e5eaf3);padding:8px 0;display:flex;justify-content:space-between;gap:12px;font-size:13px}.ns-wake-event time{color:var(--muted,#66758a);font-size:11px}
 </style></head><body>
 <div id="login" class="login">
  <form id="login-form" class="card login-card">
@@ -133,7 +135,14 @@
    <div class="card" style="margin-top:15px"><div class="between"><h2>Tareas organizadas</h2><button class="btn" data-open="task">+ Crear tarea</button></div><div class="tabs" id="task-filters"><button class="tab active" data-filter="all">Todas</button><button class="tab" data-filter="pending">Pendientes</button><button class="tab" data-filter="done">Realizadas</button></div><div id="tasks-list"></div></div></section>
   <section class="view" id="view-calendar"><div class="grid"><div class="card"><div class="between"><button class="btn ghost" id="prev-month">‹</button><h2 id="month-title" style="margin:0"></h2><button class="btn ghost" id="next-month">›</button></div><div class="calendar-grid" id="calendar" style="margin-top:20px"></div></div><div class="card"><h2 id="selected-title">Actividades del día</h2><div id="day-tasks"></div><button class="btn secondary" data-open="task">+ Agregar</button></div></div></section>
   <section class="view" id="view-bags"><div class="card"><div class="between"><h2>Listas para salir</h2><button class="btn" data-open="bag">+ Nueva lista</button></div><p class="muted small">Prepara lo que llevarás al gimnasio, al trabajo, al estudio o a cualquier destino.</p><div id="bags-list"></div></div></section>
-  <section class="view" id="view-alarms"><div class="card"><div class="between"><h2>Alarmas y recordatorios</h2><button class="btn" data-open="alarm">+ Crear alarma</button></div><p class="muted small">En Android, la aplicación programa notificaciones del sistema. Puedes crear alarmas para una fecha o repetirlas diariamente.</p><div style="margin:14px 0 17px;border:1px solid var(--border);border-radius:16px;padding:14px;background:#fafbfe">
+  <section class="view" id="view-alarms">
+   <div class="card ns-wake-insights">
+    <div class="between"><h2>Cómo van mis despertadores</h2><span class="chip">Registro local</span></div>
+    <p class="hint">Se registra cuándo suenan, se posponen y se detienen tus alarmas. Solo aparecen las de tu cuenta.</p>
+    <div class="ns-wake-grid"><div><strong id="ns-wake-fired">0</strong><span>Sonaron · 7 días</span></div><div><strong id="ns-wake-dismissed">0</strong><span>Detenidas</span></div><div><strong id="ns-wake-snoozed">0</strong><span>Pospuestas</span></div></div>
+    <div id="ns-wake-list" class="ns-wake-list"><p class="hint">En Android aparecerá tu historial al sonar una alarma.</p></div>
+   </div>
+   <div class="card"><div class="between"><h2>Alarmas y recordatorios</h2><button class="btn" data-open="alarm">+ Crear alarma</button></div><p class="muted small">En Android, la aplicación programa notificaciones del sistema. Puedes crear alarmas para una fecha o repetirlas diariamente.</p><div style="margin:14px 0 17px;border:1px solid var(--border);border-radius:16px;padding:14px;background:#fafbfe">
 <div class="between" style="margin-bottom:9px"><b style="font-size:14px">Sonido y pantalla de alarma</b><span class="chip" id="alarm-permission-indicator">Android</span></div>
 <p class="hint" id="alarm-permission-status">Los permisos se solicitan cuando programas una alarma.</p>
 <div class="row" style="margin-top:12px">
@@ -203,6 +212,33 @@ function say(msg){var e=by('notice');e.textContent=msg;e.classList.remove('hidde
 var nsFocusDuration=25,nsFocusState=null,nsFocusTick=null;
 
 /* Diario local privado; no se incluye en cargas de sincronización familiar. */
+
+/* UI de eventos nativos; filtrar por los IDs de alarma visibles de la cuenta actual. */
+function nsWakeRender(){
+ if(!session)return;
+ var ids=new Set((model&&model.alarms||[]).filter(function(a){return a.owner===session.username||a.owner==='todos'}).map(function(a){return String(a.id)}));
+ var events=[];try{if(nat&&nat.alarmEventHistory)events=JSON.parse(nat.alarmEventHistory())}catch(e){}
+ if(!Array.isArray(events))events=[];
+ var seven=Date.now()-7*86400000;
+ events=events.filter(function(e){return ids.has(String(e.id))&&Number(e.at)>seven&&Number(e.at)<=Date.now()});
+ ['ring','dismiss','snooze'].forEach(function(type,i){by(['ns-wake-fired','ns-wake-dismissed','ns-wake-snoozed'][i]).textContent=events.filter(function(e){return e.action===type}).length});
+ var area=by('ns-wake-list');area.replaceChildren();
+ var labels={ring:'Sonó',dismiss:'Detenida',snooze:'Pospuesta'};
+ if(!events.length){var empty=document.createElement('p');empty.className='hint';empty.textContent=nat?'Todavía no hay eventos recientes de tus alarmas.':'El historial estará disponible dentro de la APK Android.';area.append(empty);return}
+ events.slice(-8).reverse().forEach(function(item){
+  var row=document.createElement('div'),caption=document.createElement('span'),at=document.createElement('time');
+  row.className='ns-wake-event';caption.textContent=labels[item.action]||'Evento';
+  at.textContent=new Date(item.at).toLocaleString('es-CO',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+  row.append(caption,at);area.append(row)
+ });
+}
+function nsLauncherFocusSync(){
+ if(!nat||!nat.setLauncherFocusUntil)return;
+ try{var left=nsFocusState&&nsFocusState.running?Math.max(0,nsFocusState.duration*60000-nsFocusElapsed()):0;
+  nat.setLauncherFocusUntil(left?Date.now()+left:0)
+ }catch(e){}
+}
+
 function nsSleepKey(){return 'ns_sleep_private_v1_'+(session?session.username:'visitante')}
 function nsSleepRecords(){if(!session)return [];try{var x=JSON.parse(localStorage.getItem(nsSleepKey()));return Array.isArray(x)?x:[]}catch(e){return []}}
 function nsSleepMinutes(bed,wake){
@@ -255,7 +291,7 @@ function nsFocusKey(){return 'ns_focus_private_v1_'+(session?session.username:'v
 function nsFocusRead(){try{var x=JSON.parse(localStorage.getItem(nsFocusKey()));return x&&Array.isArray(x.sessions)?x:{sessions:[]}}catch(e){return {sessions:[]}}}
 function nsFocusWrite(v){localStorage.setItem(nsFocusKey(),JSON.stringify(v))}
 function nsFocusActiveKey(){return nsFocusKey()+'_active'}
-function nsFocusPersist(){if(!session)return;if(nsFocusState)localStorage.setItem(nsFocusActiveKey(),JSON.stringify(nsFocusState));else localStorage.removeItem(nsFocusActiveKey())}
+function nsFocusPersist(){if(!session)return;if(nsFocusState)localStorage.setItem(nsFocusActiveKey(),JSON.stringify(nsFocusState));else localStorage.removeItem(nsFocusActiveKey());nsLauncherFocusSync()}
 function nsFocusRestore(){nsFocusState=null;if(!session)return;try{var x=JSON.parse(localStorage.getItem(nsFocusActiveKey()));if(x&&[5,15,25,45].includes(x.duration)&&Number.isFinite(x.elapsed)&&Number.isFinite(x.since)&&typeof x.running==='boolean'){nsFocusState=x;nsFocusDuration=x.duration;if(nsFocusElapsed()>=x.duration*60000){nsFocusSaveSession(true)}}}catch(e){localStorage.removeItem(nsFocusActiveKey())}}
 function nsFocusFormat(ms){var seconds=Math.ceil(Math.max(0,ms)/1000);return String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0')}
 function nsFocusElapsed(){if(!nsFocusState)return 0;return nsFocusState.elapsed+(nsFocusState.running?Math.max(0,Date.now()-nsFocusState.since):0)}
@@ -480,7 +516,7 @@ var list=by('users-list');if(!list)return;
 if(!nat||!nat.getUsers){list.innerHTML='<p class="hint">Las cuentas familiares requieren instalar la APK Android y activar el celular principal.</p>';return}
 try{var data=JSON.parse(nat.getUsers());if(!data.ok){list.textContent=data.error||'No disponible';return}
 list.replaceChildren();data.users.forEach(function(u){var d=document.createElement('div');d.className='profile-line';d.innerHTML='<span><b>'+esc(u.username)+'</b><br><small class="muted">'+(u.role==='admin'?'Administrador':'Miembro')+'</small></span><span class="chip">'+(u.active?'Activo':'Inactivo')+'</span>';list.append(d)})}catch(e){list.textContent='No se pudo obtener la lista de miembros'}}
-function show(view){if(view==='admin'&&session.role!=='admin')return;document.querySelectorAll('.view').forEach(function(v){v.classList.toggle('active',v.id==='view-'+view)});document.querySelectorAll('[data-view]').forEach(function(b){b.classList.toggle('active',b.dataset.view===view)});by('page-title').textContent=labels[view];render();if(view==='habits')renderStreak()}
+function show(view){if(view==='admin'&&session.role!=='admin')return;document.querySelectorAll('.view').forEach(function(v){v.classList.toggle('active',v.id==='view-'+view)});document.querySelectorAll('[data-view]').forEach(function(b){b.classList.toggle('active',b.dataset.view===view)});by('page-title').textContent=labels[view];render();if(view==='habits')renderStreak();if(view==='alarms')nsWakeRender()}
 document.querySelectorAll('[data-view]').forEach(function(b){b.addEventListener('click',function(){show(b.dataset.view)})});
 by('prev-month').onclick=function(){month=new Date(month.getFullYear(),month.getMonth()-1,1);renderCalendar()};by('next-month').onclick=function(){month=new Date(month.getFullYear(),month.getMonth()+1,1);renderCalendar()};
 document.querySelectorAll('[data-filter]').forEach(function(b){b.onclick=function(){filter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(function(x){x.classList.toggle('active',x===b)});render()}});
@@ -644,7 +680,7 @@ function sync(){
 }
 by('sync-btn').onclick=sync;
 function getUsers(){if(!nat||!nat.getUsers)return [{username:session.username,role:session.role}];try{var r=JSON.parse(nat.getUsers());return r.users||[]}catch(e){return []}}
-function enter(u){session=u;model=load();nsSleepRender();nsSceneRestore();nsFocusRestore();nsFocusTasks();nsFocusStats();nsFocusRender();model.pet=model.pet||{xp:0,food:0,feeds:0};by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=u.username.slice(0,1).toUpperCase();by('greeting').textContent='Hola, '+u.username+'. Hoy puedes avanzar a tu ritmo.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
+function enter(u){session=u;model=load();nsSleepRender();nsSceneRestore();nsFocusRestore();nsLauncherFocusSync();nsFocusTasks();nsFocusStats();nsFocusRender();model.pet=model.pet||{xp:0,food:0,feeds:0};by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=u.username.slice(0,1).toUpperCase();by('greeting').textContent='Hola, '+u.username+'. Hoy puedes avanzar a tu ritmo.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
 by('login-form').onsubmit=function(e){e.preventDefault();var username=by('login-user').value.trim().toLowerCase(),password=by('login-pass').value;
 if(nat&&nat.login){try{var res=JSON.parse(nat.login(username,password));if(!res.ok){by('login-error').textContent=res.error||'Usuario o contraseña incorrectos';return}enter(res.user);
         if(res.mustChangePassword){show('admin');say('Por seguridad, cambia la clave provisional antes de crear cuentas familiares.');}
@@ -763,7 +799,7 @@ by('jump-progress').onclick=function(){show('habits')};
 nsFocusInit();
 nsSleepInit();
 updateInstalledBuild();
-function logout(){if(nsFocusState)nsFocusSaveSession(false);syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
+function logout(){if(nsFocusState)nsFocusSaveSession(false);nsLauncherFocusSync();syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
 by('logout').onclick=logout;by('avatar').onclick=async function(){if(await nsConfirm('Cerrar sesión','¿Quieres cerrar esta sesión?','Cerrar sesión'))logout()};
 document.addEventListener('visibilitychange',function(){if(!document.hidden){sync();refreshFocusClock()}});setInterval(sync,60000);
 if(nat&&nat.restoreSession){
