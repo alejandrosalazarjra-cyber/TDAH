@@ -55,4 +55,5 @@ function makeTest(blocked=false){
 }
 assert(source.includes("ns_last_session_provider"),'Guardar la preferencia del proveedor');
 assert(source.includes("nsPreferredProvider!=='signed_out'"),'Respetar el cierre de sesión');
+assert(source.includes("nsPreferredProvider!=='google'"),'No sustituir cuenta Google ausente por admin local');
 console.log('Fase 1c OK: aislamiento, transacción local, bloqueo y sesiones');
