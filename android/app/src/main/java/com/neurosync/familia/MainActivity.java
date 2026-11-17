@@ -122,10 +122,11 @@ public final class MainActivity extends Activity {
         if(in==null)throw new IOException("No se pudo leer el archivo");
         ByteArrayOutputStream buffer=new ByteArrayOutputStream();
         byte[] chunk=new byte[8192];int n;
-        while((n=in.read(chunk))!=-1){buffer.write(chunk,0,n);if(buffer.size()>500000)throw new IOException("Respaldo demasiado grande");}
+        while((n=in.read(chunk))!=-1){buffer.write(chunk,0,n);if(buffer.size()>2000000)throw new IOException("Respaldo demasiado grande");}
         String json=buffer.toString("UTF-8");
         JSONObject parsed=new JSONObject(json);
-        if(parsed.optJSONArray("tasks")==null||parsed.optJSONArray("packs")==null||parsed.optJSONArray("alarms")==null)
+        if(!"neurosync-encrypted-backup".equals(parsed.optString("format")) &&
+           (parsed.optJSONArray("tasks")==null||parsed.optJSONArray("packs")==null||parsed.optJSONArray("alarms")==null))
           throw new IOException("Formato de respaldo incompatible");
         if(web!=null)web.evaluateJavascript("window.neuroImportData && window.neuroImportData("+JSONObject.quote(json)+")",null);
       }catch(Exception e){android.util.Log.e("NeuroSync","Error importando respaldo",e);}
@@ -441,18 +442,26 @@ public final class MainActivity extends Activity {
     @JavascriptInterface public void updateWidget(int pending){
       TodayWidget.refresh(MainActivity.this,Math.max(0,Math.min(pending,9999)));
     }
+    @JavascriptInterface public String encryptPersonalBackup(String data,String password){
+      try { return BackupCrypto.encrypt(data,password); }
+      catch(Exception e) { android.util.Log.w("NeuroSync","No se pudo cifrar el respaldo",e); return ""; }
+    }
+    @JavascriptInterface public String decryptPersonalBackup(String data,String password){
+      try { return BackupCrypto.decrypt(data,password); }
+      catch(Exception e) { android.util.Log.w("NeuroSync","Error descifrando respaldo",e); return ""; }
+    }
     @JavascriptInterface public void exportBackup(String data){
-      if(data==null||data.length()>500000)return;
+      if(data==null||data.length()>2000000)return;
       try{
         JSONObject check=new JSONObject(data);
-        if(check.optJSONArray("tasks")==null||check.optJSONArray("packs")==null||check.optJSONArray("alarms")==null)return;
+        if(!"neurosync-encrypted-backup".equals(check.optString("format")) || check.optInt("version")!=1)return;
       }catch(Exception ex){return;}
       runOnUiThread(()->{
         backupPending=data;
         Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("application/json");
-        intent.putExtra(Intent.EXTRA_TITLE,"NeuroSync-respaldo.json");
+        intent.putExtra(Intent.EXTRA_TITLE,"NeuroSync-respaldo-cifrado.json");
         startActivityForResult(intent,192);
       });
     }
