@@ -294,6 +294,59 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
 .ns-dragon-figure.has-atlas .ns-dragon-atlas{display:block}
 .ns-dragon-figure.has-atlas > .ns-dragon-sprite,.ns-dragon-figure.has-atlas > svg{display:none}
 @media(prefers-reduced-motion:reduce){.ns-dragon-figure.has-atlas,.ns-dragon-figure.has-atlas .ns-dragon-atlas{animation:none!important;transition:none!important}}
+</style><style>
+/* Pantalla Pomodoro: oculta menús, navegación y tarjetas durante la sesión. */
+#ns-pomodoro-screen{position:fixed;inset:0;width:100%;height:100%;height:100dvh;z-index:2147483600;display:none;align-items:center;justify-content:center;box-sizing:border-box;padding:24px;background:linear-gradient(160deg,#071b34,#0c3152 55%,#133b65);color:#fff;font-family:system-ui,-apple-system,sans-serif;text-align:center}
+#ns-pomodoro-screen.is-visible{display:flex}
+#ns-pomodoro-screen .ns-pomodoro-content{width:100%;max-width:460px;display:flex;align-items:center;flex-direction:column}
+.ns-pomodoro-caption{font-size:13px;letter-spacing:.23em;color:#b5d9f7;font-weight:700}
+#ns-pomodoro-count{font-variant-numeric:tabular-nums;font-size:clamp(74px,19vw,126px);font-weight:650;letter-spacing:-.065em;line-height:1.45}
+#ns-pomodoro-status{font-size:16px;color:#c3d9ef;margin:4px 0 48px}
+#ns-pomodoro-finish{border:1px solid #8ab5d7;border-radius:18px;background:rgba(255,255,255,.13);color:#fff;font-size:17px;font-weight:650;min-height:58px;padding:12px 25px;width:min(100%,320px)}
+#ns-pomodoro-finish:focus-visible{outline:3px solid #fff;outline-offset:3px}
+body.ns-pomodoro-active{overflow:hidden}
+</style>
+<style>
+.ns-google-login{margin-top:22px;width:100%;display:flex;align-items:center;justify-content:center;gap:14px;background:#fff!important;color:#1b3554!important;border:1px solid #cedce9!important;box-shadow:0 6px 22px #1a5c9014}
+.ns-google-symbol{font-family:Arial,sans-serif;font-size:26px;font-weight:800;color:#4285f4}
+.ns-google-note{font-size:12px;text-align:center!important;margin:12px 0 6px}
+.ns-owner-access{display:block;margin:12px auto 4px;background:transparent;border:0;color:#52799a;text-decoration:underline;font-size:13px;cursor:pointer;padding:11px}
+#ns-admin-login{margin-top:12px}
+</style><style>
+/* Portada compacta: mantener la actividad principal visible y el resto plegado. */
+#view-home .ns-brand-hero{display:none}
+#view-home>.grid{display:block}
+#view-home>.grid>.stack:empty{display:none}
+#view-home .ns-feature-tiles{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+#view-home .ns-feature-tile{min-width:0;padding:11px 6px}
+#view-home .ns-feature-tile strong{font-size:12px}
+#view-home .ns-feature-tile small{font-size:10px}
+.ns-home-extra{margin:14px 0;border:1px solid #d5e4f0;border-radius:20px;background:#f6fbff;padding:12px}
+.ns-home-extra>summary{cursor:pointer;padding:7px 9px;color:#143e69;font-weight:750;font-size:15px}
+.ns-home-extra[open]>summary{margin-bottom:12px}
+.ns-home-extra>.card,.ns-home-extra>.stats{margin:12px 0}
+#ns-user-popover{position:fixed;z-index:100090;top:66px;right:10px;width:min(370px,calc(100vw - 20px));max-height:calc(100dvh - 82px);overflow-y:auto;background:#fff;border:1px solid #d1e3f2;box-shadow:0 24px 68px #113b6450;border-radius:23px;padding:15px;color:#173959}
+#ns-user-popover.hidden{display:none}
+.ns-user-menu-header{display:flex;align-items:center;gap:12px;padding:4px 3px 15px;border-bottom:1px solid #e1ebf3}
+.ns-user-menu-header>div:nth-child(2){min-width:0;flex:1}
+.ns-user-menu-header small{display:block;font-size:12px;color:#54758f;overflow-wrap:anywhere}
+.ns-user-avatar{width:41px;height:41px;border-radius:50%;background:#e5f2ff;display:grid;place-items:center;color:#087cc8}
+#ns-close-account{font-size:23px;border:0;background:transparent;color:#456684;padding:6px}
+.ns-user-menu-actions{display:grid;gap:5px;margin:9px 0}
+.ns-user-menu-actions button{background:transparent;border:0;border-radius:12px;min-height:43px;text-align:left;padding:9px 12px;color:#173b60;font-size:14px}
+.ns-user-menu-actions button:active,.ns-user-menu-actions button:focus-visible{background:#e4f3ff}
+.ns-user-section{padding:6px 0;border-top:1px solid #e0edf6}
+.ns-user-section>summary{padding:10px;cursor:pointer;font-weight:700}
+#ns-user-launcher-container>.card,#ns-user-backup-container>.card,#ns-user-permission-container>div{margin:8px 0;box-shadow:none}
+#ns-user-popover .btn{font-size:13px;min-height:42px}
+@media(max-width:340px){#view-home .ns-feature-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style><style>
+#ns-google-developer-info{margin-top:12px;text-align:left;border-radius:15px;background:#fff8eb;border:1px solid #e4c995;padding:12px;color:#674a12}
+#ns-google-developer-info.hidden{display:none}
+#ns-google-developer-info summary{font-size:13px;font-weight:700;cursor:pointer}
+#ns-google-fingerprint{font-family:monospace;font-size:12px;line-height:1.6}
+.ns-music-clock-card{margin:12px 0}
+.ns-music-clock-card h3{margin-bottom:8px}
 </style></head><body>
 <div id="login" class="login ns-login-v3">
  <div class="ns-login-wrap">
@@ -310,7 +363,11 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
     <div><span aria-hidden="true">↗</span>Tus metas<br>en progreso</div>
   </div>
   <form id="login-form" class="card login-card ns-login-form">
-    <h2>Inicia sesión</h2><p class="hint">Continúa donde quedaste.</p>
+    <h2>Bienvenido a NeuroSync</h2><p class="hint">Tu productividad y tu dragón en un solo lugar.</p>
+    <button type="button" class="btn ns-google-login" id="ns-google-login"><span class="ns-google-symbol">G</span> Continuar con Google</button>
+    <p class="hint ns-google-note">Respaldo personal en Google Drive, con tu autorización.</p>
+    <button type="button" class="ns-owner-access" id="ns-owner-access" aria-expanded="false">Acceso del administrador</button>
+    <div class="hidden" id="ns-admin-login">
     <div class="stack ns-auth-fields">
       <label class="field">Usuario<input id="login-user" autocomplete="username" required placeholder="Usuario o correo" inputmode="text"></label>
       <label class="field">Contraseña
@@ -319,16 +376,17 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
     </div>
     <div class="ns-login-extras"><label class="ns-remember"><input type="checkbox" id="login-remember"> Recordar mi usuario</label><button type="button" class="ns-login-help" id="login-help">¿Olvidaste tu contraseña?</button></div>
     <button type="submit" class="btn ns-login-submit">Iniciar sesión <span aria-hidden="true">→</span></button>
+    </div>
     <p id="login-error" class="hint ns-login-error" role="alert"></p>
-    <p id="login-build" class="hint ns-login-build">Versión de la aplicación: verificando…</p>
-    <details class="ns-connection-details"><summary>Configurar teléfono principal y conexión</summary>
-      <div class="ns-connection-actions">
-       <button class="btn secondary" id="setup-host" type="button">Soy el administrador</button>
-       <button class="btn ghost" id="setup-client" type="button">Conectar por internet</button>
-       <button class="btn ghost" id="setup-lan" type="button">Red local avanzada</button>
-      </div>
+    <details id="ns-google-developer-info" class="hidden ns-google-diagnostics">
+      <summary>Detalles técnicos para configurar Google</summary>
+      <p class="hint">Registra un cliente OAuth de tipo Android con estos datos en Google Cloud. Es una configuración del desarrollador, no debes cambiar tu contraseña.</p>
+      <pre id="ns-google-fingerprint" style="white-space:pre-wrap;overflow-wrap:anywhere;user-select:text"></pre>
+      <p class="hint">Para la versión publicada en Play Store registra también el SHA-1 del certificado de firma de Play, que puede ser diferente.</p>
     </details>
-    <div class="alert ns-login-security">Por seguridad, cambia la clave inicial del administrador después de ingresar. No compartas contraseñas.</div>
+    <p id="login-build" class="hint ns-login-build">Versión de la aplicación: verificando…</p>
+
+
   </form>
   <div class="ns-login-footer"><img src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%20role%3D%22img%22%20aria-label%3D%22NeuroSync%3A%20drag%C3%B3n%20y%20lista%20de%20tareas%22%3E%0A%3Cdefs%3E%3ClinearGradient%20id%3D%22bg%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23063674%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%230866c6%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2303c4ec%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22wing%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2345eeff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%230d7fe6%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22paper%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ffffff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23c8f2ff%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%0A%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%22248%22%20height%3D%22248%22%20rx%3D%2258%22%20fill%3D%22url(%23bg)%22%2F%3E%0A%3Cpath%20d%3D%22M28%20158Q32%2078%20103%2063Q63%20103%2075%20152Q95%20104%20151%2077Q107%20127%20113%20175Q88%20205%2055%20201Q37%20184%2028%20158Z%22%20fill%3D%22url(%23wing)%22%2F%3E%0A%3Cpath%20d%3D%22M77%2043Q109%2073%20128%2075Q115%2051%20119%2033Q142%2061%20166%2065Q195%2076%20203%20103Q209%20118%20193%20128Q181%20135%20160%20121Q144%20116%20124%20128Q100%20147%20102%20182Q78%20156%2087%20132Q91%20113%20113%20101Q87%2098%2059%20122Q73%2081%20109%2087Q87%2067%2077%2043Z%22%20fill%3D%22%23f7feff%22%2F%3E%0A%3Cpath%20d%3D%22M159%20103Q171%20101%20178%20107Q170%20116%20159%20108Z%22%20fill%3D%22%23073878%22%2F%3E%0A%3Crect%20x%3D%22128%22%20y%3D%22127%22%20width%3D%22100%22%20height%3D%2290%22%20rx%3D%2218%22%20fill%3D%22url(%23paper)%22%2F%3E%0A%3Cg%20stroke%3D%22%23078fe6%22%20stroke-width%3D%228%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m143%20149%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20173%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20196%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22M175%20151h37M175%20175h37M175%20199h27%22%2F%3E%3C%2Fg%3E%0A%3Cpath%20d%3D%22M44%20207Q111%20251%20190%20220%22%20fill%3D%22none%22%20stroke%3D%22%235ff0fd%22%20stroke-width%3D%2216%22%20stroke-linecap%3D%22round%22%2F%3E%0A%3Cpath%20d%3D%22m219%2058%206%2016%2016%206-16%206-6%2016-6-16-16-6%2016-6Z%22%20fill%3D%22%2394ffff%22%2F%3E%0A%3C%2Fsvg%3E" alt="">Tu dragón de productividad te acompaña en cada paso.</div>
  </div>
@@ -347,7 +405,23 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
  <main class="main">
   <header class="top"><div class="ns-top-title"><div class="ns-mobile-brand"><img src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%20role%3D%22img%22%20aria-label%3D%22NeuroSync%3A%20drag%C3%B3n%20y%20lista%20de%20tareas%22%3E%0A%3Cdefs%3E%3ClinearGradient%20id%3D%22bg%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23063674%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%230866c6%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2303c4ec%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22wing%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2345eeff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%230d7fe6%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22paper%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ffffff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23c8f2ff%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%0A%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%22248%22%20height%3D%22248%22%20rx%3D%2258%22%20fill%3D%22url(%23bg)%22%2F%3E%0A%3Cpath%20d%3D%22M28%20158Q32%2078%20103%2063Q63%20103%2075%20152Q95%20104%20151%2077Q107%20127%20113%20175Q88%20205%2055%20201Q37%20184%2028%20158Z%22%20fill%3D%22url(%23wing)%22%2F%3E%0A%3Cpath%20d%3D%22M77%2043Q109%2073%20128%2075Q115%2051%20119%2033Q142%2061%20166%2065Q195%2076%20203%20103Q209%20118%20193%20128Q181%20135%20160%20121Q144%20116%20124%20128Q100%20147%20102%20182Q78%20156%2087%20132Q91%20113%20113%20101Q87%2098%2059%20122Q73%2081%20109%2087Q87%2067%2077%2043Z%22%20fill%3D%22%23f7feff%22%2F%3E%0A%3Cpath%20d%3D%22M159%20103Q171%20101%20178%20107Q170%20116%20159%20108Z%22%20fill%3D%22%23073878%22%2F%3E%0A%3Crect%20x%3D%22128%22%20y%3D%22127%22%20width%3D%22100%22%20height%3D%2290%22%20rx%3D%2218%22%20fill%3D%22url(%23paper)%22%2F%3E%0A%3Cg%20stroke%3D%22%23078fe6%22%20stroke-width%3D%228%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m143%20149%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20173%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20196%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22M175%20151h37M175%20175h37M175%20199h27%22%2F%3E%3C%2Fg%3E%0A%3Cpath%20d%3D%22M44%20207Q111%20251%20190%20220%22%20fill%3D%22none%22%20stroke%3D%22%235ff0fd%22%20stroke-width%3D%2216%22%20stroke-linecap%3D%22round%22%2F%3E%0A%3Cpath%20d%3D%22m219%2058%206%2016%2016%206-16%206-6%2016-6-16-16-6%2016-6Z%22%20fill%3D%22%2394ffff%22%2F%3E%0A%3C%2Fsvg%3E" alt=""><span>Neuro<b>Sync</b></span></div><h1 id="page-title">Mi día</h1><div class="sub" id="greeting">Organiza tus próximos pasos</div>
   <div class="hint" id="installed-build" aria-live="polite">Comprobando versión instalada…</div></div>
-   <div class="top-right"><span class="sync-state" id="sync-status">Guardado local</span><button id="sync-btn" class="btn secondary" aria-label="Sincronizar">↻</button><button class="avatar" id="avatar" type="button" aria-label="Cerrar sesión de mi cuenta" title="Mi cuenta">A</button></div></header>
+   <div class="top-right"><span class="sync-state" id="sync-status">Guardado local</span><button id="sync-btn" class="btn secondary" aria-label="Sincronizar">↻</button><button class="avatar" id="avatar" type="button" aria-label="Abrir menú de mi cuenta" aria-controls="ns-user-popover" aria-expanded="false" title="Mi cuenta">A</button></div></header>
+  <aside id="ns-user-popover" class="hidden" role="dialog" aria-label="Cuenta y configuración">
+   <div class="ns-user-menu-header"><div class="ns-user-avatar">◉</div><div><strong id="ns-account-name">Mi cuenta</strong><small id="ns-account-email">Ajustes personales</small></div><button type="button" id="ns-close-account" aria-label="Cerrar menú">×</button></div>
+   <div class="ns-user-menu-actions">
+    <button type="button" data-account-go="tasks">☑ Mis tareas</button>
+    <button type="button" data-account-go="calendar">▦ Mi agenda</button>
+    <button type="button" data-account-go="habits">◉ Mi progreso</button>
+    <button type="button" data-account-go="alarms">◷ Mis alarmas</button>
+   </div>
+   <details class="ns-user-section" id="ns-account-permissions"><summary>⚙ Permisos y configuración</summary>
+    <div class="ns-user-menu-actions"><button type="button" id="ns-user-alarm-permissions">Permisos de alarmas</button><button type="button" data-native-permission="notifications">Notificaciones</button><button type="button" data-native-permission="overlay">Ventanas flotantes</button><button type="button" data-native-permission="usage">Acceso de uso (opcional)</button><button type="button" data-native-permission="app">Ajustes de Android</button></div>
+    <div id="ns-user-permission-container"></div>
+   </details>
+   <details class="ns-user-section" id="ns-account-launcher"><summary>⌂ Inicio minimalista</summary><div id="ns-user-launcher-container"></div></details>
+   <details class="ns-user-section" id="ns-account-backup"><summary>☁ Respaldo y datos</summary><div id="ns-user-backup-container"></div></details>
+   <div class="ns-user-menu-actions"><button type="button" id="ns-account-logout">Cerrar sesión</button></div>
+  </aside>
   <section class="view active" id="view-home">
    <div class="ns-home-intro"><div><span class="ns-eyebrow">TU DÍA EN EQUILIBRIO</span><h2 id="ns-home-welcome">Tu día está listo para avanzar</h2><p>Avanza a tu ritmo. Tu dragón te acompaña hoy.</p></div></div>
    <div class="ns-brand-hero"><div class="ns-brand-hero-copy"><span class="ns-eyebrow">TU DRAGÓN DE PRODUCTIVIDAD</span><h2>Tu dragón te acompaña hoy</h2><span class="ns-hero-missions"><span aria-hidden="true">✓</span><span id="ns-hero-missions">Tus misiones están listas</span></span></div><img src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%20role%3D%22img%22%20aria-label%3D%22NeuroSync%3A%20drag%C3%B3n%20y%20lista%20de%20tareas%22%3E%0A%3Cdefs%3E%3ClinearGradient%20id%3D%22bg%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23063674%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%230866c6%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2303c4ec%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22wing%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2345eeff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%230d7fe6%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22paper%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ffffff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23c8f2ff%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%0A%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%22248%22%20height%3D%22248%22%20rx%3D%2258%22%20fill%3D%22url(%23bg)%22%2F%3E%0A%3Cpath%20d%3D%22M28%20158Q32%2078%20103%2063Q63%20103%2075%20152Q95%20104%20151%2077Q107%20127%20113%20175Q88%20205%2055%20201Q37%20184%2028%20158Z%22%20fill%3D%22url(%23wing)%22%2F%3E%0A%3Cpath%20d%3D%22M77%2043Q109%2073%20128%2075Q115%2051%20119%2033Q142%2061%20166%2065Q195%2076%20203%20103Q209%20118%20193%20128Q181%20135%20160%20121Q144%20116%20124%20128Q100%20147%20102%20182Q78%20156%2087%20132Q91%20113%20113%20101Q87%2098%2059%20122Q73%2081%20109%2087Q87%2067%2077%2043Z%22%20fill%3D%22%23f7feff%22%2F%3E%0A%3Cpath%20d%3D%22M159%20103Q171%20101%20178%20107Q170%20116%20159%20108Z%22%20fill%3D%22%23073878%22%2F%3E%0A%3Crect%20x%3D%22128%22%20y%3D%22127%22%20width%3D%22100%22%20height%3D%2290%22%20rx%3D%2218%22%20fill%3D%22url(%23paper)%22%2F%3E%0A%3Cg%20stroke%3D%22%23078fe6%22%20stroke-width%3D%228%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m143%20149%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20173%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20196%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22M175%20151h37M175%20175h37M175%20199h27%22%2F%3E%3C%2Fg%3E%0A%3Cpath%20d%3D%22M44%20207Q111%20251%20190%20220%22%20fill%3D%22none%22%20stroke%3D%22%235ff0fd%22%20stroke-width%3D%2216%22%20stroke-linecap%3D%22round%22%2F%3E%0A%3Cpath%20d%3D%22m219%2058%206%2016%2016%206-16%206-6%2016-6-16-16-6%2016-6Z%22%20fill%3D%22%2394ffff%22%2F%3E%0A%3C%2Fsvg%3E" alt="" aria-hidden="true"></div>
@@ -479,10 +553,16 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
 <div class="between" style="margin-bottom:9px"><b style="font-size:14px">Sonido y pantalla de alarma</b><span class="chip" id="alarm-permission-indicator">Android</span></div>
 <p class="hint" id="alarm-permission-status">Los permisos se solicitan cuando programas una alarma.</p>
 <div class="row" style="margin-top:12px">
+<button type="button" class="btn secondary" id="alarm-permissions-open">Permitir pantalla completa</button>
 <button type="button" class="btn secondary" id="alarm-test">Probar en 1 min</button>
 <button type="button" class="btn ghost" id="alarm-local-sound">Elegir sonido</button>
 <button type="button" class="btn ghost" id="alarm-clock-music">Abrir Reloj de Google</button></div>
-</div><p class="hint" style="margin-top:10px">Para usar canciones de YouTube Music, configura una alarma en Reloj de Google. Las alarmas propias de NeuroSync tienen desafíos y tonos locales, pero no pueden reproducir directamente YouTube Music.</p><div id="alarms-list"></div></div></section>
+</div><p class="hint" style="margin-top:10px">Para usar canciones de YouTube Music, configura una alarma en Reloj de Google. Las alarmas propias de NeuroSync tienen desafíos y tonos locales, pero no pueden reproducir directamente YouTube Music.</p><div class="card ns-music-clock-card">
+  <h3>Despertar con YouTube Music</h3>
+  <p class="hint">Configura la canción desde Reloj de Google con YouTube Music Premium. Esta alarma sonará en Reloj y no utilizará los desafíos de NeuroSync.</p>
+  <button type="button" class="btn secondary" id="ns-create-music-alarm">Crear alarma musical en Reloj</button>
+  <p class="hint">Para las alarmas con retos de NeuroSync, usa un archivo de audio local autorizado o un tono del teléfono.</p>
+ </div><div id="alarms-list"></div></div></section>
   <section class="view" id="view-habits">
    <div class="card ns-health-summary">
     <div class="between"><h2>Mi panorama semanal</h2><span class="chip">Solo en mi cuenta</span></div>
@@ -532,9 +612,9 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
     <h2>Historial privado</h2><div id="streak-history"></div>
    </div>
   </section>
-  <section class="view" id="view-admin"><div class="grid"><div class="stack"><div class="card"><div class="between"><h2>Miembros de la familia</h2><button class="btn" data-open="user">+ Crear cuenta</button></div><p class="muted small">Cada persona tiene su propio usuario. Las actividades se asignan por responsable.</p><div id="users-list"></div></div><div class="card"><h2>Flujos de trabajo</h2><p class="small muted">Crea una tarea recurrente y asígnala a un miembro. Puedes añadir subtareas, horario y fecha.</p><button class="btn secondary" data-open="task">+ Crear flujo / tarea</button></div></div><div class="stack"><div class="card"><h2>Respaldo personal</h2>
+  <section class="view" id="view-admin"><div class="grid"><div class="stack"><div class="card"><div class="between"><h2>Miembros de la familia</h2></div><p class="muted small">Cada integrante utiliza su propia cuenta de Google. Los datos personales se guardan por separado. Compartir tareas entre cuentas requiere una sincronización familiar adicional.</p><div id="users-list" class="hidden"></div></div><div class="card"><h2>Flujos de trabajo</h2><p class="small muted">Crea una tarea recurrente y asígnala a un miembro. Puedes añadir subtareas, horario y fecha.</p><button class="btn secondary" data-open="task">+ Crear flujo / tarea</button></div></div><div class="stack"><div class="card"><h2>Respaldo personal</h2>
 <p class="hint">Guarda y recupera tus tareas, listas, alarmas y progreso de mascota antes de reinstalar una APK.</p>
-<div class="row"><button class="btn secondary" type="button" id="backup-export">Exportar respaldo</button><button class="btn ghost" type="button" id="backup-import">Importar respaldo</button></div></div><div class="card"><h2>Seguridad</h2><p class="muted small">Cambia la contraseña inicial del administrador. Usa una diferente para cada persona.</p><form id="password-form" class="stack" style="gap:10px"><label class="field">Contraseña actual<input id="current-pass" type="password" required></label><label class="field">Contraseña nueva (mín. 10 caracteres)<input id="new-pass" type="password" minlength="10" required></label><button class="btn" type="submit">Cambiar contraseña</button></form></div><div class="card"><h2>Teléfono principal</h2><p class="muted small">La sincronización por internet usa una base central en Cloudflare cuando esté activada. Tu cuenta controla miembros y tareas; no necesitas Netlify, Tailscale ni Play Store.</p><button class="btn secondary" id="configure-network">Configurar conexión</button></div></div></div></section>
+<div class="row"><button class="btn secondary" type="button" id="backup-export">Exportar respaldo</button><button class="btn ghost" type="button" id="backup-import">Importar respaldo</button></div></div><div class="card"><h2>Seguridad</h2><p class="muted small">Cambia la contraseña inicial del administrador. Usa una diferente para cada persona.</p><form id="password-form" class="stack" style="gap:10px"><label class="field">Contraseña actual<input id="current-pass" type="password" required></label><label class="field">Contraseña nueva (mín. 10 caracteres)<input id="new-pass" type="password" minlength="10" required></label><button class="btn" type="submit">Cambiar contraseña</button></form></div></div></div></section>
  </main>
  <nav class="nav-mobile" aria-label="Navegación principal">
   <button class="active" data-view="home"><span>⌂</span>Hoy</button><button data-view="tasks"><span>☑</span>Tareas</button><button data-view="calendar"><span>▦</span>Agenda</button><button data-view="bags"><span>▣</span>Listas</button><button data-view="alarms"><span>◷</span>Alarmas</button><button data-view="habits"><span>◉</span>Progreso</button><button class="admin-only" data-view="admin"><span>♙</span>Admin</button>
@@ -1263,8 +1343,30 @@ function nsFocusStats(){
  by('ns-focus-week').textContent=Math.floor(weekMs/60000)+' min';
  by('ns-focus-sessions').textContent=records.filter(function(x){return x.completed}).length;
 }
+function nsFocusFullscreen(state,remaining){
+ var screen=document.getElementById('ns-pomodoro-screen');
+ if(!screen){
+  screen=document.createElement('section');screen.id='ns-pomodoro-screen';
+  screen.setAttribute('role','dialog');screen.setAttribute('aria-modal','true');
+  screen.setAttribute('aria-label','Pomodoro a pantalla completa');
+  screen.innerHTML='<div class="ns-pomodoro-content"><div class="ns-pomodoro-caption">MODO CONCENTRACIÓN</div><div id="ns-pomodoro-count" role="timer" aria-live="off">25:00</div><div id="ns-pomodoro-status">Concéntrate en una sola cosa</div><button type="button" id="ns-pomodoro-finish">Terminar pomodoro</button></div>';
+  document.body.appendChild(screen);
+  screen.querySelector('#ns-pomodoro-finish').addEventListener('click',function(){
+   if(nsFocusState){nsFocusSaveSession(false);say('Pomodoro terminado. Tiempo registrado.');}
+  });
+ }
+ var active=!!(state&&session);
+ screen.classList.toggle('is-visible',active);
+ screen.setAttribute('aria-hidden',String(!active));
+ document.body.classList.toggle('ns-pomodoro-active',active);
+ if(active){
+  screen.querySelector('#ns-pomodoro-count').textContent=nsFocusFormat(remaining);
+  screen.querySelector('#ns-pomodoro-status').textContent=state.running?'Concéntrate en una sola cosa':'Sesión en pausa';
+ }
+}
 function nsFocusRender(){
  var state=nsFocusState,total=(state?state.duration:nsFocusDuration)*60000,remaining=Math.max(0,total-nsFocusElapsed());
+ nsFocusFullscreen(state,remaining);
  by('ns-focus-time').textContent=nsFocusFormat(remaining);
  by('ns-focus-phase').textContent=!state?'Listo para comenzar':state.running?'Concentrándote':'En pausa';
  by('ns-focus-toggle').textContent=state?(state.running?'Pausar':'Continuar'):'Iniciar enfoque';
@@ -1335,7 +1437,22 @@ if(session&&session.role==='admin'){
 }
 localStorage.setItem(localKey(),JSON.stringify(fresh));return fresh;
 }
-function save(){localStorage.setItem(localKey(),JSON.stringify(model));by('sync-status').textContent='Cambios guardados';if(nat&&(nat.syncFamilyAsync||nat.syncFamily)){setTimeout(sync,350)}}
+var nsDriveBackupTimer=null;
+function nsQueueDriveBackup(){
+ if(!session||!session.google||!nat||!nat.backupGoogleDrive)return;
+ clearTimeout(nsDriveBackupTimer);
+ nsDriveBackupTimer=setTimeout(function(){
+  if(!session||!session.google||!model)return;
+  try{nat.backupGoogleDrive(JSON.stringify({version:1,googleId:session.username.slice(7),savedAt:Date.now(),model:model}))}
+  catch(error){by('sync-status').textContent='Copia Drive pendiente'}
+ },15000);
+}
+function save(){
+ localStorage.setItem(localKey(),JSON.stringify(model));
+ by('sync-status').textContent=session&&session.google?'Guardado local · Drive pendiente':'Cambios guardados';
+ if(session&&session.google){nsQueueDriveBackup();return}
+ if(nat&&(nat.syncFamilyAsync||nat.syncFamily)){setTimeout(sync,350)}
+}
 function active(list){return list.filter(function(t){return !t.deleted})}
 function owned(t){return session.role==='admin'||t.owner===session.username||t.owner==='todos'}
 function mark(t){t.updatedAt=stamp();return t}
@@ -1598,11 +1715,15 @@ function checkAlarmPermissions(){
  try{
   var a=JSON.parse(nat.alarmPermissions());
   var count=[a.notifications,a.exact,a.fullScreen].filter(Boolean).length;
-  status.textContent=count===3?'Permisos disponibles. Prueba el sonido y la pantalla bloqueada.':'Android requiere '+(3-count)+' autorización(es) para todas las funciones. Se solicitarán al crear o probar una alarma.';
+  status.textContent=count===3&&a.channelHigh!==false?'Permisos disponibles. Bloquea el teléfono para probar la apertura completa. Con pantalla desbloqueada Android muestra un aviso emergente.':'Faltan permisos o la prioridad del canal de alarma es baja. Usa Permitir pantalla completa y comprueba los ajustes de notificaciones.';
   var badge=by('alarm-permission-indicator');
   if(badge)badge.textContent=count===3?'Listo':'Permisos '+count+'/3';
  }catch(err){status.textContent='No se pudo verificar los permisos'}
 }
+by('alarm-permissions-open').onclick=function(){
+ if(nat&&nat.requestAlarmPermissions)nat.requestAlarmPermissions();
+ else say('Solo disponible en la APK Android');
+};
 by('alarm-test').onclick=function(){
  if(nat&&nat.testAlarm){
   if(nat.requestAlarmPermissions) {
@@ -1616,6 +1737,10 @@ window.neuroAlarmSoundSelected=function(){say('Sonido guardado para próximas al
 by('alarm-local-sound').onclick=function(){
  if(nat&&nat.chooseAlarmSound)nat.chooseAlarmSound();
  else say('La selección de audio necesita la APK Android');
+};
+by('ns-create-music-alarm').onclick=function(){
+ if(nat&&nat.createYouTubeMusicClockAlarm)nat.createYouTubeMusicClockAlarm();
+ else say('Abre Reloj de Android → Alarma → Sonido → YouTube Music');
 };
 by('alarm-clock-music').onclick=function(){
  if(nat&&nat.openSystemClock){nat.openSystemClock()}
@@ -1657,45 +1782,65 @@ window.neuroSyncOnSync=function(payload,requestingUser){
  }catch(e){by('sync-status').textContent='Error aplicando cambios'}
 };
 function sync(){
- if(!session||!nat||syncing)return;
+ if(!session||session.google||!nat||syncing)return;
  var content=JSON.stringify({tasks:model.tasks,packs:model.packs,alarms:model.alarms});
  if(nat.syncFamilyAsync){syncing=true;by('sync-status').textContent='Sincronizando…';try{nat.syncFamilyAsync(content,session.username)}catch(e){syncing=false;by('sync-status').textContent='Guardado local'}return}
  if(nat.syncFamily){try{window.neuroSyncOnSync(nat.syncFamily(content))}catch(e){by('sync-status').textContent='Guardado local'}}
 }
 by('sync-btn').onclick=sync;
 function getUsers(){if(!nat||!nat.getUsers)return [{username:session.username,role:session.role}];try{var r=JSON.parse(nat.getUsers());return r.users||[]}catch(e){return []}}
-function enter(u){session=u;model=load();nsSleepRender();nsSceneRestore();nsFocusRestore();nsLauncherFocusSync();nsFocusTasks();nsFocusStats();nsFocusRender();nsDragonData();by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=u.username.slice(0,1).toUpperCase();by('greeting').textContent='Tu día está listo para avanzar a tu ritmo.';by('ns-home-welcome').textContent='Hola, '+u.username+'. Tu día te espera.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
+function enter(u){session=u;model=load();nsSleepRender();nsSceneRestore();nsFocusRestore();nsLauncherFocusSync();nsFocusTasks();nsFocusStats();nsFocusRender();nsDragonData();by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=(u.displayName||u.username).slice(0,1).toUpperCase();by('greeting').textContent='Tu día está listo para avanzar a tu ritmo.';by('ns-home-welcome').textContent='Hola, '+(u.displayName||u.email||u.username)+'. Tu día te espera.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');if(nsPendingRoute){var route=nsPendingRoute;nsPendingRoute='';nsNavigate(route)}sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
+by('ns-owner-access').onclick=function(){
+ var panel=by('ns-admin-login'),showing=!panel.classList.toggle('hidden');
+ by('ns-owner-access').setAttribute('aria-expanded',String(showing));
+ if(showing)by('login-user').focus();
+};
+by('ns-google-login').onclick=function(){
+ by('login-error').textContent='';
+ if(nat&&nat.loginGoogle)nat.loginGoogle();
+ else by('login-error').textContent='El acceso Google requiere la APK Android.';
+};
+window.neuroGoogleLogin=function(json){
+ try{
+  var result=JSON.parse(json);
+  var info=by('ns-google-developer-info');
+  info.classList.add('hidden');
+  if(result.ok&&result.user&&result.user.google){
+   by('login-error').textContent='';
+   enter(result.user);
+   by('sync-status').textContent='Google conectado · comprobando Drive';
+  }else{
+   by('login-error').textContent=result.error||'No se pudo iniciar sesión con Google';
+   if(result.configurationRequired&&nat&&nat.googleOAuthDiagnostics){
+    try{
+     var diagnostics=JSON.parse(nat.googleOAuthDiagnostics());
+     by('ns-google-fingerprint').textContent='Identificador: '+(diagnostics.packageName||'No disponible')+'\nSHA-1: '+(diagnostics.sha1||'No disponible');
+     info.classList.remove('hidden');
+    }catch(err){}
+   }
+  }
+ }catch(e){by('login-error').textContent='No se pudo validar la identidad'}
+};
+window.neuroDriveStatus=function(message){if(by('sync-status'))by('sync-status').textContent=message};
+window.neuroGoogleBackupRestored=async function(raw){
+ if(!session||!session.google)return;
+ try{
+  var backup=JSON.parse(raw);
+  if(backup.version!==1||backup.googleId!==session.username.slice(7)||!backup.model||!Array.isArray(backup.model.tasks)||!Array.isArray(backup.model.packs)||!Array.isArray(backup.model.alarms))return;
+  var hasData=model.tasks.length||model.alarms.length||model.packs.length;
+  if(hasData&&!await nsConfirm('Respaldo encontrado','¿Restaurar los datos guardados en tu cuenta de Google? Reemplazará los datos locales de esta cuenta.','Restaurar'))return;
+  model=backup.model;localStorage.setItem(localKey(),JSON.stringify(model));
+  render();nsDragonRender();nsFocusTasks();nsFocusStats();
+  say('Respaldo personal restaurado desde Google Drive');
+ }catch(e){if(by('sync-status'))by('sync-status').textContent='Restauración Drive no disponible'}
+};
 by('login-form').onsubmit=function(e){e.preventDefault();var username=by('login-user').value.trim().toLowerCase(),password=by('login-pass').value;
 try{if(by('login-remember').checked)localStorage.setItem('ns_login_last_user',username);else localStorage.removeItem('ns_login_last_user')}catch(error){}
-if(nat&&nat.login){try{var res=JSON.parse(nat.login(username,password));if(!res.ok){by('login-error').textContent=res.error||'Usuario o contraseña incorrectos';return}enter(res.user);
+if(nat&&nat.loginOwner){try{var res=JSON.parse(nat.loginOwner(username,password));if(!res.ok){by('login-error').textContent=res.error||'Usuario o contraseña incorrectos';return}enter(res.user);
         if(res.mustChangePassword){show('admin');say('Por seguridad, cambia la clave provisional antes de crear cuentas familiares.');}
         return}catch(err){by('login-error').textContent='Error de conexión con el teléfono principal';return}}
-if(username==='administrador'&&password==='admin1234'){enter({username:username,role:'admin'});say('Modo web de demostración: sin cuentas seguras ni sincronización');return}
-by('login-error').textContent='En web solo está disponible la demostración. Las cuentas familiares requieren la APK.'};
-by('setup-host').onclick=function(){if(nat&&nat.configureHost){try{var r=JSON.parse(nat.configureHost());say(r.message||'Configuración guardada')}catch(e){say('No se pudo activar el teléfono principal')}}else say('La configuración del servidor solo funciona en la APK Android')};
-by('setup-client').onclick=async function(){
- if(!nat||!nat.configureCloud){say('La sincronización por internet requiere la APK Android');return}
- var url=await nsPrompt('Servidor familiar HTTPS','',{type:'url',placeholder:'https://servidor.ejemplo.com'});
- if(!url)return;
- try{var response=JSON.parse(nat.configureCloud(url));say(response.message||response.error||'No se pudo conectar')}
- catch(e){say('Dirección no válida')}
-};
-by('setup-lan').onclick=async function(){
- if(!nat||!nat.configureRemote){say('Opción disponible solo en Android');return}
- var host=await nsPrompt('Servidor de red local','',{placeholder:'192.168.1.10'});
- if(!host)return;
- try{var result=JSON.parse(nat.configureRemote(host));say(result.message||result.error||'Error')}
- catch(e){say('No se pudo configurar la conexión')}
-};
-by('configure-network').onclick=async function(){
- if(!nat){say('Configura el servidor desde la APK Android');return}
- var choice=await nsConfirm('Sincronización por internet','Cancelar conserva la configuración anterior.','Continuar');
- if(!choice)return;
- var url=await nsPrompt('Dirección HTTPS del servidor','',{type:'url'});
- if(!url)return;
- try{var result=JSON.parse(nat.configureCloud(url));say(result.message||result.error||'Sin cambios')}
- catch(e){say('No se pudo configurar el servidor')}
-};
+
+by('login-error').textContent='El acceso de administrador requiere la APK Android.'};
 by('password-form').onsubmit=function(e){e.preventDefault();if(!nat||!nat.changePassword){say('Cambia contraseñas desde el APK Android');return}try{var r=JSON.parse(nat.changePassword(by('current-pass').value,by('new-pass').value));say(r.ok?'Contraseña actualizada. Inicia sesión de nuevo.':(r.error||'Error'));if(r.ok){by('password-form').reset();setTimeout(logout,1100)}}catch(err){say('No se pudo cambiar la contraseña')}};
 window.neuroBackupMessage=function(message){say(message)};
 window.neuroImportData=async function(raw){
@@ -1807,6 +1952,81 @@ function updateInstalledBuild(){
  by('installed-build').textContent=label;
  by('feature-status').textContent=label;
 }
+
+/* Organiza los módulos una sola vez; mueve nodos, no los clona, para conservar sus listeners. */
+function nsMoveTo(id,container){
+ var source=by(id),dest=by(container);
+ if(source&&dest)dest.appendChild(source);
+}
+function nsHomeExtra(title,id){
+ var details=document.createElement('details');
+ details.className='ns-home-extra';details.id=id;
+ var label=document.createElement('summary');label.textContent=title;details.appendChild(label);
+ by('view-home').appendChild(details);
+ return details;
+}
+function nsOrganizeHome(){
+ var dragon=nsHomeExtra('Misiones y aventuras de Azul','ns-extra-dragon');
+ var focus=nsHomeExtra('Temporizador Pomodoro y concentración','ns-extra-focus');
+ var more=nsHomeExtra('Ver más de mi día','ns-extra-day');
+ function move(selector,dest){var item=document.querySelector(selector);if(item)dest.appendChild(item)}
+ move('#view-home .ns-dragon-quest-card',dragon);
+ move('#focus-studio',focus);
+ move('#view-home .stats',more);
+ move('#view-home #quick-capture-card',by('view-home').querySelector('.grid>.stack'));
+ // Las tareas y el dragón permanecen visibles en la portada.
+ move('#view-home .card:has(#jump-challenge)',more);
+ move('#view-home .card:has(#daily-summary)',more);
+ move('#view-home .card:has(#home-alarms)',more);
+ move('#view-home .card:has(#home-bags)',more);
+ move('#view-home .card:has(#open-minimal-home)',by('ns-user-launcher-container'));
+ move('#view-admin .card:has(#backup-export)',by('ns-user-backup-container'));
+ var permissions=by('alarm-permission-status');
+ if(permissions&&permissions.parentElement)by('ns-user-permission-container').appendChild(permissions.parentElement);
+}
+function nsAccountVisible(visible){
+ var dialog=by('ns-user-popover');
+ dialog.classList.toggle('hidden',!visible);
+ by('avatar').setAttribute('aria-expanded',String(visible));
+ if(visible){
+  by('ns-account-name').textContent=session?(session.displayName||session.username):'Mi cuenta';
+  by('ns-account-email').textContent=session?(session.email||'Administrador local'):'Ajustes personales';
+  checkAlarmPermissions();
+ }
+}
+function nsOpenFocusStudio(){
+ show('home');
+ var detail=by('ns-extra-focus');
+ if(detail)detail.open=true;
+ by('focus-studio').scrollIntoView({behavior:'auto',block:'start'});
+}
+var nsPendingRoute='';
+function nsNavigate(route){
+ if(!session){nsPendingRoute=route;return}
+ if(['home','tasks','calendar','bags','alarms','habits','admin'].includes(route))show(route);
+ else if(route==='focus')nsOpenFocusStudio();
+ else if(route==='dragon'){show('home');by('dragon-scene').scrollIntoView({behavior:'auto',block:'start'})}
+ else return;
+ nsAccountVisible(false);
+}
+window.neuroNavigateFromLauncher=function(route){if(typeof route==='string')nsNavigate(route)};
+nsOrganizeHome();
+by('avatar').onclick=function(){nsAccountVisible(by('ns-user-popover').classList.contains('hidden'))};
+by('ns-close-account').onclick=function(){nsAccountVisible(false)};
+by('ns-account-logout').onclick=function(){nsAccountVisible(false);by('logout').click()};
+document.querySelectorAll('[data-account-go]').forEach(function(button){button.onclick=function(){nsNavigate(button.dataset.accountGo)}});
+document.querySelectorAll('[data-native-permission]').forEach(function(button){button.onclick=function(){
+ if(nat&&nat.openPermissionsPanel)nat.openPermissionsPanel(button.dataset.nativePermission);
+ else say('Esta función solo está disponible en la APK Android');
+}});
+by('ns-user-alarm-permissions').onclick=function(){if(nat&&nat.requestAlarmPermissions)nat.requestAlarmPermissions()};
+document.addEventListener('click',function(e){
+ var menu=by('ns-user-popover');
+ if(!menu.classList.contains('hidden')&&!menu.contains(e.target)&&!by('avatar').contains(e.target))nsAccountVisible(false);
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')nsAccountVisible(false)});
+by('ns-tile-focus-open').onclick=nsOpenFocusStudio;
+
 by('jump-challenge').onclick=function(){show('alarms');say('Crea una alarma y elige el desafío para detenerla')};
 by('jump-progress').onclick=function(){show('habits')};
 nsFocusInit();
@@ -2019,10 +2239,20 @@ function nsDragonInitActions(){
  nsDragonRender=function(){originalRender();nsDragonUpdateEnergy()};
 }
 
-function logout(){if(nsFocusState)nsFocusSaveSession(false);nsLauncherFocusSync();syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
+function logout(){clearTimeout(nsDriveBackupTimer);if(session&&session.google&&nat&&nat.logoutGoogle)nat.logoutGoogle();if(nsFocusState)nsFocusSaveSession(false);nsLauncherFocusSync();syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
 by('logout').onclick=logout;by('avatar').onclick=async function(){if(await nsConfirm('Cerrar sesión','¿Quieres cerrar esta sesión?','Cerrar sesión'))logout()};
 document.addEventListener('visibilitychange',function(){if(!document.hidden){sync();refreshFocusClock()}});setInterval(sync,60000);
-if(nat&&nat.restoreSession){
+var nsGoogleRestored=false;
+if(nat&&nat.restoreGoogleSession){
+ try{
+  var googleRestored=JSON.parse(nat.restoreGoogleSession());
+  if(googleRestored.ok&&googleRestored.user&&googleRestored.user.google){
+   enter(googleRestored.user);nsGoogleRestored=true;
+   if(nat.refreshGoogleDrive)nat.refreshGoogleDrive();
+  }
+ }catch(error){}
+}
+if(!nsGoogleRestored&&nat&&nat.restoreSession){
  try{
   var restored=JSON.parse(nat.restoreSession());
   if(restored.ok&&restored.user&&restored.user.username){
