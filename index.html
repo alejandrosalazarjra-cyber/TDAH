@@ -641,6 +641,16 @@ html,body{background:#f8fbff;color:var(--ink)}
  #view-alarms .ns-alarm-line-actions{gap:14px}
 }
 @media(prefers-reduced-motion:reduce){#view-alarms .ns-alarm-switch span,#view-alarms .ns-alarm-switch span:after{transition:none}}
+</style><style id="ns-alarm-weekdays-style">
+#modal.ns-alarm-modal #ns-weekdays{display:flex;gap:5px;justify-content:space-between;padding:4px 0 10px;border:0;margin:0;min-width:0}
+#modal.ns-alarm-modal #ns-weekdays.hidden{display:none!important}
+#modal.ns-alarm-modal #ns-weekdays legend{font-size:12px;color:#9fb7ce;margin-bottom:8px}
+#modal.ns-alarm-modal #ns-weekdays label{position:relative;display:block;flex:1;min-width:0}
+#modal.ns-alarm-modal #ns-weekdays input{position:absolute!important;inset:0;opacity:0;cursor:pointer}
+#modal.ns-alarm-modal #ns-weekdays span{display:grid;place-items:center;border-radius:10px;
+ border:1px solid #29415b;background:#1b2c40;color:#a4bed9;min-height:39px;font-weight:650;font-size:13px}
+#modal.ns-alarm-modal #ns-weekdays input:checked+span{background:#168bfa;color:#fff;border-color:#168bfa}
+#modal.ns-alarm-modal #ns-weekdays input:focus-visible+span{outline:2px solid #adddff;outline-offset:2px}
 </style></head><body>
 <div id="login" class="login ns-login-v3">
  <div class="ns-login-wrap">
@@ -2033,10 +2043,15 @@ function nsNextAlarmDate(a,now){
  var repeat=a.repeat|| (a.daily?'daily':'none');
  if(repeat==='none')return date.getTime()>now?date:null;
  var amount={daily:1,weekly:7,every2:2,every3:3}[repeat];
- if(!amount)return null;
- // Calendario local; el día/hora se mantiene a través de cambios de horario.
- for(var i=0;i<16000&&date.getTime()<=now;i++)date.setDate(date.getDate()+amount);
- return date.getTime()>now?date:null;
+ if(!amount&&!/^days:[1-7](,[1-7]){0,6}$/.test(repeat))return null;
+ var allowed=repeat.startsWith('days:')?new Set(repeat.slice(5).split(',').map(Number)):null;
+ // Calendario local; conservamos la hora al avanzar entre días.
+ for(var i=0;i<16000;i++){
+  var iso=date.getDay()===0?7:date.getDay();
+  if(date.getTime()>now&&(!allowed||allowed.has(iso)))return date;
+  date.setDate(date.getDate()+(amount||1));
+ }
+ return null;
 }
 function nsNextAlarmSummary(){
  var hour=by('ns-next-hour'),description=by('ns-next-description'),countdown=by('ns-next-countdown');
@@ -2080,6 +2095,23 @@ function nsAlarmToggle(a){
  }
  mark(a);save();render();
 }
+function nsRepeatFromEditor(form){
+ var repeat=form.elements.repeat.value;
+ if(repeat!=='custom')return repeat;
+ var days=[...form.querySelectorAll('input[name="weekDay"]:checked')]
+  .map(function(i){return Number(i.value)}).sort(function(a,b){return a-b});
+ return days.length?'days:'+days.join(','):'';
+}
+function nsFillAlarmRepeat(form,repeat){
+ if((repeat||'').startsWith('days:')){
+  form.elements.repeat.value='custom';
+  var activeDays=new Set(repeat.slice(5).split(','));
+  form.querySelectorAll('input[name="weekDay"]').forEach(function(i){
+   i.checked=activeDays.has(i.value)
+  });
+ }else form.elements.repeat.value=repeat||'none';
+ form.elements.repeat.dispatchEvent(new Event('change'));
+}
 function nsAlarmEdit(a){
  if(!nsAlarmCanEdit(a)){say('Esta alarma no se puede editar desde tu cuenta');return}
  openModal('alarm');
@@ -2088,7 +2120,7 @@ function nsAlarmEdit(a){
  form.elements.title.value=a.title||'Alarma';
  form.elements.time.value=a.time||'08:00';
  form.elements.date.value=a.date||day();
- form.elements.repeat.value=a.repeat|| (a.daily?'daily':'none');
+ nsFillAlarmRepeat(form,a.repeat|| (a.daily?'daily':'none'));
  form.elements.snoozeMinutes.value=String(a.snoozeMinutes||5);
  form.elements.snoozeMax.value=String(a.snoozeMax==null?3:a.snoozeMax);
  if(form._selectMission)form._selectMission(a.challenge||'none');
@@ -2098,8 +2130,10 @@ function nsAlarmEdit(a){
   if(v.challenge==='qr'&&!v.qrValue&&a.challenge!=='qr'){
    say('Registra un QR físico antes de guardar');return
   }
+  var selectedRepeat=nsRepeatFromEditor(form);
+  if(!selectedRepeat){say('Selecciona al menos un día de la semana');return}
   var next=Object.assign({},a,{title:(v.title||'').trim()||'Alarma',
-   date:v.date,time:v.time,repeat:v.repeat,daily:v.repeat==='daily',
+   date:v.date,time:v.time,repeat:selectedRepeat,daily:selectedRepeat==='daily',
    challenge:v.challenge||'none',
    snoozeMinutes:Number(v.snoozeMinutes)||5,snoozeMax:Number(v.snoozeMax),updatedAt:stamp()});
   if(!nsNextAlarmDate(Object.assign({},next,{enabled:true}),Date.now())){
@@ -2134,7 +2168,8 @@ function nsAlarmDuplicate(a){
 function alarmItem(a){
  var e=document.createElement('div');e.className='ns-alarm-list-item'+(a.enabled===false?' ns-alarm-off':'');
  var repeat=a.repeat|| (a.daily?'daily':'none');
- var cadence={none:'Una vez',daily:'Cada día',weekly:'Cada semana',every2:'Cada 2 días',every3:'Cada 3 días'}[repeat]||'Personalizada';
+ var cadence={none:'Una vez',daily:'Cada día',weekly:'Cada semana',every2:'Cada 2 días',every3:'Cada 3 días'}[repeat]||
+  (repeat.startsWith('days:')?'Días '+repeat.slice(5).split(',').map(function(d){return {1:'L',2:'M',3:'X',4:'J',5:'V',6:'S',7:'D'}[d]||d}).join(' · '):'Personalizada');
  var mission={none:'Sin desafío',math:'Matemáticas',math_hard:'Matemáticas difíciles',taps:'12 toques',
   memory:'Memoria',typing:'Escritura',shake:'Movimiento',qr:'Código QR',
   routine_focus:'Rutina mental',routine_active:'Rutina activa'}[a.challenge||'none']||'Desafío';
@@ -2196,7 +2231,15 @@ if(kind==='alarm')html+=
  '<label class="field ns-alarm-time-field">Hora<input aria-label="Hora de la alarma" name="time" type="time" required></label>'+
  '<label class="field ns-alarm-date-field">Fecha inicial<input name="date" type="date" required></label>'+
  '<label class="field wide">Nombre<input name="title" maxlength="90" required placeholder="Ej. Levantarme temprano"></label>'+
- '<label class="field wide">Repetición<select name="repeat"><option value="none">Solo una vez</option><option value="daily">Todos los días</option><option value="weekly">Cada semana</option><option value="every2">Cada 2 días</option><option value="every3">Cada 3 días</option></select></label>'+
+ '<label class="field wide">Repetición<select name="repeat"><option value="none">Solo una vez</option><option value="daily">Todos los días</option><option value="weekly">Cada semana</option><option value="every2">Cada 2 días</option><option value="every3">Cada 3 días</option><option value="custom">Elegir días de la semana</option></select></label>'+
+ '<fieldset class="ns-weekdays hidden wide" id="ns-weekdays"><legend>Días</legend>'+
+ '<label><input type="checkbox" name="weekDay" value="1"><span>L</span></label>'+
+ '<label><input type="checkbox" name="weekDay" value="2"><span>M</span></label>'+
+ '<label><input type="checkbox" name="weekDay" value="3"><span>X</span></label>'+
+ '<label><input type="checkbox" name="weekDay" value="4"><span>J</span></label>'+
+ '<label><input type="checkbox" name="weekDay" value="5"><span>V</span></label>'+
+ '<label><input type="checkbox" name="weekDay" value="6"><span>S</span></label>'+
+ '<label><input type="checkbox" name="weekDay" value="7"><span>D</span></label></fieldset>'+
  '<section class="ns-mission-editor wide" aria-label="Elegir misión de despertar"><h3>Misión para detener</h3>'+
  '<input name="challenge" type="hidden" value="none"><button type="button" class="ns-mission-current" id="ns-mission-select">Sin misión <span>›</span></button>'+
  '<div id="ns-mission-options" class="hidden" role="group" aria-label="Tipos de misión">'+
@@ -2228,6 +2271,9 @@ html+='<div class="wide row" style="justify-content:flex-end"><button type="butt
 by('cancel-popup').onclick=closeModal;var form=by('popup-form');if(form.elements.date)form.elements.date.value=day();
 if(kind==='alarm'){
  var challengeSelect=form.elements.challenge,qrBlock=by('qr-enroll');
+ function repeatDisplay(){by('ns-weekdays').classList.toggle('hidden',form.elements.repeat.value!=='custom')}
+ form.elements.repeat.onchange=repeatDisplay;
+ repeatDisplay();
  var missionLabels={none:'Sin misión',math:'Matemáticas · 3 ejercicios',math_hard:'Matemáticas avanzadas',
  memory:'Recordar un código',typing:'Escribir una frase',taps:'Tocar 12 veces',shake:'Mover el teléfono',
  qr:'Escanear QR',routine_focus:'Sumas y escritura',routine_active:'Rutina activa'};
@@ -2269,7 +2315,8 @@ if(kind==='task'){
 if(kind==='bag'){var items=(values.items||'').split(';').map(function(s){return s.trim()}).filter(Boolean);if(!items.length){say('Agrega algo para llevar');return}model.packs.push({id:uid(),place:(values.place||'').trim(),owner:values.owner||session.username,items:items,checked:{},updatedAt:stamp()})}
 if(kind==='alarm'){
  if(values.challenge==='qr'&&!values.qrValue){say('Escanea primero el QR físico de referencia');return}
- var d=values.date||day(),time=values.time||'08:00',repeat=values.repeat||'none';
+ var d=values.date||day(),time=values.time||'08:00',repeat=nsRepeatFromEditor(form);
+ if(!repeat){say('Selecciona al menos un día de la semana');return}
  if(repeat==='none'&&new Date(d+'T'+time+':00').getTime()<=Date.now()){
   say('Elige una hora futura para la alarma');return
  }
@@ -2360,7 +2407,9 @@ function scheduleAlarm(a){
  }
  var when=local.getTime();
  var repeat=a.repeat|| (a.daily?'daily':'none');
- if(!['none','daily','weekly','every2','every3'].includes(repeat)){say('Repetición no válida');return false}
+ if(!['none','daily','weekly','every2','every3'].includes(repeat)&&!/^days:[1-7](,[1-7]){0,6}$/.test(repeat)){
+  say('Repetición no válida');return false
+ }
  // No sumar milisegundos para repeticiones: en cambios de zona horaria o DST
  // esa aritmética desplaza la hora de despertar. Android usa Calendar local.
  // El primer día/hora es la referencia y AlarmReceiver.nextRepeat calcula el siguiente.
