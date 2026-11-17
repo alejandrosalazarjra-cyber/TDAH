@@ -61,4 +61,17 @@ assert(html.includes("if(document.hidden){nsFlushNativeSnapshot()"),
  'Descargar al enviar la app a segundo plano');
 assert(html.includes("function logout(){\n nsFlushNativeSnapshot();"),
  'Descargar al cerrar sesión');
+/* Una copia antigua de SQLite no debe ganarle al historial local más reciente. */
+account.username='user_b';
+const localKey='ns_v2_user_b';
+const oldNative={tasks:[{id:'n',owner:'user_b',title:'Copia antigua'}],
+ packs:[],alarms:[],pet:{xp:1},_localUpdatedAt:100};
+const newestLocal={tasks:[{id:'l',owner:'user_b',title:'Copia reciente'}],
+ packs:[],alarms:[],pet:{xp:2},_localUpdatedAt:200};
+snapshots.set('user_b',JSON.stringify(oldNative));
+local.set(localKey,'{corrupto');
+local.set(localKey+'_anterior',JSON.stringify(newestLocal));
+assert.equal(context.load().tasks[0].title,'Copia reciente',
+ 'Recuperar la revisión más reciente, no simplemente dar prioridad a SQLite');
+assert.equal(JSON.parse(local.get(localKey)).pet.xp,2);
 console.log('Fase 1e OK: 30 cambios agrupados, persistencia inmediata, reintento y cuentas separadas');
