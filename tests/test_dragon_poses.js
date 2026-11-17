@@ -11,7 +11,7 @@ assert(a>0&&b>a,'No se encontró el renderizador de los atlas de Azul');
 const timeouts=new Map(),intervals=new Map(),loaders=[];
 let id=0,stage='0',tile=null;
 const figure={
- dataset:{stage},isConnected:true,
+ dataset:{stage,accessory:'none'},isConnected:true,
  classList:{add(x){figure.hasAtlas=x==='has-atlas'}},
  querySelector(sel){return sel==='.ns-dragon-atlas'?tile:null},
  appendChild(node){tile=node}
@@ -64,4 +64,7 @@ for(let s=0;s<6;s++){
  hidden=false;reduced=true;choose('walk');expect('idle',s+1);assert.equal(intervals.size,0);
  reduced=false;
 }
+figure.dataset.accessory='star';tile=null;
+context.nsDragonPoseSet('idle');
+assert.equal(loaders.length,0,'Los accesorios equipados deben conservar el SVG existente');
 console.log('OK: seis atlas, 8 poses, parpadeo, caminata, segundo plano y reducir movimiento');
