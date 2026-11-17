@@ -529,10 +529,20 @@ var head={task:'Nueva tarea / flujo',bag:'Nueva lista de salida',alarm:'Nueva al
 var html='<form id="popup-form" class="form-grid">';
 if(kind==='task')html+=field('Actividad','title')+field('Responsable','owner','select',who)+field('Fecha','date','date')+field('Hora','time','time')+field('Repetición','repeat','select',[['none','Una vez'],['daily','Diario'],['weekly','Semanal']])+field('Prioridad','priority','select',[['normal','Normal'],['high','Importante'],['low','Puede esperar']])+field('Energía necesaria','energy','select',[['low','Poca energía'],['medium','Media'],['high','Alta']])+'<label class="field wide">Primeros pasos (separados por punto y coma)<textarea name="steps" placeholder="Preparar mochila; Revisar llaves; Salir"></textarea></label>';
 if(kind==='bag')html+=field('Lugar o destino','place')+field('Responsable','owner','select',who)+'<label class="field wide">Objetos separados por punto y coma<textarea name="items" required placeholder="Agua; Toalla; Candado"></textarea></label>';
-if(kind==='alarm')html+=field('Nombre de la alarma','title')+field('Fecha','date','date')+field('Hora','time','time')+field('Desafío para detener','challenge','select',[['none','Sin desafío'],['math','Resolver 3 sumas'],['taps','Tocar 12 veces'],['memory','Recordar un código'],['typing','Escribir una frase'],['shake','Mover el teléfono 12 veces'],['math_hard','Matemáticas avanzadas']])+'<label class="field wide"><span class="row"><input type="checkbox" name="daily" style="width:20px"> Repetir todos los días</span></label>';
+if(kind==='alarm')html+=field('Nombre de la alarma','title')+field('Fecha','date','date')+field('Hora','time','time')+field('Desafío para detener','challenge','select',[['none','Sin desafío'],['math','Resolver 3 sumas'],['taps','Tocar 12 veces'],['memory','Recordar un código'],['typing','Escribir una frase'],['shake','Mover el teléfono 12 veces'],['math_hard','Matemáticas avanzadas'],['qr','Escanear QR físico']])+'<div id="qr-enroll" class="field wide hidden"><span>QR para desactivar esta alarma</span><input name="qrValue" type="hidden"><button class="btn secondary" id="qr-enroll-button" type="button">Escanear QR de referencia</button><p class="hint" id="qr-enroll-status">Elige un QR físico que tengas lejos de la cama. No se comparte con otras cuentas.</p></div><label class="field wide"><span class="row"><input type="checkbox" name="daily" style="width:20px"> Repetir todos los días</span></label>';
 if(kind==='user')html+=field('Usuario (sin espacios)','username')+field('Contraseña (mínimo 10 caracteres)','password','password');
 html+='<div class="wide row" style="justify-content:flex-end"><button type="button" id="cancel-popup" class="btn ghost">Cancelar</button><button class="btn" type="submit">Guardar</button></div></form>';body.innerHTML=html;by('modal').classList.remove('hidden');
 by('cancel-popup').onclick=closeModal;var form=by('popup-form');if(form.elements.date)form.elements.date.value=day();
+if(kind==='alarm'){
+ var qrBlock=by('qr-enroll'),challengeSelect=form.elements.challenge;
+ function qrShow(){qrBlock.classList.toggle('hidden',challengeSelect.value!=='qr')}
+ challengeSelect.addEventListener('change',qrShow);qrShow();
+ by('qr-enroll-button').onclick=function(){
+  if(!nat||!nat.scanQrReference){say('El escáner QR requiere la APK Android');return}
+  nat.scanQrReference();
+ };
+}
+
 form.onsubmit=function(ev){ev.preventDefault();var values=Object.fromEntries(new FormData(form).entries());
 if(kind==='user'){if(!nat||!nat.createAccount){say('Crea cuentas desde el APK Android');return}try{var r=JSON.parse(nat.createAccount(values.username,values.password));if(!r.ok){say(r.error||'No se pudo crear la cuenta');return}say('Cuenta creada: '+values.username);renderUsers()}catch(e){say('Error creando usuario')}closeModal();return}
 if(kind==='task'){
@@ -550,7 +560,7 @@ if(kind==='task'){
  }
 }
 if(kind==='bag'){var items=(values.items||'').split(';').map(function(s){return s.trim()}).filter(Boolean);if(!items.length){say('Agrega algo para llevar');return}model.packs.push({id:uid(),place:(values.place||'').trim(),owner:values.owner||session.username,items:items,checked:{},updatedAt:stamp()})}
-if(kind==='alarm'){var d=values.date||day(),time=values.time||'08:00';if(!values.daily&&new Date(d+'T'+time+':00').getTime()<=Date.now()){say('Elige una hora futura para la alarma');return}var alarm={id:uid(),title:(values.title||'').trim()||'Recordatorio',date:d,time:time,daily:!!values.daily,challenge:values.challenge||'none',owner:session.username,updatedAt:stamp()};model.alarms.push(alarm);scheduleAlarm(alarm)}
+if(kind==='alarm'){if(values.challenge==='qr'&&!values.qrValue){say('Escanea primero el QR físico de referencia');return}var d=values.date||day(),time=values.time||'08:00';if(!values.daily&&new Date(d+'T'+time+':00').getTime()<=Date.now()){say('Elige una hora futura para la alarma');return}var alarm={id:uid(),title:(values.title||'').trim()||'Recordatorio',date:d,time:time,daily:!!values.daily,challenge:values.challenge||'none',owner:session.username,updatedAt:stamp()};model.alarms.push(alarm);if(values.challenge==='qr'&&nat&&nat.setAlarmQrCode)nat.setAlarmQrCode(alarm.id,values.qrValue);scheduleAlarm(alarm)}
 save();closeModal();render();say('Guardado correctamente')};
 }
 function editTask(t){
@@ -598,6 +608,15 @@ function editTask(t){
 function closeModal(){by('modal').classList.add('hidden')}
 by('close-modal').onclick=closeModal;by('modal').onclick=function(e){if(e.target===by('modal'))closeModal()};
 document.querySelectorAll('[data-open]').forEach(function(b){b.onclick=function(){openModal(b.dataset.open)}});
+window.neuroQrEnrollment=function(raw){
+ var form=by('popup-form');
+ if(!form||!form.elements.qrValue)return;
+ if(typeof raw!=='string'||!raw){say('Escaneo cancelado');return}
+ if(raw.length>2048){say('Este QR es demasiado largo');return}
+ form.elements.qrValue.value=raw;
+ by('qr-enroll-status').textContent='QR registrado para esta alarma. Guarda la alarma para confirmar.';
+ say('QR de referencia capturado');
+};
 function scheduleAlarm(a){
  if(!nat||!nat.scheduleAlarm)return;
  var when=new Date(a.date+'T'+a.time+':00').getTime();
