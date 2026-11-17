@@ -94,6 +94,33 @@
 @keyframes ns-dragon-twinkle{50%{opacity:.25;transform:scale(.75)}}
 @media(max-width:620px){.ns-dragon-hero{flex-direction:column-reverse;gap:4px;padding:15px}.ns-dragon-scene{height:160px;flex:none;width:100%}.ns-dragon-figure{max-width:180px}.ns-dragon-figure svg{max-height:168px}.ns-dragon-copy{min-width:0;width:100%}.ns-dragon-actions .btn{flex:1}}
 @media(prefers-reduced-motion:reduce){.ns-dragon-figure,.ns-dragon-scenery{animation:none!important}}
+
+/* Habitación original del dragón. No utiliza fotografías ni recursos remotos. */
+.ns-dragon-hero{flex-wrap:wrap}.ns-dragon-scene{border-radius:24px;overflow:hidden;isolation:isolate;min-height:218px;box-shadow:inset 0 0 0 1px #ffffff90}
+.ns-dragon-scene[data-room="nest"]{background:linear-gradient(170deg,#c2e5ff,#dfe9ff 68%,#abc7f5)}
+.ns-dragon-scene[data-room="forest"]{background:linear-gradient(155deg,#c4eede,#88c7bc 65%,#568f85)}
+.ns-dragon-scene[data-room="mountain"]{background:linear-gradient(155deg,#dbe8ff,#8faee7 63%,#5e7cba)}
+.ns-dragon-scene[data-room="cosmos"]{background:linear-gradient(150deg,#182653,#48548d 70%,#737bb5)}
+.ns-dragon-room-window{position:absolute;top:16px;left:16px;width:62px;height:62px;border:4px solid #ffffff88;border-radius:50%;background:radial-gradient(circle at 60% 40%,#fff5c6 0 21%,#9ed4f488 23% 100%);box-shadow:0 0 25px #fff9}
+.ns-dragon-room-floor{position:absolute;bottom:0;width:100%;height:23%;background:linear-gradient(#ffffff66,#f3f5ff88);border-top:2px solid #ffffff8a}
+.ns-dragon-scene[data-room="forest"] .ns-dragon-room-floor{background:#5a9f82aa}
+.ns-dragon-scene[data-room="mountain"] .ns-dragon-room-floor{background:#b8c7eebb}
+.ns-dragon-scene[data-room="cosmos"] .ns-dragon-room-floor{background:#101a45a8}
+.ns-dragon-room-prop{position:absolute;right:7px;bottom:19px;z-index:2;font-size:43px;filter:drop-shadow(0 5px 3px #202b6a4c)}
+.ns-dragon-scene[data-room="cosmos"] .ns-dragon-scenery{color:#ffefb7}
+.ns-dragon-status{font-size:11px;color:#52648d}
+.ns-dragon-quest-card{margin-top:15px}
+.ns-dragon-quest-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px}
+.ns-dragon-quest-grid h3{font-size:15px;margin:2px 0 10px}
+.ns-dragon-missions,.ns-dragon-realms{display:grid;gap:8px}
+.ns-dragon-mission,.ns-dragon-realm{display:flex;align-items:center;justify-content:space-between;gap:10px;border-radius:13px;padding:11px;background:var(--bg);border:1px solid var(--border)}
+.ns-dragon-mission strong,.ns-dragon-realm strong{font-size:13px;display:block}
+.ns-dragon-mission small,.ns-dragon-realm small{font-size:11px;color:var(--muted);display:block;margin-top:3px}
+.ns-dragon-mission .btn,.ns-dragon-realm .btn{font-size:11px;min-height:34px;padding:7px 9px;flex-shrink:0}
+.ns-dragon-room-controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:15px}
+.ns-dragon-room-controls .field{min-width:0;font-size:12px}
+@media(max-width:680px){.ns-dragon-quest-grid,.ns-dragon-room-controls{grid-template-columns:1fr}.ns-dragon-scene{width:100%}}
+@media(prefers-reduced-motion:reduce){.ns-dragon-glow{animation:none!important}}
 </style></head><body>
 <div id="login" class="login">
  <form id="login-form" class="card login-card">
@@ -145,9 +172,23 @@
    <button class="btn ghost" id="dragon-decorate" type="button">Personalizar</button>
   </div>
   <p class="ns-dragon-message" id="dragon-message" aria-live="polite">Estoy contigo. ¿Qué hacemos primero?</p>
+  <div class="ns-dragon-status" id="dragon-status">Un paso a la vez, sin presión.</div>
  </div>
- <div class="ns-dragon-scene" id="dragon-scene"><div class="ns-dragon-glow"></div><div class="pet ns-dragon-figure" id="pet-face" role="img" aria-label="Dragón de productividad en evolución"></div><span class="ns-dragon-scenery">✦</span></div>
+ <div class="ns-dragon-scene" id="dragon-scene" data-room="nest"><div class="ns-dragon-room-window"></div><div class="ns-dragon-room-floor"></div><div class="ns-dragon-room-prop" id="dragon-room-prop" aria-hidden="true">✦</div><div class="ns-dragon-glow"></div><div class="pet ns-dragon-figure" id="pet-face" role="img" aria-label="Dragón de productividad en evolución"></div><span class="ns-dragon-scenery" aria-hidden="true">✦</span></div>
  </div>
+     <div class="card ns-dragon-quest-card">
+       <div class="between"><h2>La guarida de tu dragón</h2><span class="chip" id="dragon-quest-date">Mis misiones</span></div>
+       <p class="hint">Las misiones se completan con tus tareas y sesiones reales. Nunca pierdes experiencia por descansar.</p>
+       <div class="ns-dragon-quest-grid">
+         <div><h3>Misiones de hoy</h3><div id="dragon-missions" class="ns-dragon-missions"></div></div>
+         <div><h3>Aventuras y habitación</h3><div id="dragon-realms" class="ns-dragon-realms"></div></div>
+       </div>
+       <div class="ns-dragon-room-controls"><label class="field">Mi habitación
+         <select id="dragon-room-select" aria-label="Elegir habitación del dragón"><option value="nest">Nido de nubes</option><option value="forest">Bosque encantado</option><option value="mountain">Montañas azules</option><option value="cosmos">Santuario celeste</option></select>
+       </label><label class="field">Decoración
+         <select id="dragon-furniture-select" aria-label="Elegir decoración de la habitación"><option value="none">Sin decoración</option><option value="plant">Planta luminosa</option><option value="books">Biblioteca</option><option value="crystal">Cristal mágico</option></select>
+       </label></div>
+     </div>
      <div class="stats"><div class="stat"><strong id="stat-today">0</strong><span>Hechas hoy</span></div><div class="stat"><strong id="stat-pending">0</strong><span>Pendientes</span></div><div class="stat"><strong id="stat-food">0</strong><span>Puntos para comida</span></div></div>
      <div class="card" style="border:1px solid var(--border);background:var(--paper)">
        <div class="between"><h2>Accesos a funciones</h2><span id="feature-status" class="chip">Versión en revisión</span></div>
@@ -550,6 +591,10 @@ function nsDragonData(){
  p.name=String(p.name||'Azul').trim().slice(0,18)||'Azul';
  p.accessory=['none','star','scarf'].includes(p.accessory)?p.accessory:'none';
  p.pets=p.pets&&typeof p.pets==='object'?p.pets:{};
+ p.room=['nest','forest','mountain','cosmos'].includes(p.room)?p.room:'nest';
+ p.furniture=['none','plant','books','crystal'].includes(p.furniture)?p.furniture:'none';
+ p.unlockedFurniture=Array.isArray(p.unlockedFurniture)?p.unlockedFurniture.filter(function(x){return ['none','plant','books','crystal'].includes(x)}):['none'];
+ p.missionClaims=p.missionClaims&&typeof p.missionClaims==='object'?p.missionClaims:{};
  model.pet=p;return p;
 }
 function nsDragonStage(xp){for(var i=nsDragonStages.length-1;i>=0;i--)if(xp>=nsDragonStages[i].min)return i;return 0}
@@ -580,8 +625,92 @@ function nsDragonRender(){
  by('dragon-xp-label').textContent=next?p.xp+' / '+goal+' XP para evolucionar':p.xp+' XP · Evolución máxima';
  by('pet-detail').textContent=next?'Completa tareas y sesiones de concentración para ayudar a '+p.name+' a crecer.':'¡Evolución máxima! Puedes seguir reuniendo XP y cuidando a tu dragón.';
  by('stat-food').textContent=Math.floor(p.food);
+ nsDragonQuestRender();
+}
+function nsDragonDailyProgress(){
+ var date=day(),tasks=allTasks().filter(function(t){return !t.inbox&&(t.doneDates||[]).includes(date)&&(!t.repeat||t.repeat==='none'?t.date===date:nsTaskDueOn(t,date))});
+ var focus=nsFocusRead().sessions.filter(function(x){return x.day===date&&x.completed});
+ var minutes=Math.floor(focus.reduce(function(n,x){return n+Math.max(0,Number(x.ms)||0)},0)/60000);
+ return {tasks:tasks.length,minutes:minutes};
+}
+var nsDragonMissions=[
+ {id:'start',title:'Primer paso',detail:'Completa una tarea',count:1,type:'tasks',xp:10,coins:5},
+ {id:'rhythm',title:'Un poco más',detail:'Completa dos tareas',count:2,type:'tasks',xp:20,coins:10},
+ {id:'focus',title:'Dragón concentrado',detail:'Acumula 15 minutos de enfoque completado',count:15,type:'minutes',xp:25,coins:10}
+];
+var nsDragonRooms=[
+ {id:'nest',name:'Nido de nubes',xp:0},
+ {id:'forest',name:'Bosque encantado',xp:200},
+ {id:'mountain',name:'Montañas azules',xp:420},
+ {id:'cosmos',name:'Santuario celeste',xp:750}
+];
+var nsDragonFurniture=[
+ {id:'none',name:'Sin decoración',coins:0,symbol:'✦'},
+ {id:'plant',name:'Planta luminosa',coins:25,symbol:'🌿'},
+ {id:'books',name:'Biblioteca',coins:35,symbol:'📚'},
+ {id:'crystal',name:'Cristal mágico',coins:45,symbol:'💎'}
+];
+function nsDragonQuestRender(){
+ var p=nsDragonData(),date=day(),progress=nsDragonDailyProgress(),claims=p.missionClaims[date]||[];
+ by('dragon-quest-date').textContent='Hoy · '+date;
+ by('dragon-scene').dataset.room=p.room;
+ var furniture=nsDragonFurniture.find(function(x){return x.id===p.furniture})||nsDragonFurniture[0];
+ by('dragon-room-prop').textContent=furniture.symbol;
+ by('dragon-room-select').value=p.room;
+ by('dragon-furniture-select').value=p.furniture;
+ var status=by('dragon-status');status.textContent=progress.tasks+' tareas completadas hoy · '+progress.minutes+' min de enfoque · '+Math.floor(p.food)+' puntos';
+ var root=by('dragon-missions');root.replaceChildren();
+ nsDragonMissions.forEach(function(m){
+  var count=progress[m.type],claimed=claims.includes(m.id),complete=count>=m.count;
+  var row=document.createElement('div');row.className='ns-dragon-mission';
+  var info=document.createElement('div'),name=document.createElement('strong'),note=document.createElement('small');
+  name.textContent=m.title;note.textContent=m.detail+' · '+Math.min(count,m.count)+'/'+m.count+' · +'+m.xp+' XP y '+m.coins+' puntos';
+  info.append(name,note);var action=document.createElement('button');action.type='button';action.className='btn secondary';
+  action.textContent=claimed?'Reclamada':complete?'Reclamar':'En progreso';action.disabled=claimed||!complete;
+  action.onclick=function(){nsDragonClaim(m.id)};row.append(info,action);root.append(row)
+ });
+ var realms=by('dragon-realms');realms.replaceChildren();
+ nsDragonRooms.forEach(function(room){
+  var open=p.xp>=room.xp,row=document.createElement('div');row.className='ns-dragon-realm';
+  var info=document.createElement('div'),name=document.createElement('strong'),note=document.createElement('small');
+  name.textContent=room.name;note.textContent=open?'Desbloqueada':'Se desbloquea con '+room.xp+' XP';
+  info.append(name,note);var action=document.createElement('button');action.type='button';action.className='btn ghost';
+  action.textContent=p.room===room.id?'Visitando':open?'Visitar':'Bloqueada';action.disabled=!open||p.room===room.id;
+  action.onclick=function(){nsDragonSelectRoom(room.id)};row.append(info,action);realms.append(row)
+ });
+ var roomSelector=by('dragon-room-select');
+ Array.from(roomSelector.options).forEach(function(o){var room=nsDragonRooms.find(function(x){return x.id===o.value});o.disabled=!!room&&p.xp<room.xp});
+ var furnitureSelector=by('dragon-furniture-select');
+ Array.from(furnitureSelector.options).forEach(function(o){var item=nsDragonFurniture.find(function(x){return x.id===o.value});o.textContent=item.name+(p.unlockedFurniture.includes(o.value)||o.value==='none'?'':' · '+item.coins+' puntos')});
+}
+function nsDragonClaim(id){
+ var p=nsDragonData(),m=nsDragonMissions.find(function(x){return x.id===id}),date=day(),progress=nsDragonDailyProgress();
+ if(!m||progress[m.type]<m.count)return;
+ var claims=p.missionClaims[date]||[];
+ if(claims.includes(id))return;
+ p.missionClaims[date]=claims.concat(id);
+ var keys=Object.keys(p.missionClaims).sort();if(keys.length>40)keys.slice(0,keys.length-40).forEach(function(k){delete p.missionClaims[k]});
+ p.xp+=m.xp;p.food+=m.coins;
+ save();nsDragonRender();nsDragonMessage('¡Misión cumplida! +'+m.xp+' XP para tu dragón.',true)
+}
+function nsDragonSelectRoom(id){
+ var p=nsDragonData(),room=nsDragonRooms.find(function(x){return x.id===id});
+ if(!room||p.xp<room.xp){nsDragonMessage('Esa aventura se desbloquea al crecer.');return}
+ p.room=id;save();nsDragonRender();nsDragonMessage('¡Exploraremos '+room.name+'!',true)
+}
+function nsDragonSelectFurniture(id){
+ var p=nsDragonData(),item=nsDragonFurniture.find(function(x){return x.id===id});
+ if(!item)return;
+ if(!p.unlockedFurniture.includes(id)&&id!=='none'){
+  if(p.food<item.coins){nsDragonMessage('Necesitamos '+item.coins+' puntos para esta decoración.');nsDragonRender();return}
+  p.food-=item.coins;p.unlockedFurniture.push(id)
+ }
+ p.furniture=id;save();nsDragonRender();nsDragonMessage('¡Nuestra habitación se ve genial!',true)
 }
 function nsDragonInit(){
+ by('dragon-room-select').onchange=function(){nsDragonSelectRoom(this.value)};
+ by('dragon-furniture-select').onchange=function(){nsDragonSelectFurniture(this.value)};
+ by('dragon-scene').onclick=function(){nsDragonMessage('¡Qué gusto verte! Sigamos a nuestro ritmo.',true)};
  by('dragon-pet').onclick=function(){
   var p=nsDragonData(),today=day(),n=Number(p.pets[today])||0;
   if(n>=3){nsDragonMessage('Ya recibí mis caricias de hoy. ¡Sigamos con una tarea pequeña!',true);return}
