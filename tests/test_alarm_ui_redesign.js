@@ -44,14 +44,20 @@ const receiver=fs.readFileSync('android/app/src/main/java/com/neurosync/familia/
 const bridge=fs.readFileSync('android/app/src/main/java/com/neurosync/familia/MainActivity.java','utf8');
 assert(native.includes('Detener sin desafío'),'Debe existir salida de seguridad');
 assert(native.includes('setShowWhenLocked(true)'),'Mantener comportamiento Android bloqueado');
-assert(native.includes('AlarmOptionsStore.canSnooze')===false);
 assert(native.includes('AlarmOptionsStore.max(this,id)'));
 assert(store.includes('static boolean configure(')&&store.includes('static boolean canSnooze('));
+assert(store.includes('static boolean setAudio(')&&store.includes('static int fadeSeconds('));
+const audio=fs.readFileSync('android/app/src/main/java/com/neurosync/familia/AlarmAudioService.java','utf8');
+assert(audio.includes('fadeVolume(')&&audio.includes('AlarmOptionsStore.volume(this,id)'),
+ 'El sonido gradual debe depender de las preferencias de cada alarma');
+assert(html.includes('name="volumePercent"')&&html.includes('name="gentleSeconds"'));
 assert(receiver.includes('AlarmOptionsStore.consumed(ctx,id)'));
 assert(receiver.includes('public static void pause(Context ctx,String id)'));
 assert(receiver.includes('static boolean isDaysRepeat('));
 assert(receiver.includes('wanted.contains(isoDay(c))'));
+assert(receiver.includes('Math.max(System.currentTimeMillis(),original)'),
+ 'Una alarma sonada temprano no puede reprogramarse en la misma ocurrencia');
 assert(bridge.includes('setAlarmOptions(')&&bridge.includes('pauseAlarm('));
-assert(bridge.includes('setAlarmOptions(')&&bridge.includes('pauseAlarm('));
+assert(bridge.includes('setAlarmSoundBehavior('),'Falta puente de volumen y despertar gradual');
 assert(html.includes('La música de YouTube Music Premium se configura en Reloj de Google.'));
 console.log('Alarmas UI OK: tabs, próxima hora, editor, misiones, posponer y seguridad nativa');
