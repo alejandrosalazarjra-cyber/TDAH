@@ -13,13 +13,14 @@ function makeTest(blocked=false){
  const model={tasks:[{id:'local',owner:'mama',title:'Local',updatedAt:11},
   {id:'archived',owner:'hermano',title:'Dato histórico local',updatedAt:6}],
   packs:[],alarms:[],pet:{xp:3}};
- const ctx={session,model,nsStorageRecoveryBlocked:blocked,syncing:true,
+ const ctx={window:{},session,model,nsStorageRecoveryBlocked:blocked,syncing:true,
    by:()=>({set textContent(value){notifications.push(value)}}),
    nat:{scheduleAlarmRepeat:()=>true},
    nsLocalSave:next=>{written=next; if(ctx.failWrite)throw Error('disk full')},
    active:xs=>xs.filter(x=>!x.deleted),scheduleAlarm:()=>{scheduled++},
    render:()=>renders++,Date,JSON,Array,Number,String,Object,Map,Error};
  vm.createContext(ctx);vm.runInContext(code,ctx);
+ ctx.neuroSyncOnSync=ctx.window.neuroSyncOnSync;
  return {ctx,model,getWritten:()=>written,getRenders:()=>renders,getScheduled:()=>scheduled,notifications};
 }
 {
