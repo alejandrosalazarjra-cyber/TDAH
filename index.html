@@ -1848,7 +1848,7 @@ function nsDragonPoseSet(state){
   use('idle');
   // Parpadeo ocasional; solo consume un temporizador cuando Azul está visible.
   function blink(){
-   if(nsDragonActionState!=='idle'||document.hidden)return;
+   if(!session||!model||nsDragonActionState!=='idle'||document.hidden)return;
    use('blink');
    nsDragonPoseBlinkTimer=setTimeout(function(){
     if(nsDragonActionState!=='idle')return;
