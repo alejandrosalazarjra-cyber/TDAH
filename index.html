@@ -1950,7 +1950,7 @@ window.neuroQrEnrollment=function(raw){
 function scheduleAlarm(a){
  if(!nat||(!nat.scheduleAlarm&&!nat.scheduleAlarmRepeat))return false;
  var dateText=String(a.date||''),timeText=String(a.time||'');
- if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(dateText)||!/^\\d{2}:\\d{2}$/.test(timeText)){
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(dateText)||!/^\d{2}:\d{2}$/.test(timeText)){
   say('La alarma tiene una fecha u hora inválida');return false
  }
  var pieces=dateText.split('-').map(Number),clock=timeText.split(':').map(Number);
