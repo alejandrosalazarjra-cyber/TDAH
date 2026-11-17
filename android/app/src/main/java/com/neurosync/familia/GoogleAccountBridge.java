@@ -86,7 +86,8 @@ final class GoogleAccountBridge {
  private static String request(String method,String url,String token,String type,byte[] body) throws Exception {
   HttpURLConnection connection=(HttpURLConnection)new URL(url).openConnection();
   try{
-   connection.setRequestMethod(method);
+   connection.setRequestMethod("PATCH".equals(method)?"POST":method);
+   if("PATCH".equals(method))connection.setRequestProperty("X-HTTP-Method-Override","PATCH");
    connection.setConnectTimeout(12000);connection.setReadTimeout(18000);
    connection.setRequestProperty("Authorization","Bearer "+token);
    connection.setRequestProperty("Accept","application/json");
