@@ -63,6 +63,8 @@ jobs:
           node tests/test_phase1b_alarm_schedule.js
           node tests/test_phase1c_session_sync.js
           node tests/test_phase1d_native_recovery.js
+          node tests/test_phase1e_snapshot_batch.js
+          node tests/test_phase1e_restart_recovery.js
 
       - name: Validar interfaz antes de compilar
         shell: bash
