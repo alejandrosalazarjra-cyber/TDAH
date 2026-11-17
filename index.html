@@ -235,6 +235,26 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
 .ns-hero-missions>span:first-child{background:#e5f7ff;color:#078fe3;border-radius:50%;width:23px;height:23px;display:grid;place-items:center}
 @media(max-width:670px){.ns-brand-hero{min-height:147px;padding:18px;border-radius:24px}.ns-brand-hero h2{font-size:22px;max-width:230px}.ns-brand-hero img{width:108px;height:108px;border-radius:29px;margin-right:-18px}.ns-hero-missions{font-size:10px;padding:7px 10px}.ns-brand-hero-copy{max-width:73%}}
 @media(max-width:360px){.ns-brand-hero img{width:84px;height:84px}.ns-brand-hero h2{font-size:19px}}
+
+/* DrakoPlan: animación por transform/opacity, sin render loop ni dependencias externas.
+   No cambia el SVG base; su aspecto definitivo se ajustará con la referencia aprobada. */
+.ns-dragon-tail{transform-box:fill-box;transform-origin:10% 30%;animation:ns-tail-sway 3.4s ease-in-out infinite}
+@keyframes ns-tail-sway{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(7deg)}}
+.ns-dragon-scene[data-dragon-action="walk"] .ns-dragon-figure{animation:ns-dragon-walk .45s ease-in-out 4}
+.ns-dragon-scene[data-dragon-action="sleep"] .ns-dragon-figure{animation:ns-dragon-rest 5.2s ease-in-out infinite}
+.ns-dragon-scene[data-dragon-action="sleep"] .ns-dragon-eye{animation:none;transform:scaleY(.12)}
+.ns-dragon-scene[data-dragon-action="eat"] .ns-dragon-figure{animation:ns-dragon-eat .32s ease-in-out 3}
+.ns-dragon-scene[data-dragon-action="play"] .ns-dragon-figure{animation:ns-dragon-play .65s ease-in-out 2}
+.ns-dragon-scene[data-dragon-action="celebrate"] .ns-dragon-figure{animation:ns-dragon-celebrate .65s ease-in-out 2}
+.ns-dragon-scene[data-dragon-action="sleep"] .ns-dragon-wing{animation:none}
+.ns-dragon-play-controls{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.ns-dragon-play-controls .btn{flex:1 1 90px;min-height:38px;font-size:12px}
+.ns-dragon-energy{font-size:12px;font-weight:650;color:#1b4778;margin:8px 0}
+@keyframes ns-dragon-walk{0%,100%{transform:translateX(-8px) rotate(-3deg)}50%{transform:translateX(9px) translateY(-6px) rotate(3deg)}}
+@keyframes ns-dragon-eat{50%{transform:translateY(5px) scale(.96,1.04)}}
+@keyframes ns-dragon-play{25%{transform:translateY(-12px) rotate(-7deg)}75%{transform:translateY(-9px) rotate(7deg)}}
+@media(prefers-reduced-motion:reduce){.ns-dragon-tail,.ns-dragon-scene[data-dragon-action] .ns-dragon-figure,.ns-dragon-scene[data-dragon-action] .ns-dragon-eye{animation:none!important}}
+
 </style></head><body>
 <div id="login" class="login ns-login-v3">
  <div class="ns-login-wrap">
@@ -308,6 +328,8 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
   <h2 style="margin-top:12px" id="pet-headline">Tu dragón está creciendo</h2>
   <p class="muted" id="pet-detail">Cada tarea completada alimenta tu progreso.</p>
   <div class="ns-dragon-xp"><div class="between"><span id="dragon-stage">Huevo místico</span><span id="pet-level" class="chip">Nivel 1</span></div><div class="progress"><div id="dragon-xp-fill" style="width:0%"></div></div><small id="dragon-xp-label">0 XP</small></div>
+  <div class="ns-dragon-energy" id="ns-dragon-energy" aria-live="polite">Energía: 100/100</div>
+  <div class="ns-dragon-play-controls" id="ns-dragon-play-controls" role="group" aria-label="Acciones del dragón"></div>
   <div class="ns-dragon-actions">
    <button class="btn" id="pet-feed" type="button">🍎 Alimentar · 20</button>
    <button class="btn secondary" id="dragon-pet" type="button">♡ Acariciar</button>
@@ -734,6 +756,9 @@ function nsDragonData(){
  p.xp=Math.max(0,Number(p.xp)||0);
  p.food=Math.max(0,Number(p.food)||0);
  p.feeds=Math.max(0,Number(p.feeds)||0);
+  // Campo nuevo opcional: las copias antiguas de la mascota siguen siendo compatibles.
+  p.energy=Math.min(100,Math.max(0,Number.isFinite(Number(p.energy))?Number(p.energy):100));
+  p.plays=Math.max(0,Number(p.plays)||0);
  p.name=String(p.name||'Azul').trim().slice(0,18)||'Azul';
  p.accessory=['none','star','scarf'].includes(p.accessory)?p.accessory:'none';
  p.pets=p.pets&&typeof p.pets==='object'?p.pets:{};
@@ -754,7 +779,7 @@ function nsDragonSvg(stage,accessory){
  var stars=stage>=4?'<circle cx="56" cy="52" r="3" fill="#5a9dff"/><path d="M212 50 l0 -9 m-5 5 h10" stroke="#6eaaff" stroke-width="3"/>':'';
  var costume=accessory==='scarf'?'<path d="M99 151 Q132 166 164 148 L164 164 Q128 182 99 164 Z" fill="#f3a0b7"/><path d="M156 158 L173 186 L162 193 L141 165 Z" fill="#e16a91"/>':accessory==='star'?'<path d="M132 149 l6 12 13 2 -10 9 2 13 -11 -6 -11 6 2 -13 -10 -9 13 -2Z" fill="#ffca66" stroke="#d39c31" stroke-width="2"/>':'';
  if(egg)return '<svg viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><ellipse cx="130" cy="199" rx="66" ry="10" fill="#819bd43a"/><path d="M130 34 C75 34 62 105 76 155 C86 196 175 196 186 152 C202 99 176 34 130 34Z" fill="#d5edff" stroke="#6a8ecb" stroke-width="5"/><path d="M90 128 L113 114 L133 137 L150 118 L179 139" fill="none" stroke="#608ccc" stroke-width="6" stroke-linecap="round"/><path d="M90 157 Q129 185 169 154" stroke="#abcdf5" stroke-width="4" fill="none"/><circle cx="103" cy="91" r="6" fill="#b1d7ff"/><circle cx="158" cy="88" r="5" fill="#b1d7ff"/><path d="M132 24 l0 -12 m-5 6 h10" stroke="#7aa5f5" stroke-width="3"/></svg>';
- return '<svg viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><ellipse cx="131" cy="208" rx="73" ry="9" fill="#819bd43a"/>'+wing+fins+'<path d="M169 162 Q224 144 228 179 Q230 202 202 189" fill="none" stroke="#3b70ce" stroke-width="24" stroke-linecap="round"/><path d="M202 188 L218 175 L220 195 Z" fill="#9be9fa"/><ellipse cx="135" cy="163" rx="59" ry="46" fill="#3f83d3" stroke="#2e58a9" stroke-width="4"/><ellipse cx="133" cy="172" rx="39" ry="33" fill="#a8dffd"/><path d="M92 180 Q74 183 79 203 L106 203 Q116 185 110 177Z M158 178 Q182 180 181 201 L155 203 Q143 188 148 177Z" fill="#4388de" stroke="#2e58a9" stroke-width="3"/>'+horns+crest+'<path d="M86 104 C84 64 109 54 133 57 C168 55 188 86 177 121 C194 135 172 155 143 151 L108 151 C76 150 68 126 86 104Z" fill="#5599ed" stroke="#2c61b5" stroke-width="4"/><ellipse cx="133" cy="133" rx="40" ry="21" fill="#9dd8fb"/><ellipse class="ns-dragon-eye" cx="108" cy="105" rx="15" ry="18" fill="#fff"/><ellipse class="ns-dragon-eye" cx="155" cy="105" rx="15" ry="18" fill="#fff"/><ellipse cx="111" cy="108" rx="7" ry="10" fill="#253c75"/><ellipse cx="152" cy="108" rx="7" ry="10" fill="#253c75"/><circle cx="114" cy="104" r="3" fill="#fff"/><circle cx="155" cy="104" r="3" fill="#fff"/><ellipse cx="118" cy="130" rx="4" ry="3" fill="#417eb9"/><ellipse cx="149" cy="130" rx="4" ry="3" fill="#417eb9"/><path d="M123 140 Q133 147 143 140" stroke="#345c96" stroke-width="3" stroke-linecap="round" fill="none"/><circle cx="85" cy="122" r="7" fill="#f99dbb" opacity=".65"/><circle cx="178" cy="122" r="7" fill="#f99dbb" opacity=".65"/>'+costume+stars+'</svg>';
+ return '<svg viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><ellipse cx="131" cy="208" rx="73" ry="9" fill="#819bd43a"/>'+wing+fins+'<path class="ns-dragon-tail" d="M169 162 Q224 144 228 179 Q230 202 202 189" fill="none" stroke="#3b70ce" stroke-width="24" stroke-linecap="round"/><path d="M202 188 L218 175 L220 195 Z" fill="#9be9fa"/><ellipse cx="135" cy="163" rx="59" ry="46" fill="#3f83d3" stroke="#2e58a9" stroke-width="4"/><ellipse cx="133" cy="172" rx="39" ry="33" fill="#a8dffd"/><path d="M92 180 Q74 183 79 203 L106 203 Q116 185 110 177Z M158 178 Q182 180 181 201 L155 203 Q143 188 148 177Z" fill="#4388de" stroke="#2e58a9" stroke-width="3"/>'+horns+crest+'<path d="M86 104 C84 64 109 54 133 57 C168 55 188 86 177 121 C194 135 172 155 143 151 L108 151 C76 150 68 126 86 104Z" fill="#5599ed" stroke="#2c61b5" stroke-width="4"/><ellipse cx="133" cy="133" rx="40" ry="21" fill="#9dd8fb"/><ellipse class="ns-dragon-eye" cx="108" cy="105" rx="15" ry="18" fill="#fff"/><ellipse class="ns-dragon-eye" cx="155" cy="105" rx="15" ry="18" fill="#fff"/><ellipse cx="111" cy="108" rx="7" ry="10" fill="#253c75"/><ellipse cx="152" cy="108" rx="7" ry="10" fill="#253c75"/><circle cx="114" cy="104" r="3" fill="#fff"/><circle cx="155" cy="104" r="3" fill="#fff"/><ellipse cx="118" cy="130" rx="4" ry="3" fill="#417eb9"/><ellipse cx="149" cy="130" rx="4" ry="3" fill="#417eb9"/><path d="M123 140 Q133 147 143 140" stroke="#345c96" stroke-width="3" stroke-linecap="round" fill="none"/><circle cx="85" cy="122" r="7" fill="#f99dbb" opacity=".65"/><circle cx="178" cy="122" r="7" fill="#f99dbb" opacity=".65"/>'+costume+stars+'</svg>';
 }
 function nsDragonMessage(text,animate){
  var message=by('dragon-message');if(message)message.textContent=text;
@@ -1536,7 +1561,7 @@ by('open-minimal-home').onclick=function(){
 };
 by('pet-feed').onclick=function(){
  var p=nsDragonData();if(p.food<20){nsDragonMessage('Nos faltan puntos. ¿Hacemos una tarea pequeña?');return}
- p.food-=20;p.xp+=15;p.feeds++;save();render();nsDragonMessage('¡Qué rico! Gracias por cuidarme. +15 XP',true)
+ p.food-=20;p.xp+=15;p.feeds++;p.energy=Math.min(100,p.energy+20);save();render();nsDragonMessage('¡Qué rico! Gracias por cuidarme. +15 XP',true);nsDragonAnimate('eat')
 };
 var syncing=false;
 window.neuroSyncOnSync=function(payload,requestingUser){
@@ -1714,11 +1739,67 @@ by('jump-challenge').onclick=function(){show('alarms');say('Crea una alarma y el
 by('jump-progress').onclick=function(){show('habits')};
 nsFocusInit();
 nsDragonInit();
+nsDragonInitActions();
 nsBrandLoginInit();
 nsTaskOrganizerInit();
 nsPlanInit();
 nsSleepInit();
 updateInstalledBuild();
+
+/* DrakoPlan / feature/dragon-azul — acciones aisladas.
+   No se conectan a autenticación, alarmas ni copias de seguridad. */
+var nsDragonActionTimer=null;
+function nsDragonAnimate(action){
+ var scene=by('dragon-scene');
+ if(!scene)return;
+ if(nsDragonActionTimer!==null){clearTimeout(nsDragonActionTimer);nsDragonActionTimer=null}
+ scene.dataset.dragonAction=action;
+ if(action==='sleep')return; // Se despierta con la siguiente interacción.
+ nsDragonActionTimer=setTimeout(function(){
+  if(scene.dataset.dragonAction===action)delete scene.dataset.dragonAction;
+  nsDragonActionTimer=null;
+ },action==='walk'?2000:action==='play'||action==='celebrate'?1500:1100);
+}
+function nsDragonPlay(){
+ if(!session||!model)return;
+ var p=nsDragonData();
+ if(p.energy<15){nsDragonMessage('Tengo sueño. Primero vamos a descansar.');nsDragonAnimate('sleep');return}
+ p.energy-=15;p.plays++;
+ // El juego es una interacción afectiva, NO genera monedas ni XP: evita farmear recompensas.
+ save();nsDragonAnimate('play');nsDragonMessage('¡Qué divertido! Juguemos otra vez después de descansar.',false);
+ nsDragonUpdateEnergy();
+}
+function nsDragonRest(){
+ if(!session||!model)return;
+ var p=nsDragonData();
+ p.energy=Math.min(100,p.energy+25);save();
+ nsDragonAnimate('sleep');nsDragonMessage('Un descanso merecido. Mi energía se recupera sin penalizaciones.',false);
+ nsDragonUpdateEnergy();
+}
+function nsDragonUpdateEnergy(){
+ if(!session||!model)return;
+ var p=nsDragonData(),element=by('ns-dragon-energy');
+ if(element)element.textContent='Energía: '+Math.round(p.energy)+'/100 · Nivel '+(1+Math.floor(p.xp/100));
+}
+function nsDragonInitActions(){
+ var actions=by('ns-dragon-play-controls');
+ if(!actions)return;
+ [['walk','Caminar'],['play','Jugar'],['sleep','Dormir'],['celebrate','Celebrar']].forEach(function(entry){
+  var button=document.createElement('button');
+  button.type='button';button.className='btn secondary';button.textContent=entry[1];
+  button.onclick=function(){
+   if(!session||!model)return;
+   if(entry[0]==='play')return nsDragonPlay();
+   if(entry[0]==='sleep')return nsDragonRest();
+   nsDragonAnimate(entry[0]);nsDragonMessage(entry[0]==='walk'?'¡Vamos a explorar!':'¡Celebremos nuestros avances!',false);
+  };
+  actions.append(button);
+ });
+ // La pantalla se actualiza al entrar, completar acciones o cambiar de vista.
+ var originalRender=nsDragonRender;
+ nsDragonRender=function(){originalRender();nsDragonUpdateEnergy()};
+}
+
 function logout(){if(nsFocusState)nsFocusSaveSession(false);nsLauncherFocusSync();syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
 by('logout').onclick=logout;by('avatar').onclick=async function(){if(await nsConfirm('Cerrar sesión','¿Quieres cerrar esta sesión?','Cerrar sesión'))logout()};
 document.addEventListener('visibilitychange',function(){if(!document.hidden){sync();refreshFocusClock()}});setInterval(sync,60000);
