@@ -21,6 +21,7 @@ import java.util.concurrent.Executors;
 public final class MainActivity extends Activity {
   private WebView web;
   private String backupPending="";
+  private boolean qrEnrollmentPending=false;
   private final ExecutorService networkWorker=Executors.newSingleThreadExecutor();
   private volatile String sessionToken="";
   private volatile JSONObject sessionUser=null;
@@ -79,6 +80,20 @@ public final class MainActivity extends Activity {
   }
   @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
     super.onActivityResult(requestCode,resultCode,data);
+    // Registro de referencia QR iniciado desde el formulario web.
+    if(qrEnrollmentPending){
+      com.google.zxing.integration.android.IntentResult scan=
+        com.google.zxing.integration.android.IntentIntegrator.parseActivityResult(requestCode,resultCode,data);
+      if(scan!=null){
+        qrEnrollmentPending=false;
+        String value=scan.getContents();
+        if(web!=null){
+          String argument=value==null?"null":org.json.JSONObject.quote(value);
+          web.evaluateJavascript("window.neuroQrEnrollment && window.neuroQrEnrollment("+argument+")",null);
+        }
+        return;
+      }
+    }
     if(requestCode==194){
       boolean selected=holdsHomeRole();
       new AlertDialog.Builder(this).setTitle(selected?"Inicio activado":"Inicio sin cambiar")
@@ -370,6 +385,23 @@ public final class MainActivity extends Activity {
           .setMessage("Android no permitió abrir una app de reloj desde NeuroSync. Abre Reloj de Google manualmente, elige una alarma y selecciona YouTube Music como sonido.")
           .setPositiveButton("Entendido",null).show();
       });
+    }
+    @JavascriptInterface public void scanQrReference(){
+      runOnUiThread(()->{
+        qrEnrollmentPending=true;
+        try{
+          new com.google.zxing.integration.android.IntentIntegrator(MainActivity.this)
+            .setDesiredBarcodeFormats(com.google.zxing.integration.android.IntentIntegrator.QR_CODE)
+            .setPrompt("Escanea el QR físico que usarás para desactivar la alarma")
+            .setBeepEnabled(false).setOrientationLocked(false).initiateScan();
+        }catch(Exception ex){
+          qrEnrollmentPending=false;
+          android.widget.Toast.makeText(MainActivity.this,"No se pudo abrir la cámara QR",android.widget.Toast.LENGTH_LONG).show();
+        }
+      });
+    }
+    @JavascriptInterface public void setAlarmQrCode(String id,String value){
+      AlarmChallengeStore.setQr(MainActivity.this,id,value);
     }
     @JavascriptInterface public void setAlarmChallenge(String id,String challenge){
       AlarmChallengeStore.set(MainActivity.this,id,challenge);
