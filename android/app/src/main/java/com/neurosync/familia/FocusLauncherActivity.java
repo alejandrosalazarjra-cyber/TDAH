@@ -24,7 +24,8 @@ import java.util.*;
  * Los límites de concentración se aplican solo al abrir apps desde este launcher.
  */
 public final class FocusLauncherActivity extends Activity {
-  private static final int BLACK=0xFF101113, WHITE=0xFFF8F8F7, MUTED=0xFF9E9EA1, CARD=0xFF232428;
+  private int BLACK=0xFF101113, WHITE=0xFFF8F8F7, MUTED=0xFF9E9EA1, CARD=0xFF232428;
+  private int themeMode=0;
   private LinearLayout root, page;
   private EditText search;
   private boolean drawer=false;
@@ -40,6 +41,15 @@ public final class FocusLauncherActivity extends Activity {
   private int mindfulDelay=5;
   private boolean usageWarningShown=false;
 
+  private void applyTheme(){
+    if(themeMode==1){BLACK=0xFF101C32;CARD=0xFF223653;WHITE=0xFFF6F9FF;MUTED=0xFFA7B6CD;}
+    else if(themeMode==2){BLACK=0xFF10241E;CARD=0xFF243C32;WHITE=0xFFF6FCF8;MUTED=0xFFACBEB5;}
+    else{BLACK=0xFF101113;CARD=0xFF232428;WHITE=0xFFF8F8F7;MUTED=0xFF9E9EA1;}
+    getWindow().setStatusBarColor(BLACK);getWindow().setNavigationBarColor(BLACK);
+    if(root!=null)root.setBackgroundColor(BLACK);
+  }
+  private void cycleTheme(){themeMode=(themeMode+1)%3;preferences.edit().putInt("theme_mode",themeMode).apply();applyTheme();showSettings();}
+  private String themeName(){return themeMode==1?"Azul profundo":themeMode==2?"Bosque oscuro":"Grafito";}
   private static class AppEntry {
     String title,packageName,activity;
     AppEntry(String title,String pkg,String cls){this.title=title;this.packageName=pkg;this.activity=cls;}
@@ -63,7 +73,8 @@ public final class FocusLauncherActivity extends Activity {
   private TextView action(String value,Runnable click){
     TextView t=text(value,14,WHITE,false);
     pad(t,12,11);
-    t.setBackgroundColor(CARD);
+    android.graphics.drawable.GradientDrawable background=new android.graphics.drawable.GradientDrawable();
+    background.setColor(CARD);background.setCornerRadius(dp(14));t.setBackground(background);
     t.setMinHeight(dp(46));
     t.setGravity(Gravity.CENTER);
     t.setMaxLines(2);
@@ -76,9 +87,9 @@ public final class FocusLauncherActivity extends Activity {
 
   @Override public void onCreate(Bundle state){
     super.onCreate(state);
-    getWindow().setStatusBarColor(BLACK);getWindow().setNavigationBarColor(BLACK);
     getWindow().getDecorView().setSystemUiVisibility(0);
     preferences=getSharedPreferences("focus_launcher",MODE_PRIVATE);
+    themeMode=preferences.getInt("theme_mode",0);applyTheme();
     favorites.addAll(preferences.getStringSet("favorites",Collections.emptySet()));
     focusApps.addAll(preferences.getStringSet("focus",Collections.emptySet()));
     focusEnabled=preferences.getBoolean("focus_enabled",true);
@@ -490,6 +501,7 @@ public final class FocusLauncherActivity extends Activity {
     LinearLayout view=vertical();pad(view,16,17);
     TextView back=action("‹  Volver a inicio",()->{drawer=false;renderHome();});view.addView(back);
     view.addView(gap(30));view.addView(text("Mi inicio minimalista",25,WHITE,true));view.addView(gap(14));
+    view.addView(action("Tema visual: "+themeName()+"  ·  Cambiar",this::cycleTheme));view.addView(gap(12));
     TextView explain=text("Puedes usar NeuroSync como pantalla de inicio sin perder el acceso a otras aplicaciones ni las llamadas de emergencia. Android te permitirá regresar a tu launcher anterior desde Ajustes.",14,MUTED,false);
     view.addView(explain);view.addView(gap(24));
     view.addView(action("✓  Elegir NeuroSync como pantalla de inicio",this::chooseDefaultHome));view.addView(gap(13));
