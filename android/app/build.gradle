@@ -24,6 +24,11 @@ android {
     buildTypes {
         preview {
             initWith debug
+            // Usar una firma persistente cuando haya un keystore seguro en GitHub Secrets.
+            // Evita que el SHA-1 de OAuth cambie entre ejecuciones de GitHub Actions.
+            if (System.getenv('NS_KEYSTORE_FILE')) {
+                signingConfig signingConfigs.neurosyncRelease
+            }
             applicationIdSuffix '.preview'
             versionNameSuffix '-preview'
             manifestPlaceholders = [appLabel: 'NeuroSync PRUEBA 10']
