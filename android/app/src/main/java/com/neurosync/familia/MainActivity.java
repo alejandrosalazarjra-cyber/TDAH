@@ -19,6 +19,27 @@ import java.util.concurrent.Executors;
  * La interfaz principal se distribuye dentro de la APK (no depende de Netlify).
  */
 public final class MainActivity extends Activity {
+  private String pendingNavigation="";
+  private String allowedNavigation(String value){
+    if(value==null)return "";
+    switch(value){
+      case "home":case "tasks":case "calendar":case "bags":case "alarms":
+      case "habits":case "focus":case "dragon":case "admin":return value;
+      default:return "";
+    }
+  }
+  private void deliverNavigation(){
+    if(web==null||pendingNavigation.isEmpty())return;
+    String route=pendingNavigation;
+    pendingNavigation="";
+    web.evaluateJavascript("window.neuroNavigateFromLauncher && window.neuroNavigateFromLauncher("+JSONObject.quote(route)+")",null);
+  }
+  @Override protected void onNewIntent(Intent intent){
+    super.onNewIntent(intent);
+    setIntent(intent);
+    pendingNavigation=allowedNavigation(intent==null?null:intent.getStringExtra("neurosync_view"));
+    deliverNavigation();
+  }
   private WebView web;
   private GoogleAccountBridge googleAccounts;
   void googleCallback(String name,String json){
@@ -57,6 +78,7 @@ public final class MainActivity extends Activity {
   }
   @Override public void onCreate(Bundle state){
     super.onCreate(state);
+    pendingNavigation=allowedNavigation(getIntent()==null?null:getIntent().getStringExtra("neurosync_view"));
     restoreNativeSession();
     googleAccounts=new GoogleAccountBridge(this);
     getWindow().setStatusBarColor(Color.rgb(246,248,252));
@@ -70,6 +92,10 @@ public final class MainActivity extends Activity {
     settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
     web.setWebChromeClient(new WebChromeClient());
     web.setWebViewClient(new WebViewClient(){
+      @Override public void onPageFinished(WebView view,String url){
+        super.onPageFinished(view,url);
+        deliverNavigation();
+      }
       // Solo recursos locales de la mascota; no altera la red, cuentas ni las alarmas.
       @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request){
         String path=request.getUrl().getPath();
@@ -386,6 +412,27 @@ public final class MainActivity extends Activity {
         runOnUiThread(()->{
           if(web!=null)web.evaluateJavascript("window.neuroSyncOnSync && window.neuroSyncOnSync("+value+","+JSONObject.quote(requestingUser)+")",null);
         });
+      });
+    }
+    @JavascriptInterface public void openPermissionsPanel(String target){
+      runOnUiThread(()->{
+        try{
+          Intent settings;
+          switch(target==null?"":target){
+            case "overlay":
+              settings=new Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                android.net.Uri.parse("package:"+getPackageName()));break;
+            case "usage":
+              settings=new Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS);break;
+            case "notifications":
+              settings=new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE,getPackageName());break;
+            case "app":
+              openAppSettings();return;
+            default:return;
+          }
+          startActivity(settings);
+        }catch(Exception ignored){openAppSettings();}
       });
     }
     @JavascriptInterface public String alarmPermissions(){
