@@ -375,7 +375,7 @@ function nsRenderTaskOrganizer(tasks){
  var shown=all.filter(function(t){
   if(filter==='done'&&!taskDone(t))return false;
   if(filter==='pending'&&taskDone(t))return false;
-  if(filter==='overdue'&&(taskDone(t)||t.repeat&&t.repeat!=='none'||!t.date||t.date>=day()))return false;
+  if(filter==='overdue'&&(taskDone(t)||(t.repeat&&t.repeat!=='none')||!t.date||t.date>=day()))return false;
   var category=String(t.category||'Sin categoría');
   if(nsCategoryFilter!=='all'&&category.toLocaleLowerCase('es-CO')!==nsCategoryFilter)return false;
   if(!q)return true;
@@ -413,11 +413,11 @@ function nsTemplateMerge(imported){
  });nsTemplateWrite(list)
 }
 async function nsTemplateCreate(){
- var title=await nsPrompt('Nueva plantilla','Nombre que usarás para esta rutina.','',{placeholder:'Ej. Preparar salida al trabajo'});
+ var title=await nsPrompt('Nueva plantilla','',{message:'Nombre que usarás para esta rutina.',placeholder:'Ej. Preparar salida al trabajo'});
  if(!title||!title.trim())return;
- var steps=await nsPrompt('Pasos de la plantilla','Escribe los pasos separados por punto y coma.','',{placeholder:'Llaves; Agua; Documento'});
+ var steps=await nsPrompt('Pasos de la plantilla','',{message:'Escribe los pasos separados por punto y coma.',placeholder:'Llaves; Agua; Documento'});
  if(steps===null)return;
- var category=await nsPrompt('Categoría de plantilla','Puedes reutilizarla en cualquier fecha.','Personal',{placeholder:'Trabajo, Estudio…'});
+ var category=await nsPrompt('Categoría de plantilla','Personal',{message:'Puedes reutilizarla en cualquier fecha.',placeholder:'Trabajo, Estudio…'});
  if(category===null)return;
  var list=nsTemplateRead();list.push({id:uid(),title:title.trim().slice(0,100),category:nsCleanCategory(category),steps:steps.split(';').map(function(x){return x.trim().slice(0,140)}).filter(Boolean).slice(0,20),tags:[],priority:'normal'});
  nsTemplateWrite(list);nsPlanRender();say('Plantilla guardada');
@@ -478,6 +478,10 @@ function nsTaskDueOn(t,date){
  if(!t.date||date<t.date)return false;
  if(t.repeat==='daily')return true;
  if(t.repeat==='weekly')return new Date(t.date+'T12:00').getDay()===new Date(date+'T12:00').getDay();
+ if(t.repeat==='every2'||t.repeat==='every3'){
+  var start=new Date(t.date+'T12:00'),target=new Date(date+'T12:00'),difference=Math.round((target-start)/86400000);
+  return difference>=0&&difference%(t.repeat==='every2'?2:3)===0;
+ }
  return t.date===date;
 }
 function nsPlanInit(){
@@ -630,8 +634,8 @@ function active(list){return list.filter(function(t){return !t.deleted})}
 function owned(t){return session.role==='admin'||t.owner===session.username||t.owner==='todos'}
 function mark(t){t.updatedAt=stamp();return t}
 function allTasks(){return active(model.tasks).filter(owned).sort(function(a,b){return (a.date||'').localeCompare(b.date||'')||(a.time||'').localeCompare(b.time||'')})}
-function taskDone(t){if(t.repeat==='daily')return (t.doneDates||[]).indexOf(day())!==-1;if(t.repeat==='weekly')return (t.doneDates||[]).indexOf(day())!==-1;return (t.doneDates||[]).indexOf(t.date)!==-1}
-function todayTask(t){if(t.inbox||t.date>day())return false;if(t.repeat==='daily')return true;if(t.repeat==='weekly')return new Date(t.date+'T12:00').getDay()===new Date().getDay();return t.date===day()}
+function taskDone(t){if(t.repeat&&t.repeat!=='none')return (t.doneDates||[]).indexOf(day())!==-1;return (t.doneDates||[]).indexOf(t.date)!==-1}
+function todayTask(t){return !t.inbox&&nsTaskDueOn(t,day())}
 function priorityScore(t){return t.priority==='high'?0:t.priority==='low'?2:1}
 function actionable(){
  return allTasks().filter(function(t){return !t.inbox&&!taskDone(t)&&todayTask(t)})
@@ -712,7 +716,7 @@ by('quick-capture-form').onsubmit=function(event){
    date:day(),repeat:'none',priority:'normal',energy:'low',steps:[],doneDates:[],updatedAt:stamp()});
  input.value='';save();render();say('Anotado. No tienes que hacerlo ahora.');
 };
-function taskItem(t){var yes=taskDone(t),el=document.createElement('div');el.className='task'+(yes?' done':'');var meta=esc(t.date)+(t.time?' · '+esc(t.time):'')+' · '+esc(t.owner||'Yo')+' · '+esc(t.category||'Sin categoría')+((t.tags||[]).length?' · #'+(t.tags||[]).map(esc).join(' #'):'')+(t.repeat&&t.repeat!=='none'?' · '+(t.repeat==='daily'?'Diaria':'Semanal'):'');
+function taskItem(t){var yes=taskDone(t),el=document.createElement('div');el.className='task'+(yes?' done':'');var meta=esc(t.date)+(t.time?' · '+esc(t.time):'')+' · '+esc(t.owner||'Yo')+' · '+esc(t.category||'Sin categoría')+((t.tags||[]).length?' · #'+(t.tags||[]).map(esc).join(' #'):'')+(t.repeat&&t.repeat!=='none'?' · '+(t.repeat==='daily'?'Diaria':t.repeat==='weekly'?'Semanal':t.repeat==='every2'?'Cada 2 días':'Cada 3 días'):'');
 el.innerHTML='<input type="checkbox" aria-label="Completar tarea" '+(yes?'checked':'')+'><div class="task-main"><div class="task-title">'+esc(t.title)+'</div><div class="task-meta">'+meta+'</div></div><button class="iconbtn edit-task" type="button" aria-label="Editar tarea" title="Editar">✎</button><button class="iconbtn delete-task" type="button" aria-label="Eliminar tarea" title="Eliminar">×</button>';
 el.querySelector('input').onchange=function(e){var k=t.repeat==='none'?t.date:day();t.doneDates=t.doneDates||[];if(e.target.checked){if(t.doneDates.indexOf(k)<0){t.doneDates.push(k);model.pet.food+=10;model.pet.xp+=10;say('¡Buen trabajo! +10 puntos para tu mascota 🐣')}}else{t.doneDates=t.doneDates.filter(function(v){return v!==k})}mark(t);save();render()};
 el.querySelector('.edit-task').onclick=function(){editTask(t)};
@@ -776,7 +780,7 @@ if(kind==='alarm'&&nat&&nat.requestAlarmPermissions){
 }
 var head={task:'Nueva tarea / flujo',bag:'Nueva lista de salida',alarm:'Nueva alarma',user:'Crear cuenta familiar'};by('modal-title').textContent=head[kind];var body=by('modal-body'),users=(session.role==='admin'?getUsers():[]),who=session.role==='admin'?[['todos','Todos']].concat(users.map(function(u){return [u.username,u.username]})):[[session.username,session.username]];
 var html='<form id="popup-form" class="form-grid">';
-if(kind==='task')html+=field('Actividad','title')+field('Responsable','owner','select',who)+field('Fecha','date','date')+field('Hora','time','time')+field('Repetición','repeat','select',[['none','Una vez'],['daily','Diario'],['weekly','Semanal']])+field('Prioridad','priority','select',[['normal','Normal'],['high','Importante'],['low','Puede esperar']])+field('Energía necesaria','energy','select',[['low','Poca energía'],['medium','Media'],['high','Alta']])+'<label class="field wide">Categoría<input name="category" maxlength="36" list="ns-task-categories" placeholder="Ej. Trabajo, estudio, familia"><datalist id="ns-task-categories"><option value="Personal"><option value="Trabajo"><option value="Estudio"><option value="Hogar"><option value="Familia"><option value="Salud"></datalist></label>'+'<label class="field wide">Etiquetas (separadas por comas)<input name="tags" maxlength="180" placeholder="Importante, comprar, urgente"></label>'+'<label class="field wide">Primeros pasos (separados por punto y coma)<textarea name="steps" placeholder="Preparar mochila; Revisar llaves; Salir"></textarea></label>';
+if(kind==='task')html+=field('Actividad','title')+field('Responsable','owner','select',who)+field('Fecha','date','date')+field('Hora','time','time')+field('Repetición','repeat','select',[['none','Una vez'],['daily','Diario'],['weekly','Semanal'],['every2','Cada 2 días'],['every3','Cada 3 días']])+field('Prioridad','priority','select',[['normal','Normal'],['high','Importante'],['low','Puede esperar']])+field('Energía necesaria','energy','select',[['low','Poca energía'],['medium','Media'],['high','Alta']])+'<label class="field wide">Categoría<input name="category" maxlength="36" list="ns-task-categories" placeholder="Ej. Trabajo, estudio, familia"><datalist id="ns-task-categories"><option value="Personal"><option value="Trabajo"><option value="Estudio"><option value="Hogar"><option value="Familia"><option value="Salud"></datalist></label>'+'<label class="field wide">Etiquetas (separadas por comas)<input name="tags" maxlength="180" placeholder="Importante, comprar, urgente"></label>'+'<label class="field wide">Primeros pasos (separados por punto y coma)<textarea name="steps" placeholder="Preparar mochila; Revisar llaves; Salir"></textarea></label>';
 if(kind==='bag')html+=field('Lugar o destino','place')+field('Responsable','owner','select',who)+'<label class="field wide">Objetos separados por punto y coma<textarea name="items" required placeholder="Agua; Toalla; Candado"></textarea></label>';
 if(kind==='alarm')html+=field('Nombre de la alarma','title')+field('Fecha','date','date')+field('Hora','time','time')+field('Desafío para detener','challenge','select',[['none','Sin desafío'],['math','Resolver 3 sumas'],['taps','Tocar 12 veces'],['memory','Recordar un código'],['typing','Escribir una frase'],['shake','Mover el teléfono 12 veces'],['math_hard','Matemáticas avanzadas'],['qr','Escanear QR físico'],['routine_focus','Rutina mental: sumas y escritura'],['routine_active','Rutina activa: memoria, movimiento y sumas']])+'<div id="qr-enroll" class="field wide hidden"><span>QR para desactivar esta alarma</span><input name="qrValue" type="hidden"><button class="btn secondary" id="qr-enroll-button" type="button">Escanear QR de referencia</button><p class="hint" id="qr-enroll-status">Elige un QR físico que tengas lejos de la cama. No se comparte con otras cuentas.</p></div><label class="field wide"><span class="row"><input type="checkbox" name="daily" style="width:20px"> Repetir todos los días</span></label>';
 if(kind==='user')html+=field('Usuario (sin espacios)','username')+field('Contraseña (mínimo 10 caracteres)','password','password');
@@ -874,6 +878,8 @@ function scheduleAlarm(a){
  var repeat=a.repeat|| (a.daily?'daily':'none');
  if(repeat==='weekly')while(when<Date.now())when+=7*86400000;
  else if(repeat==='daily')while(when<Date.now())when+=86400000;
+ else if(repeat==='every2')while(when<Date.now())when+=2*86400000;
+ else if(repeat==='every3')while(when<Date.now())when+=3*86400000;
  try{
   if(nat.setAlarmChallenge)nat.setAlarmChallenge(a.id,a.challenge||'none');
   var ok=nat.scheduleAlarmRepeat?nat.scheduleAlarmRepeat(a.id,a.title,when,repeat):nat.scheduleAlarm(a.id,a.title,when,repeat==='daily');
