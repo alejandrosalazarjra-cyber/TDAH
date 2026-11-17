@@ -2100,7 +2100,11 @@ function sync(){
 }
 by('sync-btn').onclick=sync;
 function getUsers(){if(!nat||!nat.getUsers)return [{username:session.username,role:session.role}];try{var r=JSON.parse(nat.getUsers());return r.users||[]}catch(e){return []}}
-function enter(u){nsStorageRecoveryBlocked=false;session=u;model=load();nsSleepRender();nsSceneRestore();nsFocusRestore();nsLauncherFocusSync();nsFocusTasks();nsFocusStats();nsFocusRender();nsDragonData();by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=(u.displayName||u.username).slice(0,1).toUpperCase();by('greeting').textContent='Tu día está listo para avanzar a tu ritmo.';by('ns-home-welcome').textContent='Hola, '+(u.displayName||u.email||u.username)+'. Tu día te espera.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');if(nsPendingRoute){var route=nsPendingRoute;nsPendingRoute='';nsNavigate(route)}sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
+function enter(u){
+ // Registrar el proveedor que la persona eligió para no abrir otra cuenta
+ // automáticamente si conviven un administrador local y un Google vinculado.
+ try{localStorage.setItem('ns_last_session_provider',u.google?'google':'owner')}catch(e){}
+ nsStorageRecoveryBlocked=false;session=u;model=load();nsSleepRender();nsSceneRestore();nsFocusRestore();nsLauncherFocusSync();nsFocusTasks();nsFocusStats();nsFocusRender();nsDragonData();by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=(u.displayName||u.username).slice(0,1).toUpperCase();by('greeting').textContent='Tu día está listo para avanzar a tu ritmo.';by('ns-home-welcome').textContent='Hola, '+(u.displayName||u.email||u.username)+'. Tu día te espera.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');if(nsPendingRoute){var route=nsPendingRoute;nsPendingRoute='';nsNavigate(route)}sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
 by('ns-owner-access').onclick=function(){
  var panel=by('ns-admin-login'),showing=!panel.classList.toggle('hidden');
  by('ns-owner-access').setAttribute('aria-expanded',String(showing));
@@ -2584,14 +2588,17 @@ function nsDragonInitActions(){
  nsDragonRender=function(){originalRender();nsDragonUpdateEnergy()};
 }
 
-function logout(){clearTimeout(nsDriveBackupTimer);nsUploadDriveNow();if(session&&session.google&&nat&&nat.logoutGoogle)nat.logoutGoogle();if(nsFocusState)nsFocusSaveSession(false);nsLauncherFocusSync();syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
+function logout(){
+ try{localStorage.setItem('ns_last_session_provider','signed_out')}catch(e){}
+ clearTimeout(nsDriveBackupTimer);nsUploadDriveNow();if(session&&session.google&&nat&&nat.logoutGoogle)nat.logoutGoogle();if(nsFocusState)nsFocusSaveSession(false);nsLauncherFocusSync();syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
 by('logout').onclick=logout;by('avatar').onclick=async function(){if(await nsConfirm('Cerrar sesión','¿Quieres cerrar esta sesión?','Cerrar sesión'))logout()};
 document.addEventListener('visibilitychange',function(){
  if(document.hidden){clearTimeout(nsDriveBackupTimer);nsUploadDriveNow()}
  else{sync();refreshFocusClock()}
 });setInterval(sync,60000);
-var nsGoogleRestored=false;
-if(nat&&nat.restoreGoogleSession){
+var nsGoogleRestored=false,nsPreferredProvider='';
+try{nsPreferredProvider=localStorage.getItem('ns_last_session_provider')||''}catch(e){}
+if(nsPreferredProvider!=='owner'&&nsPreferredProvider!=='signed_out'&&nat&&nat.restoreGoogleSession){
  try{
   var googleRestored=JSON.parse(nat.restoreGoogleSession());
   if(googleRestored.ok&&googleRestored.user&&googleRestored.user.google){
@@ -2600,7 +2607,7 @@ if(nat&&nat.restoreGoogleSession){
   }
  }catch(error){}
 }
-if(!nsGoogleRestored&&nat&&nat.restoreSession){
+if(!nsGoogleRestored&&nsPreferredProvider!=='signed_out'&&nat&&nat.restoreSession){
  try{
   var restored=JSON.parse(nat.restoreSession());
   if(restored.ok&&restored.user&&restored.user.username){
