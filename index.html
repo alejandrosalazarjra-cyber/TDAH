@@ -1605,7 +1605,7 @@ function nsConfirm(title,message,ok){return nsDialog({title:title,message:messag
 function nsPrompt(title,value,extra){return nsDialog(Object.assign({title:title,value:value||'',input:true,ok:'Guardar'},extra||{}))}
 function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 /* Fase 1: recuperación local versionada. Los datos corruptos jamás se borran silenciosamente. */
-function nsValidModel(x){return x&&typeof x==='object'&&!Array.isArray(x)&&Array.isArray(x.tasks)&&Array.isArray(x.packs)&&Array.isArray(x.alarms)&&x.pet&&typeof x.pet==='object'}
+function nsValidModel(x){return !!(x&&typeof x==='object'&&!Array.isArray(x)&&Array.isArray(x.tasks)&&Array.isArray(x.packs)&&Array.isArray(x.alarms)&&x.pet&&typeof x.pet==='object')}
 function nsReadModel(raw){if(!raw)return null;try{var v=JSON.parse(raw);return nsValidModel(v)?v:null}catch(e){return null}}
 function nsLocalSave(data){
  if(!session||!nsValidModel(data))throw Error('Datos no válidos');
