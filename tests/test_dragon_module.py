@@ -60,20 +60,20 @@ class DragonContract(unittest.TestCase):
         self.assertIn("figure.classList.add('has-sprite')", HTML)
         self.assertIn("image.onerror=function()", HTML)
 
-    def test_eight_higgsfield_pose_frames(self):
-        poses = ("idle", "blink", "walk-a", "walk-b", "flap",
-                 "sleep", "eat", "celebrate")
-        for name in poses:
-            asset = ROOT / "assets" / "dragon" / "poses" / (name + ".webp")
+    def test_evolution_atlases_all_six(self):
+        for stage in range(1, 7):
+            asset = ROOT / "assets" / "dragon" / "atlases" / f"etapa-{stage}.webp"
             self.assertTrue(asset.is_file(), f"Falta {asset}")
-            self.assertGreater(asset.stat().st_size, 3000)
+            self.assertGreater(asset.stat().st_size, 10000)
             self.assertEqual(asset.read_bytes()[0:4], b"RIFF")
             self.assertEqual(asset.read_bytes()[8:12], b"WEBP")
+        for pose in ("idle", "blink", "walk-a", "walk-b", "flap", "sleep", "eat", "celebrate"):
+            self.assertIn("'" + pose + "'", HTML)
         self.assertIn("function nsDragonPoseSet(state)", HTML)
-        self.assertIn("figure.dataset.stage!=='1'", HTML)
         self.assertIn("nsDragonPoseFrameTimer=setInterval", HTML)
-        self.assertIn("use('blink')", HTML)
+        self.assertIn("nsDragonAtlasFrame(figure,1)", HTML)
         self.assertIn("nsDragonStopPoseTimers()", HTML)
+        self.assertIn("figure.classList.add('has-atlas')", HTML)
 
     def test_android_packages_and_serves_offline_sprites(self):
         workflow = (ROOT / ".github" / "workflows" / "android-apk.yml").read_text(encoding="utf-8")
@@ -83,6 +83,8 @@ class DragonContract(unittest.TestCase):
         self.assertIn('path.matches("/assets/dragon/', java)
         self.assertIn('poses/(?:idle|blink|walk-a|walk-b|flap|sleep|eat|celebrate)', java)
         self.assertIn('cp assets/dragon/poses/*.webp', workflow)
+        self.assertIn('cp assets/dragon/atlases/etapa-{1..6}.webp', workflow)
+        self.assertIn('atlases/etapa-[1-6]', java)
         self.assertIn('getAssets().open(file)', java)
 
     def test_exactly_one_initializer_and_script(self):
