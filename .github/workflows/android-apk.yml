@@ -198,13 +198,9 @@ jobs:
           mkdir -p android/app/src/main/assets/dragon
           cp assets/dragon/etapa-{1..6}.webp android/app/src/main/assets/dragon/
           for n in {1..6}; do test -s "android/app/src/main/assets/dragon/etapa-${n}.webp"; done
-          mkdir -p android/app/src/main/assets/dragon/poses
-          cp assets/dragon/poses/*.webp android/app/src/main/assets/dragon/poses/
           mkdir -p android/app/src/main/assets/dragon/atlases
           cp assets/dragon/atlases/etapa-{1..6}.webp android/app/src/main/assets/dragon/atlases/
           for n in {1..6}; do test -s "android/app/src/main/assets/dragon/atlases/etapa-${n}.webp"; done
-          for pose in idle blink walk-a walk-b flap sleep eat celebrate; do
-            test -s "android/app/src/main/assets/dragon/poses/${pose}.webp"
           done
 
       - name: Compilar APK de prueba independiente (no sustituye tu instalación)
