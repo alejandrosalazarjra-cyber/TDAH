@@ -17,6 +17,7 @@ public final class AlarmAudioService extends Service {
   private Vibrator vibrator;
   private final Handler handler=new Handler(Looper.getMainLooper());
   private final Runnable stopLater=()->stopSelf();
+  private Runnable fadeRunnable;
 
   public static void start(Context context,String id,String title){
     Intent intent=new Intent(context,AlarmAudioService.class).setAction(START)
@@ -49,7 +50,7 @@ public final class AlarmAudioService extends Service {
       if(Build.VERSION.SDK_INT>=29)
         startForeground(701,notification,android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
       else startForeground(701,notification);
-      playAudio();
+      playAudio(id);
       startVibration();
       handler.removeCallbacks(stopLater);
       handler.postDelayed(stopLater,180000); // Límite de seguridad: no sonar indefinidamente.
@@ -71,8 +72,24 @@ public final class AlarmAudioService extends Service {
       }
     }catch(Exception ex){android.util.Log.w("DrakoPlan","Vibración no disponible",ex);}
   }
-  private void playAudio(){
+  private void fadeVolume(final MediaPlayer current,final float target,final int seconds){
+    final long beginning=SystemClock.elapsedRealtime();
+    fadeRunnable=new Runnable(){
+      @Override public void run(){
+        if(player!=current||!current.isPlaying())return;
+        float progress=Math.min(1f,(SystemClock.elapsedRealtime()-beginning)/(seconds*1000f));
+        float volume=target*(0.15f+0.85f*progress);
+        try{current.setVolume(volume,volume);}catch(Exception ignored){return;}
+        if(progress<1f)handler.postDelayed(this,1000);
+      }
+    };
+    handler.post(fadeRunnable);
+  }
+  private void playAudio(String id){
     release();
+    int percent=Math.max(20,Math.min(100,AlarmOptionsStore.volume(this,id)));
+    int gentle=AlarmOptionsStore.fadeSeconds(this,id);
+    float target=percent/100f;
     String custom=getSharedPreferences("ns_sound",0).getString("uri","");
     Uri[] candidates=new Uri[]{
       custom.isEmpty()?null:Uri.parse(custom),
@@ -88,19 +105,25 @@ public final class AlarmAudioService extends Service {
           .setUsage(AudioAttributes.USAGE_ALARM)
           .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
         attempt.setDataSource(this,uri);
-        attempt.setLooping(true);attempt.prepare();attempt.start();
-        player=attempt;return;
+        attempt.setLooping(true);attempt.prepare();
+        float initial=gentle>0?target*0.15f:target;
+        attempt.setVolume(initial,initial);
+        attempt.start();
+        player=attempt;
+        if(gentle>0)fadeVolume(attempt,target,gentle);
+        return;
       }catch(Exception error){
         if(attempt!=null)try{attempt.release();}catch(Exception ignored){}
         android.util.Log.w("NeuroSync","Tono no disponible, probando siguiente",error);
       }
     }
     try{
-      backupTone=new ToneGenerator(AudioManager.STREAM_ALARM,90);
+      backupTone=new ToneGenerator(AudioManager.STREAM_ALARM,percent);
       backupTone.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD,180000);
     }catch(Exception e){android.util.Log.e("NeuroSync","Sin reproductor de emergencia",e);}
   }
   private void release(){
+    if(fadeRunnable!=null){handler.removeCallbacks(fadeRunnable);fadeRunnable=null;}
     if(vibrator!=null){try{vibrator.cancel();}catch(Exception ignored){}vibrator=null;}
     if(player!=null){try{player.stop();}catch(Exception ignored){}player.release();player=null;}
     if(backupTone!=null){backupTone.stopTone();backupTone.release();backupTone=null;}
