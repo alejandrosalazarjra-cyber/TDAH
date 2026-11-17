@@ -14,6 +14,9 @@ public final class AlarmRingActivity extends Activity {
  private String challenge;
  private int remaining=3, correct=0, tapped=0;
  private int answer;
+ private String memoryCode="";
+ private final Handler uiHandler=new Handler(Looper.getMainLooper());
+ private static final String[] WAKE_PHRASES={"Hoy elijo avanzar paso a paso","Respiro y comienzo mi dia","Una accion pequeña cuenta"};
  private TextView prompt, progress;
  private EditText input;
  private LinearLayout root;
@@ -27,7 +30,11 @@ public final class AlarmRingActivity extends Activity {
  }
  private Button button(String text){
    Button result=new Button(this);result.setText(text);result.setAllCaps(false);
-   result.setMinHeight(dp(52));return result;
+   result.setMinHeight(dp(54));result.setTextSize(15);
+   result.setTextColor(Color.WHITE);result.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF465FD6));
+   LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-1,dp(54));
+   params.setMargins(0,dp(5),0,dp(5));result.setLayoutParams(params);
+   return result;
  }
  private void finishAlarm(){
    AlarmReceiver.dismiss(this,id);finish();
@@ -46,11 +53,12 @@ public final class AlarmRingActivity extends Activity {
    root.setOrientation(LinearLayout.VERTICAL);
    root.setGravity(Gravity.CENTER);
    root.setPadding(dp(22),dp(24),dp(22),dp(24));
-   root.setBackgroundColor(0xFF111215);
+   root.setBackgroundColor(0xFF101A31);
    ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.addView(root);
    setContentView(scroll);
-   root.addView(label("⏰",54));
-   root.addView(label(title==null?"Alarma":title,27));
+   root.addView(label("☀",52));
+   root.addView(label("ES MOMENTO DE DESPERTAR",14));
+   root.addView(label(title==null?"Mi alarma":title,29));
    progress=label("",15);root.addView(progress);
    prompt=label("",22);root.addView(prompt);
    if("math".equals(challenge)){
@@ -75,6 +83,38 @@ public final class AlarmRingActivity extends Activity {
        tapped++;tap.setText("Tocar · "+tapped+" / 12");
        if(tapped>=12)finishAlarm();
      });
+   }else if("memory".equals(challenge)){
+     // El código se muestra unos segundos y se oculta; no requiere cámara ni internet.
+     memoryCode=String.format(java.util.Locale.US,"%04d",1000+random.nextInt(9000));
+     progress.setText("Memoriza el código durante 8 segundos");
+     prompt.setText(memoryCode);
+     input=new EditText(this);input.setSingleLine(true);input.setTextColor(Color.WHITE);
+     input.setHintTextColor(0xFF9EAECA);input.setHint("Escribe el código");
+     input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+     input.setVisibility(android.view.View.GONE);root.addView(input);
+     Button check=button("Comprobar código");check.setVisibility(android.view.View.GONE);root.addView(check);
+     uiHandler.postDelayed(()->{
+       if(isFinishing()||isDestroyed())return;
+       prompt.setText("¿Qué código viste?");progress.setText("Recuerda los cuatro números");
+       input.setVisibility(android.view.View.VISIBLE);check.setVisibility(android.view.View.VISIBLE);
+     },8000);
+     check.setOnClickListener(v->{
+       if(memoryCode.equals(input.getText().toString().trim()))finishAlarm();
+       else{input.setError("Revisa el código e inténtalo de nuevo");}
+     });
+   }else if("typing".equals(challenge)){
+     String phrase=WAKE_PHRASES[random.nextInt(WAKE_PHRASES.length)];
+     progress.setText("Escribe la frase para completar el desafío");
+     prompt.setText(phrase);
+     input=new EditText(this);input.setSingleLine(false);input.setMinLines(2);
+     input.setTextColor(Color.WHITE);input.setHintTextColor(0xFF9EAECA);
+     input.setHint("Escribe aquí la frase");root.addView(input);
+     Button check=button("Comprobar frase");root.addView(check);
+     check.setOnClickListener(v->{
+       String actual=input.getText().toString().trim().replaceAll("\\s+"," ");
+       if(phrase.equalsIgnoreCase(actual))finishAlarm();
+       else input.setError("Escribe la frase como aparece arriba");
+     });
    }else{
      Button stop=button("Detener alarma");root.addView(stop);
      stop.setOnClickListener(v->finishAlarm());
@@ -91,6 +131,7 @@ public final class AlarmRingActivity extends Activity {
        .setPositiveButton("Detener ahora",(d,w)->finishAlarm()).show());
    }
  }
+ @Override protected void onDestroy(){uiHandler.removeCallbacksAndMessages(null);super.onDestroy();}
  private void nextQuestion(){
    int x=3+random.nextInt(16),y=2+random.nextInt(14);
    answer=x+y;
