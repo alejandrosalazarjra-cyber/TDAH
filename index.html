@@ -761,6 +761,7 @@ function nsDragonSyncActivity(){
  var scene=by('dragon-scene'),prop=by('dragon-companion-prop');
  if(!scene||!prop)return;
  var mode=nsDragonActivity();
+ var control=by('dragon-start-focus');if(control)control.textContent=mode==='studying'?'Pausar y descansar':mode==='resting'?'Reanudar juntos':'Iniciar 5 min juntos';
  if(scene.dataset.activity!==mode){
   scene.dataset.activity=mode;
   prop.textContent=mode==='studying'?'📖':mode==='resting'?'💤':'';
@@ -796,7 +797,11 @@ function nsDragonCoachRender(){
 }
 function nsDragonBeginFocus(){
  if(!session||!model)return;
- if(nsFocusState){nsDragonMessage(nsFocusState.running?'Ya estamos concentrándonos.':'Tu sesión está en pausa. Retómala desde Concentración.',true);return}
+ if(nsFocusState){
+  if(nsFocusState.running){nsFocusState.elapsed=nsFocusElapsed();nsFocusState.running=false;nsDragonMessage('Pausa activada. Descansamos juntos.',true)}
+  else{nsFocusState.since=Date.now();nsFocusState.running=true;nsDragonMessage('¡Volvemos al enfoque! Continuemos a nuestro ritmo.',true)}
+  nsFocusPersist();nsFocusRender();return
+ }
  var items=nsDragonSuggestedTasks(),task=items.find(function(t){return t.id===model.focusId})||items[0];
  if(!task){nsDragonMessage('No tienes tareas para hoy. Puedes descansar o crear una nueva.',true);return}
  model.focusId=task.id;nsFocusDuration=5;
