@@ -36,6 +36,7 @@ public final class FocusLauncherActivity extends Activity {
   private android.content.SharedPreferences preferences;
   private float xStart,yStart;
   private boolean focusEnabled=true;
+  private boolean floatingFocusEnabled=false;
   private int focusStart=0,focusEnd=0;
   private int dailyBudget=120;
   private int mindfulDelay=5;
@@ -93,6 +94,7 @@ public final class FocusLauncherActivity extends Activity {
     favorites.addAll(preferences.getStringSet("favorites",Collections.emptySet()));
     focusApps.addAll(preferences.getStringSet("focus",Collections.emptySet()));
     focusEnabled=preferences.getBoolean("focus_enabled",true);
+    floatingFocusEnabled=preferences.getBoolean("floating_focus_enabled",false);
     focusStart=preferences.getInt("focus_start",0);
     focusEnd=preferences.getInt("focus_end",0);
     dailyBudget=preferences.getInt("daily_budget",120);
@@ -130,6 +132,7 @@ public final class FocusLauncherActivity extends Activity {
     preferences.edit().putStringSet("favorites",new HashSet<>(favorites))
       .putStringSet("focus",new HashSet<>(focusApps))
       .putBoolean("focus_enabled",focusEnabled)
+      .putBoolean("floating_focus_enabled",floatingFocusEnabled)
       .putInt("focus_start",focusStart).putInt("focus_end",focusEnd)
       .putInt("daily_budget",dailyBudget).putInt("mindful_delay",mindfulDelay).apply();
   }
@@ -428,6 +431,18 @@ public final class FocusLauncherActivity extends Activity {
       intent.addCategory(Intent.CATEGORY_LAUNCHER);
       intent.setClassName(app.packageName,app.activity);
       intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+      // Inicio voluntario desde launcher: nunca interceptar apps abiertas por otros medios.
+      if(floatingFocusEnabled && hasOverlayPermission() && focusIsActive()
+          && focusApps.contains(app.packageName)){
+        try{
+          startService(new Intent(this,FocusOverlayService.class)
+            .putExtra("mode","focus")
+            .putExtra("message","¿Para qué abriste "+app.title+"?")
+            .putExtra("seconds",10));
+        }catch(RuntimeException ex){
+          android.util.Log.w("DrakoPlan","Pausa flotante restringida",ex);
+        }
+      }
       startActivity(intent);
     }catch(Exception e){Toast.makeText(this,"No se pudo abrir la aplicación",Toast.LENGTH_SHORT).show();}
   }
@@ -693,6 +708,16 @@ public final class FocusLauncherActivity extends Activity {
     view.addView(action("Permisos y ventanas flotantes",this::showSpecialPermissions));view.addView(gap(10));
     view.addView(action("Recordatorio flotante personalizado",this::chooseFloatingReminder));view.addView(gap(10));
     view.addView(action("Pausa flotante voluntaria",this::chooseFloatingPause));view.addView(gap(10));
+    view.addView(action(floatingFocusEnabled?"Aviso flotante al abrir apps marcadas: ACTIVADO":"Aviso flotante al abrir apps marcadas: DESACTIVADO",()->{
+      if(!floatingFocusEnabled&&!hasOverlayPermission()){
+        new AlertDialog.Builder(this).setTitle("Falta permiso")
+          .setMessage("Para activar avisos sobre aplicaciones marcadas debes autorizar antes las superposiciones.")
+          .setPositiveButton("Permisos",(d,w)->showSpecialPermissions())
+          .setNegativeButton("Cancelar",null).show();
+        return;
+      }
+      floatingFocusEnabled=!floatingFocusEnabled;persist();showSettings();
+    }));view.addView(gap(10));
     view.addView(action("Enviar notificación de prueba",this::testFocusNotification));view.addView(gap(20));
     view.addView(text("Bienestar digital",18,WHITE,true));view.addView(gap(10));
     view.addView(action("Administrar notificaciones por aplicación",this::showNotificationControls));
