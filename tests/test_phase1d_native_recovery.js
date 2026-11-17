@@ -65,4 +65,6 @@ assert(java.includes('MessageDigest.getInstance("SHA-256")'),
  'Los respaldos deben estar separados por hash de cuenta');
 assert(bridgeCode.includes('saveNativeSnapshot(')&&bridgeCode.includes('recoverNativeSnapshot('),
  'El puente Android debe admitir escritura y lectura de copia secundaria');
+assert(bridgeCode.includes('canAccessSnapshot(')&&bridgeCode.includes('!canAccessSnapshot(username)'),
+ 'El puente Android debe comprobar la identidad antes de consultar copias');
 console.log('Fase 1d OK: recuperación SQLite simulada, separación de cuentas y transacciones cifradas');
