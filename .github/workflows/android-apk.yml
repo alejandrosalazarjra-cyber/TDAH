@@ -10,7 +10,7 @@ on:
       - 'android/**'
       - 'assets/dragon/**'
   push:
-    branches: [main]
+    branches: [main, 'feature/pantallas-completas-alarma-pomodoro']
     paths:
       - '.github/workflows/android-apk.yml'
       - 'tests/test_dragon_motion.js'
@@ -96,7 +96,7 @@ jobs:
               "AccountStore.java", "AlarmReceiver.java", "SyncService.java",
               "AlarmRingActivity.java", "TodayWidget.java",
               "FocusLauncherActivity.java", "AlarmAudioService.java", "SessionVault.java",
-              "MainActivity.java",
+              "MainActivity.java", "FocusOverlayService.java", "BackupCrypto.java",
           ]
           errors = []
           for name in required:

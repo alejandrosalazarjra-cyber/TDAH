@@ -123,7 +123,7 @@ public final class FocusLauncherActivity extends Activity {
       preferences.edit().putString("last_budget_alert_date",today).apply();
       new AlertDialog.Builder(this).setTitle("Recordatorio de descanso")
         .setMessage("Has alcanzado tu objetivo diario de "+dailyBudget+" minutos de uso. Puedes cerrar aplicaciones o continuar voluntariamente.")
-        .setPositiveButton("Ver mis tareas",(d,w)->openNeuroSync())
+        .setPositiveButton("Ver mis tareas",(d,w)->openNeuroSync("tasks"))
         .setNegativeButton("Entendido",null).show();
     }
   }
@@ -201,12 +201,12 @@ public final class FocusLauncherActivity extends Activity {
     body.addView(date);
     body.addView(gap(24));
     int pending=getSharedPreferences("ns_widget",0).getInt("pending",0);
-    TextView progress=action("☑  "+pending+" tareas pendientes",this::openNeuroSync);
+    TextView progress=action("☑  "+pending+" tareas pendientes",()->openNeuroSync("tasks"));
     body.addView(progress);
     body.addView(gap(8));
     long focus=focusRemaining();
     TextView session=action(focus>0?
-       "◷  Concentración: "+((focus+59999)/60000)+" min":"◷  Iniciar concentración",this::chooseFocusSession);
+       "◷  Concentración: "+((focus+59999)/60000)+" min":"◷  Iniciar concentración",()->openNeuroSync("focus"));
     body.addView(session);
     body.addView(gap(22));
     TextView favoriteTitle=text("FAVORITAS",11,MUTED,true);
@@ -225,7 +225,15 @@ public final class FocusLauncherActivity extends Activity {
     body.addView(gap(18));body.addView(line());body.addView(gap(12));
     body.addView(action("⌕  Buscar aplicaciones",this::showDrawer));
     body.addView(gap(8));
-    body.addView(action("✓  Agenda y tareas",this::openNeuroSync));
+    body.addView(action("✓  Agenda y tareas",()->openNeuroSync("calendar")));
+    body.addView(gap(8));
+    LinearLayout sections=horizontal();
+    sections.addView(action("◷  Alarmas",()->openNeuroSync("alarms")),new LinearLayout.LayoutParams(0,dp(48),1));
+    sections.addView(new View(this),new LinearLayout.LayoutParams(dp(8),1));
+    sections.addView(action("☷  Listas",()->openNeuroSync("bags")),new LinearLayout.LayoutParams(0,dp(48),1));
+    sections.addView(new View(this),new LinearLayout.LayoutParams(dp(8),1));
+    sections.addView(action("◉  Progreso",()->openNeuroSync("habits")),new LinearLayout.LayoutParams(0,dp(48),1));
+    body.addView(sections);
     body.addView(gap(16));
     LinearLayout shortcuts=horizontal();
     shortcuts.setGravity(Gravity.CENTER);
@@ -388,7 +396,7 @@ public final class FocusLauncherActivity extends Activity {
       new AlertDialog.Builder(this).setTitle("Objetivo diario alcanzado")
         .setMessage("Ya has usado "+app.title+" aproximadamente "+minutes+" minutos hoy, superando tu objetivo de "+limit+". Puedes volver a tu agenda o abrir la aplicación igualmente.")
         .setPositiveButton("Abrir igualmente",(d,w)->openWithFocus(app))
-        .setNegativeButton("Volver a mis tareas",(d,w)->openNeuroSync())
+        .setNegativeButton("Volver a mis tareas",(d,w)->openNeuroSync("tasks"))
         .setNeutralButton("Cancelar",null).show();
       return;
     }
@@ -449,7 +457,14 @@ public final class FocusLauncherActivity extends Activity {
   private void launchIntent(Intent intent){
     try{startActivity(intent);}catch(Exception e){Toast.makeText(this,"No se encontró una aplicación compatible",Toast.LENGTH_SHORT).show();}
   }
-  private void openNeuroSync(){startActivity(new Intent(this,MainActivity.class));}
+  /** Rutas explícitas: abrir la actividad y la sección solicitada, no solo la portada. */
+  private void openNeuroSync(String section){
+    Intent intent=new Intent(this,MainActivity.class);
+    intent.putExtra("neurosync_view",section);
+    intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT|Intent.FLAG_ACTIVITY_SINGLE_TOP);
+    startActivity(intent);
+  }
+  private void openNeuroSync(){openNeuroSync("tasks");}
   private void chooseDefaultHome(){
     if(Build.VERSION.SDK_INT>=29){
       RoleManager roles=getSystemService(RoleManager.class);
@@ -689,8 +704,8 @@ public final class FocusLauncherActivity extends Activity {
     TextView explain=text("Puedes usar NeuroSync como pantalla de inicio sin perder el acceso a otras aplicaciones ni las llamadas de emergencia. Android te permitirá regresar a tu launcher anterior desde Ajustes.",14,MUTED,false);
     view.addView(explain);view.addView(gap(24));
     view.addView(action("✓  Elegir NeuroSync como pantalla de inicio",this::chooseDefaultHome));view.addView(gap(13));
-    view.addView(action("⌂  Abrir agenda y organización",this::openNeuroSync));view.addView(gap(13));
-    view.addView(action("◷  Gestionar sesión de concentración",this::chooseFocusSession));view.addView(gap(13));
+    view.addView(action("⌂  Abrir agenda y organización",()->openNeuroSync("calendar")));view.addView(gap(13));
+    view.addView(action("◷  Gestionar sesión de concentración",()->openNeuroSync("focus")));view.addView(gap(13));
     TextView pause=action(focusEnabled?"Pausa consciente: activada":"Pausa consciente: desactivada",()->{
       focusEnabled=!focusEnabled;persist();showSettings();
     });
