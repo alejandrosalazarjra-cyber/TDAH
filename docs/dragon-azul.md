@@ -1,19 +1,24 @@
-# DrakoPlan — Dragón Azul (rama feature/dragon-azul)
+# DrakoPlan — mascota Azul (rama feature/dragon-azul)
 
-## Alcance integrado
-La mascota está implementada en `index.html`, que la `MainActivity` carga como interfaz WebView dentro de la APK. La nueva interacción conserva los datos existentes del objeto `model.pet`. La estructura continúa usando los seis umbrales anteriores: 0, 80, 200, 420, 750 y 1200 XP.
+## Implementación actual
+- Seis etapas de XP: 0, 80, 200, 420, 750 y 1200.
+- Seis WebP locales en assets/dragon/etapa-{1..6}.webp, con respaldo SVG si el WebP no carga; la imagen no se vuelve a cargar en cada render si la etapa sigue igual.
+- La compilación Android copia los WebP dentro de la APK; MainActivity sirve únicamente esas seis rutas desde WebView. No requieren internet.
+- Máquina de estados con prioridades, cola y transiciones temporizadas: idle, tired, walk, sleep, eat, play, celebrate, evolve.
+- Ocho ciclos visuales CSS: respiración, caminata, sueño, alimentación, juego, celebración, transformación y brillo mágico. Respetan reducir movimiento.
+- Celebración al completar tareas y sesiones de concentración; evolución únicamente cuando sube el nivel durante la sesión. La primera vista de otra cuenta no dispara una falsa evolución.
+- Jugar consume 15 de energía sin otorgar XP; descansar recupera 25. Se preservan premios previos de tareas, alimentación y enfoque.
 
-En esta entrega incremental se añadieron controles de caminar, jugar, dormir y celebrar; animaciones de cola y alimentación; energía (0–100) y contador de juegos. Los datos nuevos son opcionales para respaldos antiguos. Jugar consume 15 de energía y descansar recupera 25. Alimentar recupera 20. Las recompensas de tareas, foco y misiones existentes siguen siendo las fuentes de XP/monedas; jugar no genera recompensas ilimitadas.
+## Límite visual importante
+Los WebP de Higgsfield son ilustraciones individuales, no personajes articulados. Los ciclos aplican transformaciones a la imagen completa: las alas, patas, cola y párpados no se animan por separado en los WebP. El SVG de respaldo conserva sus propios movimientos internos. Un rig completo requiere recursos separados para cada articulación o fotogramas dibujados para las seis etapas.
 
-## Pendiente antes del merge
-- Recibir y comparar la imagen de referencia del dragón; **no se ha aprobado su aspecto final**.
-- Construir y ejecutar la APK en un dispositivo Android real para observar cada animación (incluidos estados de pantalla suspendida y batería).
-- Comprobar el renderizado en pantallas pequeñas, WebView Android y modo reducir movimiento.
-- Comprobar que tareas, enfoques, copias/restauración y cuentas antiguas conservan su progreso.
-- Diseñar e implementar la integración específica con hábitos una vez identificado un evento de hábito completado distinto de la vista de progreso.
-- Pruebas de regresión y test de interacción automatizado: los tests estáticos no demuestran animación fluida.
+## Verificación
+- Sintaxis JS del documento comprobada y prueba funcional de la máquina de estados ejercitada en un entorno simulado.
+- Contratos: python3 -m unittest discover -s tests -p 'test_dragon_module.py'
+- Prueba dinámica: node tests/test_dragon_motion.js
+- El workflow de la APK ejecutará ambas pruebas antes de compilar.
+- Pendientes: ejecutar el workflow completo Android, probar en WebView real, medir rendimiento y memoria, revisar el recorte de las seis imágenes, regresiones y accesibilidad.
+- Pendiente: integrar hábitos completados reales después de identificar sus eventos existentes.
 
-## Prueba estática
-`python3 -m unittest discover -s tests -p 'test_dragon_module.py'`
-
-No se modificaron clases Android, autenticación, respaldos, sincronización, alarmas ni Google Drive. No se ha cambiado `main`.
+## Aislamiento
+Solo cambian el módulo del dragón, sus WebP, lectura Android de esos archivos, empaquetado, pruebas y documentación. No se modificó main ni las funciones de autenticación, alarmas, copias de seguridad o sincronización.
