@@ -1948,7 +1948,7 @@ window.neuroQrEnrollment=function(raw){
  say('QR de referencia capturado');
 };
 function scheduleAlarm(a){
- if(!nat||!nat.scheduleAlarm)return;
+ if(!nat||(!nat.scheduleAlarm&&!nat.scheduleAlarmRepeat))return false;
  var when=new Date(a.date+'T'+a.time+':00').getTime();
  var repeat=a.repeat|| (a.daily?'daily':'none');
  // No sumar milisegundos para repeticiones: en cambios de zona horaria o DST
