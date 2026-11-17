@@ -144,7 +144,9 @@ jobs:
           for feature in ('quick-capture-form','inbox-list','next-action','focus-five',
                           'function editTask(t)','function renderFocus()','function renderInbox()'):
               assert feature in src, f'Falta función de organización: {feature}'
-          assert 'if(t.inbox||t.date>day())' in src, 'Las ideas sin planificar no deben aparecer como tareas'
+          assert 'function nsTaskDueOn(t,date)' in src, 'El planificador debe conservar fechas y recurrencias'
+          assert 'function nsBrandDashboardRender()' in src, 'La APK debe incluir el panel visual de NeuroSync'
+          assert 'function nsDragonRender()' in src, 'La APK debe incluir el dragón de productividad'
           print('Sesión persistente, captura rápida, bandeja, foco y edición comprobados')
           PY
           python3 - <<'PY'
@@ -211,7 +213,7 @@ jobs:
                             if x.startswith("classes") and x.endswith(".dex"))
               for name in (b"AlarmChallengeStore",b"AlarmRingActivity",b"SessionVault"):
                   assert name in dex, f"Falta clase Android: {name!r}"
-              for name in (b'view-habits',b'buildInfo',b'setAlarmChallenge'):
+              for name in (b'view-habits',b'buildInfo',b'setAlarmChallenge',b'ns-login-form',b'ns-brand-hero'):
                   assert name in packed, f"Falta control HTML: {name!r}"
           print("APK preview contiene HTML y funciones actuales.")
           print("SHA256 de HTML:",hashlib.sha256(packed).hexdigest())
@@ -290,7 +292,7 @@ jobs:
                           b'FocusLauncherActivity'):
               assert feature in dex, f'Clase Android ausente en APK: {feature!r}'
           for feature in (b'view-habits',b'setAlarmChallenge',b'buildInfo',
-                          b'quick-capture-form'):
+                          b'quick-capture-form',b'ns-login-form',b'ns-brand-hero'):
               assert feature in packaged, f'Nueva funci\xc3\xb3n ausente: {feature!r}'
           print('VERIFICADO: APK contiene la interfaz y las clases de esta versión')
           print('SHA256 index.html empaquetado:',hashlib.sha256(packaged).hexdigest())
