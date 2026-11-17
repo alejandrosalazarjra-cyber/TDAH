@@ -22,3 +22,13 @@ Los WebP de Higgsfield son ilustraciones individuales, no personajes articulados
 
 ## Aislamiento
 Solo cambian el módulo del dragón, sus WebP, lectura Android de esos archivos, empaquetado, pruebas y documentación. No se modificó main ni las funciones de autenticación, alarmas, copias de seguridad o sincronización.
+
+## Ocho poses Higgsfield de la evolución Cría
+- Hoja fuente generada en Higgsfield con créditos del usuario (trabajo 4aa9c2e4-c0cf-472a-ba0b-5469662359e4).
+- Recortes de 320 × 320 píxeles WebP RGBA (transparencia), ubicados en assets/dragon/poses: idle, blink, walk-a, walk-b, flap, sleep, eat y celebrate.
+- Las ocho poses se usan exclusivamente en la segunda etapa (índice 1, Cría). Las etapas 1 y 3–6 mantienen sus sprites de evolución para evitar perder la progresión.
+- En Cría, caminar alterna walk-a/walk-b; en reposo, parpadea periódicamente; las demás acciones seleccionan una imagen distintiva. El cambio de fotogramas se detiene si se oculta la app o está activada la opción de reducir movimiento.
+- Si alguna pose falla, se utiliza etapa-2.webp; si falla también, permanece el SVG de respaldo.
+- Los ocho recursos se empaquetan como archivos locales en la APK y las rutas Android WebView se limitan a los nombres conocidos.
+- Pruebas: node tests/test_dragon_poses.js; python3 -m unittest discover -s tests -p 'test_dragon_module.py'.
+- Pendiente ampliar las poses a cada una de las otras cinco evoluciones, validar en un teléfono y refinar la consistencia del dibujo. Los WebP son fotogramas por postura, no un esqueleto separado en partes.
