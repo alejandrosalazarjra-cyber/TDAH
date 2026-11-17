@@ -1374,7 +1374,22 @@ if(session&&session.role==='admin'){
 }
 localStorage.setItem(localKey(),JSON.stringify(fresh));return fresh;
 }
-function save(){localStorage.setItem(localKey(),JSON.stringify(model));by('sync-status').textContent='Cambios guardados';if(nat&&(nat.syncFamilyAsync||nat.syncFamily)){setTimeout(sync,350)}}
+var nsDriveBackupTimer=null;
+function nsQueueDriveBackup(){
+ if(!session||!session.google||!nat||!nat.backupGoogleDrive)return;
+ clearTimeout(nsDriveBackupTimer);
+ nsDriveBackupTimer=setTimeout(function(){
+  if(!session||!session.google||!model)return;
+  try{nat.backupGoogleDrive(JSON.stringify({version:1,googleId:session.username.slice(7),savedAt:Date.now(),model:model}))}
+  catch(error){by('sync-status').textContent='Copia Drive pendiente'}
+ },15000);
+}
+function save(){
+ localStorage.setItem(localKey(),JSON.stringify(model));
+ by('sync-status').textContent=session&&session.google?'Guardado local · Drive pendiente':'Cambios guardados';
+ if(session&&session.google){nsQueueDriveBackup();return}
+ if(nat&&(nat.syncFamilyAsync||nat.syncFamily)){setTimeout(sync,350)}
+}
 function active(list){return list.filter(function(t){return !t.deleted})}
 function owned(t){return session.role==='admin'||t.owner===session.username||t.owner==='todos'}
 function mark(t){t.updatedAt=stamp();return t}
@@ -1704,6 +1719,36 @@ function sync(){
 by('sync-btn').onclick=sync;
 function getUsers(){if(!nat||!nat.getUsers)return [{username:session.username,role:session.role}];try{var r=JSON.parse(nat.getUsers());return r.users||[]}catch(e){return []}}
 function enter(u){session=u;model=load();nsSleepRender();nsSceneRestore();nsFocusRestore();nsLauncherFocusSync();nsFocusTasks();nsFocusStats();nsFocusRender();nsDragonData();by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=(u.displayName||u.username).slice(0,1).toUpperCase();by('greeting').textContent='Tu día está listo para avanzar a tu ritmo.';by('ns-home-welcome').textContent='Hola, '+(u.displayName||u.email||u.username)+'. Tu día te espera.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
+by('ns-owner-access').onclick=function(){
+ var panel=by('ns-admin-login'),showing=!panel.classList.toggle('hidden');
+ by('ns-owner-access').setAttribute('aria-expanded',String(showing));
+ if(showing)by('login-user').focus();
+};
+by('ns-google-login').onclick=function(){
+ by('login-error').textContent='';
+ if(nat&&nat.loginGoogle)nat.loginGoogle();
+ else by('login-error').textContent='El acceso Google requiere la APK Android.';
+};
+window.neuroGoogleLogin=function(json){
+ try{
+  var result=JSON.parse(json);
+  if(result.ok&&result.user&&result.user.google){enter(result.user);by('sync-status').textContent='Google conectado · comprobando Drive'}
+  else by('login-error').textContent=result.error||'Acceso Google no autorizado';
+ }catch(e){by('login-error').textContent='No se pudo validar la identidad'}
+};
+window.neuroDriveStatus=function(message){if(by('sync-status'))by('sync-status').textContent=message};
+window.neuroGoogleBackupRestored=async function(raw){
+ if(!session||!session.google)return;
+ try{
+  var backup=JSON.parse(raw);
+  if(backup.version!==1||backup.googleId!==session.username.slice(7)||!backup.model||!Array.isArray(backup.model.tasks)||!Array.isArray(backup.model.packs)||!Array.isArray(backup.model.alarms))return;
+  var hasData=model.tasks.length||model.alarms.length||model.packs.length;
+  if(hasData&&!await nsConfirm('Respaldo encontrado','¿Restaurar los datos guardados en tu cuenta de Google? Reemplazará los datos locales de esta cuenta.','Restaurar'))return;
+  model=backup.model;localStorage.setItem(localKey(),JSON.stringify(model));
+  render();nsDragonRender();nsFocusTasks();nsFocusStats();
+  say('Respaldo personal restaurado desde Google Drive');
+ }catch(e){if(by('sync-status'))by('sync-status').textContent='Restauración Drive no disponible'}
+};
 by('login-form').onsubmit=function(e){e.preventDefault();var username=by('login-user').value.trim().toLowerCase(),password=by('login-pass').value;
 try{if(by('login-remember').checked)localStorage.setItem('ns_login_last_user',username);else localStorage.removeItem('ns_login_last_user')}catch(error){}
 if(nat&&nat.loginOwner){try{var res=JSON.parse(nat.loginOwner(username,password));if(!res.ok){by('login-error').textContent=res.error||'Usuario o contraseña incorrectos';return}enter(res.user);
@@ -2043,10 +2088,20 @@ function nsDragonInitActions(){
  nsDragonRender=function(){originalRender();nsDragonUpdateEnergy()};
 }
 
-function logout(){if(nsFocusState)nsFocusSaveSession(false);nsLauncherFocusSync();syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
+function logout(){clearTimeout(nsDriveBackupTimer);if(session&&session.google&&nat&&nat.logoutGoogle)nat.logoutGoogle();if(nsFocusState)nsFocusSaveSession(false);nsLauncherFocusSync();syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
 by('logout').onclick=logout;by('avatar').onclick=async function(){if(await nsConfirm('Cerrar sesión','¿Quieres cerrar esta sesión?','Cerrar sesión'))logout()};
 document.addEventListener('visibilitychange',function(){if(!document.hidden){sync();refreshFocusClock()}});setInterval(sync,60000);
-if(nat&&nat.restoreSession){
+var nsGoogleRestored=false;
+if(nat&&nat.restoreGoogleSession){
+ try{
+  var googleRestored=JSON.parse(nat.restoreGoogleSession());
+  if(googleRestored.ok&&googleRestored.user&&googleRestored.user.google){
+   enter(googleRestored.user);nsGoogleRestored=true;
+   if(nat.refreshGoogleDrive)nat.refreshGoogleDrive();
+  }
+ }catch(error){}
+}
+if(!nsGoogleRestored&&nat&&nat.restoreSession){
  try{
   var restored=JSON.parse(nat.restoreSession());
   if(restored.ok&&restored.user&&restored.user.username){
