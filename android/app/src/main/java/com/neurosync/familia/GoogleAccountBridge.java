@@ -70,10 +70,16 @@ final class GoogleAccountBridge {
    restoreDrive();
   }catch(Exception ex){
    Log.w("NeuroSync","Error de acceso Google",ex);
+   int code=ex instanceof ApiException?((ApiException)ex).getStatusCode():-1;
+   String problem=code==10
+     ?"La conexión Google de esta compilación no está registrada. Es una configuración del desarrollador, no un error de tu cuenta."
+     :code==7?"No se pudo contactar con Google. Comprueba tu conexión e inténtalo nuevamente."
+     :code==12501?"Cancelaste el inicio de sesión. Puedes volver a intentarlo."
+     :"No se pudo completar el inicio de sesión. Código de Google: "+code;
    try{
     emit("neuroGoogleLogin",new JSONObject().put("ok",false)
-     .put("error","Google no autorizó el acceso. Comprueba la conexión y la huella SHA-1/OAuth de esta APK.").toString());
-   }catch(org.json.JSONException jsonError){emit("neuroGoogleLogin","{}");}
+      .put("error",problem).put("code",code).put("configurationRequired",code==10).toString());
+   }catch(org.json.JSONException ignored){emit("neuroGoogleLogin","{}");}
   }
  }
  void logout(){client.signOut();}
