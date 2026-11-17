@@ -30,6 +30,11 @@ assert.equal(one,null,'Una alarma única vencida no debe presentarse como próxi
 assert.equal(ctx.nsNextAlarmDate(input('daily',false),now),null,'No anunciar alarmas pausadas');
 const week=ctx.nsNextAlarmDate(input('weekly'),now);
 assert(week&&week.getDate()===23,'Repeticiones semanales deben usar días calendario');
+const custom=ctx.nsNextAlarmDate(input('days:1,3,5'),now);
+assert(custom&&custom.getDate()===18&&custom.getDay()===3,
+ 'Los días personalizados deben avanzar hasta el próximo día seleccionado');
+assert(html.includes('name="weekDay"'),'Deben existir casillas para seleccionar días');
+assert(html.includes('function nsRepeatFromEditor('),'No basta la interfaz sin conversión al modelo');
 const extra=html.slice(html.indexOf('function nsAlarmEdit('),html.indexOf('function renderCalendar(){'));
 for(const token of ['nsAlarmToggle(','nsAlarmEdit(','nsAlarmDuplicate(','nat.pauseAlarm',
  'setAlarmOptions','nsAlarmCanEdit('])assert(extra.includes(token),'Falta '+token);
@@ -44,6 +49,9 @@ assert(native.includes('AlarmOptionsStore.max(this,id)'));
 assert(store.includes('static boolean configure(')&&store.includes('static boolean canSnooze('));
 assert(receiver.includes('AlarmOptionsStore.consumed(ctx,id)'));
 assert(receiver.includes('public static void pause(Context ctx,String id)'));
+assert(receiver.includes('static boolean isDaysRepeat('));
+assert(receiver.includes('wanted.contains(isoDay(c))'));
+assert(bridge.includes('setAlarmOptions(')&&bridge.includes('pauseAlarm('));
 assert(bridge.includes('setAlarmOptions(')&&bridge.includes('pauseAlarm('));
 assert(html.includes('La música de YouTube Music Premium se configura en Reloj de Google.'));
 console.log('Alarmas UI OK: tabs, próxima hora, editor, misiones, posponer y seguridad nativa');
