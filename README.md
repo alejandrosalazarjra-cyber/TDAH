@@ -1,5 +1,15 @@
 # NeuroSync Familia — Android
 
+## Permisos especiales y superposición — primera implementación
+
+- En el launcher **Ajustes → Permisos y ventanas flotantes** se muestra el estado de la autorización `SYSTEM_ALERT_WINDOW` y el acceso de uso.
+- El usuario puede abrir los ajustes oficiales de Android para autorizar superposiciones; no se concede ni elude ningún permiso automáticamente.
+- Con permiso concedido se puede mostrar una **vista flotante de prueba** durante 20 segundos: permite regresar a DrakoPlan y dispone de un cierre visible. No bloquea el resto de la pantalla ni observa otras aplicaciones.
+- El servicio `FocusOverlayService` es privado (`exported=false`), temporal y no se inicia automáticamente al abrir la app o al reiniciar el teléfono.
+- Las estadísticas de uso siguen siendo opcionales. No se ha añadido un servicio de Accesibilidad ni de escucha de notificaciones; ambos requerirían implementación, consentimiento y revisión de cumplimiento separados.
+- **Estado de validación:** cambios de código verificados en GitHub; todavía no hay prueba de compilación, instalación ni comportamiento sobre otras aplicaciones en dispositivo real. No desinstalar la APK con datos antes de respaldarlos.
+
+
 ## Respaldo personal cifrado — actualización de seguridad
 
 La exportación desde la APK ahora pide una contraseña de al menos 12 caracteres (con confirmación) y utiliza AES-256-GCM con sal y nonce aleatorios; la clave se deriva con PBKDF2-HMAC-SHA256 (210.000 iteraciones). El archivo resultante se guarda mediante el selector de documentos de Android, donde puede elegirse Google Drive si está disponible.
