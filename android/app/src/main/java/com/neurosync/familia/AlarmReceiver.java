@@ -38,7 +38,7 @@ public final class AlarmReceiver extends BroadcastReceiver {
    if(id==null||id.length()<2||id.length()>100||at<=0)return false;
    if(title==null||title.trim().isEmpty())title="Recordatorio";
    long when=at;
-   long interval="weekly".equals(repeat)?604800000L:"daily".equals(repeat)?86400000L:0L;
+   long interval="weekly".equals(repeat)?604800000L:"daily".equals(repeat)?86400000L:"every2".equals(repeat)?172800000L:"every3".equals(repeat)?259200000L:0L;
    if(interval>0)while(when<=System.currentTimeMillis())when+=interval;
    if(when<=System.currentTimeMillis())return false;
    JSONObject entry=new JSONObject().put("id",id).put("title",title).put("when",when).put("repeat",repeat);
@@ -101,7 +101,7 @@ public final class AlarmReceiver extends BroadcastReceiver {
     JSONObject a=new JSONObject((String)row.getValue());
     String id=a.getString("id");long when=a.getLong("when");
     String repeat=a.optString("repeat",a.optBoolean("daily")?"daily":"none");
-    long interval="weekly".equals(repeat)?604800000L:"daily".equals(repeat)?86400000L:0L;
+    long interval="weekly".equals(repeat)?604800000L:"daily".equals(repeat)?86400000L:"every2".equals(repeat)?172800000L:"every3".equals(repeat)?259200000L:0L;
     if(interval>0)while(when<=System.currentTimeMillis())when+=interval;
     if(when>System.currentTimeMillis())program(ctx,id,when);
    }catch(Exception ignored){}
@@ -161,7 +161,7 @@ public final class AlarmReceiver extends BroadcastReceiver {
    catch(Exception e){android.util.Log.e("NeuroSync","No se pudo iniciar audio en segundo plano",e);}
 
    String repeat=a.optString("repeat",a.optBoolean("daily")?"daily":"none");
-   long interval="weekly".equals(repeat)?604800000L:"daily".equals(repeat)?86400000L:0L;
+   long interval="weekly".equals(repeat)?604800000L:"daily".equals(repeat)?86400000L:"every2".equals(repeat)?172800000L:"every3".equals(repeat)?259200000L:0L;
    if(interval>0 && FIRE.equals(intent.getAction())){
     long next=a.optLong("when")+interval;
     while(next<=System.currentTimeMillis())next+=interval;
