@@ -2610,7 +2610,7 @@ if(nsPreferredProvider!=='owner'&&nsPreferredProvider!=='signed_out'&&nat&&nat.r
   }
  }catch(error){}
 }
-if(!nsGoogleRestored&&nsPreferredProvider!=='signed_out'&&nat&&nat.restoreSession){
+if(!nsGoogleRestored&&nsPreferredProvider!=='signed_out'&&nsPreferredProvider!=='google'&&nat&&nat.restoreSession){
  try{
   var restored=JSON.parse(nat.restoreSession());
   if(restored.ok&&restored.user&&restored.user.username){
