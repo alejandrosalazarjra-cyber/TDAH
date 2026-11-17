@@ -2072,10 +2072,13 @@ window.neuroSyncOnSync=function(payload,requestingUser){
   ['tasks','packs','alarms'].forEach(function(k){
    if(remote[k]!=null&&!Array.isArray(remote[k]))throw Error('Datos remotos inválidos: '+k);
    var found=new Map();
-   (model[k]||[]).concat((remote[k]||[]).slice(0,5000)).forEach(function(item){
+   // Nunca retirar elementos locales existentes: pueden ser datos históricos
+   // de administración que no estén incluidos en esta respuesta de servidor.
+   (model[k]||[]).forEach(function(item){if(item&&typeof item.id==='string')found.set(item.id,item)});
+   (remote[k]||[]).slice(0,5000).forEach(function(item){
     if(!item||typeof item.id!=='string'||item.id.length>140||
        !item.owner||typeof item.owner!=='string')return;
-    // El servidor solo puede devolver datos propios o compartidos permitidos.
+    // Solo aceptar cambios remotos propios o compartidos, nunca datos privados ajenos.
     if(item.owner!==owner&&item.owner!=='todos')return;
     var current=found.get(item.id);
     if(!current||(+item.updatedAt||0)>(+current.updatedAt||0))found.set(item.id,item);
