@@ -432,7 +432,20 @@ html,body{background:#f8fbff;color:var(--ink)}
  #app .view .ns-dragon-hero{padding:8px 0!important}
 }
 </style>
-</head><body>
+<style id="ns-text-only-alarm-lines">
+#app .view .ns-alarm-line{padding:15px 0!important}
+.ns-alarm-row{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:69px}
+.ns-alarm-core{display:flex;align-items:center;gap:16px;min-width:0;flex:1}
+.ns-alarm-hour{font:650 clamp(34px,9vw,49px)/1.05 system-ui,sans-serif;letter-spacing:-.07em;font-variant-numeric:tabular-nums;color:#10385d;white-space:nowrap}
+.ns-alarm-meta{display:grid;gap:3px;min-width:0}
+.ns-alarm-meta strong{font-size:14px;font-weight:650;overflow-wrap:anywhere}
+.ns-alarm-meta small{font-size:11px;color:#72889e}
+#app .view .ns-alarm-remove{font-size:22px!important;color:#738ba1!important;min-width:44px;min-height:44px}
+#app .view .ns-wake-insights .ns-wake-grid{display:flex;justify-content:space-between;gap:12px}
+#app .view .ns-wake-insights .ns-wake-grid>div{padding:8px 0!important}
+#view-alarms>.card:first-child{padding-top:2px!important}
+@media(max-width:370px){.ns-alarm-core{gap:8px}.ns-alarm-meta strong{font-size:12px}}
+</style></head><body>
 <div id="login" class="login ns-login-v3">
  <div class="ns-login-wrap">
   <div class="ns-login-brand"><img src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%20role%3D%22img%22%20aria-label%3D%22NeuroSync%3A%20drag%C3%B3n%20y%20lista%20de%20tareas%22%3E%0A%3Cdefs%3E%3ClinearGradient%20id%3D%22bg%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23063674%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%230866c6%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2303c4ec%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22wing%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2345eeff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%230d7fe6%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22paper%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ffffff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23c8f2ff%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%0A%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%22248%22%20height%3D%22248%22%20rx%3D%2258%22%20fill%3D%22url(%23bg)%22%2F%3E%0A%3Cpath%20d%3D%22M28%20158Q32%2078%20103%2063Q63%20103%2075%20152Q95%20104%20151%2077Q107%20127%20113%20175Q88%20205%2055%20201Q37%20184%2028%20158Z%22%20fill%3D%22url(%23wing)%22%2F%3E%0A%3Cpath%20d%3D%22M77%2043Q109%2073%20128%2075Q115%2051%20119%2033Q142%2061%20166%2065Q195%2076%20203%20103Q209%20118%20193%20128Q181%20135%20160%20121Q144%20116%20124%20128Q100%20147%20102%20182Q78%20156%2087%20132Q91%20113%20113%20101Q87%2098%2059%20122Q73%2081%20109%2087Q87%2067%2077%2043Z%22%20fill%3D%22%23f7feff%22%2F%3E%0A%3Cpath%20d%3D%22M159%20103Q171%20101%20178%20107Q170%20116%20159%20108Z%22%20fill%3D%22%23073878%22%2F%3E%0A%3Crect%20x%3D%22128%22%20y%3D%22127%22%20width%3D%22100%22%20height%3D%2290%22%20rx%3D%2218%22%20fill%3D%22url(%23paper)%22%2F%3E%0A%3Cg%20stroke%3D%22%23078fe6%22%20stroke-width%3D%228%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m143%20149%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20173%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20196%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22M175%20151h37M175%20175h37M175%20199h27%22%2F%3E%3C%2Fg%3E%0A%3Cpath%20d%3D%22M44%20207Q111%20251%20190%20220%22%20fill%3D%22none%22%20stroke%3D%22%235ff0fd%22%20stroke-width%3D%2216%22%20stroke-linecap%3D%22round%22%2F%3E%0A%3Cpath%20d%3D%22m219%2058%206%2016%2016%206-16%206-6%2016-6-16-16-6%2016-6Z%22%20fill%3D%22%2394ffff%22%2F%3E%0A%3C%2Fsvg%3E" alt="Logo NeuroSync"><span>Neuro<b>Sync</b></span></div>
@@ -1663,7 +1676,23 @@ e.querySelector('.iconbtn').onclick=function(){nsConfirm('Eliminar lista','Se el
 var c=e.querySelector('.bag-checks');(b.items||[]).forEach(function(it,i){var l=document.createElement('label');l.className='check';var input=document.createElement('input');input.type='checkbox';input.checked=!!(b.checked||{})[i];input.onchange=function(){b.checked=b.checked||{};b.checked[i]=input.checked;mark(b);save()};l.append(input,document.createTextNode(it));c.append(l)});
 e.querySelector('.btn').onclick=function(){b.checked={};mark(b);save();render()};return e}
 function renderBags(){fill('bags-list',active(model.packs).filter(owned),bagItem,'Crea una lista para tu próxima salida.')}
-function alarmItem(a){var e=document.createElement('div');e.className='list-row';e.innerHTML='<div class="between"><div><b>⏰ '+esc(a.title)+'</b><div class="task-meta">'+esc(a.date)+' · '+esc(a.time)+(a.daily?' · Todos los días':'')+'</div></div><button class="iconbtn" aria-label="Eliminar alarma">×</button></div>';e.querySelector('button').onclick=function(){if(session.role!=='admin'&&a.owner==='todos'){say('Esta alarma compartida solo puede eliminarla el administrador');return}a.deleted=true;mark(a);try{nat&&nat.cancelAlarm&&nat.cancelAlarm(a.id)}catch(err){}save();render()};return e}
+function alarmItem(a){
+ var e=document.createElement('div');e.className='list-row ns-alarm-line';
+ var time=(a.time||'--:--').slice(0,5);
+ var repeat=a.repeat|| (a.daily?'daily':'none');
+ var cadence=repeat==='daily'?'Cada día':repeat==='weekly'?'Cada semana':repeat==='every2'?'Cada 2 días':repeat==='every3'?'Cada 3 días':'Una vez';
+ e.innerHTML='<div class="ns-alarm-row"><div class="ns-alarm-core"><span class="ns-alarm-hour">'+esc(time)+'</span><div class="ns-alarm-meta"><strong>'+esc(a.title||'Alarma')+'</strong><small>'+esc(a.date||'')+' · '+cadence+'</small></div></div><button class="iconbtn ns-alarm-remove" type="button" aria-label="Eliminar alarma '+esc(a.title||'')+'">×</button></div>';
+ e.querySelector('button').onclick=function(){
+  if(session.role!=='admin'&&a.owner==='todos'){say('Esta alarma compartida solo puede eliminarla el administrador');return}
+  nsConfirm('Eliminar alarma','¿Eliminar '+(a.title||'esta alarma')+'?','Eliminar').then(function(ok){
+   if(!ok)return;
+   a.deleted=true;mark(a);
+   try{nat&&nat.cancelAlarm&&nat.cancelAlarm(a.id)}catch(err){}
+   save();render();
+  });
+ };
+ return e;
+}
 function renderAlarms(){fill('alarms-list',active(model.alarms).filter(owned),alarmItem,'No hay alarmas. Crea una para recordar algo importante.')}
 function renderCalendar(){var grid=by('calendar');grid.replaceChildren();by('month-title').textContent=month.toLocaleDateString('es-CO',{month:'long',year:'numeric'});var wd=['L','M','M','J','V','S','D'];wd.forEach(function(w){var e=document.createElement('span');e.className='week-label';e.textContent=w;grid.append(e)});
 var first=new Date(month.getFullYear(),month.getMonth(),1),offset=(first.getDay()+6)%7,last=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();
