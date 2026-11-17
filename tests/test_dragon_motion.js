@@ -27,6 +27,7 @@ const context={
  nsDragonData(){return this.model.pet},
  nsDragonStage(xp){return [0,80,200,420,750,1200].reduce((n,min,i)=>xp>=min?i:n,0)},
  nsDragonMessage(message){events.push(message)},
+ nsDragonPoseSet(){},
  save(){},
  setTimeout(callback,ms){const id=++seq;timers.set(id,{callback,ms});return id},
  clearTimeout(id){timers.delete(id)}
