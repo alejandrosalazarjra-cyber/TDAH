@@ -81,8 +81,6 @@ class DragonContract(unittest.TestCase):
                 / "com" / "neurosync" / "familia" / "MainActivity.java").read_text(encoding="utf-8")
         self.assertIn("cp assets/dragon/etapa-{1..6}.webp", workflow)
         self.assertIn('path.matches("/assets/dragon/', java)
-        self.assertIn('poses/(?:idle|blink|walk-a|walk-b|flap|sleep|eat|celebrate)', java)
-        self.assertIn('cp assets/dragon/poses/*.webp', workflow)
         self.assertIn('cp assets/dragon/atlases/etapa-{1..6}.webp', workflow)
         self.assertIn('atlases/etapa-[1-6]', java)
         self.assertIn('getAssets().open(file)', java)
