@@ -187,6 +187,9 @@ jobs:
           set -euo pipefail
           cp index.html android/app/src/main/assets/index.html
           test -s android/app/src/main/assets/index.html
+          mkdir -p android/app/src/main/assets/dragon
+          cp assets/dragon/etapa-{1..6}.webp android/app/src/main/assets/dragon/
+          for n in {1..6}; do test -s "android/app/src/main/assets/dragon/etapa-${n}.webp"; done
 
       - name: Compilar APK de prueba independiente (no sustituye tu instalación)
         working-directory: android
