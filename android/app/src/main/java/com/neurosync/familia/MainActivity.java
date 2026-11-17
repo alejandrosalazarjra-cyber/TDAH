@@ -395,7 +395,10 @@ public final class MainActivity extends Activity {
         boolean notifications=Build.VERSION.SDK_INT<33 || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED;
         boolean exact=Build.VERSION.SDK_INT<31 || ((AlarmManager)getSystemService(ALARM_SERVICE)).canScheduleExactAlarms();
         boolean full=Build.VERSION.SDK_INT<34 || n.canUseFullScreenIntent();
-        return j.put("notifications",notifications).put("exact",exact).put("fullScreen",full).toString();
+        boolean allowed=n.areNotificationsEnabled();
+        android.app.NotificationChannel alarmChannel=Build.VERSION.SDK_INT>=26?n.getNotificationChannel("neurosync_alarms_v4_visual"):null;
+        boolean high=alarmChannel==null||alarmChannel.getImportance()>=NotificationManager.IMPORTANCE_HIGH;
+        return j.put("notifications",notifications&&allowed).put("exact",exact).put("fullScreen",full).put("channelHigh",high).toString();
       }catch(Exception e){return "{}";}
     }
     @JavascriptInterface public void requestAlarmPermissions(){
