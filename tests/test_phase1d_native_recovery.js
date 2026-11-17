@@ -23,13 +23,14 @@ const bridge={
 const session={username:'persona_a',role:'user'};
 const context={nat:bridge,session,localStorage:storage,nsStorageRecoveryBlocked:false,
  localKey:()=> 'ns_v2_'+session.username,by:()=>null,blank:()=>({tasks:[],packs:[],alarms:[],pet:{xp:0}}),
- setTimeout:cb=>{messages.push('recover')},say:x=>messages.push(x),
+ setTimeout:cb=>{messages.push('scheduled');return messages.length},clearTimeout:()=>{},say:x=>messages.push(x),
  Date,JSON,Number,String,Array,Error,Math,Map};
 vm.createContext(context);
 vm.runInContext(html.slice(start,end),context);
 const first={tasks:[{id:'1',owner:'persona_a',title:'Primer dato'}],
  packs:[],alarms:[],pet:{xp:20}};
 context.nsLocalSave(first);
+assert.equal(context.nsFlushNativeSnapshot(),true);
 assert.equal(JSON.parse(native.get('persona_a')).pet.xp,20);
 const key='ns_v2_persona_a';
 state.set(key,'{corrupto');
@@ -43,6 +44,7 @@ session.username='persona_b';
 const second={tasks:[{id:'2',owner:'persona_b',title:'Privado'}],
  packs:[],alarms:[],pet:{xp:7}};
 context.nsLocalSave(second);
+assert.equal(context.nsFlushNativeSnapshot(),true);
 assert.equal(JSON.parse(native.get('persona_b')).pet.xp,7);
 state.set('ns_v2_persona_b','{corrupto');
 assert.equal(context.load().tasks[0].title,'Privado',
