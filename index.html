@@ -1605,6 +1605,16 @@ window.neuroImportData=async function(raw){
  try{
   if(!session||!model)throw Error('Inicia sesión antes de restaurar');
   var restored=JSON.parse(raw);
+  if(restored.format==='neurosync-encrypted-backup'){
+    if(!nat||!nat.decryptPersonalBackup)throw Error('Abre este respaldo en la APK Android actualizada');
+    var password=await nsPrompt('Contraseña del respaldo','',{type:'password',ok:'Descifrar',message:'Introduce la contraseña que elegiste cuando guardaste esta copia.'});
+    if(password===null)return;
+    var plaintext=nat.decryptPersonalBackup(raw,password);
+    if(!plaintext)throw Error('Contraseña incorrecta, archivo dañado o formato no compatible');
+    restored=JSON.parse(plaintext);
+  }else{
+    if(!await nsConfirm('Copia antigua sin cifrar','Este archivo contiene información sin cifrar. ¿Quieres revisarlo e importarlo?','Continuar'))return;
+  }
   if(!Array.isArray(restored.tasks)||!Array.isArray(restored.packs)||!Array.isArray(restored.alarms))throw Error('Formato inválido');
   // Las copias nuevas pertenecen exclusivamente a la cuenta que las creó.
   // Las copias antiguas no tenían propietario explícito: se importan solamente registros propios.
@@ -1632,16 +1642,22 @@ window.neuroImportData=async function(raw){
 };
 by('backup-export').onclick=async function(){
  if(!session||!model)return;
- if(!await nsConfirm('Exportar copia personal','El archivo JSON no está cifrado. Guarda tu respaldo en una carpeta privada de Drive y no lo compartas con otras personas.','Exportar'))return;
+ if(!nat||!nat.encryptPersonalBackup||!nat.exportBackup){
+   say('El respaldo cifrado requiere la APK Android actualizada');return;
+ }
+ var password=await nsPrompt('Proteger copia personal','',{type:'password',ok:'Continuar',message:'Crea una contraseña de 12 o más caracteres. Sin ella no podrás recuperar este respaldo.'});
+ if(password===null)return;
+ if(password.length<12){say('La contraseña debe tener al menos 12 caracteres');return}
+ var repeated=await nsPrompt('Repetir contraseña','',{type:'password',ok:'Cifrar y guardar',message:'Escríbela otra vez. Guárdala en un lugar seguro: la aplicación no la almacenará.'});
+ if(repeated===null)return;
+ if(password!==repeated){say('Las contraseñas no coinciden');return}
  var mine=function(rows){return (rows||[]).filter(function(row){return row&&row.owner===session.username})};
  var data=JSON.stringify({version:3,exportedFor:session.username,exportedAt:new Date().toISOString(),tasks:mine(model.tasks),packs:mine(model.packs),alarms:mine(model.alarms),pet:model.pet,templates:nsTemplateRead()});
- if(nat&&nat.exportBackup)nat.exportBackup(data);
- else{
-  var blob=new Blob([data],{type:'application/json'});
-  var url=URL.createObjectURL(blob),link=document.createElement('a');
-  link.href=url;link.download='NeuroSync-respaldo-personal.json';link.click();
-  setTimeout(function(){URL.revokeObjectURL(url)},1000);
- }
+ try{
+   var encrypted=nat.encryptPersonalBackup(data,password);
+   if(!encrypted)throw Error('No se pudo cifrar la copia. Verifica el espacio disponible y vuelve a intentar.');
+   nat.exportBackup(encrypted);
+ }catch(e){say(e&&e.message?e.message:'No se pudo preparar el respaldo cifrado')}
 };
 by('backup-import').onclick=function(){
  if(nat&&nat.importBackup)nat.importBackup();
