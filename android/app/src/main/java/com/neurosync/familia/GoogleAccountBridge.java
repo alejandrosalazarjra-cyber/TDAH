@@ -83,7 +83,12 @@ final class GoogleAccountBridge {
    }catch(org.json.JSONException ignored){emit("neuroGoogleLogin","{}");}
   }
  }
- void logout(){client.signOut();}
+ void logout(){
+  // No revocar la identidad hasta que terminen las copias ya aceptadas por la cola.
+  // El hilo de IO no abre pantallas: signOut se entrega al hilo principal.
+  try{io.execute(()->main.post(()->client.signOut()));}
+  catch(java.util.concurrent.RejectedExecutionException ignored){main.post(()->client.signOut());}
+ }
  private GoogleSignInAccount account() throws Exception {
   GoogleSignInAccount a=GoogleSignIn.getLastSignedInAccount(activity);
   if(a==null||a.getEmail()==null||a.getId()==null)throw new Exception("Inicia sesión con Google");
