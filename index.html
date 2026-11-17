@@ -1284,7 +1284,7 @@ function nsFocusFullscreen(state,remaining){
   screen.innerHTML='<div class="ns-pomodoro-content"><div class="ns-pomodoro-caption">MODO CONCENTRACIÓN</div><div id="ns-pomodoro-count" role="timer" aria-live="off">25:00</div><div id="ns-pomodoro-status">Concéntrate en una sola cosa</div><button type="button" id="ns-pomodoro-finish">Terminar pomodoro</button></div>';
   document.body.appendChild(screen);
   screen.querySelector('#ns-pomodoro-finish').addEventListener('click',function(){
-   var stop=by('ns-focus-stop');if(stop)stop.click();
+   if(nsFocusState){nsFocusSaveSession(false);say('Pomodoro terminado. Tiempo registrado.');}
   });
  }
  var active=!!(state&&session);
