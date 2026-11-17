@@ -10,7 +10,7 @@ on:
       - 'android/**'
       - 'assets/dragon/**'
   push:
-    branches: [main]
+    branches: [main, 'feature/pantallas-completas-alarma-pomodoro']
     paths:
       - '.github/workflows/android-apk.yml'
       - 'tests/test_dragon_motion.js'
