@@ -16,6 +16,9 @@ import java.util.Random;
 public final class AlarmRingActivity extends Activity implements SensorEventListener {
  private String id;
  private String challenge;
+ private String routineType="";
+ private int routineStep=0;
+ private String alarmTitle="";
  private int remaining=3, correct=0, tapped=0;
  private int answer;
  private String memoryCode="";
@@ -45,8 +48,23 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
    params.setMargins(0,dp(5),0,dp(5));result.setLayoutParams(params);
    return result;
  }
- private void finishAlarm(){
+ private void forceDismissAlarm(){
    AlarmReceiver.dismiss(this,id);finish();
+ }
+ private void finishAlarm(){
+   if(!routineType.isEmpty()){
+     String[] stages=routineStages(routineType);
+     if(routineStep+1<stages.length){
+       android.content.Intent next=new android.content.Intent(this,AlarmRingActivity.class)
+         .putExtra("id",id).putExtra("title",alarmTitle)
+         .putExtra("routineType",routineType).putExtra("routineStep",routineStep+1);
+       startActivity(next);finish();return;
+     }
+   }
+   forceDismissAlarm();
+ }
+ private String[] routineStages(String kind){
+   return "routine_active".equals(kind)?new String[]{"memory","shake","math"}:new String[]{"math","typing"};
  }
  @Override public void onCreate(Bundle state){
    super.onCreate(state);
@@ -57,7 +75,21 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
    if(id==null){finish();return;}
    openedAt=SystemClock.elapsedRealtime();
    challenge=AlarmChallengeStore.get(this,id);
+   String configured=challenge;
+   routineType=getIntent().getStringExtra("routineType");
+   if(routineType==null)routineType="";
+   if(routineType.isEmpty()&&("routine_focus".equals(configured)||"routine_active".equals(configured)))
+      routineType=configured;
+   if(!routineType.isEmpty()){
+     if(!"routine_focus".equals(routineType)&&!"routine_active".equals(routineType))
+       routineType="";
+     else{
+       routineStep=Math.max(0,Math.min(getIntent().getIntExtra("routineStep",0),routineStages(routineType).length-1));
+       challenge=routineStages(routineType)[routineStep];
+     }
+   }
    String title=getIntent().getStringExtra("title");
+   alarmTitle=title==null?"Mi alarma":title;
    root=new LinearLayout(this);
    root.setOrientation(LinearLayout.VERTICAL);
    root.setGravity(Gravity.CENTER);
@@ -69,7 +101,10 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
    setContentView(scroll);
    root.addView(label("☀",52));
    root.addView(label("ES MOMENTO DE DESPERTAR",14));
-   root.addView(label(title==null?"Mi alarma":title,29));
+   root.addView(label(alarmTitle,29));
+   if(!routineType.isEmpty()){
+     root.addView(label("RUTINA DE DESPERTAR · ETAPA "+(routineStep+1)+" DE "+routineStages(routineType).length,14));
+   }
    progress=label("",15);root.addView(progress);
    prompt=label("",22);root.addView(prompt);
    if("math".equals(challenge)||"math_hard".equals(challenge)){
@@ -168,7 +203,7 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
        TextView message=label("Puedes detener la alarma sin completar el reto.",15);
        root.addView(message);
        Button confirm=button("Sí, detener ahora");root.addView(confirm);
-       confirm.setOnClickListener(w->finishAlarm());
+       confirm.setOnClickListener(w->forceDismissAlarm());
        Button back=button("Volver al desafío");root.addView(back);
        back.setOnClickListener(w->{root.removeView(message);root.removeView(confirm);root.removeView(back);emergency.setVisibility(android.view.View.VISIBLE);});
      });
@@ -209,7 +244,7 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
  }
  @Override public void onBackPressed(){
    // Si necesita detenerse, el botón seguro está siempre visible.
-   if("none".equals(challenge))finishAlarm();
+   if("none".equals(challenge))forceDismissAlarm();
    else Toast.makeText(this,"Usa Posponer o Detener sin desafío",Toast.LENGTH_LONG).show();
  }
 }
