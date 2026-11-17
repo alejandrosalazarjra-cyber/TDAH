@@ -678,6 +678,7 @@ public final class MainActivity extends Activity {
       try{return AlarmReceiver.schedule(MainActivity.this,id,title,when,daily);}
       catch(Exception e){return false;}
     }
+    @JavascriptInterface public void pauseAlarm(String id){AlarmReceiver.pause(MainActivity.this,id);}
     @JavascriptInterface public void cancelAlarm(String id){AlarmReceiver.cancel(MainActivity.this,id);}
     @JavascriptInterface public void logout(){forgetNativeSession();}
   }
