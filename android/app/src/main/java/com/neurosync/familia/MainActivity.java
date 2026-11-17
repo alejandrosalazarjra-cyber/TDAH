@@ -69,7 +69,7 @@ public final class MainActivity extends Activity {
       @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request){
         String path=request.getUrl().getPath();
         if("appassets.androidplatform.net".equals(request.getUrl().getHost())
-            && path!=null && path.matches("/assets/dragon/(?:etapa-[1-6]|poses/(?:idle|blink|walk-a|walk-b|flap|sleep|eat|celebrate))\\.webp")){
+            && path!=null && path.matches("/assets/dragon/(?:etapa-[1-6]|poses/(?:idle|blink|walk-a|walk-b|flap|sleep|eat|celebrate)|atlases/etapa-[1-6])\\.webp")){
           try{
             String file=path.substring("/assets/".length());
             return new WebResourceResponse("image/webp",null,getAssets().open(file));
