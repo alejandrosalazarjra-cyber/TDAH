@@ -1,5 +1,41 @@
 # NeuroSync Familia — Android
 
+## Estabilización de alarmas — programación, audio y posposición
+
+Actualización del motor nativo, sin cambios al módulo de dragón:
+
+- Repeticiones por calendario (`daily`, `weekly`, `every2`, `every3`) para conservar mejor la hora local en zonas con cambio de horario de verano.
+- Recuperación tras reinicio, cambio manual de hora y cambio de zona horaria; al restaurar una repetición vencida se guarda su nueva fecha.
+- Programación inicial solo se guarda como activa si Android acepta la solicitud del `AlarmManager`.
+- El canal de notificaciones visuales `neurosync_alarms_v4_visual` no reproduce audio adicional: el servicio nativo gestiona el tono y la vibración, con cierre al detener/posponer y límite máximo de 3 minutos.
+- Liberación explícita del `MediaPlayer` cuando falla un tono y cambio automático a otro tono.
+- La posposición de cinco minutos guarda su hora en preferencias separadas y se restaura tras reinicio. Si venció mientras el móvil estaba apagado, se reprograma después de arrancar (puede retrasarse según restricciones de Android).
+- Se preservan los desafíos existentes, el botón de posponer y la salida segura sin desafío.
+
+**Falta comprobar en Android real**: permisos de notificación/alarma exacta/pantalla completa, modo silencio y volumen, pantalla bloqueada, ahorro de batería OPPO/otros fabricantes, reloj cambiado manualmente, reinicio antes de sonar, reinicio durante posposición, recuperación del audio y compatibilidad con la firma de APK instalada. El código guardado no demuestra que las alarmas sean fiables en todos los móviles.
+
+## Avisos flotantes y notificaciones — segunda implementación
+
+La sección **NeuroSync Inicio → Ajustes** incorpora controles originales de DrakoPlan:
+- **Recordatorio flotante personalizado:** mensaje de hasta 90 caracteres, visible 20 segundos, con cierre inmediato.
+- **Pausa flotante voluntaria:** 5, 10, 20 o 30 segundos, con texto de concentración.
+- **Aviso flotante al abrir apps marcadas:** desactivado por defecto. Solo actúa cuando el usuario abre desde el launcher una aplicación marcada para concentración, la sesión/horario está activo y Android autorizó superposiciones. No vigila aplicaciones abiertas desde otros launchers.
+- **Notificación de prueba:** canal independiente de recordatorios de concentración, con acceso a la app. La autorización de notificaciones se solicita solo al pulsar la prueba.
+
+Estas funciones no reemplazan las alarmas, no alteran el bloqueo del dispositivo y no requieren Accesibilidad. Son acciones opcionales y cerrables. Las ventanas se retiran automáticamente al finalizar su duración. Android o el fabricante pueden bloquearlas. No se ha implementado aún la lectura de notificaciones ajenas ni un bloqueo universal de otras apps.
+
+**Pruebas pendientes:** compilación con Gradle, instalación con firma compatible, inicio de sesión y persistencia previos, pruebas de superposición con permisos concedidos/denegados, pantalla bloqueada, batería, app en segundo plano y compatibilidad Google Play. **No desinstales una APK que tenga datos hasta verificar un respaldo recuperable.**
+
+## Permisos especiales y superposición — primera implementación
+
+- En el launcher **Ajustes → Permisos y ventanas flotantes** se muestra el estado de la autorización `SYSTEM_ALERT_WINDOW` y el acceso de uso.
+- El usuario puede abrir los ajustes oficiales de Android para autorizar superposiciones; no se concede ni elude ningún permiso automáticamente.
+- Con permiso concedido se puede mostrar una **vista flotante de prueba** durante 20 segundos: permite regresar a DrakoPlan y dispone de un cierre visible. No bloquea el resto de la pantalla ni observa otras aplicaciones.
+- El servicio `FocusOverlayService` es privado (`exported=false`), temporal y no se inicia automáticamente al abrir la app o al reiniciar el teléfono.
+- Las estadísticas de uso siguen siendo opcionales. No se ha añadido un servicio de Accesibilidad ni de escucha de notificaciones; ambos requerirían implementación, consentimiento y revisión de cumplimiento separados.
+- **Estado de validación:** cambios de código verificados en GitHub; todavía no hay prueba de compilación, instalación ni comportamiento sobre otras aplicaciones en dispositivo real. No desinstalar la APK con datos antes de respaldarlos.
+
+
 ## Respaldo personal cifrado — actualización de seguridad
 
 La exportación desde la APK ahora pide una contraseña de al menos 12 caracteres (con confirmación) y utiliza AES-256-GCM con sal y nonce aleatorios; la clave se deriva con PBKDF2-HMAC-SHA256 (210.000 iteraciones). El archivo resultante se guarda mediante el selector de documentos de Android, donde puede elegirse Google Drive si está disponible.
