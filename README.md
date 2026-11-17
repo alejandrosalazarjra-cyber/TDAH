@@ -1,5 +1,19 @@
 # NeuroSync Familia — Android
 
+## Estabilización de alarmas — programación, audio y posposición
+
+Actualización del motor nativo, sin cambios al módulo de dragón:
+
+- Repeticiones por calendario (`daily`, `weekly`, `every2`, `every3`) para conservar mejor la hora local en zonas con cambio de horario de verano.
+- Recuperación tras reinicio, cambio manual de hora y cambio de zona horaria; al restaurar una repetición vencida se guarda su nueva fecha.
+- Programación inicial solo se guarda como activa si Android acepta la solicitud del `AlarmManager`.
+- El canal de notificaciones visuales `neurosync_alarms_v4_visual` no reproduce audio adicional: el servicio nativo gestiona el tono y la vibración, con cierre al detener/posponer y límite máximo de 3 minutos.
+- Liberación explícita del `MediaPlayer` cuando falla un tono y cambio automático a otro tono.
+- La posposición de cinco minutos guarda su hora en preferencias separadas y se restaura tras reinicio. Si venció mientras el móvil estaba apagado, se reprograma después de arrancar (puede retrasarse según restricciones de Android).
+- Se preservan los desafíos existentes, el botón de posponer y la salida segura sin desafío.
+
+**Falta comprobar en Android real**: permisos de notificación/alarma exacta/pantalla completa, modo silencio y volumen, pantalla bloqueada, ahorro de batería OPPO/otros fabricantes, reloj cambiado manualmente, reinicio antes de sonar, reinicio durante posposición, recuperación del audio y compatibilidad con la firma de APK instalada. El código guardado no demuestra que las alarmas sean fiables en todos los móviles.
+
 ## Avisos flotantes y notificaciones — segunda implementación
 
 La sección **NeuroSync Inicio → Ajustes** incorpora controles originales de DrakoPlan:
