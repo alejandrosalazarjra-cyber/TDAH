@@ -234,6 +234,9 @@ jobs:
       - name: Compilar APK de prueba independiente (no sustituye tu instalación)
         working-directory: android
         shell: bash
+        env:
+          NS_SIGNING_PASSWORD: ${{ secrets.NS_SIGNING_PASSWORD }}
+          NS_SIGNING_ALIAS: ${{ secrets.NS_SIGNING_ALIAS }}
         run: |
           set -o pipefail
           gradle --no-daemon --stacktrace assemblePreview 2>&1 | tee "$RUNNER_TEMP/neurosync-gradle.log"
