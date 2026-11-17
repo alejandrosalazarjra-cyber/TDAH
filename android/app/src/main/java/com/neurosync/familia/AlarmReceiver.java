@@ -69,6 +69,7 @@ public final class AlarmReceiver extends BroadcastReceiver {
   ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id.hashCode());
  }
  public static void dismiss(Context ctx,String id){
+  AlarmHistory.record(ctx,id,"dismiss");
   AlarmAudioService.stop(ctx);
   ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id.hashCode());
   // No borrar la siguiente repetición diaria/semanal.
@@ -83,6 +84,7 @@ public final class AlarmReceiver extends BroadcastReceiver {
   try{
    String s=ctx.getSharedPreferences("ns_alarms",0).getString(PREFIX+id,null);if(s==null)return;
    JSONObject a=new JSONObject(s);
+   AlarmHistory.record(ctx,id,"snooze");
    AlarmManager alarm=manager(ctx);
    long when=System.currentTimeMillis()+minutes*60000L;
    if(Build.VERSION.SDK_INT<31||alarm.canScheduleExactAlarms())
@@ -129,6 +131,7 @@ public final class AlarmReceiver extends BroadcastReceiver {
   String raw=ctx.getSharedPreferences("ns_alarms",0).getString(PREFIX+id,null);if(raw==null)return;
   try{
    JSONObject a=new JSONObject(raw);String title=a.optString("title","Recordatorio");
+   AlarmHistory.record(ctx,id,"ring");
    channel(ctx);
    Intent screen=new Intent(ctx,AlarmRingActivity.class).putExtra("id",id).putExtra("title",title);
    screen.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
