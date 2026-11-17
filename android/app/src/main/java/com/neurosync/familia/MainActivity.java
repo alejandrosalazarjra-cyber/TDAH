@@ -425,6 +425,7 @@ public final class MainActivity extends Activity {
       long now=System.currentTimeMillis();
       if(until<now || until>now+4*60*60*1000L)until=0;
       getSharedPreferences("focus_launcher",MODE_PRIVATE).edit().putLong("focus_session_until",until).apply();
+      TodayWidget.refreshState(MainActivity.this);
     }
     @JavascriptInterface public String launcherFocusStatus(){
       long until=getSharedPreferences("focus_launcher",MODE_PRIVATE).getLong("focus_session_until",0);
@@ -432,6 +433,9 @@ public final class MainActivity extends Activity {
     }
     @JavascriptInterface public String alarmEventHistory(){
       return AlarmHistory.read(MainActivity.this);
+    }
+    @JavascriptInterface public void updateWidgetNextAlarm(String when){
+      TodayWidget.setNextAlarm(MainActivity.this,when);
     }
     @JavascriptInterface public void updateWidget(int pending){
       TodayWidget.refresh(MainActivity.this,Math.max(0,Math.min(pending,9999)));
