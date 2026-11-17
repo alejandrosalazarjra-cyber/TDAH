@@ -54,6 +54,8 @@ public final class AlarmReceiver extends BroadcastReceiver {
  public static boolean scheduleRepeat(Context ctx,String id,String title,long at,String repeat){
   try{
    if(id==null||id.length()<2||id.length()>100||at<=0)return false;
+   if(!("none".equals(repeat)||"daily".equals(repeat)||"weekly".equals(repeat)
+        ||"every2".equals(repeat)||"every3".equals(repeat)))return false;
    if(title==null||title.trim().isEmpty())title="Recordatorio";
    long when=at;
    if(!"none".equals(repeat)){
@@ -62,8 +64,18 @@ public final class AlarmReceiver extends BroadcastReceiver {
    }
    if(when<=System.currentTimeMillis())return false;
    JSONObject entry=new JSONObject().put("id",id).put("title",title).put("when",when).put("repeat",repeat);
-   if(!program(ctx,id,when))return false;
-   ctx.getSharedPreferences("ns_alarms",0).edit().putString(PREFIX+id,entry.toString()).apply();
+   // Guardar primero el registro para que el receptor encuentre la alarma si se dispara
+   // inmediatamente. commit() verifica persistencia antes de anunciar programación correcta.
+   android.content.SharedPreferences prefs=ctx.getSharedPreferences("ns_alarms",0);
+   String previous=prefs.getString(PREFIX+id,null);
+   if(!prefs.edit().putString(PREFIX+id,entry.toString()).commit())return false;
+   if(!program(ctx,id,when)){
+    android.content.SharedPreferences.Editor rollback=prefs.edit();
+    if(previous==null)rollback.remove(PREFIX+id);
+    else rollback.putString(PREFIX+id,previous);
+    rollback.commit();
+    return false;
+   }
    return true;
   }catch(Exception e){return false;}
  }
@@ -119,6 +131,26 @@ public final class AlarmReceiver extends BroadcastReceiver {
    AlarmAudioService.stop(ctx);
    ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id.hashCode());
   }catch(Exception ignored){}
+ }
+ /** Diagnóstico de los registros locales: no afirma una garantía de ejecución del SO. */
+ public static JSONObject diagnostics(Context ctx){
+  JSONObject result=new JSONObject();
+  int count=0,invalid=0;long next=Long.MAX_VALUE;
+  try{
+   for(Map.Entry<String,?> row:ctx.getSharedPreferences("ns_alarms",0).getAll().entrySet()){
+    if(!row.getKey().startsWith(PREFIX))continue;
+    try{
+     JSONObject alarm=new JSONObject((String)row.getValue());
+     String id=alarm.optString("id","");
+     long at=alarm.optLong("when",-1);
+     if(id.length()<2||at<=0){invalid++;continue;}
+     count++;
+     if(at>System.currentTimeMillis()&&at<next)next=at;
+    }catch(Exception malformed){invalid++;}
+   }
+   result.put("count",count).put("invalid",invalid).put("nextAt",next==Long.MAX_VALUE?0:next);
+  }catch(Exception e){android.util.Log.w("NeuroSync","No se pudieron contar alarmas locales",e);}
+  return result;
  }
  private static void restore(Context ctx){
   long now=System.currentTimeMillis();
