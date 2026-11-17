@@ -2158,7 +2158,19 @@ window.neuroImportData=async function(raw){
     if(restored.pet&&typeof restored.pet==='object'&&!Array.isArray(restored.pet))model.pet=restored.pet;
     if(Array.isArray(restored.templates))nsTemplateMerge(restored.templates);
   }
-  save();render();say('Respaldo restaurado: '+imported+' registros; '+ignored+' omitidos');
+  // Una importación explícita y validada puede desbloquear la recuperación,
+  // pero antes conservamos íntegra la copia dañada para análisis.
+  var wasBlocked=nsStorageRecoveryBlocked;
+  if(wasBlocked){
+    var broken=localStorage.getItem(localKey());
+    if(broken)localStorage.setItem(localKey()+'_corrupto_importacion_'+Date.now(),broken);
+    nsStorageRecoveryBlocked=false;
+  }
+  if(!save()){
+    nsStorageRecoveryBlocked=wasBlocked;
+    throw Error('No se pudo guardar la importación; no se eliminaron los datos anteriores');
+  }
+  render();say('Respaldo restaurado: '+imported+' registros; '+ignored+' omitidos');
  }catch(e){say(e&&e.message?e.message:'No se pudo importar este respaldo')}
 };
 by('backup-export').onclick=async function(){
