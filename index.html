@@ -453,6 +453,79 @@ html,body{background:#f8fbff;color:var(--ink)}
 #ns-launcher-direct span:last-child{font-size:24px;color:#8297aa}
 #ns-launcher-direct:focus-visible{outline:2px solid #0876ba;outline-offset:2px;border-radius:4px}
 #ns-launcher-direct:active{background:#eaf5ff}
+</style><style id="ns-blue-actions-visible-azul">
+/* Eliminar el aspecto rústico sin reconstruir los módulos ni tapar la mascota. */
+:root{--ns-action-blue:#0A84FF;--ns-action-dark:#0869D1;--ns-action-soft:#E9F4FF}
+#app .view .btn:not(.ghost):not(.secondary):not(.iconbtn):not(.tab),
+#app .view button.btn:not(.ghost):not(.secondary):not(.iconbtn):not(.tab),
+#app .view #ns-focus-toggle{
+ background:var(--ns-action-blue)!important;color:white!important;
+ border:1px solid var(--ns-action-blue)!important;border-radius:13px!important;
+ box-shadow:0 4px 12px rgba(10,132,255,.13)!important;
+ padding:10px 14px!important;min-height:44px;
+ font-weight:700;transition:background-color .14s ease,transform .14s ease;
+}
+#app .view .btn.secondary:not(.tab){
+ background:var(--ns-action-soft)!important;color:#086CC7!important;
+ border:1px solid #D2E7FF!important;border-radius:13px!important;
+ box-shadow:none!important;padding:10px 13px!important;
+ min-height:43px;font-weight:650;
+}
+#app .view .btn.ghost{color:#086CC7!important}
+#app .view .btn:not(.ghost):active{transform:scale(.98);background:var(--ns-action-dark)!important;color:#fff!important}
+#app .view .btn.secondary:active{background:#D7EAFF!important;color:#0869D1!important}
+#app .view .btn:focus-visible,#ns-launcher-direct:focus-visible,#ns-home-dragon-details:focus-visible{
+ outline:3px solid #69B9FF!important;outline-offset:2px!important
+}
+#ns-launcher-direct{background:var(--ns-action-blue)!important;color:#fff!important;
+ border:0!important;border-radius:14px!important;padding:12px 15px!important;min-height:52px;
+ box-shadow:0 5px 16px #0A84FF26!important}
+#ns-launcher-direct strong,#ns-launcher-direct span{color:#fff!important}
+#ns-launcher-direct:active{background:var(--ns-action-dark)!important}
+#view-home .ns-home-intro{margin:0!important;padding:3px 0 0!important}
+#view-home .ns-home-intro h2{font-size:clamp(21px,5vw,26px);margin-bottom:0}
+#view-home .ns-home-companion{
+ margin:9px 0 12px;padding:13px 13px 3px;
+ border:1px solid #D7E9F8;border-radius:19px;
+ background:linear-gradient(155deg,#F2F9FF,#DDEFFF 70%,#E5F5FF);
+ overflow:hidden;max-width:100%;
+}
+#view-home .ns-companion-heading{display:flex;align-items:start;justify-content:space-between;gap:9px}
+#view-home .ns-companion-heading>div{display:grid;gap:2px;min-width:0}
+#view-home .ns-companion-eyebrow{color:#397DB0;font-size:10px;letter-spacing:.11em;font-weight:800}
+#view-home #ns-companion-title{color:#143A60;font-size:17px;line-height:1.3}
+#view-home .ns-companion-heading small{color:#537C9A;font-size:11px;line-height:1.35}
+#view-home #ns-home-dragon-details{border:0;background:transparent;color:#086CC7;min-height:42px;
+ font-size:12px;font-weight:750;padding:9px 2px;white-space:nowrap}
+#view-home .ns-companion-scene-slot{width:100%;display:flex;justify-content:center;align-items:center;
+ min-height:168px;max-height:206px;overflow:hidden}
+#view-home .ns-companion-scene-slot #dragon-scene{
+ width:min(100%,310px)!important;max-width:310px;height:192px!important;min-height:160px!important;
+ flex:0 0 auto!important;background:transparent!important;box-shadow:none!important;
+ margin:0 auto!important;overflow:visible!important;isolation:auto!important;
+}
+#view-home .ns-companion-scene-slot #dragon-scene .ns-dragon-figure{width:100%;max-width:195px!important}
+#view-home .ns-companion-scene-slot #dragon-scene .ns-dragon-sprite{max-height:186px!important}
+#view-home .ns-companion-scene-slot #dragon-scene .ns-dragon-room-window,
+#view-home .ns-companion-scene-slot #dragon-scene .ns-dragon-room-floor{opacity:.25}
+#view-home .ns-companion-scene-slot #dragon-scene .ns-dragon-glow{opacity:.6}
+#view-home .ns-dragon-hero{min-height:unset!important;gap:0!important}
+#view-home .ns-dragon-copy{width:100%!important}
+#view-home .ns-dragon-copy h2{font-size:18px!important;margin:5px 0 7px!important}
+#view-home .ns-feature-tiles{margin:9px 0 15px!important}
+#view-home .ns-dragon-actions{gap:8px!important}
+#view-home .ns-dragon-actions .btn{flex:1 1 130px;min-height:42px}
+#app .view .btn[disabled]{opacity:.5;box-shadow:none!important}
+@media(max-width:380px){
+ #view-home .ns-home-companion{padding:11px 10px 2px}
+ #view-home .ns-companion-scene-slot{min-height:153px;max-height:181px}
+ #view-home .ns-companion-scene-slot #dragon-scene{height:172px!important}
+ #view-home .ns-companion-scene-slot #dragon-scene .ns-dragon-figure{max-width:174px!important}
+ #view-home .ns-companion-heading small{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+ #app .view .btn{transition:none!important}
+}
 </style></head><body>
 <div id="login" class="login ns-login-v3">
  <div class="ns-login-wrap">
@@ -530,6 +603,13 @@ html,body{background:#f8fbff;color:var(--ink)}
   </aside>
   <section class="view active" id="view-home">
    <div class="ns-home-intro"><div><h2 id="ns-home-welcome">Tu día está listo para avanzar</h2></div></div>
+   <section class="ns-home-companion" aria-label="Azul, tu dragón">
+     <div class="ns-companion-heading">
+       <div><span class="ns-companion-eyebrow">TU COMPAÑERO</span><strong id="ns-companion-title">Azul está contigo</strong><small>Completa tareas para hacerlo evolucionar</small></div>
+       <button type="button" class="ns-companion-view" id="ns-home-dragon-details">Ver detalles <span aria-hidden="true">›</span></button>
+     </div>
+     <div class="ns-companion-scene-slot" id="ns-companion-scene-slot"></div>
+   </section>
    <div class="ns-brand-hero"><div class="ns-brand-hero-copy"><span class="ns-eyebrow">TU DRAGÓN DE PRODUCTIVIDAD</span><h2>Tu dragón te acompaña hoy</h2><span class="ns-hero-missions"><span aria-hidden="true">✓</span><span id="ns-hero-missions">Tus misiones están listas</span></span></div><img src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%20role%3D%22img%22%20aria-label%3D%22NeuroSync%3A%20drag%C3%B3n%20y%20lista%20de%20tareas%22%3E%0A%3Cdefs%3E%3ClinearGradient%20id%3D%22bg%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23063674%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%230866c6%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2303c4ec%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22wing%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2345eeff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%230d7fe6%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22paper%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ffffff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23c8f2ff%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%0A%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%22248%22%20height%3D%22248%22%20rx%3D%2258%22%20fill%3D%22url(%23bg)%22%2F%3E%0A%3Cpath%20d%3D%22M28%20158Q32%2078%20103%2063Q63%20103%2075%20152Q95%20104%20151%2077Q107%20127%20113%20175Q88%20205%2055%20201Q37%20184%2028%20158Z%22%20fill%3D%22url(%23wing)%22%2F%3E%0A%3Cpath%20d%3D%22M77%2043Q109%2073%20128%2075Q115%2051%20119%2033Q142%2061%20166%2065Q195%2076%20203%20103Q209%20118%20193%20128Q181%20135%20160%20121Q144%20116%20124%20128Q100%20147%20102%20182Q78%20156%2087%20132Q91%20113%20113%20101Q87%2098%2059%20122Q73%2081%20109%2087Q87%2067%2077%2043Z%22%20fill%3D%22%23f7feff%22%2F%3E%0A%3Cpath%20d%3D%22M159%20103Q171%20101%20178%20107Q170%20116%20159%20108Z%22%20fill%3D%22%23073878%22%2F%3E%0A%3Crect%20x%3D%22128%22%20y%3D%22127%22%20width%3D%22100%22%20height%3D%2290%22%20rx%3D%2218%22%20fill%3D%22url(%23paper)%22%2F%3E%0A%3Cg%20stroke%3D%22%23078fe6%22%20stroke-width%3D%228%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m143%20149%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20173%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20196%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22M175%20151h37M175%20175h37M175%20199h27%22%2F%3E%3C%2Fg%3E%0A%3Cpath%20d%3D%22M44%20207Q111%20251%20190%20220%22%20fill%3D%22none%22%20stroke%3D%22%235ff0fd%22%20stroke-width%3D%2216%22%20stroke-linecap%3D%22round%22%2F%3E%0A%3Cpath%20d%3D%22m219%2058%206%2016%2016%206-16%206-6%2016-6-16-16-6%2016-6Z%22%20fill%3D%22%2394ffff%22%2F%3E%0A%3C%2Fsvg%3E" alt="" aria-hidden="true"></div>
    <div class="ns-minimal-entry">
      <button type="button" id="ns-launcher-direct" aria-label="Abrir modo minimalista"><span>⌂</span><strong>Modo minimalista</strong><span aria-hidden="true">›</span></button>
@@ -1877,6 +1957,11 @@ by('set-default-home').onclick=function(){
  if(nat&&nat.requestDefaultHome)nat.requestDefaultHome();
  else say('La selección de inicio está disponible desde la APK Android');
 };
+by('ns-home-dragon-details').onclick=function(){
+ var details=by('ns-extra-dragon');
+ if(details){details.open=true;details.scrollIntoView({behavior:'smooth',block:'start'});}
+ else {var copy=document.querySelector('#view-home .ns-dragon-copy');if(copy)copy.scrollIntoView({behavior:'smooth',block:'start'});}
+};
 by('ns-launcher-direct').onclick=function(){
  if(nat&&nat.openMinimalHome)nat.openMinimalHome();
  else say('El modo minimalista está disponible en la APK Android');
@@ -2095,6 +2180,10 @@ function nsHomeExtra(title,id){
  return details;
 }
 function nsOrganizeHome(){
+ // Reubicar el nodo ORIGINAL del dragón, sin copiar sprites, animaciones ni crear otra mascota.
+ // Se mantiene su id="dragon-scene", por lo que las evoluciones y acciones existentes continúan.
+ var originalScene=by('dragon-scene'),sceneSlot=by('ns-companion-scene-slot');
+ if(originalScene&&sceneSlot&&originalScene.parentNode!==sceneSlot)sceneSlot.appendChild(originalScene);
  var dragon=nsHomeExtra('Misiones y aventuras de Azul','ns-extra-dragon');
  var focus=nsHomeExtra('Temporizador Pomodoro y concentración','ns-extra-focus');
  var more=nsHomeExtra('Ver más de mi día','ns-extra-day');
