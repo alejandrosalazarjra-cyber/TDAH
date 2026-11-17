@@ -16,6 +16,10 @@ const scene={dataset:{},setAttribute(name,value){this[name]=value}};
 const energy={textContent:''};
 const context={
  console,
+ // El módulo registra un listener de visibilidad aunque esta prueba de
+ // estados no usa DOM real. Simular la interfaz mínima de navegador.
+ document:{hidden:false,addEventListener(){}},
+ window:{matchMedia(){return {matches:false}}},
  session:{username:'tester'},
  model:{pet:{xp:79,energy:100,plays:0,food:0}},
  nsDragonStages:[
