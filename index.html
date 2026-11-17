@@ -15,6 +15,23 @@
 .ns-focus-ring>div{z-index:1;text-align:center}.ns-focus-ring strong{font-size:37px;font-variant-numeric:tabular-nums;display:block;letter-spacing:-1px}.ns-focus-ring span{font-size:11px;color:var(--muted,#64738b)}
 .ns-focus-options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.ns-focus-options button{font:600 13px Inter,system-ui,sans-serif;border:1px solid var(--border,#e1e7f2);border-radius:11px;background:var(--paper,#fff);color:var(--ink,#1b2540);padding:11px 3px;min-width:0}.ns-focus-options button.selected{background:var(--blue,#4258db);color:#fff;border-color:var(--blue,#4258db)}
 .ns-focus-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:18px 0}.ns-focus-metrics>div{background:var(--bg,#f5f7fe);border:1px solid var(--border,#e4e9f2);padding:13px 6px;border-radius:12px;text-align:center;min-width:0}.ns-focus-metrics strong{display:block;font-size:17px}.ns-focus-metrics span{display:block;font-size:10px;color:var(--muted,#69758d);margin-top:3px}
+
+/* Arte original CSS de NeuroSync: amanecer, bosque y noche, sin recursos de Oasis. */
+.ns-focus-studio{position:relative;overflow:hidden;isolation:isolate;--scene-sky:#eef3ff;--scene-glow:#ffdca2;--scene-back:#d6e7fd;--scene-front:#8cbbdf}
+.ns-focus-studio[data-scene="bosque"]{--scene-sky:#e8f6ef;--scene-glow:#fff2bb;--scene-back:#abd9c5;--scene-front:#5aaf95}
+.ns-focus-studio[data-scene="noche"]{--scene-sky:#171e3c;--scene-glow:#f1edcf;--scene-back:#3c4c80;--scene-front:#283b65}
+.ns-scene-art{height:105px;position:relative;overflow:hidden;margin:6px 0 8px;border-radius:17px;background:linear-gradient(175deg,var(--scene-sky),var(--scene-back));transition:background .25s}
+.ns-orb{position:absolute;left:calc(50% - 28px);top:12px;width:56px;height:56px;border-radius:50%;background:var(--scene-glow);box-shadow:0 0 24px 8px color-mix(in srgb,var(--scene-glow),transparent 35%);animation:ns-orbit 5s ease-in-out infinite}
+.ns-hill{position:absolute;bottom:-35px;height:100px;width:120%;left:-10%;border-radius:50% 50% 0 0}
+.ns-hill-back{background:var(--scene-back);transform:rotate(-5deg) translateY(16px)}.ns-hill-front{background:var(--scene-front);transform:rotate(7deg) translateY(34px)}
+.ns-star{position:absolute;font-size:21px;color:#fff;opacity:.65}.ns-star-one{top:12px;left:18%}.ns-star-two{top:35px;right:17%}
+.ns-focus-studio[data-scene="calma"] .ns-star,.ns-focus-studio[data-scene="bosque"] .ns-star{opacity:.15}
+.ns-scene-select{display:flex;gap:6px;flex-wrap:wrap;margin:3px 0 15px}
+.ns-scene-select button{flex:1;min-width:80px;border:1px solid var(--border,#e3e8f2);border-radius:13px;padding:10px 5px;background:var(--paper,#fff);color:var(--ink,#1b2540);font-size:12px;font-weight:650}
+.ns-scene-select button.selected{background:var(--blue,#4258db);border-color:var(--blue,#4258db);color:white}
+.hero .pet{animation:ns-pet-breathe 3.2s ease-in-out infinite;transform-origin:center bottom}
+@keyframes ns-orbit{50%{transform:translateY(-6px)}}@keyframes ns-pet-breathe{50%{transform:translateY(-5px) scale(1.025)}}
+@media(prefers-reduced-motion:reduce){.ns-orb,.hero .pet{animation:none!important}}
 </style></head><body>
 <div id="login" class="login">
  <form id="login-form" class="card login-card">
@@ -72,10 +89,12 @@
       <div id="next-action"></div>
       <div class="row" style="margin-top:12px"><button class="btn secondary" type="button" id="focus-five">Comenzar 5 minutos</button><span class="hint" id="focus-clock">Un inicio pequeño es suficiente.</span></div>
      </div>
-     <div class="card ns-focus-studio" id="focus-studio">
+     <div class="card ns-focus-studio" id="focus-studio" data-scene="calma">
        <div class="between"><h2>Estudio de concentración</h2><span class="chip">Sin distracciones</span></div>
        <p class="hint">Trabaja en una sola actividad. Tu tiempo y tu historial se guardan únicamente en este dispositivo.</p>
+       <div class="ns-scene-art" aria-hidden="true"><span class="ns-orb"></span><span class="ns-hill ns-hill-back"></span><span class="ns-hill ns-hill-front"></span><span class="ns-star ns-star-one">✦</span><span class="ns-star ns-star-two">✧</span></div>
        <div class="ns-focus-ring" aria-live="polite"><div><strong id="ns-focus-time">25:00</strong><span id="ns-focus-phase">Listo para comenzar</span></div></div>
+       <div class="ns-scene-select" role="group" aria-label="Ambiente visual"><button type="button" class="selected" data-ns-scene="calma">☀ Calma</button><button type="button" data-ns-scene="bosque">♧ Bosque</button><button type="button" data-ns-scene="noche">☾ Noche</button></div>
        <div class="ns-focus-options" role="group" aria-label="Duración de la sesión">
         <button type="button" data-focus-minutes="5">5 min</button><button type="button" data-focus-minutes="15">15 min</button><button type="button" class="selected" data-focus-minutes="25">25 min</button><button type="button" data-focus-minutes="45">45 min</button>
        </div>
@@ -156,6 +175,11 @@ function say(msg){var e=by('notice');e.textContent=msg;e.classList.remove('hidde
 
 /* Registro de concentración aislado por cuenta. No se sincroniza con cuentas familiares. */
 var nsFocusDuration=25,nsFocusState=null,nsFocusTick=null;
+function nsSceneKey(){return 'ns_focus_scene_v1_'+(session?session.username:'visitante')}
+function nsSceneApply(name){var allowed=['calma','bosque','noche'];if(allowed.indexOf(name)<0)name='calma';by('focus-studio').dataset.scene=name;
+ document.querySelectorAll('[data-ns-scene]').forEach(function(b){b.classList.toggle('selected',b.dataset.nsScene===name);b.setAttribute('aria-pressed',String(b.dataset.nsScene===name))});
+ if(session)localStorage.setItem(nsSceneKey(),name)}
+function nsSceneRestore(){nsSceneApply(session?localStorage.getItem(nsSceneKey())||'calma':'calma')}
 function nsFocusKey(){return 'ns_focus_private_v1_'+(session?session.username:'visitante')}
 function nsFocusRead(){try{var x=JSON.parse(localStorage.getItem(nsFocusKey()));return x&&Array.isArray(x.sessions)?x:{sessions:[]}}catch(e){return {sessions:[]}}}
 function nsFocusWrite(v){localStorage.setItem(nsFocusKey(),JSON.stringify(v))}
@@ -197,6 +221,7 @@ function nsFocusSaveSession(completed){
 }
 function nsFocusPulse(){if(!nsFocusState)return;if(nsFocusElapsed()>=nsFocusState.duration*60000){nsFocusSaveSession(true);say('¡Sesión completada! Tu avance quedó registrado.')}else nsFocusRender()}
 function nsFocusInit(){
+ document.querySelectorAll('[data-ns-scene]').forEach(function(b){b.onclick=function(){nsSceneApply(b.dataset.nsScene)}});
  document.querySelectorAll('[data-focus-minutes]').forEach(function(b){b.onclick=function(){if(nsFocusState)return;nsFocusDuration=Number(b.dataset.focusMinutes);nsFocusRender()}});
  by('ns-focus-toggle').onclick=function(){
   if(!session)return;
@@ -548,7 +573,7 @@ function sync(){
 }
 by('sync-btn').onclick=sync;
 function getUsers(){if(!nat||!nat.getUsers)return [{username:session.username,role:session.role}];try{var r=JSON.parse(nat.getUsers());return r.users||[]}catch(e){return []}}
-function enter(u){session=u;model=load();nsFocusRestore();nsFocusTasks();nsFocusStats();nsFocusRender();model.pet=model.pet||{xp:0,food:0,feeds:0};by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=u.username.slice(0,1).toUpperCase();by('greeting').textContent='Hola, '+u.username+'. Hoy puedes avanzar a tu ritmo.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
+function enter(u){session=u;model=load();nsSceneRestore();nsFocusRestore();nsFocusTasks();nsFocusStats();nsFocusRender();model.pet=model.pet||{xp:0,food:0,feeds:0};by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=u.username.slice(0,1).toUpperCase();by('greeting').textContent='Hola, '+u.username+'. Hoy puedes avanzar a tu ritmo.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
 by('login-form').onsubmit=function(e){e.preventDefault();var username=by('login-user').value.trim().toLowerCase(),password=by('login-pass').value;
 if(nat&&nat.login){try{var res=JSON.parse(nat.login(username,password));if(!res.ok){by('login-error').textContent=res.error||'Usuario o contraseña incorrectos';return}enter(res.user);
         if(res.mustChangePassword){show('admin');say('Por seguridad, cambia la clave provisional antes de crear cuentas familiares.');}
