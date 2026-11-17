@@ -309,7 +309,11 @@ public final class AlarmReceiver extends BroadcastReceiver {
 
    String repeat=a.optString("repeat",a.optBoolean("daily")?"daily":"none");
    if(!"none".equals(repeat) && FIRE.equals(intent.getAction())){
-    long next=nextRepeat(a.optLong("when"),repeat,System.currentTimeMillis());
+    long original=a.optLong("when");
+    // Al sonar, avanzar siempre DESPUÉS de la ocurrencia original.
+    // Impide reprogramar exactamente el mismo instante si Android entrega
+    // el broadcast unos milisegundos antes de lo previsto.
+    long next=nextRepeat(original,repeat,Math.max(System.currentTimeMillis(),original));
     if(next>System.currentTimeMillis() && program(ctx,id,next)){
       a.put("when",next);
       ctx.getSharedPreferences("ns_alarms",0).edit().putString(PREFIX+id,a.toString()).apply();
