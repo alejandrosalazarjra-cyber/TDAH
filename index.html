@@ -602,6 +602,7 @@ function nsDragonData(){
  p.furniture=['none','plant','books','crystal'].includes(p.furniture)?p.furniture:'none';
  p.unlockedFurniture=Array.isArray(p.unlockedFurniture)?p.unlockedFurniture.filter(function(x){return ['none','plant','books','crystal'].includes(x)}):['none'];
  p.missionClaims=p.missionClaims&&typeof p.missionClaims==='object'?p.missionClaims:{};
+ p.adventureClaims=p.adventureClaims&&typeof p.adventureClaims==='object'?p.adventureClaims:{};
  model.pet=p;return p;
 }
 function nsDragonStage(xp){for(var i=nsDragonStages.length-1;i>=0;i--)if(xp>=nsDragonStages[i].min)return i;return 0}
@@ -635,7 +636,7 @@ function nsDragonRender(){
  nsDragonQuestRender();
 }
 function nsDragonDailyProgress(){
- var date=day(),tasks=allTasks().filter(function(t){return !t.inbox&&(t.doneDates||[]).includes(date)&&(!t.repeat||t.repeat==='none'?t.date===date:nsTaskDueOn(t,date))});
+ var date=day(),tasks=allTasks().filter(function(t){return t.owner===session.username&&!t.inbox&&(t.doneDates||[]).includes(date)&&(!t.repeat||t.repeat==='none'?t.date===date:nsTaskDueOn(t,date))});
  var focus=nsFocusRead().sessions.filter(function(x){return x.day===date&&x.completed});
  var minutes=Math.floor(focus.reduce(function(n,x){return n+Math.max(0,Number(x.ms)||0)},0)/60000);
  return {tasks:tasks.length,minutes:minutes};
@@ -646,10 +647,10 @@ var nsDragonMissions=[
  {id:'focus',title:'Dragón concentrado',detail:'Acumula 15 minutos de enfoque completado',count:15,type:'minutes',xp:25,coins:10}
 ];
 var nsDragonRooms=[
- {id:'nest',name:'Nido de nubes',xp:0},
- {id:'forest',name:'Bosque encantado',xp:200},
- {id:'mountain',name:'Montañas azules',xp:420},
- {id:'cosmos',name:'Santuario celeste',xp:750}
+ {id:'nest',name:'Nido de nubes',xp:0,target:2,type:'tasks'},
+ {id:'forest',name:'Bosque encantado',xp:200,target:4,type:'tasks'},
+ {id:'mountain',name:'Montañas azules',xp:420,target:30,type:'minutes'},
+ {id:'cosmos',name:'Santuario celeste',xp:750,target:60,type:'minutes'}
 ];
 var nsDragonFurniture=[
  {id:'none',name:'Sin decoración',coins:0,symbol:'✦'},
@@ -657,6 +658,26 @@ var nsDragonFurniture=[
  {id:'books',name:'Biblioteca',coins:35,symbol:'📚'},
  {id:'crystal',name:'Cristal mágico',coins:45,symbol:'💎'}
 ];
+function nsDragonWeekProgress(){
+ var now=new Date(),start=new Date(now.getFullYear(),now.getMonth(),now.getDate()-(now.getDay()+6)%7);
+ var from=day(start),to=day(),taskEvents=0;
+ allTasks().filter(function(t){return t.owner===session.username&&!t.inbox}).forEach(function(t){
+  (t.doneDates||[]).forEach(function(date){if(date>=from&&date<=to&&nsTaskDueOn(t,date))taskEvents++});
+ });
+ var focus=nsFocusRead().sessions.filter(function(x){return x.completed&&x.day>=from&&x.day<=to});
+ var minutes=Math.floor(focus.reduce(function(n,x){return n+Math.max(0,Number(x.ms)||0)},0)/60000);
+ return {key:from,tasks:taskEvents,minutes:minutes};
+}
+function nsDragonClaimAdventure(id){
+ var p=nsDragonData(),room=nsDragonRooms.find(function(x){return x.id===id}),week=nsDragonWeekProgress();
+ if(!room||p.xp<room.xp||week[room.type]<room.target)return;
+ var claimed=p.adventureClaims[week.key]||[];
+ if(claimed.includes(id))return;
+ p.adventureClaims[week.key]=claimed.concat(id);
+ var weeks=Object.keys(p.adventureClaims).sort();
+ if(weeks.length>16)weeks.slice(0,weeks.length-16).forEach(function(k){delete p.adventureClaims[k]});
+ p.xp+=35;p.food+=15;save();nsDragonRender();nsDragonMessage('¡Aventura semanal terminada! +35 XP y 15 puntos.',true)
+}
 function nsDragonQuestRender(){
  var p=nsDragonData(),date=day(),progress=nsDragonDailyProgress(),claims=p.missionClaims[date]||[];
  by('dragon-quest-date').textContent='Hoy · '+date;
@@ -677,13 +698,15 @@ function nsDragonQuestRender(){
   action.onclick=function(){nsDragonClaim(m.id)};row.append(info,action);root.append(row)
  });
  var realms=by('dragon-realms');realms.replaceChildren();
+ var weekly=nsDragonWeekProgress(),weeklyClaims=p.adventureClaims[weekly.key]||[];
  nsDragonRooms.forEach(function(room){
   var open=p.xp>=room.xp,row=document.createElement('div');row.className='ns-dragon-realm';
   var info=document.createElement('div'),name=document.createElement('strong'),note=document.createElement('small');
-  name.textContent=room.name;note.textContent=open?'Desbloqueada':'Se desbloquea con '+room.xp+' XP';
+  name.textContent=room.name;note.textContent=open?('Aventura semanal · '+Math.min(weekly[room.type],room.target)+'/'+room.target+' '+(room.type==='tasks'?'tareas':'minutos')):'Se desbloquea con '+room.xp+' XP';
   info.append(name,note);var action=document.createElement('button');action.type='button';action.className='btn ghost';
-  action.textContent=p.room===room.id?'Visitando':open?'Visitar':'Bloqueada';action.disabled=!open||p.room===room.id;
-  action.onclick=function(){nsDragonSelectRoom(room.id)};row.append(info,action);realms.append(row)
+  var won=weeklyClaims.includes(room.id),ready=open&&weekly[room.type]>=room.target;
+  action.textContent=won?'Lograda':ready?'Reclamar':p.room===room.id?'Visitando':open?'Visitar':'Bloqueada';action.disabled=!open||won||(p.room===room.id&&!ready);
+  action.onclick=function(){if(ready)nsDragonClaimAdventure(room.id);else nsDragonSelectRoom(room.id)};row.append(info,action);realms.append(row)
  });
  var roomSelector=by('dragon-room-select');
  Array.from(roomSelector.options).forEach(function(o){var room=nsDragonRooms.find(function(x){return x.id===o.value});o.disabled=!!room&&p.xp<room.xp});
