@@ -1,5 +1,16 @@
 # NeuroSync Familia — Android
 
+## Respaldo personal cifrado — actualización de seguridad
+
+La exportación desde la APK ahora pide una contraseña de al menos 12 caracteres (con confirmación) y utiliza AES-256-GCM con sal y nonce aleatorios; la clave se deriva con PBKDF2-HMAC-SHA256 (210.000 iteraciones). El archivo resultante se guarda mediante el selector de documentos de Android, donde puede elegirse Google Drive si está disponible.
+
+- Cada copia nueva incluye solamente tareas, listas y alarmas de la cuenta activa, junto a su mascota y sus plantillas.
+- La aplicación solicita la contraseña al restaurar una copia cifrada; las copias JSON anteriores se siguen aceptando con una advertencia y filtrado de registros de la cuenta.
+- **No olvides la contraseña**: no se guarda ni hay mecanismo de recuperación.
+- **No es sincronización automática ni acceso con Google**: Drive se utiliza por ahora como destino elegido manualmente.
+- Antes de reinstalar una APK verifica que puedes abrir la copia; comprueba también que la nueva compilación usa una firma compatible con la instalada.
+- La modificación se ha guardado en el repositorio, pero falta validar compilación y restauración en un dispositivo real.
+
 ## NeuroSync 10.0 — diagnóstico de instalación y firma real
 
 **Hallazgo verificado:** se descargaron las APK de GitHub Actions #49 y #50. Ambas contenían clases Android y HTML nuevos, pero las firmas eran diferentes:
