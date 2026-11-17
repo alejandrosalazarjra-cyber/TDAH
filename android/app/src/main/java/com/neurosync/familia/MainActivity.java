@@ -426,6 +426,7 @@ public final class MainActivity extends Activity {
       if(until<now || until>now+4*60*60*1000L)until=0;
       getSharedPreferences("focus_launcher",MODE_PRIVATE).edit().putLong("focus_session_until",until).apply();
       TodayWidget.refreshState(MainActivity.this);
+      FocusWidget.refresh(MainActivity.this);
     }
     @JavascriptInterface public String launcherFocusStatus(){
       long until=getSharedPreferences("focus_launcher",MODE_PRIVATE).getLong("focus_session_until",0);
