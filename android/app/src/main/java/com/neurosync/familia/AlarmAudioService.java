@@ -76,11 +76,14 @@ public final class AlarmAudioService extends Service {
     final long beginning=SystemClock.elapsedRealtime();
     fadeRunnable=new Runnable(){
       @Override public void run(){
-        if(player!=current||!current.isPlaying())return;
-        float progress=Math.min(1f,(SystemClock.elapsedRealtime()-beginning)/(seconds*1000f));
-        float volume=target*(0.15f+0.85f*progress);
-        try{current.setVolume(volume,volume);}catch(Exception ignored){return;}
-        if(progress<1f)handler.postDelayed(this,1000);
+        if(player!=current)return;
+        try{
+          if(!current.isPlaying())return;
+          float progress=Math.min(1f,(SystemClock.elapsedRealtime()-beginning)/(seconds*1000f));
+          float volume=target*(0.15f+0.85f*progress);
+          current.setVolume(volume,volume);
+          if(progress<1f)handler.postDelayed(this,1000);
+        }catch(IllegalStateException stopped){return;}
       }
     };
     handler.post(fadeRunnable);
