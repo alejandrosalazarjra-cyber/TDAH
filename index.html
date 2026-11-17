@@ -1110,7 +1110,7 @@ function nsDragonInit(){
  by('dragon-advice-toggle').onclick=nsDragonToggleAdvice;
  by('dragon-room-select').onchange=function(){nsDragonSelectRoom(this.value)};
  by('dragon-furniture-select').onchange=function(){nsDragonSelectFurniture(this.value)};
- by('dragon-scene').onclick=function(){nsDragonMessage('¡Qué gusto verte! Sigamos a nuestro ritmo.',true)};
+ by('dragon-scene').onclick=function(){nsDragonMessage('¡Qué gusto verte! Sigamos a nuestro ritmo.',true);nsDragonAnimate('play')};
  by('dragon-pet').onclick=function(){
   var p=nsDragonData(),today=day(),n=Number(p.pets[today])||0;
   if(n>=3){nsDragonMessage('Ya recibí mis caricias de hoy. ¡Sigamos con una tarea pequeña!',true);return}
