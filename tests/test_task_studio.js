@@ -54,8 +54,8 @@ assert(api.share(last.id),'Administrador puede compartir tarea existente');
 assert.equal(last.owner,'todos');
 owner.role='user';
 assert(!api.share(tasks[0].id),'Un integrante normal no puede compartir una tarea ajena');
-assert(script.includes('data-share=')&&script.includes('ns-ts-share-option'),
- 'Task Studio necesita controles simples de compartir');
+assert(script.includes('data-send=')&&script.includes('name="recipient"'),
+ 'Task Studio debe permitir enviar tareas desde cuentas normales');
 
 
 // Cualquier usuario puede enviar una tarea a otro sin permiso de administrador.
@@ -84,5 +84,18 @@ assert(backend.includes('nameUUIDFromBytes')&&backend.includes('if(tasks.contain
  'Los reintentos deben evitar duplicados');
 assert(accounts.includes('public static JSONObject contacts('),'Listar destinatarios sin permisos de administrador');
 assert(service.includes('route.equals("/send-task")'),'Habilitar envío desde teléfonos conectados');
+assert(script.includes('data-tab="received"')&&script.includes('data-tab="sent"'),
+ 'El panel debe mostrar bandejas de recibidas y enviadas');
+assert(script.includes('data-accept=')&&script.includes('data-complete='),
+ 'Las tareas recibidas deben poder aceptarse y completarse');
+assert(backend.includes('public static JSONObject sentTasks(')&&
+ backend.includes('public static JSONObject updateDelivery('),
+ 'El servidor debe gestionar estados y mostrar los envíos');
+assert(backend.includes('actor.optString("username").equals(task.optString("owner"))'),
+ 'Solo el destinatario puede aceptar o completar sus tareas');
+assert(backend.includes('change.put("deliveryStatus",old.optString("deliveryStatus","pending"))'),
+ 'Un cliente desactualizado no puede sobrescribir estados del servidor');
+assert(html.includes("if(t.deliveryStatus!=='accepted')return false;"),
+ 'La finalización rápida requiere aceptación previa');
 assert(saveCount>=2);
 console.log('Task Studio OK: hábitos, tareas rápidas, plantillas, aislamiento y gráficos');
