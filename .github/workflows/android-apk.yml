@@ -69,6 +69,7 @@ jobs:
           node tests/test_alarm_studio_days.js
           node tests/test_task_studio.js
           node tests/test_departure_studio.js
+          node tests/test_pomodoro_studio.js
 
       - name: Validar interfaz antes de compilar
         shell: bash
@@ -218,6 +219,20 @@ jobs:
           cp modules/alarm_studio.js modules/alarm_studio.css android/app/src/main/assets/modules/
           cp modules/task_studio.js modules/task_studio.css android/app/src/main/assets/modules/
           cp modules/departure_studio.js modules/departure_studio.css android/app/src/main/assets/modules/
+          cp modules/pomodoro_studio.js modules/pomodoro_studio.css android/app/src/main/assets/modules/
+          test -s android/app/src/main/assets/modules/pomodoro_studio.js
+          test -s android/app/src/main/assets/modules/pomodoro_studio.css
+          # La escena Bosque fue generada con Higgsfield. Si el origen deja de estar
+          # disponible, la APK mantiene su fondo animado CSS sin bloquear la compilación.
+          mkdir -p android/app/src/main/assets/focus
+          if curl --fail --location --silent --show-error --connect-timeout 10 --max-time 120 --retry 1 \
+            'https://d8j0ntlcm91z4.cloudfront.net/user_3MDNXswrgR6N3gVdMwDFhTyzzP4/hf_20261118_051340_5295b8d3-4aa6-475a-8b6f-7060243830c8.mp4' \
+            -o android/app/src/main/assets/focus/bosque.mp4; then
+            test "$(wc -c < android/app/src/main/assets/focus/bosque.mp4)" -gt 10000 || rm -f android/app/src/main/assets/focus/bosque.mp4
+          else
+            rm -f android/app/src/main/assets/focus/bosque.mp4
+            echo "::warning::Video Bosque temporalmente inaccesible; se utilizará ambiente animado local."
+          fi
           test -s android/app/src/main/assets/modules/departure_studio.js
           test -s android/app/src/main/assets/modules/departure_studio.css
           test -s android/app/src/main/assets/modules/alarm_studio.js
