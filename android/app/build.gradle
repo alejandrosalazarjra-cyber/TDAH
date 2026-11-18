@@ -25,6 +25,15 @@ android {
     }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     signingConfigs {
+        // Clave independiente para la APK preview; nunca reutilizar Play/release.
+        if (System.getenv('NS_PREVIEW_KEYSTORE_FILE')) {
+            create('neurosyncPreview') {
+                storeFile file(System.getenv('NS_PREVIEW_KEYSTORE_FILE'))
+                storePassword System.getenv('NS_PREVIEW_SIGNING_PASSWORD')
+                keyAlias System.getenv('NS_PREVIEW_SIGNING_ALIAS') ?: 'neurosync_preview'
+                keyPassword System.getenv('NS_PREVIEW_SIGNING_PASSWORD')
+            }
+        }
         if (System.getenv('NS_KEYSTORE_FILE')) {
             create('neurosyncRelease') {
                 storeFile file(System.getenv('NS_KEYSTORE_FILE'))
@@ -37,10 +46,12 @@ android {
     buildTypes {
         preview {
             initWith debug
-            // Usar una firma persistente cuando haya un keystore seguro en GitHub Secrets.
-            // Evita que el SHA-1 de OAuth cambie entre ejecuciones de GitHub Actions.
-            if (System.getenv('NS_KEYSTORE_FILE')) {
-                signingConfig signingConfigs.neurosyncRelease
+            // Si no hay firma preview estable, ocultar login público en esta APK.
+            // Así se evita intentar Google OAuth con el certificado debug efímero del runner.
+            if (System.getenv('NS_PREVIEW_KEYSTORE_FILE')) {
+                signingConfig signingConfigs.neurosyncPreview
+            } else {
+                buildConfigField 'String', 'PUBLIC_GOOGLE_CLIENT_ID', '""'
             }
             applicationIdSuffix '.preview'
             versionNameSuffix '-preview'
