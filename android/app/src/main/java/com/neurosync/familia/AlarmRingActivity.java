@@ -75,6 +75,7 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
    forceDismissAlarm();
  }
  private String[] routineStages(String kind){
+   if("routine_custom".equals(kind))return AlarmChallengeStore.getSequence(this,id);
    if("routine_five".equals(kind))return new String[]{"math","memory","typing","taps","shake"};
    return "routine_active".equals(kind)?new String[]{"memory","shake","math"}:new String[]{"math","typing"};
  }
@@ -98,10 +99,10 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
    String configured=challenge;
    routineType=getIntent().getStringExtra("routineType");
    if(routineType==null)routineType="";
-   if(routineType.isEmpty()&&("routine_focus".equals(configured)||"routine_active".equals(configured)||"routine_five".equals(configured)))
+   if(routineType.isEmpty()&&("routine_focus".equals(configured)||"routine_active".equals(configured)||"routine_five".equals(configured)||"routine_custom".equals(configured)))
       routineType=configured;
    if(!routineType.isEmpty()){
-     if(!"routine_focus".equals(routineType)&&!"routine_active".equals(routineType)&&!"routine_five".equals(routineType))
+     if(!"routine_focus".equals(routineType)&&!"routine_active".equals(routineType)&&!"routine_five".equals(routineType)&&!"routine_custom".equals(routineType))
        routineType="";
      else{
        routineStep=Math.max(0,Math.min(getIntent().getIntExtra("routineStep",0),routineStages(routineType).length-1));
