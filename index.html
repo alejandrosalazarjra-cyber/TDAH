@@ -3071,6 +3071,14 @@ window.NeuroWellbeingAPI={
   try{localStorage.removeItem(streakKey());renderStreak();return true}catch(e){return false}
  }
 };
+/* Finance studio usa la identidad autenticada sin acceder al modelo familiar. */
+window.NeuroFinanceAPI={
+ account:function(){return session?session.username:null},
+ updateLauncher:function(show,balance,income,expense){
+  if(!session||!nat||!nat.updateFinanceLauncherSummary)return false;
+  return !!nat.updateFinanceLauncherSummary(session.username,!!show,balance,income,expense);
+ }
+};
 })();
 </script>
 <script src="./modules/wellbeing_studio.js"></script>
