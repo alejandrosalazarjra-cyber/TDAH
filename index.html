@@ -2733,10 +2733,19 @@ window.NeuroAlarmAPI={
   });
   return {focusMinutes:focusMinutes,tasksCompleted:tasksCompleted,dragonXp:Number(model.pet&&model.pet.xp)||0};
  },
- preferences:function(){return model&&model.alarmPreferences?Object.assign({},model.alarmPreferences):{}},
+ preferences:function(){
+  var pref=model&&model.alarmPreferences?Object.assign({},model.alarmPreferences):{};
+  if(nat&&nat.getAlarmFadeSeconds)pref.fadeSeconds=nat.getAlarmFadeSeconds();
+  return pref;
+ },
  setPreferences:function(opts){
   if(!session||!model)return false;
-  model.alarmPreferences=Object.assign({},model.alarmPreferences||{},opts);return !!save();
+  var previous=Object.assign({},model.alarmPreferences||{});
+  var fade=[0,15,30,60].includes(Number(opts.fadeSeconds))?Number(opts.fadeSeconds):0;
+  model.alarmPreferences=Object.assign({},previous,opts,{fadeSeconds:fade});
+  if(!save()){model.alarmPreferences=previous;return false}
+  if(nat&&nat.setAlarmFadeSeconds)nat.setAlarmFadeSeconds(fade);
+  return true;
  },
  permissions:function(){try{return nat&&nat.alarmPermissions?JSON.parse(nat.alarmPermissions()):null}catch(e){return null}},
  requestPermissions:function(){if(nat&&nat.requestAlarmPermissions)nat.requestAlarmPermissions()},
