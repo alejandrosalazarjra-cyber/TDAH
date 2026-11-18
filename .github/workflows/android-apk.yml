@@ -10,7 +10,7 @@ on:
       - 'android/**'
       - 'assets/dragon/**'
   push:
-    branches: [main]
+    branches: [main, 'feature/pantallas-completas-alarma-pomodoro']
     paths:
       - '.github/workflows/android-apk.yml'
       - 'tests/test_dragon_motion.js'
@@ -59,6 +59,17 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_dragon_module.py' -v
           node tests/test_dragon_motion.js
           node tests/test_dragon_poses.js
+          node tests/test_phase1_persistence.js
+          node tests/test_phase1b_alarm_schedule.js
+          node tests/test_phase1c_session_sync.js
+          node tests/test_phase1d_native_recovery.js
+          node tests/test_phase1e_snapshot_batch.js
+          node tests/test_phase1e_restart_recovery.js
+          node tests/test_alarm_studio.js
+          node tests/test_alarm_studio_days.js
+          node tests/test_task_studio.js
+          node tests/test_departure_studio.js
+          node tests/test_pomodoro_studio.js
 
       - name: Validar interfaz antes de compilar
         shell: bash
@@ -96,7 +107,7 @@ jobs:
               "AccountStore.java", "AlarmReceiver.java", "SyncService.java",
               "AlarmRingActivity.java", "TodayWidget.java",
               "FocusLauncherActivity.java", "AlarmAudioService.java", "SessionVault.java",
-              "MainActivity.java",
+              "MainActivity.java", "FocusOverlayService.java", "BackupCrypto.java",
           ]
           errors = []
           for name in required:
@@ -204,6 +215,28 @@ jobs:
           set -euo pipefail
           cp index.html android/app/src/main/assets/index.html
           test -s android/app/src/main/assets/index.html
+          mkdir -p android/app/src/main/assets/modules
+          cp modules/alarm_studio.js modules/alarm_studio.css android/app/src/main/assets/modules/
+          cp modules/task_studio.js modules/task_studio.css android/app/src/main/assets/modules/
+          cp modules/departure_studio.js modules/departure_studio.css android/app/src/main/assets/modules/
+          cp modules/pomodoro_studio.js modules/pomodoro_studio.css android/app/src/main/assets/modules/
+          test -s android/app/src/main/assets/modules/pomodoro_studio.js
+          test -s android/app/src/main/assets/modules/pomodoro_studio.css
+          # La escena Bosque fue generada con Higgsfield. Si el origen deja de estar
+          # disponible, la APK mantiene su fondo animado CSS sin bloquear la compilación.
+          mkdir -p android/app/src/main/assets/focus
+          if curl --fail --location --silent --show-error --connect-timeout 10 --max-time 120 --retry 1 \
+            'https://d8j0ntlcm91z4.cloudfront.net/user_3MDNXswrgR6N3gVdMwDFhTyzzP4/hf_20261118_051340_5295b8d3-4aa6-475a-8b6f-7060243830c8.mp4' \
+            -o android/app/src/main/assets/focus/bosque.mp4; then
+            test "$(wc -c < android/app/src/main/assets/focus/bosque.mp4)" -gt 10000 || rm -f android/app/src/main/assets/focus/bosque.mp4
+          else
+            rm -f android/app/src/main/assets/focus/bosque.mp4
+            echo "::warning::Video Bosque temporalmente inaccesible; se utilizará ambiente animado local."
+          fi
+          test -s android/app/src/main/assets/modules/departure_studio.js
+          test -s android/app/src/main/assets/modules/departure_studio.css
+          test -s android/app/src/main/assets/modules/alarm_studio.js
+          test -s android/app/src/main/assets/modules/alarm_studio.css
           mkdir -p android/app/src/main/assets/dragon
           cp assets/dragon/etapa-{1..6}.webp android/app/src/main/assets/dragon/
           for n in {1..6}; do test -s "android/app/src/main/assets/dragon/etapa-${n}.webp"; done
@@ -211,9 +244,32 @@ jobs:
           cp assets/dragon/atlases/etapa-{1..6}.webp android/app/src/main/assets/dragon/atlases/
           for n in {1..6}; do test -s "android/app/src/main/assets/dragon/atlases/etapa-${n}.webp"; done
 
+      - name: Preparar firma permanente de distribución
+        id: signing
+        shell: bash
+        env:
+          NS_SIGNING_KEY_B64: ${{ secrets.NS_SIGNING_KEY_B64 }}
+          NS_SIGNING_PASSWORD: ${{ secrets.NS_SIGNING_PASSWORD }}
+          NS_SIGNING_ALIAS: ${{ secrets.NS_SIGNING_ALIAS }}
+        run: |
+          set -euo pipefail
+          if [ -z "$NS_SIGNING_KEY_B64" ] || [ -z "$NS_SIGNING_PASSWORD" ] || [ -z "$NS_SIGNING_ALIAS" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::La APK de PRUEBA está disponible. Para la APK definitiva con firma permanente ejecuta bash scripts/setup-signing.sh UNA vez en Codespaces."
+            exit 0
+          fi
+          mkdir -p "$RUNNER_TEMP/ns-signing"
+          printf '%s' "$NS_SIGNING_KEY_B64" | base64 -d > "$RUNNER_TEMP/ns-signing/neurosync-release.jks"
+          chmod 600 "$RUNNER_TEMP/ns-signing/neurosync-release.jks"
+          echo "NS_KEYSTORE_FILE=$RUNNER_TEMP/ns-signing/neurosync-release.jks" >> "$GITHUB_ENV"
+          echo "configured=true" >> "$GITHUB_OUTPUT"
+          echo "Firma estable cargada desde GitHub Secrets."
       - name: Compilar APK de prueba independiente (no sustituye tu instalación)
         working-directory: android
         shell: bash
+        env:
+          NS_SIGNING_PASSWORD: ${{ secrets.NS_SIGNING_PASSWORD }}
+          NS_SIGNING_ALIAS: ${{ secrets.NS_SIGNING_ALIAS }}
         run: |
           set -o pipefail
           gradle --no-daemon --stacktrace assemblePreview 2>&1 | tee "$RUNNER_TEMP/neurosync-gradle.log"
@@ -251,26 +307,6 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Preparar firma permanente de distribución
-        id: signing
-        shell: bash
-        env:
-          NS_SIGNING_KEY_B64: ${{ secrets.NS_SIGNING_KEY_B64 }}
-          NS_SIGNING_PASSWORD: ${{ secrets.NS_SIGNING_PASSWORD }}
-          NS_SIGNING_ALIAS: ${{ secrets.NS_SIGNING_ALIAS }}
-        run: |
-          set -euo pipefail
-          if [ -z "$NS_SIGNING_KEY_B64" ] || [ -z "$NS_SIGNING_PASSWORD" ] || [ -z "$NS_SIGNING_ALIAS" ]; then
-            echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::La APK de PRUEBA está disponible. Para la APK definitiva con firma permanente ejecuta bash scripts/setup-signing.sh UNA vez en Codespaces."
-            exit 0
-          fi
-          mkdir -p "$RUNNER_TEMP/ns-signing"
-          printf '%s' "$NS_SIGNING_KEY_B64" | base64 -d > "$RUNNER_TEMP/ns-signing/neurosync-release.jks"
-          chmod 600 "$RUNNER_TEMP/ns-signing/neurosync-release.jks"
-          echo "NS_KEYSTORE_FILE=$RUNNER_TEMP/ns-signing/neurosync-release.jks" >> "$GITHUB_ENV"
-          echo "configured=true" >> "$GITHUB_OUTPUT"
-          echo "Firma estable cargada desde GitHub Secrets."
       - name: Compilar APK instalable de distribución
         if: steps.signing.outputs.configured == 'true'
         working-directory: android
