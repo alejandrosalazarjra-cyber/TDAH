@@ -99,6 +99,21 @@ public final class MainActivity extends Activity {
       // Solo recursos locales de la mascota; no altera la red, cuentas ni las alarmas.
       @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request){
         String path=request.getUrl().getPath();
+        // Módulos internos de alarmas: ruta exacta, sin permitir acceso a archivos arbitrarios.
+        if("appassets.androidplatform.net".equals(request.getUrl().getHost()) && path!=null){
+          String resource=null,mime=null;
+          if("/modules/alarm_studio.js".equals(path)){
+            resource="modules/alarm_studio.js";mime="text/javascript";
+          }else if("/modules/alarm_studio.css".equals(path)){
+            resource="modules/alarm_studio.css";mime="text/css";
+          }
+          if(resource!=null)try{
+            return new WebResourceResponse(mime,"UTF-8",getAssets().open(resource));
+          }catch(IOException error){
+            android.util.Log.w("NeuroSync","No se pudo cargar módulo interno de alarmas",error);
+            return null;
+          }
+        }
         if("appassets.androidplatform.net".equals(request.getUrl().getHost())
             && path!=null && path.matches("/assets/dragon/(?:etapa-[1-6]|atlases/etapa-[1-6])\\.webp")){
           try{
