@@ -549,6 +549,7 @@ html,body{background:#f8fbff;color:var(--ink)}
   <form id="login-form" class="card login-card ns-login-form">
     <h2>NeuroSync</h2>
     <button type="button" class="btn ns-google-login" id="ns-google-login"><span class="ns-google-symbol">G</span> Continuar con Google</button>
+    <button type="button" class="btn ns-google-login hidden" id="ns-public-login"><span class="ns-google-symbol">G</span> Entrar a NeuroSync público</button>
     <p class="hint ns-google-note">Respaldo personal en Google Drive, con tu autorización.</p>
     <button type="button" class="ns-owner-access" id="ns-owner-access" aria-expanded="false">Acceso del administrador</button>
     <div class="hidden" id="ns-admin-login">
@@ -1778,6 +1779,7 @@ function save(){
  }
  by('sync-status').textContent=session.google?'Guardado local · Drive pendiente':'Guardado local verificado';
  if(session.google){nsQueueDriveBackup();return true}
+ if(session.public){return true}
  if(nat&&(nat.syncFamilyAsync||nat.syncFamily)){setTimeout(sync,350)}
  return true;
 }
@@ -2244,7 +2246,7 @@ window.neuroSyncOnSync=function(payload,requestingUser){
  }
 };
 function sync(){
- if(!session||session.google||!nat||syncing)return;
+ if(!session||session.google||session.public||!nat||syncing)return;
  nsOutboxFlush();
  var content=JSON.stringify({tasks:model.tasks,packs:model.packs,alarms:model.alarms});
  if(nat.syncFamilyAsync){syncing=true;by('sync-status').textContent='Sincronizando…';try{nat.syncFamilyAsync(content,session.username)}catch(e){syncing=false;by('sync-status').textContent='Guardado local'}return}
@@ -2263,12 +2265,29 @@ function getUsers(){if(!nat||!nat.getUsers)return [{username:session.username,ro
 function enter(u){
  // Registrar el proveedor que la persona eligió para no abrir otra cuenta
  // automáticamente si conviven un administrador local y un Google vinculado.
- try{localStorage.setItem('ns_last_session_provider',u.google?'google':'owner')}catch(e){}
+ try{localStorage.setItem('ns_last_session_provider',u.public?'public':u.google?'google':'owner')}catch(e){}
  nsStorageRecoveryBlocked=false;session=u;model=load();nsSleepRender();nsSceneRestore();nsFocusRestore();nsLauncherFocusSync();nsFocusTasks();nsFocusStats();nsFocusRender();nsDragonData();by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=(u.displayName||u.username).slice(0,1).toUpperCase();by('greeting').textContent='Tu día está listo para avanzar a tu ritmo.';by('ns-home-welcome').textContent='Hola, '+(u.displayName||u.email||u.username)+'. Tu día te espera.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');if(window.NeuroFinanceStudio)window.NeuroFinanceStudio.syncLauncher();if(nsPendingRoute){var route=nsPendingRoute;nsPendingRoute='';nsNavigate(route)}sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
 by('ns-owner-access').onclick=function(){
  var panel=by('ns-admin-login'),showing=!panel.classList.toggle('hidden');
  by('ns-owner-access').setAttribute('aria-expanded',String(showing));
  if(showing)by('login-user').focus();
+};
+if(nat&&nat.publicAvailable&&nat.publicAvailable()){
+ by('ns-public-login').classList.remove('hidden');
+}
+by('ns-public-login').onclick=function(){
+ by('login-error').textContent='';
+ if(nat&&nat.publicLogin)nat.publicLogin();
+ else by('login-error').textContent='La versión pública no está configurada.';
+};
+window.neuroPublicLogin=function(raw){
+ try{
+  var result=JSON.parse(raw);
+  if(result.ok&&result.user&&result.user.public){
+   enter(result.user);
+   by('sync-status').textContent='Conectado a NeuroSync público';
+  }else by('login-error').textContent=result.error||'No se pudo iniciar sesión';
+ }catch(e){by('login-error').textContent='No se pudo abrir la cuenta pública'}
 };
 by('ns-google-login').onclick=function(){
  by('login-error').textContent='';
@@ -2768,7 +2787,7 @@ function logout(){
  if(window.NeuroFinanceStudio)window.NeuroFinanceStudio.hideLauncher();
  nsFlushNativeSnapshot();
  try{localStorage.setItem('ns_last_session_provider','signed_out')}catch(e){}
- clearTimeout(nsDriveBackupTimer);nsUploadDriveNow();if(session&&session.google&&nat&&nat.logoutGoogle)nat.logoutGoogle();if(nsFocusState)nsFocusSaveSession(false);nsLauncherFocusSync();syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
+ clearTimeout(nsDriveBackupTimer);nsUploadDriveNow();if(session&&session.google&&nat&&nat.logoutGoogle)nat.logoutGoogle();if(session&&session.public&&nat&&nat.publicLogout)nat.publicLogout();if(nsFocusState)nsFocusSaveSession(false);nsLauncherFocusSync();syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
 by('logout').onclick=logout;by('avatar').onclick=async function(){if(await nsConfirm('Cerrar sesión','¿Quieres cerrar esta sesión?','Cerrar sesión'))logout()};
 document.addEventListener('visibilitychange',function(){
  if(document.hidden){nsFlushNativeSnapshot();clearTimeout(nsDriveBackupTimer);nsUploadDriveNow()}
@@ -2777,7 +2796,15 @@ document.addEventListener('visibilitychange',function(){
 window.addEventListener('pagehide',function(){nsFlushNativeSnapshot()});setInterval(sync,60000);
 var nsGoogleRestored=false,nsPreferredProvider='';
 try{nsPreferredProvider=localStorage.getItem('ns_last_session_provider')||''}catch(e){}
-if(nsPreferredProvider!=='owner'&&nsPreferredProvider!=='signed_out'&&nat&&nat.restoreGoogleSession){
+if(nsPreferredProvider==='public'&&nat&&nat.publicRestore){
+ try{
+  var publicRestored=JSON.parse(nat.publicRestore());
+  if(publicRestored.ok&&publicRestored.user&&publicRestored.user.public){
+   enter(publicRestored.user);nsGoogleRestored=true;
+  }
+ }catch(e){}
+}
+if(!nsGoogleRestored&&nsPreferredProvider!=='owner'&&nsPreferredProvider!=='signed_out'&&nsPreferredProvider!=='public'&&nat&&nat.restoreGoogleSession){
  try{
   var googleRestored=JSON.parse(nat.restoreGoogleSession());
   if(googleRestored.ok&&googleRestored.user&&googleRestored.user.google){
@@ -2786,7 +2813,7 @@ if(nsPreferredProvider!=='owner'&&nsPreferredProvider!=='signed_out'&&nat&&nat.r
   }
  }catch(error){}
 }
-if(!nsGoogleRestored&&nsPreferredProvider!=='signed_out'&&nsPreferredProvider!=='google'&&nat&&nat.restoreSession){
+if(!nsGoogleRestored&&nsPreferredProvider!=='signed_out'&&nsPreferredProvider!=='google'&&nsPreferredProvider!=='public'&&nat&&nat.restoreSession){
  try{
   var restored=JSON.parse(nat.restoreSession());
   if(restored.ok&&restored.user&&restored.user.username){
@@ -2957,9 +2984,13 @@ function nsOutboxWrite(entries){
  }catch(e){return false}
 }
 function nsOutboxAttempt(entry){
- if(!nat||!nat.sendTaskToUser)return {ok:false,error:'Servidor no conectado'};
+ if(!nat)return {ok:false,error:'Servidor no conectado'};
  try{
-  var response=JSON.parse(nat.sendTaskToUser(entry.recipient,entry.id,JSON.stringify(entry.task)));
+  var raw=session&&session.public&&nat.publicSendTask?
+   nat.publicSendTask(entry.recipient,entry.id,entry.task.title):
+   nat.sendTaskToUser&&nat.sendTaskToUser(entry.recipient,entry.id,JSON.stringify(entry.task));
+  if(!raw)return {ok:false,error:'Transporte no disponible'};
+  var response=JSON.parse(raw);
   return response&&response.ok===true?response:
    {ok:false,error:response&&response.error||'No se pudo entregar'};
  }catch(e){return {ok:false,error:'Sin conexión con el servidor'}}
@@ -2987,17 +3018,42 @@ window.NeuroTasksAPI={
  today:function(){return day()},
  owner:function(){return session?session.username:''},
  contacts:function(){
-  if(!session||!nat||!nat.taskContacts)return [];
+  if(!session||!nat)return [];
   try{
+   if(session.public){
+    if(!nat.publicContacts)return [];
+    var people=JSON.parse(nat.publicContacts());
+    return people.ok&&Array.isArray(people.contacts)?people.contacts.filter(function(u){
+     return u&&typeof u.id==='string'&&typeof u.handle==='string';
+    }).map(function(u){return {id:u.id,label:(u.display_name||u.handle)+' (@'+u.handle+')'};}):[];
+   }
+   if(!nat.taskContacts)return [];
    var response=JSON.parse(nat.taskContacts());
    return response.ok&&Array.isArray(response.users)?response.users.filter(function(u){
     return u&&typeof u.username==='string'&&u.username!==session.username;
    }).map(function(u){return u.username}):[];
   }catch(e){return []}
  },
+ publicAccount:function(){return !!(session&&session.public)},
+ publicLookup:function(handle){
+  if(!session||!session.public||!nat||!nat.publicLookup)return {ok:false,error:'Servicio público no disponible'};
+  try{return JSON.parse(nat.publicLookup(handle))}catch(e){return {ok:false,error:'No se pudo buscar el contacto'}}
+ },
+ publicInvite:function(id){
+  if(!session||!session.public||!nat||!nat.publicInvite)return {ok:false,error:'Servicio público no disponible'};
+  try{return JSON.parse(nat.publicInvite(id))}catch(e){return {ok:false,error:'No se pudo enviar la invitación'}}
+ },
+ publicInvitations:function(){
+  if(!session||!session.public||!nat||!nat.publicInvitations)return {ok:false,invitations:[]};
+  try{return JSON.parse(nat.publicInvitations())}catch(e){return {ok:false,invitations:[]}}
+ },
+ publicAcceptInvite:function(id){
+  if(!session||!session.public||!nat||!nat.publicAcceptInvite)return {ok:false,error:'Servicio no disponible'};
+  try{return JSON.parse(nat.publicAcceptInvite(id))}catch(e){return {ok:false,error:'No se pudo aceptar'}}
+ },
  sendTo:function(recipient,task){
   if(!session||!model)return {ok:false,error:'Inicia sesión'};
-  if(typeof recipient!=='string'||!/^[a-z0-9_-]{3,30}$/.test(recipient)||recipient===session.username)
+  if(typeof recipient!=='string'||!(session.public?/^[0-9a-f-]{36}$/i.test(recipient):/^[a-z0-9_-]{3,30}$/.test(recipient))||recipient===session.username)
    return {ok:false,error:'Selecciona una persona distinta'};
   if(!task||!String(task.title||'').trim())return {ok:false,error:'Escribe una tarea'};
   var entries=nsOutboxRead();
@@ -3029,11 +3085,31 @@ window.NeuroTasksAPI={
  retryOutbox:function(){return nsOutboxFlush()},
 
  received:function(){
+  if(session&&session.public&&nat&&nat.publicTasks){
+   try{
+    var result=JSON.parse(nat.publicTasks('inbox'));
+    return result.ok&&Array.isArray(result.tasks)?result.tasks.map(function(t){
+     return {id:t.id,title:t.title,owner:session.username,sentBy:t.sender_id,
+      deliveryStatus:t.status,date:day()};
+    }):[];
+   }catch(e){return []}
+  }
   return session&&model?model.tasks.filter(function(t){
    return t&&!t.deleted&&t.owner===session.username&&typeof t.sentBy==='string';
   }).map(function(t){return Object.assign({},t)}):[];
  },
  sent:function(){
+  if(session&&session.public&&nat&&nat.publicTasks){
+   var queued=nsOutboxRead();
+   if(queued===null)return {ok:false,error:'No se pudo leer la bandeja',tasks:[]};
+   var offline=queued.map(function(e){return {id:e.id,title:e.task.title,recipient:e.recipient,deliveryStatus:'queued'}});
+   try{
+    var reply=JSON.parse(nat.publicTasks('sent'));
+    return {ok:true,offline:!reply.ok,tasks:offline.concat(reply.ok&&Array.isArray(reply.tasks)?reply.tasks.map(function(t){
+     return {id:t.id,title:t.title,recipient:t.recipient_id,deliveryStatus:t.status};
+    }):[])};
+   }catch(e){return {ok:true,offline:true,tasks:offline}}
+  }
   var pending=nsOutboxRead();
   if(pending===null)return {ok:false,error:'Bandeja de salida ilegible',tasks:[]};
   var queued=pending.map(function(e){return {id:e.id,recipient:e.recipient,title:e.task.title,
@@ -3049,6 +3125,15 @@ window.NeuroTasksAPI={
  },
 
  updateReceived:function(id,status){
+  if(session&&session.public){
+   if(!nat||!nat.publicTaskAction)return {ok:false,error:'Servicio público no disponible'};
+   try{
+    var action=status==='accepted'?'accept':status==='completed'?'complete':'';
+    if(!action)return {ok:false,error:'Acción inválida'};
+    var response=JSON.parse(nat.publicTaskAction(id,action));
+    return response.ok?{ok:true,status:response.task&&response.task.status}:{ok:false,error:response.error||'No se pudo actualizar'};
+   }catch(e){return {ok:false,error:'Sin conexión'}}
+  }
   if(!session||!model||!nat||!nat.updateTaskDelivery)return {ok:false,error:'Conecta con el servidor familiar'};
   var task=model.tasks.find(function(t){return t&&t.id===id&&t.owner===session.username&&t.sentBy&&!t.deleted});
   if(!task)return {ok:false,error:'Tarea no encontrada'};
