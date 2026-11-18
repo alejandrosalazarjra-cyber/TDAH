@@ -24,7 +24,7 @@ public final class MainActivity extends Activity {
     if(value==null)return "";
     switch(value){
       case "home":case "tasks":case "calendar":case "bags":case "alarms":
-      case "habits":case "focus":case "dragon":case "admin":return value;
+      case "habits":case "focus":case "dragon":case "admin":case "finance":return value;
       default:return "";
     }
   }
