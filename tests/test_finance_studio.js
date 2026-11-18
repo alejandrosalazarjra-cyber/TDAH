@@ -17,6 +17,7 @@ assert(script.includes('function voidEntry(')&&script.includes('entry.voidedAt=n
 assert(script.includes('function exportBook(')&&script.includes("neurosync-finanzas-"));
 assert(script.includes('data-finance="confirm-void"')&&!script.includes('window.confirm('));
 assert(android.includes('canAccessSnapshot(username)'),'Actualizar launcher solo desde cuenta verificada');
+assert(/case\s+"finance"\s*:\s*return value;/.test(android),'Android debe permitir abrir Finanzas desde el launcher');
 assert(launcher.includes('getBoolean("enabled",false)'),'Ocultar resumen hasta consentimiento');
 assert(launcher.includes('openNeuroSync("finance")'),'Resumen abre finanzas');
 assert(workflow.includes('cp modules/finance_studio.js modules/finance_studio.css'));
