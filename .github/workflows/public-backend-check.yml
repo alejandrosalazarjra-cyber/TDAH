@@ -41,6 +41,7 @@ jobs:
       - run: node --check backend/server.js
       - run: node tests/test_public_backend_contract.js
       - run: node tests/test_public_backend_api.js
+      - run: node tests/test_public_deployment_config.js
       - name: Aplicar esquema a PostgreSQL de prueba
         env:
           DATABASE_URL: postgres://neurosync:test_only_local_ci@127.0.0.1:5432/neurosync_tests
