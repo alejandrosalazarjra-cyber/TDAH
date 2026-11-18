@@ -31,6 +31,7 @@ workflows:
           node tests/test_task_studio.js
           node tests/test_task_sent_notifications.js
           node tests/test_task_background_sync.js
+          node tests/test_public_backend_contract.js
           node tests/test_departure_studio.js
           node tests/test_pomodoro_studio.js
           node tests/test_wellbeing_studio.js
