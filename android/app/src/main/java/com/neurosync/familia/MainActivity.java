@@ -123,6 +123,11 @@ public final class MainActivity extends Activity {
             resource="modules/wellbeing_studio.js";mime="text/javascript";
           }else if("/modules/wellbeing_studio.css".equals(path)){
             resource="modules/wellbeing_studio.css";mime="text/css";
+          }
+          else if("/modules/finance_studio.js".equals(path)){
+            resource="modules/finance_studio.js";mime="text/javascript";
+          }else if("/modules/finance_studio.css".equals(path)){
+            resource="modules/finance_studio.css";mime="text/css";
           }else if("/assets/focus/bosque.mp4".equals(path)){
             resource="focus/bosque.mp4";mime="video/mp4";
           }
@@ -663,6 +668,17 @@ public final class MainActivity extends Activity {
     }
     @JavascriptInterface public String alarmEventHistory(){
       return AlarmHistory.read(MainActivity.this);
+    }
+    @JavascriptInterface public boolean updateFinanceLauncherSummary(
+        String username,boolean visible,long balance,long income,long expense){
+      if(!canAccessSnapshot(username))return false;
+      // Opt-in explícito. Un saldo persistido en pantalla HOME se considera sensible.
+      // No almacenar el nombre de usuario ni IDs financieros en las preferencias del launcher.
+      android.content.SharedPreferences prefs=getSharedPreferences("ns_finance_launcher",MODE_PRIVATE);
+      prefs.edit().putBoolean("enabled",visible)
+        .putLong("balance",visible?balance:0).putLong("income",visible?income:0)
+        .putLong("expense",visible?expense:0).apply();
+      return true;
     }
     @JavascriptInterface public void updateWidgetNextAlarm(String when){
       TodayWidget.setNextAlarm(MainActivity.this,when);
