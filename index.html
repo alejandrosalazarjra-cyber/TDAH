@@ -3035,6 +3035,22 @@ window.NeuroTasksAPI={
   }catch(e){return []}
  },
  publicAccount:function(){return !!(session&&session.public)},
+ publicMe:function(){
+  if(!session||!session.public||!nat||!nat.publicMe)return {ok:false};
+  try{return JSON.parse(nat.publicMe())}catch(e){return {ok:false,error:'No se pudo consultar el perfil'}}
+ },
+ publicUpdateProfile:function(handle,displayName,discoverable){
+  if(!session||!session.public||!nat||!nat.publicUpdateProfile)return {ok:false,error:'Servicio público no disponible'};
+  try{
+   var result=JSON.parse(nat.publicUpdateProfile(handle,displayName,!!discoverable));
+   if(result.ok&&result.user){
+    session.handle=result.user.handle;
+    session.displayName=result.user.display_name||session.displayName;
+   }
+   return result;
+  }catch(e){return {ok:false,error:'No se pudo actualizar el perfil'}}
+ },
+
  publicLookup:function(handle){
   if(!session||!session.public||!nat||!nat.publicLookup)return {ok:false,error:'Servicio público no disponible'};
   try{return JSON.parse(nat.publicLookup(handle))}catch(e){return {ok:false,error:'No se pudo buscar el contacto'}}
