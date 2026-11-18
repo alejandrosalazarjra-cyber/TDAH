@@ -110,6 +110,10 @@ public final class MainActivity extends Activity {
             resource="modules/task_studio.js";mime="text/javascript";
           }else if("/modules/task_studio.css".equals(path)){
             resource="modules/task_studio.css";mime="text/css";
+          }else if("/modules/departure_studio.js".equals(path)){
+            resource="modules/departure_studio.js";mime="text/javascript";
+          }else if("/modules/departure_studio.css".equals(path)){
+            resource="modules/departure_studio.css";mime="text/css";
           }
           if(resource!=null)try{
             return new WebResourceResponse(mime,"UTF-8",getAssets().open(resource));
