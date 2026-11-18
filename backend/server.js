@@ -114,7 +114,7 @@ async function handler(req,res){
   return respond(res,200,{ok:true});
  }
  if(path==='/v1/me'&&req.method==='GET')return respond(res,200,{ok:true,user});
- if(path==='/v1/me'&&req.method==='PATCH'){
+ if(path==='/v1/me'&&(req.method==='PATCH'||req.method==='POST')){
   const data=await body(req),name=String(data.displayName||'').trim();
   const handle=String(data.handle||'').toLowerCase().trim().replace(/^@/,'');
   if(name.length<1||name.length>100||!/^[a-z0-9_]{3,30}$/.test(handle)||
