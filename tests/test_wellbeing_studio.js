@@ -26,7 +26,7 @@ const localStorage={
  setItem:(x,v)=>store.set(x,String(v)),
  removeItem:x=>store.delete(x)
 };
-const deps={session,localStorage,day:()=>now,streakKey:key,renderStreak:()=>{}};
+const deps={window:{},session,localStorage,day:()=>now,streakKey:key,renderStreak:()=>{}};
 const api=new Function(...Object.keys(deps),html.slice(start,end)+'\nreturn window.NeuroWellbeingAPI;')(...Object.values(deps));
 assert.deepEqual(api.read().history,[]);
 const original={started:'2026-11-01',history:[{from:'2026-10-01',to:'2026-10-10'}]};
