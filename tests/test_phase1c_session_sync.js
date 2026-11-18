@@ -53,6 +53,20 @@ function makeTest(blocked=false){
  t.ctx.neuroSyncOnSync(JSON.stringify({ok:true,data:{tasks:[],packs:[],alarms:[]}}),'otro');
  assert.equal(t.getWritten(),null,'Descartar respuestas que pertenecen a otra sesión');
 }
+{
+ const t=makeTest();
+ t.ctx.neuroSyncOnSync(JSON.stringify({ok:false,error:'No se guardaron los cambios familiares.'}),'mama');
+ assert.equal(t.getWritten(),null,'No persistir una sincronización rechazada por el servidor');
+ assert.equal(t.getRenders(),0,'No renderizar datos como sincronizados si falló el guardado remoto');
+ assert(t.notifications.some(x=>x.includes('No se guardaron')),
+  'Mostrar el error de persistencia procedente del servidor');
+}
+const syncStore=fs.readFileSync('android/app/src/main/java/com/neurosync/familia/SyncStore.java','utf8');
+assert(syncStore.includes('if(!c.getSharedPreferences("ns_family",0).edit()') &&
+ syncStore.includes('AccountStore.fail("No se guardaron los cambios familiares.'),
+ 'El servidor no debe responder ok:true si SharedPreferences.commit() falla');
+assert(syncStore.includes('updated>now+300000L'),
+ 'Rechazar actualizaciones fechadas demasiado lejos en el futuro');
 assert(source.includes("ns_last_session_provider"),'Guardar la preferencia del proveedor');
 assert(source.includes("nsPreferredProvider!=='signed_out'"),'Respetar el cierre de sesión');
 assert(source.includes("nsPreferredProvider!=='google'"),'No sustituir cuenta Google ausente por admin local');
