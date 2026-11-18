@@ -588,6 +588,20 @@ public final class MainActivity extends Activity {
     @JavascriptInterface public String publicLogout(){
       return publicAccounts==null?"{}":publicAccounts.logout().toString();
     }
+    @JavascriptInterface public String publicMe(){
+      return publicAccounts.call("GET","/v1/me",null,"").toString();
+    }
+    @JavascriptInterface public String publicUpdateProfile(String handle,String displayName,boolean discoverable){
+      String normalized=handle==null?"":handle.trim().toLowerCase(java.util.Locale.ROOT).replaceFirst("^@","");
+      String name=displayName==null?"":displayName.trim();
+      if(!normalized.matches("[a-z0-9_]{3,30}")||name.isEmpty()||name.length()>100)
+        return AccountStore.fail("Perfil inválido").toString();
+      try{
+        JSONObject body=new JSONObject().put("handle",normalized).put("displayName",name)
+          .put("discoverable",discoverable);
+        return publicAccounts.call("PATCH","/v1/me",body,"").toString();
+      }catch(Exception e){return AccountStore.fail("No se pudo modificar el perfil").toString();}
+    }
     @JavascriptInterface public String publicContacts(){
       return publicAccounts.call("GET","/v1/contacts",null,"").toString();
     }
