@@ -597,6 +597,19 @@ public final class MainActivity extends Activity {
           .setPositiveButton("Entendido",null).show();
       });
     }
+    @JavascriptInterface public void scanBarcodeReference(){
+      runOnUiThread(()->{
+        qrEnrollmentPending=true;
+        try{
+          new com.google.zxing.integration.android.IntentIntegrator(MainActivity.this)
+           .setDesiredBarcodeFormats(com.google.zxing.integration.android.IntentIntegrator.ALL_CODE_TYPES)
+           .setPrompt("Escanea el código físico que usarás al despertar")
+           .setBeepEnabled(false).setOrientationLocked(false).initiateScan();
+        }catch(Exception ex){qrEnrollmentPending=false;
+          android.util.Log.w("NeuroSync","No se pudo iniciar el escaneo de barras",ex);
+        }
+      });
+    }
     @JavascriptInterface public void scanQrReference(){
       runOnUiThread(()->{
         qrEnrollmentPending=true;
