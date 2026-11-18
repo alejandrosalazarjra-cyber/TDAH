@@ -39,8 +39,8 @@ assert(web.includes('id="ns-public-login"')&&
  'Mostrar login público solo cuando está configurado');
 assert(web.includes("u.public?'public':u.google?'google':'owner'"),
  'Recordar proveedor sin confundir Google Drive');
-assert(web.includes('if(!session||session.google||session.public||!nat||syncing)return;'),
- 'Nunca ejecutar la sincronización LAN con una cuenta pública');
+assert(web.includes('if(session.public){nsOutboxFlush();return}'),
+ 'Cuentas públicas reintentan pendientes sin invocar la sincronización LAN');
 assert(web.includes('if(!wasPublic&&nat&&nat.logout)nat.logout()'),
  'No revocar la sesión familiar al cerrar la pública');
 assert(studio.includes('ns-ts-profile-form')&&studio.includes('ns-ts-lookup-form')&&
