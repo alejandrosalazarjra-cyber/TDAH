@@ -90,6 +90,11 @@ assert.equal(offlineApi.outbox().length,1,'Persistir un envío pendiente por cue
 const same=offlineApi.sendTo('mama',{id:'task_offline_987',title:'Traer llaves'});
 assert.equal(same.queued,true);
 assert.equal(offlineApi.outbox().length,1,'No duplicar reintentos');
+const editedRetry=offlineApi.sendTo('mama',{id:'task_offline_987',title:'Texto distinto'});
+assert.equal(editedRetry.queued,true);
+assert.equal(offlineApi.outbox()[0].task.title,'Traer llaves',
+ 'Un reintento no debe cambiar los datos ya almacenados');
+
 assert.equal(offlineApi.sent().tasks[0].deliveryStatus,'queued','Mostrar pendientes aun sin servidor');
 offline=false;
 const flushed=offlineApi.retryOutbox();
@@ -102,6 +107,9 @@ storage.fail=false;
 assert.equal(offlineApi.outbox().length,0,'Un error de almacenamiento no debe crear un envío falso');
 assert(!storageState.has('ns_task_outbox_v1_hermano'),'No crear cola de otra cuenta');
 assert(script.includes('Pendiente de conexión'),'Mostrar envío sin conexión en la interfaz');
+assert(html.includes('Math.min(1,items.length)'),
+ 'Limitar los reintentos síncronos para no bloquear la pantalla');
+
 assert(html.includes("window.addEventListener('online'"),'Reintentar al recuperar la conexión');
 
 assert(script.includes('data-send=')&&script.includes('name="recipient"'),
