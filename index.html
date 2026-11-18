@@ -2738,6 +2738,12 @@ window.NeuroAlarmAPI={
   if(!session||!model)return false;
   model.alarmPreferences=Object.assign({},model.alarmPreferences||{},opts);return !!save();
  },
+ chooseSound:function(id){
+  if(!id||!nat||!nat.chooseSoundForAlarm)return false;
+  nat.chooseSoundForAlarm(id);return true;
+ },
+ hasSound:function(id){try{return !!(id&&nat&&nat.hasAlarmSound&&nat.hasAlarmSound(id))}catch(e){return false}},
+ clearSound:function(id){if(nat&&nat.clearAlarmSound)nat.clearAlarmSound(id)},
  permissions:function(){try{return nat&&nat.alarmPermissions?JSON.parse(nat.alarmPermissions()):null}catch(e){return null}},
  requestPermissions:function(){if(nat&&nat.requestAlarmPermissions)nat.requestAlarmPermissions()},
  checkPermissions:function(){checkAlarmPermissions()},
