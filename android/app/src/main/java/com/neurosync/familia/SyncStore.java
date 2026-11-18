@@ -169,6 +169,14 @@ public final class SyncStore {
               safe.put("updatedAt",updated);
               change=safe;
             }
+            // Los metadatos del envío solo los establece el servidor.
+            if(old==null){
+              change.remove("sentBy");
+              change.remove("deliveryStatus");
+            }else if(!old.has("sentBy")){
+              change.remove("sentBy");
+              change.remove("deliveryStatus");
+            }
             // El receptor puede completar su tarea, pero no falsificar el remitente.
             if(old!=null&&old.has("sentBy")){
               change.put("sentBy",old.optString("sentBy"));
