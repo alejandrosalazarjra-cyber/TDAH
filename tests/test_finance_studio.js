@@ -53,4 +53,26 @@ const noActivity=stats(book,'2026-10');
 assert.equal(noActivity.income,0);
 assert.equal(noActivity.expense,0);
 assert.equal(noActivity.balance,900000,'Saldo de cuentas = saldo actual, no movimientos del mes');
+// Integridad: comprobar fechas reales, duplicados y referencias contables dañadas.
+const validationStart=script.indexOf('const peso=');
+const validationEnd=script.indexOf('const uuid=',validationStart);
+assert(validationStart>0&&validationEnd>validationStart,'Faltan validadores financieros');
+const validators=new Function(script.slice(validationStart,validationEnd)+';return {validDate,validBook};')();
+assert.equal(validators.validDate('2024-02-29'),true,'Año bisiesto válido');
+assert.equal(validators.validDate('2026-02-30'),false,'No aceptar 30 de febrero');
+assert.equal(validators.validDate('2026-13-01'),false,'Mes fuera de rango');
+assert.equal(validators.validDate('2026-11-31'),false,'No aceptar 31 de noviembre');
+const validLedger={version:1,accounts:[{id:'cash',name:'Efectivo',opening:10000}],
+ entries:[{id:'m1',type:'expense',date:'2026-11-18',account:'cash',amount:1000}],
+ budgets:{'2026-11':5000},launcher:false};
+assert.equal(validators.validBook(validLedger),true,'Libro bien formado debe ser legible');
+const malformed=x=>JSON.parse(JSON.stringify(x));
+const duplicate=malformed(validLedger);duplicate.entries.push({...duplicate.entries[0]});
+assert.equal(validators.validBook(duplicate),false,'No aceptar movimientos duplicados');
+const missing=malformed(validLedger);missing.entries[0].account='desconocida';
+assert.equal(validators.validBook(missing),false,'No aceptar cuentas huérfanas');
+const badBudget=malformed(validLedger);badBudget.budgets=null;
+assert.equal(validators.validBook(badBudget),false,'No aceptar presupuestos nulos');
+const badAmount=malformed(validLedger);badAmount.entries[0].amount=-10;
+assert.equal(validators.validBook(badAmount),false,'No aceptar montos negativos');
 console.log('Finanzas OK: asientos, conciliación de saldos, transferencias, categorías, privacidad del launcher');
