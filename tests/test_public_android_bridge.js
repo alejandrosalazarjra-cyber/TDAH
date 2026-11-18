@@ -97,4 +97,16 @@ online=true;
 assert.equal(publicAPI.retryOutbox().delivered,1);
 assert.equal(publicAPI.outbox().length,0);
 
+// Un rechazo de autorización HTTP no puede presentarse como una pérdida de internet.
+fakeNative.publicSendTask=()=>JSON.stringify({ok:false,httpStatus:403,error:'Contacto no autorizado'});
+const rejection=publicAPI.sendTo(id,{id:'send_task_unauth_123',title:'Solo contactos'});
+assert.equal(rejection.ok,false,'Un rechazo de servidor no debe parecer envío pendiente');
+assert.equal(publicAPI.outbox()[0].failed,'Contacto no autorizado');
+assert.equal(publicAPI.sent().tasks[0].deliveryStatus,'failed',
+ 'La bandeja distingue rechazos reales de desconexiones');
+const countBefore=publicAPI.outbox().length;
+publicAPI.retryOutbox();
+assert.equal(publicAPI.outbox().length,countBefore,
+ 'Los envíos rechazados no se reintentan automáticamente');
+
 console.log('Puente público Android OK: sesiones separadas, permisos y UI opt-in');
