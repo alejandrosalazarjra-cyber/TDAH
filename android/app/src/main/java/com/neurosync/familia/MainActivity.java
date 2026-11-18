@@ -605,6 +605,26 @@ public final class MainActivity extends Activity {
     @JavascriptInterface public String publicContacts(){
       return publicAccounts.call("GET","/v1/contacts",null,"").toString();
     }
+    @JavascriptInterface public String publicBlocks(){
+      return publicAccounts.call("GET","/v1/contacts/blocks",null,"").toString();
+    }
+    @JavascriptInterface public String publicBlock(String recipientId){
+      if(recipientId==null||!recipientId.matches("[0-9a-fA-F-]{36}"))
+        return AccountStore.fail("Usuario inválido").toString();
+      return publicAccounts.call("POST","/v1/contacts/block",
+        payload("recipientId",recipientId),"").toString();
+    }
+    @JavascriptInterface public String publicUnblock(String recipientId){
+      if(recipientId==null||!recipientId.matches("[0-9a-fA-F-]{36}"))
+        return AccountStore.fail("Usuario inválido").toString();
+      return publicAccounts.call("POST","/v1/contacts/unblock",
+        payload("recipientId",recipientId),"").toString();
+    }
+    @JavascriptInterface public String publicDeleteAccount(String confirmation){
+      if(!"ELIMINAR".equals(confirmation))
+        return AccountStore.fail("Confirmación inválida").toString();
+      return publicAccounts.deleteAccount().toString();
+    }
     @JavascriptInterface public String publicInvitations(){
       return publicAccounts.call("GET","/v1/contacts/invitations",null,"").toString();
     }
