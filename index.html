@@ -531,7 +531,7 @@ html,body{background:#f8fbff;color:var(--ink)}
  border:0;background:transparent;color:#0876ba;min-height:43px;font-weight:650}
 #ns-check-local-copy:focus-visible{outline:2px solid #0876ba;outline-offset:2px}
 #ns-local-copy-result{padding:2px 12px;font-size:12px;line-height:1.45}
-</style></head><body>
+</style><link rel="stylesheet" href="./modules/alarm_studio.css"></head><body>
 <div id="login" class="login ns-login-v3">
  <div class="ns-login-wrap">
   <div class="ns-login-brand"><img src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%20role%3D%22img%22%20aria-label%3D%22NeuroSync%3A%20drag%C3%B3n%20y%20lista%20de%20tareas%22%3E%0A%3Cdefs%3E%3ClinearGradient%20id%3D%22bg%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23063674%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%230866c6%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2303c4ec%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22wing%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2345eeff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%230d7fe6%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22paper%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ffffff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23c8f2ff%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%0A%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%22248%22%20height%3D%22248%22%20rx%3D%2258%22%20fill%3D%22url(%23bg)%22%2F%3E%0A%3Cpath%20d%3D%22M28%20158Q32%2078%20103%2063Q63%20103%2075%20152Q95%20104%20151%2077Q107%20127%20113%20175Q88%20205%2055%20201Q37%20184%2028%20158Z%22%20fill%3D%22url(%23wing)%22%2F%3E%0A%3Cpath%20d%3D%22M77%2043Q109%2073%20128%2075Q115%2051%20119%2033Q142%2061%20166%2065Q195%2076%20203%20103Q209%20118%20193%20128Q181%20135%20160%20121Q144%20116%20124%20128Q100%20147%20102%20182Q78%20156%2087%20132Q91%20113%20113%20101Q87%2098%2059%20122Q73%2081%20109%2087Q87%2067%2077%2043Z%22%20fill%3D%22%23f7feff%22%2F%3E%0A%3Cpath%20d%3D%22M159%20103Q171%20101%20178%20107Q170%20116%20159%20108Z%22%20fill%3D%22%23073878%22%2F%3E%0A%3Crect%20x%3D%22128%22%20y%3D%22127%22%20width%3D%22100%22%20height%3D%2290%22%20rx%3D%2218%22%20fill%3D%22url(%23paper)%22%2F%3E%0A%3Cg%20stroke%3D%22%23078fe6%22%20stroke-width%3D%228%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m143%20149%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20173%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20196%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22M175%20151h37M175%20175h37M175%20199h27%22%2F%3E%3C%2Fg%3E%0A%3Cpath%20d%3D%22M44%20207Q111%20251%20190%20220%22%20fill%3D%22none%22%20stroke%3D%22%235ff0fd%22%20stroke-width%3D%2216%22%20stroke-linecap%3D%22round%22%2F%3E%0A%3Cpath%20d%3D%22m219%2058%206%2016%2016%206-16%206-6%2016-6-16-16-6%2016-6Z%22%20fill%3D%22%2394ffff%22%2F%3E%0A%3C%2Fsvg%3E" alt="Logo NeuroSync"><span>Neuro<b>Sync</b></span></div>
@@ -1897,7 +1897,7 @@ function alarmItem(a){
  };
  return e;
 }
-function renderAlarms(){fill('alarms-list',active(model.alarms).filter(owned),alarmItem,'No hay alarmas. Crea una para recordar algo importante.')}
+function renderAlarms(){fill('alarms-list',active(model.alarms).filter(owned),alarmItem,'No hay alarmas. Crea una para recordar algo importante.');window.dispatchEvent(new Event('neuro-alarm-changed'))}
 function renderCalendar(){var grid=by('calendar');grid.replaceChildren();by('month-title').textContent=month.toLocaleDateString('es-CO',{month:'long',year:'numeric'});var wd=['L','M','M','J','V','S','D'];wd.forEach(function(w){var e=document.createElement('span');e.className='week-label';e.textContent=w;grid.append(e)});
 var first=new Date(month.getFullYear(),month.getMonth(),1),offset=(first.getDay()+6)%7,last=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();
 for(var j=0;j<offset;j++){grid.append(document.createElement('span'))}
@@ -2702,5 +2702,93 @@ if(!nsGoogleRestored&&nsPreferredProvider!=='signed_out'&&nsPreferredProvider!==
   }
  }catch(error){by('login-error').textContent='No se pudo recuperar la sesión. Puedes iniciar sesión normalmente.'}
 }
+
+/* Alarm Studio: API estrecha para las seis vistas; conserva un único modelo de alarmas.
+ * El código visual no accede a credenciales, datos ajenos ni elementos internos.
+ */
+window.NeuroAlarmAPI={
+ ready:function(){return !!(session&&model)},
+ list:function(){return session&&model?active(model.alarms).filter(owned).map(function(a){return Object.assign({},a)}):[]},
+ account:function(){return session?session.username:''},
+ events:function(){
+  if(!session||!model||!nat||!nat.alarmEventHistory)return [];
+  try{
+   var ids=new Set(active(model.alarms).filter(owned).map(function(a){return String(a.id)}));
+   var items=JSON.parse(nat.alarmEventHistory());
+   return Array.isArray(items)?items.filter(function(e){return ids.has(String(e.id))&&Number(e.at)>0}).slice(-500):[];
+  }catch(e){return []}
+ },
+ sleep:function(){return session?nsSleepRecords():[]},
+ preferences:function(){return model&&model.alarmPreferences?Object.assign({},model.alarmPreferences):{}},
+ setPreferences:function(opts){
+  if(!session||!model)return false;
+  model.alarmPreferences=Object.assign({},model.alarmPreferences||{},opts);return !!save();
+ },
+ permissions:function(){try{return nat&&nat.alarmPermissions?JSON.parse(nat.alarmPermissions()):null}catch(e){return null}},
+ requestPermissions:function(){if(nat&&nat.requestAlarmPermissions)nat.requestAlarmPermissions()},
+ checkPermissions:function(){checkAlarmPermissions()},
+ native:function(action){
+  if(!nat)return false;
+  var commands={
+   sound:'chooseAlarmSound',clock:'openSystemClock',music:'createYouTubeMusicClockAlarm',
+   test:'testAlarm',optimization:'requestAlarmPermissions'
+  };
+  var method=commands[action];
+  if(method&&typeof nat[method]==='function'){nat[method]();return true}
+  return false;
+ },
+ confirm:function(title,message,label){return nsConfirm(title,message,label)},
+ legacyQr:function(){openModal('alarm');var f=by('popup-form');if(f&&f.elements.challenge){f.elements.challenge.value='qr';f.elements.challenge.dispatchEvent(new Event('change'))}},
+ createOrUpdate:function(data,id){
+  if(!session||!model)return {ok:false,error:'Inicia sesión para guardar una alarma'};
+  var original=id?model.alarms.find(function(a){return a.id===id&&!a.deleted}):null;
+  if(id&&(!original||original.owner!==session.username))return {ok:false,error:'No tienes permiso para editar esta alarma'};
+  var title=String(data.title||'Despertar').trim().slice(0,90);
+  var date=String(data.date||day()),time=String(data.time||'07:00');
+  var validRepeats=['none','daily','weekly','every2','every3'];
+  var allowedMissions=['none','math','math_hard','typing','memory','taps','shake','qr','routine_focus','routine_active'];
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^\d{2}:\d{2}$/.test(time))
+   return {ok:false,error:'Fecha u hora inválida'};
+  var dateParts=date.split('-').map(Number),timeParts=time.split(':').map(Number);
+  var d=new Date(dateParts[0],dateParts[1]-1,dateParts[2],timeParts[0],timeParts[1]);
+  if(d.getFullYear()!==dateParts[0]||d.getMonth()!==dateParts[1]-1||d.getDate()!==dateParts[2]||
+   d.getHours()!==timeParts[0]||d.getMinutes()!==timeParts[1])
+   return {ok:false,error:'Fecha u hora inexistente'};
+  var repeat=validRepeats.includes(data.repeat)?data.repeat:'none';
+  var challenge=allowedMissions.includes(data.challenge)?data.challenge:'none';
+  if(repeat==='none'&&d.getTime()<=Date.now())return {ok:false,error:'Elige una hora futura'};
+  if(challenge==='qr'&&(!original||original.challenge!=='qr'))
+   return {ok:false,error:'Configura primero tu QR desde «Configurar QR físico»'};
+  var draft=Object.assign({},original||{},{
+   id:original?original.id:uid(),owner:session.username,
+   title:title,date:date,time:time,repeat:repeat,daily:repeat==='daily',
+   challenge:challenge,enabled:true,updatedAt:stamp(),
+   snoozeMinutes:[1,3,5,10,15].includes(Number(data.snoozeMinutes))?Number(data.snoozeMinutes):5,
+   snoozeLimit:[0,1,2,3,5,10].includes(Number(data.snoozeLimit))?Number(data.snoozeLimit):3
+  });
+  // Nunca guardar como programada si Android rechazó el horario.
+  if(nat&&(!scheduleAlarm(draft)))return {ok:false,error:'Android no pudo programar la alarma. Revisa permisos.'};
+  if(original)Object.assign(original,draft);else model.alarms.push(draft);
+  if(!save()){if(nat&&nat.cancelAlarm)nat.cancelAlarm(draft.id);return {ok:false,error:'No se pudieron guardar los cambios'};}
+  render();window.dispatchEvent(new Event('neuro-alarm-changed'));
+  return {ok:true,id:draft.id};
+ },
+ toggle:function(id,enabled){
+  if(!session||!model)return false;
+  var alarm=model.alarms.find(function(a){return a.id===id&&!a.deleted&&a.owner===session.username});
+  if(!alarm)return false;
+  if(enabled){var previous=alarm.enabled;alarm.enabled=true;if(nat&&!scheduleAlarm(alarm)){alarm.enabled=previous;return false}}
+  else{if(nat&&nat.cancelAlarm)nat.cancelAlarm(alarm.id);alarm.enabled=false}
+  mark(alarm);save();render();window.dispatchEvent(new Event('neuro-alarm-changed'));return true;
+ },
+ remove:async function(id){
+  if(!session||!model)return false;
+  var a=model.alarms.find(function(x){return x.id===id&&!x.deleted&&x.owner===session.username});
+  if(!a||!await nsConfirm('Eliminar alarma','¿Eliminar '+a.title+'?','Eliminar'))return false;
+  if(nat&&nat.cancelAlarm)nat.cancelAlarm(a.id);
+  a.deleted=true;mark(a);save();render();window.dispatchEvent(new Event('neuro-alarm-changed'));return true;
+ }
+};
 })();
-</script></body></html>
+</script>
+<script src="./modules/alarm_studio.js"></script></body></html>
