@@ -101,7 +101,100 @@ public final class TaskBackgroundSync extends JobService {
       return new JSONObject(result.toString("UTF-8"));
     }finally{c.disconnect();}
   }
+  /** Consulta de eventos públicos con cursor por cuenta, nunca con un token del WebView.
+   * JobScheduler es un respaldo no instantáneo; FCM sigue pendiente.
+   */
+  private boolean pollPublic()throws Exception {
+    String base=BuildConfig.PUBLIC_API_BASE_URL;
+    if(base==null||!base.startsWith("https://"))return false;
+    JSONObject saved=PublicSessionVault.restore(this,"public",base);
+    if(saved==null)return false;
+    String token=saved.optString("token","");
+    JSONObject user=saved.optJSONObject("user");
+    if(token.length()<40||user==null)return false;
+    String uid=user.optString("id","");
+    if(!uid.matches("[0-9a-fA-F-]{36}"))return false;
+    android.content.SharedPreferences prefs=
+      getSharedPreferences("ns_public_background_events_v1",MODE_PRIVATE);
+    String key="cursor_"+uid;
+    String cursor=prefs.getString(key,"");
+    if(cursor.isEmpty()){
+      JSONObject initial=publicGet(base,"/v1/events/latest",token);
+      if(initial==null||!initial.optBoolean("ok"))return true;
+      String latest=initial.optString("nextCursor","0");
+      if(latest.matches("[0-9]{1,18}"))prefs.edit().putString(key,latest).commit();
+      return true; // Primera consulta: sin avisos de acciones históricas.
+    }
+    if(!cursor.matches("[0-9]{1,18}"))return true;
+    JSONObject response=publicGet(base,"/v1/events?cursor="+cursor,token);
+    if(response==null||!response.optBoolean("ok"))return true;
+    JSONObject still=PublicSessionVault.restore(this,"public",base);
+    if(still==null||!token.equals(still.optString("token","")))return true;
+    JSONArray events=response.optJSONArray("events");
+    if(events==null)return true;
+    String next=response.optString("nextCursor",cursor);
+    if(!next.matches("[0-9]{1,18}"))return true;
+    if(!prefs.edit().putString(key,next).commit())return true;
+    if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+      !=PackageManager.PERMISSION_GRANTED)return true;
+    NotificationManager manager=getSystemService(NotificationManager.class);
+    if(manager==null||!manager.areNotificationsEnabled())return true;
+    final String channel="ns_public_tasks_v1";
+    manager.createNotificationChannel(new NotificationChannel(channel,"Tareas de NeuroSync",
+      NotificationManager.IMPORTANCE_DEFAULT));
+    int shown=0;
+    for(int i=0;i<events.length()&&shown<5;i++){
+      JSONObject event=events.optJSONObject(i);if(event==null)continue;
+      String type=event.optString("event_type","");
+      String role=event.optString("task_role","");
+      boolean received="task_received".equals(type)&&"recipient".equals(role);
+      boolean progress="sender".equals(role)&&
+        ("task_accepted".equals(type)||"task_completed".equals(type)||
+         "task_declined".equals(type));
+      if(!received&&!progress)continue;
+      String title=received?"Nueva tarea recibida":
+        "task_accepted".equals(type)?"Tu tarea fue aceptada":
+        "task_completed".equals(type)?"Tu tarea fue completada":"Tu tarea fue rechazada";
+      int id=(uid+":"+event.optString("sequence","")).hashCode()&0x7fffffff;
+      Intent open=new Intent(this,MainActivity.class).putExtra("neurosync_view","tasks")
+        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP);
+      PendingIntent action=PendingIntent.getActivity(this,id,open,
+        PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+      Notification notice=new Notification.Builder(this,channel)
+        .setSmallIcon(android.R.drawable.stat_notify_more)
+        .setContentTitle(title).setContentText("Abre NeuroSync para consultar los detalles")
+        .setVisibility(Notification.VISIBILITY_PRIVATE).setContentIntent(action)
+        .setAutoCancel(true).build();
+      manager.notify("ns_public_"+uid,id,notice);
+      shown++;
+    }
+    return true;
+  }
+  private JSONObject publicGet(String base,String path,String token)throws Exception {
+    URL target=new URL(base+path);
+    if(!"https".equalsIgnoreCase(target.getProtocol()))return null;
+    HttpURLConnection c=(HttpURLConnection)target.openConnection();
+    try{
+      c.setRequestMethod("GET");c.setInstanceFollowRedirects(false);
+      c.setConnectTimeout(4000);c.setReadTimeout(5000);
+      c.setRequestProperty("Accept","application/json");
+      c.setRequestProperty("Authorization","Bearer "+token);
+      int status=c.getResponseCode();
+      if(status!=200)return null;
+      ByteArrayOutputStream output=new ByteArrayOutputStream();
+      try(InputStream input=c.getInputStream()){
+        byte[] buf=new byte[4096];int n;
+        while((n=input.read(buf))!=-1){
+          output.write(buf,0,n);
+          if(output.size()>100000)throw new IOException("Respuesta pública excesiva");
+        }
+      }
+      return new JSONObject(output.toString("UTF-8"));
+    }finally{c.disconnect();}
+  }
+
   private void poll()throws Exception {
+    if(pollPublic())return;
     // Activity.getPreferences(0) utiliza el nombre local de MainActivity.
     android.content.SharedPreferences settings=getSharedPreferences("MainActivity",MODE_PRIVATE);
     String mode=settings.getString("mode","");
