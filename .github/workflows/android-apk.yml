@@ -66,6 +66,7 @@ jobs:
           node tests/test_phase1e_snapshot_batch.js
           node tests/test_phase1e_restart_recovery.js
           node tests/test_alarm_studio.js
+          node tests/test_task_studio.js
 
       - name: Validar interfaz antes de compilar
         shell: bash
@@ -213,6 +214,7 @@ jobs:
           test -s android/app/src/main/assets/index.html
           mkdir -p android/app/src/main/assets/modules
           cp modules/alarm_studio.js modules/alarm_studio.css android/app/src/main/assets/modules/
+          cp modules/task_studio.js modules/task_studio.css android/app/src/main/assets/modules/
           test -s android/app/src/main/assets/modules/alarm_studio.js
           test -s android/app/src/main/assets/modules/alarm_studio.css
           mkdir -p android/app/src/main/assets/dragon
