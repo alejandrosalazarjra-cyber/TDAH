@@ -104,6 +104,10 @@ public final class AlarmReceiver extends BroadcastReceiver {
     rollback.commit();
     return false;
    }
+   // La edición reemplaza el horario anterior: ninguna posposición vieja debe sonar.
+   manager(ctx).cancel(pendingSnooze(ctx,id));
+   ctx.getSharedPreferences("ns_alarm_snoozes",0).edit().remove(SNOOZE_PREFIX+id).apply();
+   AlarmOptionsStore.reset(ctx,id);
    return true;
   }catch(Exception e){return false;}
  }
