@@ -306,6 +306,7 @@ public final class MainActivity extends Activity {
       case "/contacts":return AccountStore.contacts(this,sessionUser);
       case "/send-task":return SyncStore.sendTask(this,args,sessionUser);
       case "/sent-tasks":return SyncStore.sentTasks(this,sessionUser);
+      case "/notification-digest":return SyncStore.notificationDigest(this,sessionUser);
       case "/update-delivery":return SyncStore.updateDelivery(this,args,sessionUser);
       case "/create-user":return AccountStore.create(this,sessionUser,args.optString("username"),args.optString("password"));
       case "/change-password":return AccountStore.change(this,sessionUser,args.optString("current"),args.optString("next"));
