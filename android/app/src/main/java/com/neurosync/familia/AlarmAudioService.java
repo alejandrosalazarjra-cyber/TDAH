@@ -15,6 +15,7 @@ public final class AlarmAudioService extends Service {
   private MediaPlayer player;
   private ToneGenerator backupTone;
   private Vibrator vibrator;
+  private String playingAlarmId="";
   private final Handler handler=new Handler(Looper.getMainLooper());
   private final Runnable stopLater=()->stopSelf();
 
@@ -33,6 +34,7 @@ public final class AlarmAudioService extends Service {
     String id=intent.getStringExtra("id");
     String title=intent.getStringExtra("title");
     if(id==null){stopSelf();return START_NOT_STICKY;}
+    playingAlarmId=id;
     NotificationManager nm=getSystemService(NotificationManager.class);
     NotificationChannel channel=new NotificationChannel(CHANNEL,"Sonido de alarmas",NotificationManager.IMPORTANCE_LOW);
     channel.setSound(null,null);
@@ -74,7 +76,9 @@ public final class AlarmAudioService extends Service {
   private void playAudio(){
     release();
     String custom=getSharedPreferences("ns_sound",0).getString("uri","");
+    String selected=getSharedPreferences("ns_alarm_sounds",0).getString(playingAlarmId,"");
     Uri[] candidates=new Uri[]{
+      selected.isEmpty()?null:Uri.parse(selected),
       custom.isEmpty()?null:Uri.parse(custom),
       RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM),
       Settings.System.DEFAULT_NOTIFICATION_URI
