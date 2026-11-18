@@ -117,6 +117,11 @@ public final class SyncStore {
               safe.put("updatedAt",updated);
               change=safe;
             }
+            // El receptor puede completar su tarea, pero no falsificar el remitente.
+            if(old!=null&&old.has("sentBy")){
+              change.put("sentBy",old.optString("sentBy"));
+              change.put("owner",old.optString("owner"));
+            }
             if(old==null||updated>old.optLong("updatedAt",0))rows.put(id,change);
           }
           JSONArray all=new JSONArray(),subset=new JSONArray();
