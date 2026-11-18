@@ -43,7 +43,7 @@ function chips(){
 function taskRows(){
  const today=api.today();
  const rows=items().filter(t=>category==='Todas'||(t.category||'Personal')===category)
- .filter(t=>tab==='all'||(tab==='pending'?!isDone(t,today):isDone(t,today)));
+ .filter(t=>tab==='all'||tab==='received'||tab==='sent'||(tab==='pending'?!isDone(t,today):isDone(t,today)));
  return rows.length?rows.slice(0,12).map(t=>
   '<div class="ns-ts-row"><button type="button" class="ns-ts-check" aria-label="Cambiar estado de '+escape(t.title)+'" data-check="'+escape(t.id)+'">'+
   (isDone(t,today)?'✓':'')+'</button><div><strong>'+escape(t.title)+'</strong><small>'+escape(t.category||'Personal')+' · '+
@@ -53,6 +53,29 @@ function taskRows(){
   (t.sentBy?' · Enviada por '+escape(t.sentBy):'')+'</small></div>'+
   '<button type="button" class="ns-ts-share" data-send="'+escape(t.id)+'" aria-label="Enviar '+escape(t.title)+' a otra persona">Enviar</button>'+'</div>').join(''):
   '<div class="ns-ts-blank"><div class="ns-ts-icon">☑</div><p>Sin tareas en esta categoría.</p><small>Usa «+ Añadir» para comenzar.</small></div>';
+}
+function deliveryLabel(status){
+ return status==='completed'?'Completada':status==='accepted'?'Aceptada':'Pendiente de aceptar';
+}
+function receivedRows(){
+ const list=api.received();
+ if(!list.length)return '<p class="ns-ts-empty-mail">Aún no tienes tareas recibidas.</p>';
+ return list.slice(0,30).map(t=>{
+  const status=t.deliveryStatus||'pending';
+  return '<div class="ns-ts-row ns-ts-mail"><div><strong>'+escape(t.title)+'</strong>'+
+   '<small>De: '+escape(t.sentBy)+' · '+deliveryLabel(status)+'</small></div>'+
+   (status==='pending'?'<button type="button" class="ns-ts-share" data-accept="'+escape(t.id)+'">Aceptar</button>':
+    status==='accepted'?'<button type="button" class="ns-ts-share" data-complete="'+escape(t.id)+'">Completar</button>':'')+
+   '</div>';
+ }).join('');
+}
+function sentRows(){
+ const result=api.sent();
+ if(!result.ok)return '<p class="ns-ts-empty-mail" role="status">'+escape(result.error||'Sin conexión')+'</p>';
+ return result.tasks.length?result.tasks.slice(0,30).map(t=>
+  '<div class="ns-ts-row ns-ts-mail"><div><strong>'+escape(t.title)+'</strong>'+
+   '<small>Para: '+escape(t.recipient)+' · '+deliveryLabel(t.deliveryStatus)+'</small></div></div>'
+ ).join(''):'<p class="ns-ts-empty-mail">Todavía no has enviado tareas.</p>';
 }
 function renderTasks(){
  if(!api.ready()){app.replaceChildren();return}
@@ -64,8 +87,10 @@ function renderTasks(){
   chips()+
   '<div class="ns-ts-tabs"><button data-tab="all" '+(tab==='all'?'aria-pressed="true"':'')+'>Todas</button>'+
   '<button data-tab="pending" '+(tab==='pending'?'aria-pressed="true"':'')+'>Pendientes</button>'+
-  '<button data-tab="done" '+(tab==='done'?'aria-pressed="true"':'')+'>Completadas</button></div>'+
-  '<div class="ns-ts-items">'+taskRows()+'</div>'+
+  '<button data-tab="done" '+(tab==='done'?'aria-pressed="true"':'')+'>Completadas</button>'+
+  '<button data-tab="received" '+(tab==='received'?'aria-pressed="true"':'')+'>Recibidas</button>'+
+  '<button data-tab="sent" '+(tab==='sent'?'aria-pressed="true"':'')+'>Enviadas</button></div>'+
+  '<div class="ns-ts-items">'+(tab==='received'?receivedRows():tab==='sent'?sentRows():taskRows())+'</div>'+
   '<div class="ns-ts-toolbar"><button data-action="habits">+ Catálogo de hábitos</button>'+
   '<button data-action="templates">Plantillas de tareas</button></div>'+
   '<div class="ns-ts-pane" id="ns-ts-pane"></div>';
@@ -148,6 +173,12 @@ app.addEventListener('click',event=>{
  if(el.dataset.category){category=el.dataset.category;renderTasks();return}
  if(el.dataset.tab){tab=el.dataset.tab;renderTasks();return}
  if(el.dataset.check){if(api.toggleToday(el.dataset.check))renderTasks();return}
+ if(el.dataset.accept||el.dataset.complete){
+  const result=api.updateReceived(el.dataset.accept||el.dataset.complete,el.dataset.accept?'accepted':'completed');
+  if(result.ok)renderTasks();
+  else{const pane=app.querySelector('#ns-ts-pane');if(pane)pane.textContent=result.error||'No se pudo actualizar la tarea';}
+  return;
+ }
  if(el.dataset.send){
   sendTaskId=el.dataset.send;sheet='send';renderTasks();return;
  }
