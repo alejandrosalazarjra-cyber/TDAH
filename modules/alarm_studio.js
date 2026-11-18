@@ -26,6 +26,7 @@
   {key:'taps',icon:'◎',title:'Toques',detail:'Pulsa doce veces para despertarte',group:'Despierta tu cuerpo'},
   {key:'shake',icon:'↝',title:'Movimiento suave',detail:'Mueve el teléfono doce veces',group:'Despierta tu cuerpo'},
   {key:'qr',icon:'▣',title:'Código QR físico',detail:'Escanea un QR registrado',group:'Despierta tu cuerpo'},
+  {key:'barcode',icon:'▤',title:'Código de barras',detail:'Escanea el código físico del objeto registrado',group:'Despierta tu cuerpo'},
   {key:'walk',icon:'♧',title:'Caminar 20 pasos',detail:'Usa el detector de pasos del teléfono',group:'Despierta tu cuerpo'},
   {key:'photo',icon:'▧',title:'Tomar una foto',detail:'Abre la cámara y captura una imagen (sin verificar lugar)',group:'Despierta tu cuerpo'},
   {key:'routine_focus',icon:'◷',title:'Rutina mental',detail:'Matemáticas y escritura',group:'Rutinas de NeuroSync'},
@@ -167,8 +168,10 @@
    '<div class="ns-as-section-title">Posponer</div><div class="ns-as-field-grid">'+
    '<label>Minutos<select name="snoozeMinutes">'+[1,3,5,10,15].map(n=>'<option value="'+n+'"'+(+d.snoozeMinutes===n?' selected':'')+'>'+n+' min</option>').join('')+'</select></label>'+
    '<label>Veces<select name="snoozeLimit">'+[0,1,2,3,5,10].map(n=>'<option value="'+n+'"'+(+d.snoozeLimit===n?' selected':'')+'>'+n+'</option>').join('')+'</select></label></div>'+
-   (d.challenge==='qr'?'<p class="ns-as-hint">'+(d.qrReady?'QR capturado para esta alarma':'Escanea el QR que usarás al despertar. No se envía a internet.')+'</p>'+
-    action('Escanear QR de referencia','qr'):'')+
+   ((d.challenge==='qr'||d.challenge==='barcode')?
+    '<p class="ns-as-hint">'+(d.qrReady?'Código capturado para esta alarma':'Escanea el código físico de referencia. No se envía a internet.')+'</p>'+
+    action(d.challenge==='barcode'?'Escanear código de barras':'Escanear QR de referencia',
+      d.challenge==='barcode'?'barcode':'qr'):'')+
    '<div class="ns-as-section-title">Sonido</div>'+
    '<p class="ns-as-hint">'+(edit&&api.hasSound(state.editing)?'Tono personalizado seleccionado':'Tono local predeterminado')+'</p>'+
    (edit?action('Elegir tono para esta alarma','sound-alarm')+action('Usar tono predeterminado','clear-sound'):'<p class="ns-as-hint">Guarda la alarma para asignarle un tono individual.</p>')+
@@ -295,6 +298,9 @@
   else if(type==='qr'){
    if(!api.scanQr())note('El lector QR necesita Android.');
   }
+  else if(type==='barcode'){
+   if(!api.scanBarcode())note('El lector de barras necesita Android.');
+  }
   else if(type==='sound-alarm'&&state.editing){
    if(!api.chooseSound(state.editing))note('El selector necesita Android.');
   }
@@ -322,7 +328,7 @@
  function onChanged(){if(scheduled)return;scheduled=true;setTimeout(()=>{scheduled=false;if(state.screen==='home'||state.screen==='report')render()},0)}
  window.addEventListener('neuro-alarm-changed',onChanged);
  window.addEventListener('neuro-alarm-qr-ready',e=>{
-  if(state.draft&&state.draft.challenge==='qr'&&typeof e.detail==='string'){
+  if(state.draft&&(state.draft.challenge==='qr'||state.draft.challenge==='barcode')&&typeof e.detail==='string'){
    state.draft.qrReady=e.detail;
    if(state.screen==='editor')render();
    note('QR de referencia capturado; guarda la alarma para confirmar.');
