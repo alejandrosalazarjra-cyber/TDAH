@@ -88,6 +88,8 @@ public final class MainActivity extends Activity {
     if(sessionUser!=null)TaskBackgroundSync.schedule(this);
     googleAccounts=new GoogleAccountBridge(this);
     publicAccounts=new PublicAccountBridge(this);
+    if(PublicSessionVault.restore(this,"public",BuildConfig.PUBLIC_API_BASE_URL)!=null)
+      TaskBackgroundSync.schedule(this);
     getWindow().setStatusBarColor(Color.rgb(246,248,252));
     getWindow().setNavigationBarColor(Color.rgb(255,255,255));
     getWindow().getDecorView().setSystemUiVisibility(android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
