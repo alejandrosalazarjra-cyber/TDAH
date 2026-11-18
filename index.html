@@ -2767,7 +2767,7 @@ window.NeuroAlarmAPI={
   var title=String(data.title||'Despertar').trim().slice(0,90);
   var date=String(data.date||day()),time=String(data.time||'07:00');
   var validRepeats=['none','daily','weekly','every2','every3','weekdays','weekends'];
-  var allowedMissions=['none','math','math_hard','typing','memory','taps','shake','qr','routine_focus','routine_active','routine_five'];
+  var allowedMissions=['none','math','math_hard','typing','memory','taps','shake','qr','routine_focus','routine_active','routine_five','walk','photo'];
   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^\d{2}:\d{2}$/.test(time))
    return {ok:false,error:'Fecha u hora inválida'};
   var dateParts=date.split('-').map(Number),timeParts=time.split(':').map(Number);
@@ -2778,8 +2778,8 @@ window.NeuroAlarmAPI={
   var repeat=validRepeats.includes(data.repeat)?data.repeat:'none';
   var challenge=allowedMissions.includes(data.challenge)?data.challenge:'none';
   if(repeat==='none'&&d.getTime()<=Date.now())return {ok:false,error:'Elige una hora futura'};
-  if(challenge==='qr'&&(!original||original.challenge!=='qr'))
-   return {ok:false,error:'Configura primero tu QR desde «Configurar QR físico»'};
+  if(challenge==='qr'&&(!original||original.challenge!=='qr')&&!data.qrReady)
+   return {ok:false,error:'Escanea primero el QR físico de referencia'};
   var draft=Object.assign({},original||{},{
    id:original?original.id:uid(),owner:session.username,
    title:title,date:date,time:time,repeat:repeat,daily:repeat==='daily',
@@ -2790,6 +2790,7 @@ window.NeuroAlarmAPI={
   // Nunca guardar como programada si Android rechazó el horario.
   if(nat&&(!scheduleAlarm(draft)))return {ok:false,error:'Android no pudo programar la alarma. Revisa permisos.'};
   if(nat&&nat.setAlarmOptions)nat.setAlarmOptions(draft.id,draft.snoozeMinutes,draft.snoozeLimit);
+  if(challenge==='qr'&&data.qrReady&&nat&&nat.setAlarmQrCode)nat.setAlarmQrCode(draft.id,data.qrReady);
   var previous=original?Object.assign({},original):null;
   if(original)Object.assign(original,draft);else model.alarms.push(draft);
   if(!save()){
