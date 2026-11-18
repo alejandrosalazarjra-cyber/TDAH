@@ -41,6 +41,7 @@ jobs:
       - run: node --check backend/server.js
       - run: node tests/test_public_backend_contract.js
       - run: node tests/test_public_backend_api.js
+          node tests/test_public_oauth_wiring.js
       - run: node tests/test_public_deployment_config.js
       - name: Aplicar esquema a PostgreSQL de prueba
         env:
