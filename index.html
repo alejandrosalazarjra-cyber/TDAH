@@ -2918,7 +2918,7 @@ function nsOutboxFlush(){
   if(!session||session.username!==who)break;
   var result=nsOutboxAttempt(items[i]);
   if(!result.ok)continue;
-  var updated=remaining.filter(function(e){return e.id!==items[i].id});
+  var updated=remaining.filter(function(e){return !(e.id===items[i].id&&e.recipient===items[i].recipient)});
   if(nsOutboxWrite(updated)){remaining=updated;delivered++;}
   // Si falla eliminar del almacenamiento, se mantiene para reintentar sin duplicar.
  }
