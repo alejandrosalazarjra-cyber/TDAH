@@ -2919,7 +2919,7 @@ window.NeuroDepartureAPI={
   result.forEach(function(p){
    if(!nat||!nat.departureListState||p.owner!==session.username)return;
    try{
-    var native=JSON.parse(nat.departureListState(p.id));
+    var native=JSON.parse(nat.departureListState(session.username,p.id));
     if(!native||native.id!==p.id||!Array.isArray(p.items)||!native.items||
       JSON.stringify(p.items)!==JSON.stringify(native.items))return;
     var checked=native.checked||{};
@@ -2963,18 +2963,18 @@ window.NeuroDepartureAPI={
     owner:session.username,updatedAt:stamp()
   });
   if(scheduled&&nat){
-   if(!nat.scheduleDepartureList(draft.id,draft.place,JSON.stringify(draft.items),when,repeat))
+   if(!nat.scheduleDepartureList(session.username,draft.id,draft.place,JSON.stringify(draft.items),when,repeat))
     return {ok:false,error:'Android no pudo programar el aviso. Comprueba permisos o fecha'};
   }
   if(prior)Object.assign(prior,draft);else model.packs.push(draft);
   if(!save()){
    if(prior)Object.assign(prior,old);else model.packs=model.packs.filter(function(x){return x.id!==idValue});
-   if(nat&&nat.cancelDepartureList)nat.cancelDepartureList(idValue);
+   if(nat&&nat.cancelDepartureList)nat.cancelDepartureList(session.username,idValue);
    if(old&&old.time&&nat&&nat.scheduleDepartureList)
-    nat.scheduleDepartureList(old.id,old.place,JSON.stringify(old.items),new Date(old.date+'T'+old.time).getTime(),old.repeat||'none');
+    nat.scheduleDepartureList(session.username,old.id,old.place,JSON.stringify(old.items),new Date(old.date+'T'+old.time).getTime(),old.repeat||'none');
    return {ok:false,error:'No se pudieron guardar los cambios'};
   }
-  if(!scheduled&&nat&&nat.cancelDepartureList)nat.cancelDepartureList(idValue);
+  if(!scheduled&&nat&&nat.cancelDepartureList)nat.cancelDepartureList(session.username,idValue);
   render();return {ok:true,id:idValue};
  },
  check:function(id,index,value){
@@ -2983,8 +2983,8 @@ window.NeuroDepartureAPI={
   if(!p||index<0||index>=(p.items||[]).length)return false;
   if(nat&&nat.departureListState){
    try{
-    var previous=JSON.parse(nat.departureListState(id));
-    if(previous.id===id&&nat.markDepartureItem&&!nat.markDepartureItem(id,index,!!value))return false;
+    var previous=JSON.parse(nat.departureListState(session.username,id));
+    if(previous.id===id&&nat.markDepartureItem&&!nat.markDepartureItem(session.username,id,index,!!value))return false;
    }catch(e){}
   }
   var old=Object.assign({},p.checked||{}),stampBefore=p.updatedAt;
@@ -2994,7 +2994,7 @@ window.NeuroDepartureAPI={
  },
  openNative:function(id){
   if(!session||!model||!model.packs.some(function(p){return p.id===id&&p.owner===session.username&&!p.deleted}))return false;
-  if(nat&&nat.openDepartureChecklist){nat.openDepartureChecklist(id);return true}
+  if(nat&&nat.openDepartureChecklist){nat.openDepartureChecklist(session.username,id);return true}
   return false;
  },
  remove:async function(id){
@@ -3003,7 +3003,7 @@ window.NeuroDepartureAPI={
   if(!p||!await nsConfirm('Eliminar lista','¿Eliminar esta lista de salida?','Eliminar'))return false;
   p.deleted=true;mark(p);
   if(!save()){p.deleted=false;return false}
-  if(nat&&nat.cancelDepartureList)nat.cancelDepartureList(id);
+  if(nat&&nat.cancelDepartureList)nat.cancelDepartureList(session.username,id);
   render();return true;
  }
 };
