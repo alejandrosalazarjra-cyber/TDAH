@@ -3102,6 +3102,44 @@ window.NeuroTasksAPI={
   if(!session||!session.public||!nat||!nat.publicAcceptInvite)return {ok:false,error:'Servicio no disponible'};
   try{return JSON.parse(nat.publicAcceptInvite(id))}catch(e){return {ok:false,error:'No se pudo aceptar'}}
  },
+ publicBlocks:function(){
+  if(!session||!session.public||!nat||!nat.publicBlocks)return {ok:false,blocked:[]};
+  try{return JSON.parse(nat.publicBlocks())}catch(e){return {ok:false,blocked:[],error:'No se pudo leer la lista de bloqueos'}}
+ },
+ publicBlock:function(id){
+  if(!session||!session.public||!nat||!nat.publicBlock)return {ok:false,error:'Servicio público no disponible'};
+  try{return JSON.parse(nat.publicBlock(id))}catch(e){return {ok:false,error:'No se pudo bloquear'}}
+ },
+ publicUnblock:function(id){
+  if(!session||!session.public||!nat||!nat.publicUnblock)return {ok:false,error:'Servicio público no disponible'};
+  try{return JSON.parse(nat.publicUnblock(id))}catch(e){return {ok:false,error:'No se pudo desbloquear'}}
+ },
+ publicDeleteAccount:function(){
+  if(!session||!session.public||!nat||!nat.publicDeleteAccount)return {ok:false,error:'No se puede eliminar la cuenta'};
+  var username=session.username;
+  var response;
+  try{response=JSON.parse(nat.publicDeleteAccount('ELIMINAR'))}
+  catch(e){return {ok:false,error:'No se pudo contactar al servidor'};}
+  if(!response.ok||!response.deleted)return response;
+  // Ya no habrá escritura de snapshots tras borrar el perfil remoto.
+  syncing=false;clearTimeout(nsDriveBackupTimer);
+  session=null;model=null;nsFocusState=null;
+  try{
+   var accountSuffix='_'+username,keys=[];
+   for(var i=0;i<localStorage.length;i++){
+    var k=localStorage.key(i);
+    if(k&&(k.endsWith(accountSuffix)||k.startsWith('ns_v2_'+username+'_')||
+       k.startsWith('ns_focus_private_v1_'+username+'_')))keys.push(k);
+   }
+   keys.forEach(function(k){localStorage.removeItem(k)});
+   localStorage.setItem('ns_last_session_provider','signed_out');
+  }catch(e){}
+  if(window.NeuroFinanceStudio)window.NeuroFinanceStudio.hideLauncher();
+  by('app').classList.add('hidden');
+  by('login').classList.remove('hidden');
+  by('login-error').textContent='Cuenta eliminada. Ya no puedes iniciar sesión con ese perfil.';
+  return response;
+ },
  sendTo:function(recipient,task){
   if(!session||!model)return {ok:false,error:'Inicia sesión'};
   if(typeof recipient!=='string'||!(session.public?/^[0-9a-f-]{36}$/i.test(recipient):/^[a-z0-9_-]{3,30}$/.test(recipient))||recipient===session.username)
@@ -3188,7 +3226,7 @@ window.NeuroTasksAPI={
   if(session&&session.public){
    if(!nat||!nat.publicTaskAction)return {ok:false,error:'Servicio público no disponible'};
    try{
-    var action=status==='accepted'?'accept':status==='completed'?'complete':'';
+    var action=status==='accepted'?'accept':status==='completed'?'complete':status==='declined'?'decline':'';
     if(!action)return {ok:false,error:'Acción inválida'};
     var response=JSON.parse(nat.publicTaskAction(id,action));
     return response.ok?{ok:true,status:response.task&&response.task.status}:{ok:false,error:response.error||'No se pudo actualizar'};
