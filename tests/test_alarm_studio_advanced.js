@@ -25,6 +25,13 @@ assert(challenge.includes('setSequence(')&&challenge.includes('getSequence('));
 assert(challenge.includes('input.length()<2||input.length()>5'));
 assert(main.includes('scanBarcodeReference()')&&ringing.includes('ALL_CODE_TYPES'));
 assert(main.includes('selectedAlarmSoundId')&&audio.includes('ns_alarm_sounds'));
+assert(audio.includes('beginVolume()')&&audio.includes('AlarmOptionsStore.vibrates'),
+ 'Volumen gradual y vibración deben utilizar las opciones reales');
+assert(main.includes('setAlarmSoundOptions(')&&
+ fs.readFileSync('android/app/src/main/java/com/neurosync/familia/AlarmOptionsStore.java','utf8').includes('setAudio('),
+ 'El editor debe guardar sonido y vibración por alarma');
+assert(ui.includes('name="volumePercent"')&&ui.includes('name="vibration"')&&ui.includes('name="gentleWake"'),
+ 'Los ajustes de audio deben ser editables');
 assert(main.includes('takePersistableUriPermission'));
 assert(ui.includes('data-sequence-step'),'El editor debe permitir ordenar retos');
 assert(ui.includes("action('Elegir tono para esta alarma','sound-alarm')"),'Falta selector de audio individual');
