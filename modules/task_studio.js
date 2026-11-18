@@ -64,7 +64,7 @@ function receivedRows(){
   const status=t.deliveryStatus||'pending';
   return '<div class="ns-ts-row ns-ts-mail"><div><strong>'+escape(t.title)+'</strong>'+
    '<small>De: '+escape(t.sentBy)+' · '+deliveryLabel(status)+'</small></div>'+
-   (status==='pending'?'<button type="button" class="ns-ts-share" data-accept="'+escape(t.id)+'">Aceptar</button>':
+   (status==='pending'?'<button type="button" class="ns-ts-share" data-accept="'+escape(t.id)+'">Aceptar</button><button type="button" data-decline="'+escape(t.id)+'">Rechazar</button>':
     status==='accepted'?'<button type="button" class="ns-ts-share" data-complete="'+escape(t.id)+'">Completar</button>':'')+
    '</div>';
  }).join('');
@@ -136,6 +136,8 @@ function renderPane(){
   const invites=api.publicInvitations();
   const pending=invites.ok&&Array.isArray(invites.invitations)?invites.invitations:[];
   const contacts=api.contacts();
+  const blockedInfo=api.publicBlocks();
+  const blocked=blockedInfo.ok&&Array.isArray(blockedInfo.blocked)?blockedInfo.blocked:[];
   markup='<div class="ns-ts-pane-head"><h3>Contactos</h3><button type="button" data-action="close" aria-label="Cerrar">×</button></div>'+
    '<p>Busca a una persona por su identificador. Solo podrás enviar tareas cuando acepte la invitación.</p>'+
    '<form id="ns-ts-profile-form"><h4>Mi perfil público</h4>'+
@@ -148,7 +150,15 @@ function renderPane(){
    '<h4>Invitaciones recibidas</h4>'+
    (pending.length?pending.slice(0,20).map(t=>'<div class="ns-ts-template"><div><strong>'+escape(t.display_name||t.handle)+'</strong><small>@'+escape(t.handle)+'</small></div><button type="button" data-invite-accept="'+escape(t.id)+'">Aceptar</button></div>').join(''):'<p>Sin invitaciones pendientes.</p>')+
    '<h4>Mis contactos</h4>'+
-   (contacts.length?contacts.map(t=>'<p>'+escape(t.label||t)+'</p>').join(''):'<p>Aún no tienes contactos.</p>');
+   (contacts.length?contacts.map(t=>'<div class="ns-ts-template"><span>'+escape(t.label||t)+'</span>'+
+    (t.id?'<button type="button" data-contact-block="'+escape(t.id)+'">Bloquear</button>':'')+'</div>').join(''):'<p>Aún no tienes contactos.</p>')+
+   '<h4>Usuarios bloqueados</h4>'+
+   (blocked.length?blocked.map(t=>'<div class="ns-ts-template"><span>'+escape(t.display_name||t.handle)+'</span>'+
+      '<button type="button" data-contact-unblock="'+escape(t.id)+'">Desbloquear</button></div>').join(''):
+      '<p>No tienes usuarios bloqueados.</p>')+
+   '<details><summary>Privacidad y cuenta</summary>'+
+   '<p>Eliminar tu cuenta borra el perfil público y las tareas compartidas relacionadas. No puedes deshacerlo.</p>'+
+   '<button type="button" data-delete-public-account>Eliminar definitivamente mi cuenta</button></details>';
  }else if(sheet==='quick'){
   markup='<div class="ns-ts-pane-head"><h3>Nueva tarea</h3><button type="button" data-action="close" aria-label="Cerrar">×</button></div>'+
    '<form id="ns-ts-quick-form"><input name="title" required maxlength="100" autocomplete="off" placeholder="¿Qué necesitas hacer?">'+
@@ -193,13 +203,14 @@ function renderStats(){
  '<small>'+escape(new Date(x.date+'T12:00:00').toLocaleDateString('es-CO',{weekday:'short'}))+'</small></div>').join('')+
  '</div><p>Minutos registrados en Pomodoro, sin estimaciones.</p></div>';
 }
-app.addEventListener('click',event=>{
+app.addEventListener('click',async event=>{
  const el=event.target.closest('button');if(!el)return;
  if(el.dataset.category){category=el.dataset.category;renderTasks();return}
  if(el.dataset.tab){tab=el.dataset.tab;renderTasks();return}
  if(el.dataset.check){if(api.toggleToday(el.dataset.check))renderTasks();return}
- if(el.dataset.accept||el.dataset.complete){
-  const result=api.updateReceived(el.dataset.accept||el.dataset.complete,el.dataset.accept?'accepted':'completed');
+ if(el.dataset.accept||el.dataset.complete||el.dataset.decline){
+  const result=api.updateReceived(el.dataset.accept||el.dataset.complete||el.dataset.decline,
+   el.dataset.accept?'accepted':el.dataset.complete?'completed':'declined');
   if(result.ok)renderTasks();
   else{const pane=app.querySelector('#ns-ts-pane');if(pane)pane.textContent=result.error||'No se pudo actualizar la tarea';}
   return;
@@ -211,6 +222,26 @@ app.addEventListener('click',event=>{
   const result=api.publicAcceptInvite(el.dataset.inviteAccept);
   if(result.ok)renderTasks();
   else {const target=app.querySelector('#ns-ts-search-result');if(target)target.textContent=result.error||'No se pudo aceptar';}
+  return;
+ }
+ if(el.dataset.contactBlock){
+  if(!await api.confirm('Bloquear contacto','Esta persona no podrá encontrarte ni enviarte tareas o invitaciones.','Bloquear'))return;
+  const result=api.publicBlock(el.dataset.contactBlock);
+  if(result.ok)renderTasks();
+  else{const target=app.querySelector('#ns-ts-search-result');if(target)target.textContent=result.error||'No se pudo bloquear';}
+  return;
+ }
+ if(el.dataset.contactUnblock){
+  const result=api.publicUnblock(el.dataset.contactUnblock);
+  if(result.ok)renderTasks();
+  else{const target=app.querySelector('#ns-ts-search-result');if(target)target.textContent=result.error||'No se pudo desbloquear';}
+  return;
+ }
+ if(Object.prototype.hasOwnProperty.call(el.dataset,'deletePublicAccount')){
+  if(!await api.confirm('Eliminar mi cuenta','Se borrarán tu cuenta pública y sus tareas compartidas. Esta acción es irreversible.','Continuar'))return;
+  if(!await api.confirm('Confirmación definitiva','También se eliminarán las copias locales de este perfil. ¿Eliminar definitivamente?','Eliminar'))return;
+  const result=api.publicDeleteAccount();
+  if(!result.ok){const target=app.querySelector('#ns-ts-search-result');if(target)target.textContent=result.error||'No se pudo eliminar';}
   return;
  }
  if(el.dataset.inviteSend){
