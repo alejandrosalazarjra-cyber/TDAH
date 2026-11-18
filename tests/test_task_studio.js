@@ -95,6 +95,8 @@ assert(backend.includes('actor.optString("username").equals(task.optString("owne
  'Solo el destinatario puede aceptar o completar sus tareas');
 assert(backend.includes('change.put("deliveryStatus",old.optString("deliveryStatus","pending"))'),
  'Un cliente desactualizado no puede sobrescribir estados del servidor');
+assert(backend.includes('if(old==null){')&&backend.includes('change.remove("sentBy")'),
+ 'El servidor debe ignorar remitentes falsos incluidos en cambios normales');
 assert(html.includes("if(t.deliveryStatus!=='accepted')return false;"),
  'La finalización rápida requiere aceptación previa');
 assert(saveCount>=2);
