@@ -87,6 +87,8 @@ assert(publicAPI.publicUpdateProfile('demo','Demo',true).ok);
 const created=publicAPI.sendTo(id,{id:'send_task_1234',title:'Comprar pan'});
 assert(created.ok&&!created.queued,'Debe confirmar entrega remota');
 assert.equal(delivered[0].recipient,id);
+assert.equal(JSON.parse(delivered[0].title).title,'Comprar pan',
+ 'El puente debe enviar un JSON íntegro, no solo el título');
 assert.equal(publicAPI.sent().tasks[0].deliveryStatus,'pending');
 assert(publicAPI.updateReceived('33333333-3333-4333-8333-333333333333','accepted').ok);
 online=false;
