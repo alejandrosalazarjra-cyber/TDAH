@@ -34,6 +34,7 @@ workflows:
           node tests/test_public_backend_contract.js
           node --check backend/server.js
           node tests/test_public_backend_api.js
+          node tests/test_public_launch_readiness.js
           node tests/test_public_oauth_wiring.js
           node tests/test_preview_signing_contract.js
           node tests/test_public_android_bridge.js
