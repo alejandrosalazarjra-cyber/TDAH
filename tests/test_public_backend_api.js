@@ -22,12 +22,14 @@ const fakePool={
    return {rows:[],rowCount:0};
   if(sql.includes('FROM ns_contact_invitations i JOIN ns_public_users u'))
    return {rows:[],rowCount:0};
+  if(sql.includes('MAX(sequence)'))return {rows:[{cursor:'0'}],rowCount:1};
   if(sql.includes('FROM ns_user_events'))return {rows:[],rowCount:0};
   return {rows:[],rowCount:0};
  },
  connect:async()=>({query:(...args)=>fakePool.query(...args),release:()=>{}})
 };
 const fakeModule={exports:{}},fakeRequire=name=>{
+ if(name==='./legal_pages')return {serveLegal:()=>false};
  if(name==='pg')return {Pool:class {constructor(){return fakePool}}};
  if(name==='google-auth-library')return {
   OAuth2Client:class{async verifyIdToken(){throw Error('Invalid token')}}};
@@ -60,6 +62,8 @@ async function send(method,path,payload,auth){
  assert.equal(r.status,200);assert.equal(r.user,null);
  r=await send('GET','/v1/events?cursor=bad',undefined,token);
  assert.equal(r.status,400);
+ r=await send('GET','/v1/events/latest',undefined,token);
+ assert.equal(r.status,200);assert.equal(r.nextCursor,'0');
  r=await send('POST','/v1/tasks',{recipientId, title:'Comprar pan'},token);
  assert.equal(r.status,400,'Sin clave de idempotencia no se puede enviar');
  r=await send('GET','/v1/auth/status');
