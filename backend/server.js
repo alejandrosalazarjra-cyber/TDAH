@@ -57,8 +57,9 @@ async function actor(req){
  return result.rows[0];
 }
 async function exchange(data){
- if(!oauth||typeof data.idToken!=='string'||data.idToken.length>10000)
-  reject(400,'Identidad de Google no configurada o inválida');
+ if(!oauth)reject(503,'El acceso público aún no está habilitado');
+ if(typeof data.idToken!=='string'||data.idToken.length>10000)
+  reject(400,'Identidad de Google inválida');
  let identity;
  try{
   const ticket=await oauth.verifyIdToken({idToken:data.idToken,audience:GOOGLE_CLIENT_ID});
