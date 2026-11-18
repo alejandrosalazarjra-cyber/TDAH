@@ -305,6 +305,8 @@ public final class MainActivity extends Activity {
       case "/users":return AccountStore.list(this,sessionUser);
       case "/contacts":return AccountStore.contacts(this,sessionUser);
       case "/send-task":return SyncStore.sendTask(this,args,sessionUser);
+      case "/sent-tasks":return SyncStore.sentTasks(this,sessionUser);
+      case "/update-delivery":return SyncStore.updateDelivery(this,args,sessionUser);
       case "/create-user":return AccountStore.create(this,sessionUser,args.optString("username"),args.optString("password"));
       case "/change-password":return AccountStore.change(this,sessionUser,args.optString("current"),args.optString("next"));
       case "/sync":return SyncStore.merge(this,args,sessionUser);
@@ -483,6 +485,12 @@ public final class MainActivity extends Activity {
       }catch(Exception e){return AccountStore.fail("No se pudo restaurar la sesión").toString();}
     }
     @JavascriptInterface public String getUsers(){return call("/users",new JSONObject()).toString();}
+    @JavascriptInterface public String sentTasks(){
+      return call("/sent-tasks",new JSONObject()).toString();
+    }
+    @JavascriptInterface public String updateTaskDelivery(String id,String status){
+      return call("/update-delivery",payload("id",id,"status",status)).toString();
+    }
     @JavascriptInterface public String taskContacts(){
       return call("/contacts",new JSONObject()).toString();
     }
