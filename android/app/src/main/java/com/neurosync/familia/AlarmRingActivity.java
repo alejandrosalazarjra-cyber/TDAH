@@ -181,6 +181,22 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
          }catch(Exception ex){Toast.makeText(this,"No se pudo abrir el lector QR",Toast.LENGTH_LONG).show();}
        });
      }
+   }else if("barcode".equals(challenge)){
+     progress.setText("Escanea el código de barras del objeto registrado");
+     if(!AlarmChallengeStore.hasQr(this,id)){
+       prompt.setText("No hay un código registrado. Utiliza la salida segura.");
+     }else{
+       prompt.setText("Busca el objeto físico y escanea su código");
+       Button scan=button("Escanear código físico");root.addView(scan);
+       scan.setOnClickListener(v->{
+         try{
+           new com.google.zxing.integration.android.IntentIntegrator(this)
+            .setDesiredBarcodeFormats(com.google.zxing.integration.android.IntentIntegrator.ALL_CODE_TYPES)
+            .setPrompt("Escanea el objeto de referencia")
+            .setBeepEnabled(false).setOrientationLocked(false).initiateScan();
+         }catch(Exception ex){progress.setText("Lector no disponible; usa la salida segura.");}
+       });
+     }
    }else if("shake".equals(challenge)){
      progress.setText("Mueve suavemente tu teléfono 12 veces");
      prompt.setText("0 / 12 movimientos");
@@ -312,7 +328,7 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
    super.onActivityResult(requestCode,resultCode,data);
    com.google.zxing.integration.android.IntentResult result=
        com.google.zxing.integration.android.IntentIntegrator.parseActivityResult(requestCode,resultCode,data);
-   if(result==null||!"qr".equals(challenge))return;
+   if(result==null||(!"qr".equals(challenge)&&!"barcode".equals(challenge)))return;
    String contents=result.getContents();
    if(contents==null){progress.setText("Lectura cancelada. Puedes intentarlo de nuevo.");return;}
    if(AlarmChallengeStore.matchesQr(this,id,contents)){finishAlarm();}
