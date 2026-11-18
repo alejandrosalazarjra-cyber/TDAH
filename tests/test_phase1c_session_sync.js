@@ -8,20 +8,21 @@ const end=source.indexOf('function sync(){',begin);
 assert(begin>=0&&end>begin,'Manejador de sincronización ausente');
 const code=source.slice(begin,end);
 function makeTest(blocked=false){
- let written=null,renders=0,notifications=[],scheduled=0;
+ let written=null,renders=0,notifications=[],scheduled=0,nativeNotices=[];
  const session={username:'mama',role:'user'};
  const model={tasks:[{id:'local',owner:'mama',title:'Local',updatedAt:11},
   {id:'archived',owner:'hermano',title:'Dato histórico local',updatedAt:6}],
   packs:[],alarms:[],pet:{xp:3}};
  const ctx={window:{},session,model,nsStorageRecoveryBlocked:blocked,syncing:true,
    by:()=>({set textContent(value){notifications.push(value)}}),
-   nat:{scheduleAlarmRepeat:()=>true},
+   nat:{scheduleAlarmRepeat:()=>true,notifyTaskReceived:(id,sender)=>{nativeNotices.push({id,sender});return true}},
    nsLocalSave:next=>{written=next; if(ctx.failWrite)throw Error('disk full')},
    active:xs=>xs.filter(x=>!x.deleted),scheduleAlarm:()=>{scheduled++},
-   render:()=>renders++,Date,JSON,Array,Number,String,Object,Map,Error};
+   render:()=>renders++,say:message=>notifications.push(message),
+   Date,JSON,Array,Number,String,Object,Map,Set,Error};
  vm.createContext(ctx);vm.runInContext(code,ctx);
  ctx.neuroSyncOnSync=ctx.window.neuroSyncOnSync;
- return {ctx,model,getWritten:()=>written,getRenders:()=>renders,getScheduled:()=>scheduled,notifications};
+ return {ctx,model,getWritten:()=>written,getRenders:()=>renders,getScheduled:()=>scheduled,notifications,nativeNotices};
 }
 {
  const t=makeTest();
@@ -61,6 +62,37 @@ function makeTest(blocked=false){
  assert(t.notifications.some(x=>x.includes('No se guardaron')),
   'Mostrar el error de persistencia procedente del servidor');
 }
+// La primera recepción notifica una sola vez, después de persistir.
+{
+ const t=makeTest();
+ const record={id:'sent_123456789',owner:'mama',sentBy:'hermano',title:'Comprar pan',updatedAt:40};
+ const response=JSON.stringify({ok:true,data:{tasks:[record],packs:[],alarms:[]}});
+ t.ctx.neuroSyncOnSync(response,'mama');
+ assert.equal(t.nativeNotices.length,1,'Avisar cuando llega una tarea nueva');
+ assert.equal(t.nativeNotices[0].sender,'hermano');
+ t.ctx.neuroSyncOnSync(response,'mama');
+ assert.equal(t.nativeNotices.length,1,'No volver a avisar al sincronizar la misma tarea');
+}
+{
+ const t=makeTest();
+ t.ctx.failWrite=true;
+ t.ctx.neuroSyncOnSync(JSON.stringify({ok:true,data:{tasks:[
+  {id:'sent_pending_1',owner:'mama',sentBy:'hermano',title:'No guardada',updatedAt:60}
+ ],packs:[],alarms:[]}}),'mama');
+ assert.equal(t.nativeNotices.length,0,'No avisar si falló el guardado local');
+}
+{
+ const t=makeTest();
+ t.ctx.neuroSyncOnSync(JSON.stringify({ok:true,data:{tasks:[
+  {id:'sent_foreign_1',owner:'hermano',sentBy:'mama',title:'Ajena',updatedAt:60}
+ ],packs:[],alarms:[]}}),'mama');
+ assert.equal(t.nativeNotices.length,0,'No avisar de tareas privadas ajenas');
+}
+const javaNotices=fs.readFileSync('android/app/src/main/java/com/neurosync/familia/MainActivity.java','utf8');
+assert(javaNotices.includes('notifyTaskReceived(String taskId,String sender)') &&
+ javaNotices.includes('Notification.VISIBILITY_PRIVATE')&&
+ javaNotices.includes('ns_received_task_notices'),
+ 'Android debe proteger y deduplicar las notificaciones');
 const syncStore=fs.readFileSync('android/app/src/main/java/com/neurosync/familia/SyncStore.java','utf8');
 assert(syncStore.includes('if(!c.getSharedPreferences("ns_family",0).edit()') &&
  syncStore.includes('AccountStore.fail("No se guardaron los cambios familiares.'),
