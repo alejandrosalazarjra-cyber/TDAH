@@ -281,6 +281,10 @@ jobs:
         env:
           NS_SIGNING_PASSWORD: ${{ secrets.NS_SIGNING_PASSWORD }}
           NS_SIGNING_ALIAS: ${{ secrets.NS_SIGNING_ALIAS }}
+          # URL pública de pruebas; el usuario no la introduce manualmente.
+          NEUROSYNC_API_BASE_URL: https://neurosync-public-api-staging-vz3h.onrender.com
+          # Configurar esta variable en GitHub Actions > Variables cuando exista OAuth.
+          NEUROSYNC_GOOGLE_WEB_CLIENT_ID: ${{ vars.NEUROSYNC_GOOGLE_WEB_CLIENT_ID }}
         run: |
           set -o pipefail
           gradle --no-daemon --stacktrace assemblePreview 2>&1 | tee "$RUNNER_TEMP/neurosync-gradle.log"
