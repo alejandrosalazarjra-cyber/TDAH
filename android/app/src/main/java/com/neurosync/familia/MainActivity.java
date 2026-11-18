@@ -627,6 +627,9 @@ public final class MainActivity extends Activity {
     @JavascriptInterface public void setAlarmQrCode(String id,String value){
       AlarmChallengeStore.setQr(MainActivity.this,id,value);
     }
+    @JavascriptInterface public void setAlarmSoundOptions(String id,int volumePercent,boolean vibration,boolean gentle){
+      AlarmOptionsStore.setAudio(MainActivity.this,id,volumePercent,vibration,gentle);
+    }
     @JavascriptInterface public void setAlarmOptions(String id,int snoozeMinutes,int snoozeLimit){
       AlarmOptionsStore.set(MainActivity.this,id,snoozeMinutes,snoozeLimit);
     }
