@@ -700,6 +700,23 @@ public final class MainActivity extends Activity {
     @JavascriptInterface public boolean testAlarm(){
       return AlarmReceiver.schedule(MainActivity.this,"test_neurosync","Prueba de alarma",System.currentTimeMillis()+60000L,false);
     }
+    /** Listas de salida: horario y revisión accesibles sin abrir WebView. */
+    @JavascriptInterface public boolean scheduleDepartureList(String id,String title,String itemsJson,long when,String repeat){
+      return DepartureReminderReceiver.schedule(MainActivity.this,id,title,itemsJson,when,repeat);
+    }
+    @JavascriptInterface public void cancelDepartureList(String id){
+      DepartureReminderReceiver.cancel(MainActivity.this,id);
+    }
+    @JavascriptInterface public String departureListState(String id){
+      return DepartureReminderReceiver.state(MainActivity.this,id);
+    }
+    @JavascriptInterface public boolean markDepartureItem(String id,int index,boolean checked){
+      return DepartureReminderReceiver.mark(MainActivity.this,id,index,checked);
+    }
+    @JavascriptInterface public void openDepartureChecklist(String id){
+      if(id==null||id.isEmpty()||DepartureReminderReceiver.get(MainActivity.this,id).optJSONArray("items")==null)return;
+      runOnUiThread(()->startActivity(new Intent(MainActivity.this,DepartureChecklistActivity.class).putExtra("id",id)));
+    }
     @JavascriptInterface public boolean scheduleAlarmRepeat(String id,String title,long when,String repeat){
       try{return AlarmReceiver.scheduleRepeat(MainActivity.this,id,title,when,repeat);}
       catch(Exception e){return false;}
