@@ -111,6 +111,11 @@ public final class FocusLauncherActivity extends Activity {
       if(event.getAction()==MotionEvent.ACTION_DOWN){xStart=event.getX();yStart=event.getY();return true;}
       if(event.getAction()==MotionEvent.ACTION_UP){
         float dx=event.getX()-xStart,dy=event.getY()-yStart;
+        // Deslizar a la izquierda abre Pomodoro. Arriba/derecha: aplicaciones.
+        // Se conserva el manejo nativo de toques y desplazamientos verticales.
+        if(dx<-dp(80)&&Math.abs(dx)>Math.abs(dy)*1.25f&&!drawer){
+          openNeuroSync("focus");return true;
+        }
         if(Math.abs(dx)>dp(65)||Math.abs(dy)>dp(85)){showDrawer();return true;}
       }
       return false;
@@ -250,7 +255,7 @@ public final class FocusLauncherActivity extends Activity {
     shortcuts.addView(camera,new LinearLayout.LayoutParams(0,dp(48),1));
     body.addView(shortcuts);
     body.addView(gap(16));
-    TextView footer=text("Deslizar: aplicaciones",11,MUTED,false);
+    TextView footer=text("← Pomodoro   ·   Deslizar a la derecha: aplicaciones",11,MUTED,false);
     footer.setGravity(Gravity.CENTER);body.addView(footer);
     showContent(body);
   }
