@@ -19,8 +19,8 @@ services:
         fromDatabase:
           name: neurosync-public-db-staging
           property: connectionString
-      - key: GOOGLE_CLIENT_ID
-        sync: false
+      # Google OAuth se añadirá después en Environment; no permitir cuentas de prueba
+      # hasta que exista un OAuth Web Client ID verificado.
       - key: HOST
         value: 0.0.0.0
       - key: NODE_ENV
