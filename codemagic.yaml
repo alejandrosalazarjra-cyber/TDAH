@@ -69,6 +69,18 @@ workflows:
           export NEUROSYNC_GOOGLE_WEB_CLIENT_ID="${NEUROSYNC_GOOGLE_WEB_CLIENT_ID:-1033210706025-rgmt44l71ho2cuakl1o2qfs5j6ijsjkq.apps.googleusercontent.com}"
           export JAVA_HOME=$(/usr/libexec/java_home -v 17)
           export PATH="$JAVA_HOME/bin:$PATH"
+          if [ -n "${NS_PREVIEW_SIGNING_KEY_B64:-}" ] && [ -n "${NS_PREVIEW_SIGNING_PASSWORD:-}" ] && [ -n "${NS_PREVIEW_SIGNING_ALIAS:-}" ]; then
+            PREVIEW_KEY_DIR=$(mktemp -d)
+            trap 'rm -rf "$PREVIEW_KEY_DIR"' EXIT
+            export NS_PREVIEW_KEYSTORE_FILE="$PREVIEW_KEY_DIR/neurosync-preview.jks"
+            python3 -c 'import os,base64,pathlib; pathlib.Path(os.environ["NS_PREVIEW_KEYSTORE_FILE"]).write_bytes(base64.b64decode(os.environ["NS_PREVIEW_SIGNING_KEY_B64"],validate=True))'
+            chmod 600 "$NS_PREVIEW_KEYSTORE_FILE"
+            keytool -list -v -keystore "$NS_PREVIEW_KEYSTORE_FILE" -storepass:env NS_PREVIEW_SIGNING_PASSWORD -alias "$NS_PREVIEW_SIGNING_ALIAS" > "$PREVIEW_KEY_DIR/fingerprint.txt"
+            grep -F 'SHA1: 3E:F5:74:B7:F3:8F:09:FB:B4:81:60:BC:40:57:1E:A7:D6:A4:90:63' "$PREVIEW_KEY_DIR/fingerprint.txt" >/dev/null || { echo 'La firma preview no coincide con Google Cloud'; exit 1; }
+            echo "Firma estable preview verificada para Google OAuth."
+          else
+            echo "Firma preview ausente: se compila sin acceso público con Google."
+          fi
           cd android
           gradle --no-daemon --stacktrace assemblePreview
       - name: Verificar APK final y código actualizado
