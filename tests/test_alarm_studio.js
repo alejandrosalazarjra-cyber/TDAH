@@ -41,5 +41,6 @@ assert(html.includes('nsAlarmMissionSequence.length<5'),'Límite de 5 misiones')
 assert(html.includes('ns-alarm-mission-done'),'Aplicación explícita de misiones');
 assert(html.includes('ns-report-productivity'),'Informe debe enlazar con progreso');
 assert(html.includes('if(!scheduleAlarm(item))return'),'No guardar como éxito si Android rechaza la alarma');
+assert(html.includes('model.alarms=model.alarms.filter(function(a){return a.id!==item.id})'),'Revertir alarma nueva si falla el guardado');
 assert(html.includes("var baseRender=renderAlarms"),'La vista debe compartir el render anterior');
 console.log('Alarm Studio QA OK: navegación, misiones combinadas, repeticiones, posponer, informes y seguridad');
