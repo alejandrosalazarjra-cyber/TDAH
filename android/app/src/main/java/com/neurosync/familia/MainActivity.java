@@ -599,7 +599,7 @@ public final class MainActivity extends Activity {
       try{
         JSONObject body=new JSONObject().put("handle",normalized).put("displayName",name)
           .put("discoverable",discoverable);
-        return publicAccounts.call("PATCH","/v1/me",body,"").toString();
+        return publicAccounts.call("POST","/v1/me",body,"").toString();
       }catch(Exception e){return AccountStore.fail("No se pudo modificar el perfil").toString();}
     }
     @JavascriptInterface public String publicContacts(){
