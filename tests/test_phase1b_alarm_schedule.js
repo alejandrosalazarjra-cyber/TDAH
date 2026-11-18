@@ -32,6 +32,14 @@ const receiver=fs.readFileSync('android/app/src/main/java/com/neurosync/familia/
 assert(receiver.includes('calendar.add(unit,amount)'),'Las repeticiones deben usar Calendar');
 assert(receiver.includes('public static JSONObject diagnostics(Context ctx)'));
 assert(receiver.includes('"every2".equals(repeat)'),'La repetición personalizada debe validarse');
+const scheduleSection=receiver.slice(receiver.indexOf('public static boolean scheduleRepeat('),receiver.indexOf('private static boolean program('));
+const successSection=scheduleSection.slice(scheduleSection.indexOf('if(!program(ctx,id,when))'));
+assert(successSection.includes('manager(ctx).cancel(pendingSnooze(ctx,id))'),
+ 'Al editar, cancelar posposición anterior solamente después de programar correctamente');
+assert(successSection.includes('remove(SNOOZE_PREFIX+id)'),
+ 'Al editar, eliminar el registro persistente de la posposición anterior');
+assert(successSection.includes('AlarmOptionsStore.reset(ctx,id)'),
+ 'La nueva programación debe reiniciar el contador de posposiciones');
 const main=fs.readFileSync('android/app/src/main/java/com/neurosync/familia/MainActivity.java','utf8');
 assert(main.includes('alarmScheduleDiagnostics()'),'Falta diagnóstico Android en JS bridge');
 console.log('Fase 1b: horarios locales, validación y diagnóstico Android OK');
