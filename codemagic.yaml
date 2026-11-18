@@ -1,0 +1,73 @@
+# Compilación independiente de GitHub Actions. Ejecutar manualmente en Codemagic.
+# Variante preview: com.neurosync.familia.preview, instalable junto a la app principal.
+workflows:
+  neurosync-apk-preview:
+    name: NeuroSync - APK de prueba independiente
+    instance_type: mac_mini_m2
+    max_build_duration: 90
+    scripts:
+      - name: Preparar Java y herramientas
+        script: |
+          set -eu
+          export JAVA_HOME=$(/usr/libexec/java_home -v 17)
+          export PATH="$JAVA_HOME/bin:$PATH"
+          java -version
+          gradle --version
+          test -d "$ANDROID_SDK_ROOT"
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > android/local.properties
+      - name: Validar funciones críticas
+        script: |
+          set -eu
+          node tests/test_alarm_studio.js
+          node tests/test_alarm_studio_days.js
+          node tests/test_task_studio.js
+          node tests/test_departure_studio.js
+          node tests/test_pomodoro_studio.js
+          node tests/test_wellbeing_studio.js
+          node tests/test_finance_studio.js
+          node tests/test_widget_side_panel.js
+      - name: Copiar todos los recursos actuales a la aplicación
+        script: |
+          set -eu
+          mkdir -p android/app/src/main/assets/modules
+          cp index.html android/app/src/main/assets/index.html
+          for name in alarm_studio task_studio departure_studio pomodoro_studio wellbeing_studio finance_studio; do
+            cp "modules/$name.js" "modules/$name.css" android/app/src/main/assets/modules/
+          done
+          mkdir -p android/app/src/main/assets/dragon/atlases
+          for n in 1 2 3 4 5 6; do
+            cp "assets/dragon/etapa-$n.webp" android/app/src/main/assets/dragon/
+            cp "assets/dragon/atlases/etapa-$n.webp" android/app/src/main/assets/dragon/atlases/
+          done
+          # Video opcional: si falla, el ambiente Bosque sigue funcionando en CSS.
+          mkdir -p android/app/src/main/assets/focus
+          curl --fail --location --silent --show-error --connect-timeout 10 --max-time 90 \
+            'https://d8j0ntlcm91z4.cloudfront.net/user_3MDNXswrgR6N3gVdMwDFhTyzzP4/hf_20261118_051340_5295b8d3-4aa6-475a-8b6f-7060243830c8.mp4' \
+            -o android/app/src/main/assets/focus/bosque.mp4 || rm -f android/app/src/main/assets/focus/bosque.mp4
+          test -s android/app/src/main/assets/index.html
+          test -s android/app/src/main/assets/modules/finance_studio.js
+      - name: Construir APK Android de prueba
+        script: |
+          set -eu
+          export JAVA_HOME=$(/usr/libexec/java_home -v 17)
+          export PATH="$JAVA_HOME/bin:$PATH"
+          cd android
+          gradle --no-daemon --stacktrace assemblePreview
+      - name: Verificar APK final y código actualizado
+        script: |
+          set -eu
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          apk=Path('android/app/build/outputs/apk/preview/app-preview.apk')
+          assert apk.exists() and apk.stat().st_size > 100_000, 'No se produjo un APK válido'
+          with ZipFile(apk) as z:
+              assert z.testzip() is None, 'Archivo APK corrupto'
+              assert z.read('assets/index.html') == Path('index.html').read_bytes(), 'APK contiene una versión antigua'
+              for name in ('alarm_studio','task_studio','departure_studio','pomodoro_studio','wellbeing_studio','finance_studio'):
+                  assert z.getinfo('assets/modules/'+name+'.js')
+              assert 'classes.dex' in z.namelist(), 'Faltan clases nativas'
+          print('APK PREVIEW VERIFICADA:',apk,apk.stat().st_size,'bytes')
+          PY
+    artifacts:
+      - android/app/build/outputs/apk/preview/*.apk
