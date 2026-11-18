@@ -301,8 +301,9 @@ async function request(req,res){
  }
 }
 if(require.main===module){
- if(!pool||!oauth||!Number.isInteger(PORT)||PORT<1||PORT>65535){
-  console.error('Falta DATABASE_URL, GOOGLE_CLIENT_ID o PORT válido. API pública no iniciada.');
+ if(!pool||(!oauth&&process.env.NODE_ENV!=='staging')||
+    !Number.isInteger(PORT)||PORT<1||PORT>65535){
+  console.error('Falta DATABASE_URL, GOOGLE_CLIENT_ID (excepto staging) o PORT válido. API pública no iniciada.');
   process.exit(1);
  }
  const server=http.createServer(request);
