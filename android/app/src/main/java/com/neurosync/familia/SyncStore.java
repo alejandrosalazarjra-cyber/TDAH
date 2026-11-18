@@ -106,6 +106,26 @@ public final class SyncStore {
       }
     }catch(Exception e){return AccountStore.fail("No se pudieron consultar envíos");}
   }
+  /** Resumen mínimo para sondeo Android en segundo plano: nunca expone tareas ajenas. */
+  public static JSONObject notificationDigest(Context c,JSONObject actor){
+    if(actor==null)return AccountStore.fail("Inicia sesión");
+    try{
+      synchronized(LOCK){
+        String username=actor.optString("username","");
+        JSONArray received=new JSONArray(),rows=read(c).optJSONArray("tasks");
+        if(rows!=null)for(int i=0;i<rows.length();i++){
+          JSONObject task=rows.optJSONObject(i);
+          if(task==null||task.optBoolean("deleted")||
+             !username.equals(task.optString("owner"))||
+             !task.has("sentBy"))continue;
+          received.put(new JSONObject().put("id",task.optString("id"))
+            .put("sentBy",task.optString("sentBy")));
+        }
+        return new JSONObject().put("ok",true).put("received",received)
+          .put("sent",sentSummary(read(c),username));
+      }
+    }catch(Exception e){return AccountStore.fail("No se pudo consultar las novedades");}
+  }
   /** Solo el destinatario decide aceptar o completar una tarea recibida. */
   public static JSONObject updateDelivery(Context c,JSONObject request,JSONObject actor){
     if(actor==null)return AccountStore.fail("Inicia sesión");
