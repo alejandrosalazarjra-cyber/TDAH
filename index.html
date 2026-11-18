@@ -887,16 +887,33 @@ function nsHealthRender(){
  });
  by('ns-health-note').textContent=total?'Total de la semana: '+total+' minutos registrados.':'Todavía no hay sesiones registradas durante estos siete días.';
 }
+/* Próxima alarma para el widget: misma semántica de repetición que Android. */
+function nsAlarmNextLocal(a,now){
+ if(!a||a.deleted||a.enabled===false||!a.date||!a.time)return null;
+ var d=new Date(a.date+'T'+a.time+':00');
+ if(!Number.isFinite(d.getTime()))return null;
+ var repeat=a.repeat||(a.daily?'daily':'none'),today=now||new Date();
+ function accepted(){
+  var weekday=d.getDay(),weekend=weekday===0||weekday===6;
+  if(repeat==='weekdays')return !weekend;
+  if(repeat==='weekends')return weekend;
+  if(/^days:[01]{7}$/.test(repeat))return repeat.charAt(5+weekday)==='1';
+  return true;
+ }
+ if(d>today&&accepted())return d;
+ if(repeat==='none')return null;
+ for(var n=0;n<3700&&(d<=today||!accepted());n++)
+  d.setDate(d.getDate()+(repeat==='weekly'?7:repeat==='every2'?2:repeat==='every3'?3:1));
+ return d>today&&accepted()?d:null;
+}
 function nsWidgetAlarmSummary(){
  if(!session||!nat||!nat.updateWidgetNextAlarm)return;
  var next=null,now=new Date();
- (model.alarms||[]).filter(function(a){return !a.deleted&&(a.owner===session.username||a.owner==='todos')&&a.date&&a.time}).forEach(function(a){
-  var t=new Date(a.date+'T'+a.time+':00');if(!Number.isFinite(t.getTime()))return;
-  var rep=a.repeat||(a.daily?'daily':'none');
-  if(rep==='daily'){while(t<=now)t.setDate(t.getDate()+1)}
-  else if(rep==='weekly'){while(t<=now)t.setDate(t.getDate()+7)}
-  if(t<=now)return;
-  if(!next||t<next)next=t;
+ (model.alarms||[]).filter(function(a){
+  return !a.deleted&&(a.owner===session.username||a.owner==='todos');
+ }).forEach(function(a){
+  var d=nsAlarmNextLocal(a,now);
+  if(d&&(!next||d<next))next=d;
  });
  var label=next?next.toLocaleDateString('es-CO',{day:'2-digit',month:'short'})+' '+next.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}):'';
  try{nat.updateWidgetNextAlarm(label)}catch(e){}
