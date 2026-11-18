@@ -2275,7 +2275,14 @@ by('ns-owner-access').onclick=function(){
  if(showing)by('login-user').focus();
 };
 if(nat&&nat.publicAvailable&&nat.publicAvailable()){
- by('ns-public-login').classList.remove('hidden');
+ var publicLoginButton=by('ns-public-login'),legacyGoogleButton=by('ns-google-login');
+ publicLoginButton.classList.remove('hidden');
+ publicLoginButton.innerHTML='<span class="ns-google-symbol">G</span> Continuar con Google';
+ // Priorizar el acceso público sin eliminar las copias personales anteriores.
+ legacyGoogleButton.textContent='Usar modo personal con Google Drive';
+ legacyGoogleButton.parentNode.insertBefore(publicLoginButton,legacyGoogleButton);
+ var googleNote=document.querySelector('.ns-google-note');
+ if(googleNote)googleNote.textContent='Accede a tus contactos y comparte tareas. El modo personal anterior continúa disponible.';
 }
 by('ns-public-login').onclick=function(){
  by('login-error').textContent='';
