@@ -72,6 +72,7 @@ jobs:
           node tests/test_pomodoro_studio.js
           node tests/test_wellbeing_studio.js
           node tests/test_finance_studio.js
+          node tests/test_widget_side_panel.js
 
       - name: Validar interfaz antes de compilar
         shell: bash
