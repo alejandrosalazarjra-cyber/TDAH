@@ -2013,6 +2013,7 @@ window.neuroQrEnrollment=function(raw){
  say('QR de referencia capturado');
 };
 function scheduleAlarm(a){
+ if(a.enabled===false)return false;
  if(!nat||(!nat.scheduleAlarm&&!nat.scheduleAlarmRepeat))return false;
  var dateText=String(a.date||''),timeText=String(a.time||'');
  if(!/^\d{4}-\d{2}-\d{2}$/.test(dateText)||!/^\d{2}:\d{2}$/.test(timeText)){
@@ -2029,7 +2030,7 @@ function scheduleAlarm(a){
  }
  var when=local.getTime();
  var repeat=a.repeat|| (a.daily?'daily':'none');
- if(!['none','daily','weekly','every2','every3'].includes(repeat)){say('Repetición no válida');return false}
+ if(!['none','daily','weekly','every2','every3','weekdays','weekends'].includes(repeat)){say('Repetición no válida');return false}
  // No sumar milisegundos para repeticiones: en cambios de zona horaria o DST
  // esa aritmética desplaza la hora de despertar. Android usa Calendar local.
  // El primer día/hora es la referencia y AlarmReceiver.nextRepeat calcula el siguiente.
@@ -2745,8 +2746,8 @@ window.NeuroAlarmAPI={
   if(id&&(!original||original.owner!==session.username))return {ok:false,error:'No tienes permiso para editar esta alarma'};
   var title=String(data.title||'Despertar').trim().slice(0,90);
   var date=String(data.date||day()),time=String(data.time||'07:00');
-  var validRepeats=['none','daily','weekly','every2','every3'];
-  var allowedMissions=['none','math','math_hard','typing','memory','taps','shake','qr','routine_focus','routine_active'];
+  var validRepeats=['none','daily','weekly','every2','every3','weekdays','weekends'];
+  var allowedMissions=['none','math','math_hard','typing','memory','taps','shake','qr','routine_focus','routine_active','routine_five'];
   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^\d{2}:\d{2}$/.test(time))
    return {ok:false,error:'Fecha u hora inválida'};
   var dateParts=date.split('-').map(Number),timeParts=time.split(':').map(Number);
