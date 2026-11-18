@@ -617,6 +617,9 @@ public final class MainActivity extends Activity {
     @JavascriptInterface public void setAlarmOptions(String id,int snoozeMinutes,int snoozeLimit){
       AlarmOptionsStore.set(MainActivity.this,id,snoozeMinutes,snoozeLimit);
     }
+    @JavascriptInterface public boolean setAlarmMissionSequence(String id,String sequenceJson){
+      return AlarmChallengeStore.setSequence(MainActivity.this,id,sequenceJson);
+    }
     @JavascriptInterface public void setAlarmChallenge(String id,String challenge){
       AlarmChallengeStore.set(MainActivity.this,id,challenge);
     }
