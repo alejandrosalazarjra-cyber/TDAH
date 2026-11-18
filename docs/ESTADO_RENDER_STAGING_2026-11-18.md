@@ -27,21 +27,23 @@ Fecha: 2026-11-18
 
 ## Progreso posterior: conexión OAuth preparada
 
-- `GET /v1/auth/status` fue añadido para exponer únicamente `loginEnabled`; no devuelve IDs ni secretos. La ruta aún no pudo comprobarse mediante un cliente HTTP externo desde esta sesión.
-- La creación de usuarios requiere tanto `GOOGLE_CLIENT_ID` como `PUBLIC_REGISTRATION_ENABLED=true`. En esta fase no se ha configurado ninguno de esos valores; el registro sigue deshabilitado.
+- `GET /v1/auth/status` fue añadido para exponer únicamente `loginEnabled`; no devuelve IDs ni secretos. Se comprobó por cliente HTTP externo: `GET /v1/auth/status` → `{"ok":true,"loginEnabled":false}`.
+- La creación de usuarios requiere tanto `GOOGLE_CLIENT_ID` como `PUBLIC_REGISTRATION_ENABLED=true`. `GOOGLE_CLIENT_ID` ya se configuró en Render con el cliente Web del proyecto `neurosync-515121`; `PUBLIC_REGISTRATION_ENABLED=false` mantiene cerrado el registro.
 - La APK pública utiliza `requestIdToken` con la audiencia Web Client ID, no el token personal de Google Drive.
-- Las compilaciones de GitHub Actions y Codemagic conocen la URL HTTPS de Render y aceptan la variable del desarrollador `NEUROSYNC_GOOGLE_WEB_CLIENT_ID`.
+- Las compilaciones GitHub Actions y Codemagic conocen la URL HTTPS de Render y tienen Web Client ID público predeterminado (sobrescribible mediante `NEUROSYNC_GOOGLE_WEB_CLIENT_ID`).
 - El error de firma Google API 10 se identifica y muestra el paquete y SHA-1 al desarrollador, sin revelar credenciales.
 - Pasos detallados: `docs/OAUTH_GOOGLE_NEUROSYNC.md`.
 - Render verificó la migración y reportó servicio **live** tras este despliegue.
+- Google Auth Platform configurado: público EXTERNAL en TESTING, cliente Web `NeuroSync Backend`, y `elgatojhon8@gmail.com` como único test user; no se activó facturación.
+- API verificada externamente: `GET /health` → `{"ok":true}`.
 - La compilación de APK y el inicio de sesión en dispositivos aún no se han verificado.
 
 ## Limitaciones obligatorias
 
 **Este despliegue NO debe utilizarse con usuarios reales ni anunciarse como listo para Google Play pública.**
 
-- `GOOGLE_CLIENT_ID` no está configurado. El modo staging permite iniciar el servidor sin OAuth, pero `POST /v1/auth/exchange` responde 503 y no crea cuentas.
-- Para activar login público, crear cliente OAuth Web de Google, registrar paquete/huellas Android, configurar `GOOGLE_CLIENT_ID` en Render y `NEUROSYNC_API_BASE_URL` más `NEUROSYNC_GOOGLE_WEB_CLIENT_ID` en la compilación.
+- `GOOGLE_CLIENT_ID` está configurado. El registro sigue cerrado por la variable `PUBLIC_REGISTRATION_ENABLED=false`; `POST /v1/auth/exchange` responde 503 hasta habilitar expresamente los registros.
+- Para activar login piloto, obtener SHA-1 de una APK firmada estable, crear el cliente OAuth Android con el paquete correcto, comprobar ID token en Android y habilitar de forma controlada la bandera de registro.
 - Faltan notificaciones FCM, pruebas reales en dos móviles y pruebas independientes contra PostgreSQL.
 - Render Free puede suspender el web service al quedar inactivo.
 - PostgreSQL Free expira a los 30 días y no cuenta con respaldo gestionado. No almacenar datos importantes.
