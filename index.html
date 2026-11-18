@@ -1932,6 +1932,7 @@ by('prev-month').onclick=function(){month=new Date(month.getFullYear(),month.get
 document.querySelectorAll('[data-filter]').forEach(function(b){b.onclick=function(){filter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(function(x){x.classList.toggle('active',x===b)});render()}});
 function field(label,name,type,options){if(type==='select'){return '<label class="field">'+label+'<select name="'+name+'">'+options.map(function(o){return '<option value="'+esc(o[0])+'">'+esc(o[1])+'</option>'}).join('')+'</select></label>'}return '<label class="field">'+label+'<input name="'+name+'" type="'+(type||'text')+'" '+(name==='title'||name==='place'||name==='username'?'required':'')+'></label>'}
 function openModal(kind){
+if(kind==='bag'&&window.NeuroDepartureStudio){window.NeuroDepartureStudio.create();return}
 if(kind==='alarm'&&nat&&nat.requestAlarmPermissions){
  try{var perms=JSON.parse(nat.alarmPermissions());if(!perms.notifications||!perms.exact||!perms.fullScreen)nat.requestAlarmPermissions();}catch(e){}
 }
@@ -2941,6 +2942,7 @@ window.NeuroDepartureAPI={
   var date=String(data.date||day()),time=String(data.time||'');
   var scheduled=!!time,when=0;
   if(scheduled){
+   if(!nat)return {ok:false,error:'Para programar avisos necesitas la APK Android'};
    if(!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(date)||!/^[0-9]{2}:[0-9]{2}$/.test(time))
     return {ok:false,error:'Fecha u hora inválida'};
    var parts=date.split('-').map(Number),clock=time.split(':').map(Number);
