@@ -25,6 +25,11 @@ assert(ring.includes('routine_five')&&ring.includes('AlarmOptionsStore.minutes')
 assert(receiver.includes('AlarmOptionsStore.max'));
 assert(receiver.includes('"weekdays".equals(repeat)')&&receiver.includes('"weekends".equals(repeat)'));
 assert(options.includes('getSharedPreferences'));
+const audio=fs.readFileSync('android/app/src/main/java/com/neurosync/familia/AlarmAudioService.java','utf8');
+assert(audio.includes('beginVolumeRamp()')&&audio.includes('setVolume(volume,volume)'));
+assert(main.includes('setAlarmFadeSeconds(int seconds)')&&main.includes('getAlarmFadeSeconds()'));
+assert(js.includes('id="ns-as-fade"')&&js.includes('fadeSeconds:+'));
+
 assert(!js.includes('localStorage.setItem('),'No crear una base de alarmas paralela');
 assert(!js.includes('fetch('),'Interfaz local sin peticiones externas');
 assert(css.includes('prefers-reduced-motion')&&css.includes(':focus-visible'));
