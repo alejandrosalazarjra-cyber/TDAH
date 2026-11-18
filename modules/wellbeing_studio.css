@@ -1,0 +1,63 @@
+/* NeuroSync · Bienestar privado: diseño discreto, móvil y sin gamificación punitiva */
+#view-habits .ns-wb-card{position:relative;max-width:680px!important}
+#view-habits .ns-wb-card>span.chip,#view-habits .ns-wb-card>h2,#view-habits .ns-wb-card>p.hint,
+#view-habits .ns-wb-card>div[style],#view-habits .ns-wb-card>.row,
+#view-habits .ns-wb-card>h2:not(#ns-private-wellbeing h2),
+#view-habits .ns-wb-card>#streak-history{display:none!important}
+#ns-private-wellbeing{--wb-blue:#1686e7;--wb-ink:#193551;--wb-fade:#e9f4fb;display:grid;gap:14px;color:var(--wb-ink);
+ font-family:Inter,system-ui,-apple-system,sans-serif;max-width:650px;margin:auto}
+#ns-private-wellbeing *,.ns-wb-modal *{box-sizing:border-box}
+#ns-private-wellbeing button,.ns-wb-modal button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#ns-private-wellbeing .ns-wb-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+#ns-private-wellbeing .ns-wb-head span{display:block;font-size:10px;font-weight:800;letter-spacing:.13em;color:#1677b9}
+#ns-private-wellbeing .ns-wb-head h3{font-size:clamp(19px,5vw,25px);margin:5px 0!important;color:#1b395d!important}
+#ns-private-wellbeing .ns-wb-head button{width:44px;height:44px;background:#d9ecfb;border:0;border-radius:50%;font-size:22px;color:#266293}
+#ns-private-wellbeing .ns-wb-description{color:#6e849b;line-height:1.55;font-size:13px;margin:0}
+#ns-private-wellbeing .ns-wb-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+#ns-private-wellbeing .ns-wb-metrics>div{display:grid;gap:6px;padding:16px 7px;justify-items:center;text-align:center;
+ border-radius:17px;background:#edf7ff}
+#ns-private-wellbeing .ns-wb-metrics strong{font-size:clamp(29px,9vw,39px);font-weight:780;color:#146db9;font-variant-numeric:tabular-nums}
+#ns-private-wellbeing .ns-wb-metrics small{font-size:11px;color:#657d95}
+#ns-private-wellbeing .ns-wb-action{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#ns-private-wellbeing .ns-wb-action button{border:0;border-radius:13px;background:#1788ef;color:white;
+ padding:12px 9px;min-height:54px;font-size:12px;font-weight:750}
+#ns-private-wellbeing .ns-wb-action button+button{background:#d9edff;color:#1a649b}
+#ns-private-wellbeing .ns-wb-panel{background:#fff;border:1px solid #e0eaf5;border-radius:17px;padding:16px 13px}
+#ns-private-wellbeing .ns-wb-panel h4{margin:0 0 11px;color:#24445d!important;font-size:15px!important}
+#ns-private-wellbeing .ns-wb-panel p{font-size:12px;color:#657f9b;line-height:1.55}
+#ns-private-wellbeing .ns-wb-panel button{min-height:40px;border:1px solid #cce3f7;border-radius:10px;background:#eff7ff;color:#146da9;
+ font-size:12px;padding:8px 11px}
+#ns-private-wellbeing .ns-wb-inline{display:flex;align-items:center;justify-content:space-between;gap:9px}
+#ns-private-wellbeing .ns-wb-inline small{font-size:10px;color:#8196a8;text-align:right}
+#ns-private-wellbeing .ns-wb-heatmap{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:5px}
+#ns-private-wellbeing .ns-wb-heatmap span{height:13px;border-radius:3px;background:#ebf1f6}
+#ns-private-wellbeing .ns-wb-heatmap span.has-log{background:#4ca5eb}
+#ns-private-wellbeing .ns-wb-record{display:grid;gap:5px;padding:10px 0;border-top:1px solid #e8eff6;font-size:12px}
+#ns-private-wellbeing .ns-wb-record span{color:#8197aa}#ns-private-wellbeing .ns-wb-record strong{font-size:13px;color:#275c89}
+#ns-private-wellbeing .ns-wb-record p{margin:0;overflow-wrap:anywhere}
+#ns-private-wellbeing .ns-wb-footer{display:flex;flex-wrap:wrap;gap:7px}
+#ns-private-wellbeing .ns-wb-footer button{padding:10px;min-height:44px;background:#eff4f8;border:1px solid #d9e5ee;
+ color:#3c637e;border-radius:11px;font-size:11px;flex:1}
+#ns-private-wellbeing .ns-wb-note{font-size:11px;color:#7d91a3;line-height:1.55}
+.ns-wb-modal{position:fixed;inset:0;z-index:2147483630;display:grid;place-items:center;background:#071b33aa;
+ padding:18px;overflow-y:auto}
+.ns-wb-dialog{position:relative;width:min(100%,490px);max-height:90dvh;overflow-y:auto;padding:24px 20px 20px;background:#fff;
+ border-radius:20px;color:#1a3452;box-shadow:0 20px 70px #001b3252}
+.ns-wb-dialog h3{font-size:22px;margin:0 35px 9px 0}
+.ns-wb-dialog p{font-size:13px;color:#69819a;line-height:1.55}
+.ns-wb-dialog .ns-wb-close{position:absolute;right:12px;top:10px;width:44px;height:44px;border:0;border-radius:50%;
+ background:#edf4fa;color:#244c6e;font-size:25px}
+.ns-wb-dialog label{display:grid;gap:6px;margin-top:12px;font-size:13px;color:#466480}
+.ns-wb-dialog select,.ns-wb-dialog textarea{width:100%;padding:11px;border:1px solid #c9dce9;border-radius:10px;
+ color:#1a3452;background:#f8fbff;font:inherit;font-size:14px;min-height:43px}
+.ns-wb-dialog textarea{min-height:85px;resize:vertical}
+.ns-wb-dialog .ns-wb-primary,.ns-wb-dialog .ns-wb-danger,.ns-wb-dialog .ns-wb-support button{
+ border:0;min-height:48px;border-radius:12px;padding:11px 14px;margin-top:14px;background:#1688eb;color:white;font-size:13px;font-weight:750}
+.ns-wb-dialog .ns-wb-danger{background:#a83249}
+.ns-wb-dialog .ns-wb-breath{display:flex;align-items:baseline;justify-content:center;gap:8px;padding:16px;background:#edf7ff;border-radius:14px}
+.ns-wb-dialog .ns-wb-breath strong{font-size:46px;color:#176db5;font-variant-numeric:tabular-nums}
+.ns-wb-dialog .ns-wb-support{display:flex;flex-wrap:wrap;gap:8px}
+.ns-wb-dialog .ns-wb-support button{flex:1}
+#ns-private-wellbeing :focus-visible,.ns-wb-modal :focus-visible{outline:3px solid #138bec!important;outline-offset:3px}
+@media(max-width:350px){#ns-private-wellbeing .ns-wb-action{grid-template-columns:1fr}#ns-private-wellbeing .ns-wb-heatmap{gap:3px}}
+@media(prefers-reduced-motion:reduce){#ns-private-wellbeing *, .ns-wb-modal *{animation:none!important;transition:none!important}}
