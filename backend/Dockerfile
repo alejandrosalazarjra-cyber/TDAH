@@ -4,7 +4,7 @@ WORKDIR /app
 COPY package.json ./
 RUN npm install --omit=dev --no-audit --no-fund \
     && npm cache clean --force
-COPY server.js migrate.js schema_public_v1.sql start.sh ./
+COPY server.js legal_pages.js migrate.js schema_public_v1.sql start.sh ./
 RUN chmod +x start.sh
 USER node
 EXPOSE 8081
