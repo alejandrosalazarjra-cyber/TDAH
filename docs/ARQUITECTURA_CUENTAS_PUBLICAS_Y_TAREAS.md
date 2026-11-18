@@ -1,5 +1,5 @@
 # NeuroSync — arquitectura de cuentas públicas y tareas entre usuarios
-Estado: especificación de implementación. **No hay todavía backend público desplegado ni registro público funcional.**
+Estado: API pública desplegada en Render como entorno temporal de PRUEBAS; **el registro permanece bloqueado y la APK aún no está validada en dispositivos**. PostgreSQL Free expira el 18 de diciembre de 2026.
 Fecha: 2026-11-18
 
 ## Decisión de producto
@@ -125,3 +125,11 @@ El servidor responde `201` con el ID de tarea y estado `pending`. Reintentar con
 - Costos y privacidad de backend documentados antes de habilitar registro abierto.
 
 **Importante:** No se crean ahora direcciones públicas, proyectos cloud, usuarios externos ni tokens reales. Este documento es el contrato técnico para construir y probar esa infraestructura.
+
+## Funciones implementadas posteriormente (staging)
+
+- `POST /v1/contacts/block` y `/v1/contacts/unblock`: bloquear o desbloquear otro usuario de forma autenticada.
+- `GET /v1/contacts/blocks`: consultar exclusivamente los contactos bloqueados por la propia cuenta.
+- `POST /v1/me/delete` con confirmación `ELIMINAR`: elimina los datos de la cuenta pública, sus sesiones y sus tareas compartidas relacionadas mediante una transacción. La APK limpia también sus copias locales de esa cuenta; para Play Store hace falta además una vía web de solicitud de eliminación.
+- `GET /v1/events/latest`: cursor inicial para sincronización de eventos sin notificaciones antiguas.
+- La sincronización `JobScheduler` puede servir de respaldo de avisos, pero la entrega instantánea requiere FCM.
