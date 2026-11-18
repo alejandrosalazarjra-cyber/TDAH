@@ -2995,7 +2995,9 @@ function nsOutboxAttempt(entry){
   if(!raw)return {ok:false,error:'Transporte no disponible'};
   var response=JSON.parse(raw);
   return response&&response.ok===true?response:
-   {ok:false,error:response&&response.error||'No se pudo entregar'};
+   {ok:false,error:response&&response.error||'No se pudo entregar',
+    permanent:!!(session&&session.public&&response&&
+      [400,401,403,404,409,422].includes(Number(response.httpStatus)))};
  }catch(e){return {ok:false,error:'Sin conexión con el servidor'}}
 }
 function nsOutboxFlush(){
@@ -3003,12 +3005,23 @@ function nsOutboxFlush(){
  var who=session.username,items=nsOutboxRead();
  if(items===null)return {ok:false,error:'No se pudo leer la bandeja de salida',remaining:0};
  var remaining=items.slice(),delivered=0;
+ // No reintentar automáticamente rechazos permanentes; requieren intervención.
+ var eligible=items.filter(function(e){return !e.failed});
  // Un intento por ciclo: el puente nativo síncrono no debe bloquear la pantalla durante decenas de segundos.
- for(var i=0;i<Math.min(1,items.length);i++){
+ for(var i=0;i<Math.min(1,eligible.length);i++){
   if(!session||session.username!==who)break;
-  var result=nsOutboxAttempt(items[i]);
+  var result=nsOutboxAttempt(eligible[i]);
+  if(result.permanent){
+   nsOutboxWrite(remaining.map(function(e){
+    if(e.id===eligible[i].id&&e.recipient===eligible[i].recipient){
+     return Object.assign({},e,{failed:result.error});
+    }
+    return e;
+   }));
+   continue;
+  }
   if(!result.ok)continue;
-  var updated=remaining.filter(function(e){return !(e.id===items[i].id&&e.recipient===items[i].recipient)});
+  var updated=remaining.filter(function(e){return !(e.id===eligible[i].id&&e.recipient===eligible[i].recipient)});
   if(nsOutboxWrite(updated)){remaining=updated;delivered++;}
   // Si falla eliminar del almacenamiento, se mantiene para reintentar sin duplicar.
  }
@@ -3097,6 +3110,14 @@ window.NeuroTasksAPI={
    if(pending!==null)nsOutboxWrite(pending.filter(function(e){return !(e.id===requestId&&e.recipient===recipient)}));
    return result;
   }
+  if(result.permanent){
+   var rejected=nsOutboxRead();
+   if(rejected!==null)nsOutboxWrite(rejected.map(function(e){
+    return e.id===requestId&&e.recipient===recipient?
+     Object.assign({},e,{failed:result.error}):e;
+   }));
+   return {ok:false,error:result.error||'El servidor rechazó la tarea'};
+  }
   return {ok:true,queued:true,recipient:recipient,id:requestId,
    message:'Guardada en bandeja de salida. Se enviará al recuperar la conexión.'};
  },
@@ -3121,7 +3142,8 @@ window.NeuroTasksAPI={
   if(session&&session.public&&nat&&nat.publicTasks){
    var queued=nsOutboxRead();
    if(queued===null)return {ok:false,error:'No se pudo leer la bandeja',tasks:[]};
-   var offline=queued.map(function(e){return {id:e.id,title:e.task.title,recipient:e.recipient,deliveryStatus:'queued'}});
+   var offline=queued.map(function(e){return {id:e.id,title:e.task.title,recipient:e.recipient,
+     deliveryStatus:e.failed?'failed':'queued',error:e.failed||''}});
    try{
     var reply=JSON.parse(nat.publicTasks('sent'));
     return {ok:true,offline:!reply.ok,tasks:offline.concat(reply.ok&&Array.isArray(reply.tasks)?reply.tasks.map(function(t){
