@@ -14,6 +14,10 @@ workflows:
           java -version
           gradle --version
           test -d "$ANDROID_SDK_ROOT"
+          SDKMGR="$(command -v sdkmanager || true)"
+          if [ -z "$SDKMGR" ]; then SDKMGR="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"; fi
+          "$SDKMGR" "platforms;android-36" "build-tools;36.0.0"
+          test -f "$ANDROID_SDK_ROOT/platforms/android-36/android.jar"
           echo "sdk.dir=$ANDROID_SDK_ROOT" > android/local.properties
       - name: Validar funciones críticas
         script: |
@@ -84,7 +88,7 @@ workflows:
             echo "Firma preview ausente: se compila sin acceso público con Google."
           fi
           cd android
-          gradle --no-daemon --stacktrace assemblePreview
+          bash ../scripts/run-gradle.sh --no-daemon --stacktrace assemblePreview
       - name: Verificar APK final y código actualizado
         script: |
           set -eu
@@ -101,5 +105,24 @@ workflows:
               assert 'classes.dex' in z.namelist(), 'Faltan clases nativas'
           print('APK PREVIEW VERIFICADA:',apk,apk.stat().st_size,'bytes')
           PY
+      - name: Preparar bundle de Google Play (solo si hay firma release)
+        script: |
+          set -eu
+          if [ -z "${NS_SIGNING_KEY_B64:-}" ] || [ -z "${NS_SIGNING_PASSWORD:-}" ]; then
+            echo "Sin firma release: el AAB no se construirá hasta configurar secretos del desarrollador."
+            exit 0
+          fi
+          export NS_SIGNING_ALIAS="${NS_SIGNING_ALIAS:-neurosync}"
+          KEY_DIR=$(mktemp -d)
+          trap 'rm -rf "$KEY_DIR"' EXIT
+          export NS_KEYSTORE_FILE="$KEY_DIR/neurosync-release.jks"
+          python3 -c 'import base64,os,pathlib;pathlib.Path(os.environ["NS_KEYSTORE_FILE"]).write_bytes(base64.b64decode(os.environ["NS_SIGNING_KEY_B64"],validate=True))'
+          chmod 600 "$NS_KEYSTORE_FILE"
+          export NEUROSYNC_API_BASE_URL="${NEUROSYNC_PRODUCTION_API_BASE_URL:-}"
+          export NEUROSYNC_GOOGLE_WEB_CLIENT_ID="${NEUROSYNC_GOOGLE_WEB_CLIENT_ID:-}"
+          bash scripts/run-gradle.sh --no-daemon --stacktrace -p android bundleRelease
+          test -s android/app/build/outputs/bundle/release/app-release.aab
+          jarsigner -verify android/app/build/outputs/bundle/release/app-release.aab > "$KEY_DIR/aab-verify.txt"
     artifacts:
       - android/app/build/outputs/apk/preview/*.apk
+      - android/app/build/outputs/bundle/release/*.aab
