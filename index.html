@@ -531,7 +531,7 @@ html,body{background:#f8fbff;color:var(--ink)}
  border:0;background:transparent;color:#0876ba;min-height:43px;font-weight:650}
 #ns-check-local-copy:focus-visible{outline:2px solid #0876ba;outline-offset:2px}
 #ns-local-copy-result{padding:2px 12px;font-size:12px;line-height:1.45}
-</style><link rel="stylesheet" href="./modules/alarm_studio.css"></head><body>
+</style><link rel="stylesheet" href="./modules/alarm_studio.css"><link rel="stylesheet" href="./modules/task_studio.css"></head><body>
 <div id="login" class="login ns-login-v3">
  <div class="ns-login-wrap">
   <div class="ns-login-brand"><img src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%20role%3D%22img%22%20aria-label%3D%22NeuroSync%3A%20drag%C3%B3n%20y%20lista%20de%20tareas%22%3E%0A%3Cdefs%3E%3ClinearGradient%20id%3D%22bg%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23063674%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%230866c6%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2303c4ec%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22wing%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2345eeff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%230d7fe6%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22paper%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ffffff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23c8f2ff%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%0A%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%22248%22%20height%3D%22248%22%20rx%3D%2258%22%20fill%3D%22url(%23bg)%22%2F%3E%0A%3Cpath%20d%3D%22M28%20158Q32%2078%20103%2063Q63%20103%2075%20152Q95%20104%20151%2077Q107%20127%20113%20175Q88%20205%2055%20201Q37%20184%2028%20158Z%22%20fill%3D%22url(%23wing)%22%2F%3E%0A%3Cpath%20d%3D%22M77%2043Q109%2073%20128%2075Q115%2051%20119%2033Q142%2061%20166%2065Q195%2076%20203%20103Q209%20118%20193%20128Q181%20135%20160%20121Q144%20116%20124%20128Q100%20147%20102%20182Q78%20156%2087%20132Q91%20113%20113%20101Q87%2098%2059%20122Q73%2081%20109%2087Q87%2067%2077%2043Z%22%20fill%3D%22%23f7feff%22%2F%3E%0A%3Cpath%20d%3D%22M159%20103Q171%20101%20178%20107Q170%20116%20159%20108Z%22%20fill%3D%22%23073878%22%2F%3E%0A%3Crect%20x%3D%22128%22%20y%3D%22127%22%20width%3D%22100%22%20height%3D%2290%22%20rx%3D%2218%22%20fill%3D%22url(%23paper)%22%2F%3E%0A%3Cg%20stroke%3D%22%23078fe6%22%20stroke-width%3D%228%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m143%20149%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20173%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20196%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22M175%20151h37M175%20175h37M175%20199h27%22%2F%3E%3C%2Fg%3E%0A%3Cpath%20d%3D%22M44%20207Q111%20251%20190%20220%22%20fill%3D%22none%22%20stroke%3D%22%235ff0fd%22%20stroke-width%3D%2216%22%20stroke-linecap%3D%22round%22%2F%3E%0A%3Cpath%20d%3D%22m219%2058%206%2016%2016%206-16%206-6%2016-6-16-16-6%2016-6Z%22%20fill%3D%22%2394ffff%22%2F%3E%0A%3C%2Fsvg%3E" alt="Logo NeuroSync"><span>Neuro<b>Sync</b></span></div>
@@ -1909,7 +1909,7 @@ var list=by('users-list');if(!list)return;
 if(!nat||!nat.getUsers){list.innerHTML='<p class="hint">Las cuentas familiares requieren instalar la APK Android y activar el celular principal.</p>';return}
 try{var data=JSON.parse(nat.getUsers());if(!data.ok){list.textContent=data.error||'No disponible';return}
 list.replaceChildren();data.users.forEach(function(u){var d=document.createElement('div');d.className='profile-line';d.innerHTML='<span><b>'+esc(u.username)+'</b><br><small class="muted">'+(u.role==='admin'?'Administrador':'Miembro')+'</small></span><span class="chip">'+(u.active?'Activo':'Inactivo')+'</span>';list.append(d)})}catch(e){list.textContent='No se pudo obtener la lista de miembros'}}
-function show(view){if(view==='admin'&&session.role!=='admin')return;document.querySelectorAll('.view').forEach(function(v){v.classList.toggle('active',v.id==='view-'+view)});document.querySelectorAll('[data-view]').forEach(function(b){b.classList.toggle('active',b.dataset.view===view)});by('page-title').textContent=labels[view];render();if(view==='habits'){renderStreak();nsHealthRender()}if(view==='alarms'){nsWakeRender();checkAlarmPermissions();if(window.NeuroAlarmStudio)window.NeuroAlarmStudio.render()}}
+function show(view){if(view==='admin'&&session.role!=='admin')return;document.querySelectorAll('.view').forEach(function(v){v.classList.toggle('active',v.id==='view-'+view)});document.querySelectorAll('[data-view]').forEach(function(b){b.classList.toggle('active',b.dataset.view===view)});by('page-title').textContent=labels[view];render();if(view==='habits'){renderStreak();nsHealthRender()}if(view==='alarms'){nsWakeRender();checkAlarmPermissions();if(window.NeuroAlarmStudio)window.NeuroAlarmStudio.render()}if(window.NeuroTasksStudio&&(view==='tasks'||view==='habits'))window.NeuroTasksStudio.render(view)}
 document.querySelectorAll('[data-view]').forEach(function(b){b.addEventListener('click',function(){show(b.dataset.view)})});
 by('prev-month').onclick=function(){month=new Date(month.getFullYear(),month.getMonth()-1,1);renderCalendar()};by('next-month').onclick=function(){month=new Date(month.getFullYear(),month.getMonth()+1,1);renderCalendar()};
 document.querySelectorAll('[data-filter]').forEach(function(b){b.onclick=function(){filter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(function(x){x.classList.toggle('active',x===b)});render()}});
@@ -2835,6 +2835,60 @@ window.NeuroAlarmAPI={
   render();window.dispatchEvent(new Event('neuro-alarm-changed'));return true;
  }
 };
+
+/* Puente Task Studio: reutiliza modelo, historial y controles de acceso existentes. */
+window.NeuroTasksAPI={
+ ready:function(){return !!(session&&model)},
+ list:function(){return session&&model?allTasks().map(function(t){return Object.assign({},t)}):[]},
+ templates:function(){return session?nsTemplateRead().map(function(t){return Object.assign({},t)}):[]},
+ today:function(){return day()},
+ owner:function(){return session?session.username:''},
+ saveTemplate:function(item){
+  if(!session||!model)return false;
+  var steps=Array.isArray(item.steps)?item.steps.map(function(x){return String(x).trim().slice(0,140)}).filter(Boolean).slice(0,20):[];
+  var title=String(item.title||'').trim().slice(0,100);
+  if(!title||!steps.length)return false;
+  var list=nsTemplateRead();list.push({id:uid(),title:title,category:nsCleanCategory(item.category),steps:steps,tags:[],priority:'normal'});
+  try{nsTemplateWrite(list);nsPlanRender();return true}catch(e){return false}
+ },
+ useTemplate:function(id){
+  if(!session||!model)return false;
+  var t=nsTemplateRead().find(function(x){return x.id===id});if(!t)return false;
+  var count=model.tasks.length;nsTemplateCreateTask(t);
+  return model.tasks.length===count+1;
+ },
+ create:function(item){
+  if(!session||!model)return false;
+  var title=String(item.title||'').trim().slice(0,100);
+  if(!title)return false;
+  var repeat=['none','daily','weekly'].includes(item.repeat)?item.repeat:'none';
+  var steps=Array.isArray(item.steps)?item.steps.map(function(v){return String(v).trim().slice(0,140)}).filter(Boolean).slice(0,20):[];
+  var task={id:uid(),title:title,owner:session.username,date:day(),time:'',repeat:repeat,
+   priority:'normal',energy:'medium',category:nsCleanCategory(item.category),
+   steps:steps,tags:[],doneDates:[],stepDates:{},updatedAt:stamp()};
+  model.tasks.push(task);
+  if(!save()){model.tasks.pop();return false}
+  render();return true;
+ },
+ toggleToday:function(id){
+  if(!session||!model)return false;
+  var t=model.tasks.find(function(x){return x.id===id&&!x.deleted&&x.owner===session.username});
+  if(!t)return false;
+  var date=t.repeat&&t.repeat!=='none'?day():t.date;
+  var current=(t.doneDates||[]).slice(),done=current.includes(date);
+  t.doneDates=done?current.filter(function(d){return d!==date}):current.concat(date);
+  var oldMark=t.updatedAt;t.updatedAt=stamp();
+  if(!save()){t.doneDates=current;t.updatedAt=oldMark;return false}
+  if(!done){model.pet.food=(Number(model.pet.food)||0)+10;model.pet.xp=(Number(model.pet.xp)||0)+10;
+    save();}
+  render();return true;
+ },
+ confirm:function(title,text,yes){return nsConfirm(title,text,yes)},
+ openExistingEditor:function(){openModal('task')},
+ show:function(view){show(view)},
+ focus:function(){return nsFocusRead().sessions||[]}
+};
 })();
 </script>
-<script src="./modules/alarm_studio.js"></script></body></html>
+<script src="./modules/alarm_studio.js"></script>
+<script src="./modules/task_studio.js"></script></body></html>
