@@ -2295,7 +2295,19 @@ window.neuroPublicLogin=function(raw){
   if(result.ok&&result.user&&result.user.public){
    enter(result.user);
    by('sync-status').textContent='Conectado a NeuroSync público';
-  }else by('login-error').textContent=result.error||'No se pudo iniciar sesión';
+  }else{
+   by('login-error').textContent=result.error||'No se pudo iniciar sesión';
+   // La firma es pública; nunca mostrar ID tokens ni credenciales.
+   if(result.configurationRequired&&nat&&nat.googleOAuthDiagnostics){
+    try{
+     var d=JSON.parse(nat.googleOAuthDiagnostics());
+     by('ns-google-fingerprint').textContent='Paquete: '+(d.packageName||'No disponible')+
+      '\\nSHA-1: '+(d.sha1||'No disponible')+
+      '\\nRegistra un cliente Android y uno Web en el mismo proyecto Google Cloud.';
+     by('ns-google-developer-info').classList.remove('hidden');
+    }catch(ex){}
+   }
+  }
  }catch(e){by('login-error').textContent='No se pudo abrir la cuenta pública'}
 };
 by('ns-google-login').onclick=function(){
