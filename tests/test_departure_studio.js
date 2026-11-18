@@ -18,6 +18,9 @@ assert(receiver.includes('ACTION_BOOT_COMPLETED')&&receiver.includes('setFullScr
 assert(activity.includes('setShowWhenLocked(true)')&&activity.includes('DepartureReminderReceiver.mark(this,id,position,active)'));
 assert(activity.includes('if(allDone())'),'No declarar terminada la revisión sin todos los checks');
 assert(bridge.includes('scheduleDepartureList(')&&bridge.includes('departureListState('));
+assert(bridge.includes('departureKey(String username,String id)')&&bridge.includes('canAccessSnapshot(username)'));
+assert(html.includes('nat.departureListState(session.username,p.id)'));
+assert(html.includes("if(kind==='bag'&&window.NeuroDepartureStudio)"));
 assert(bridge.includes('"/modules/departure_studio.js"'));
 assert(manifest.includes('android:name=".DepartureChecklistActivity"')&&manifest.includes('android:name=".DepartureReminderReceiver"'));
 assert(workflow.includes('cp modules/departure_studio.js modules/departure_studio.css'));
@@ -26,10 +29,10 @@ assert(from>0&&to>from);
 const packs=[],native=new Map(),user={username:'owner',role:'user'},model={packs,tasks:[],alarms:[],pet:{xp:0}};
 let saves=0,serial=0;const now=new Date(Date.now()+86400000),date=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
 const nat={
- scheduleDepartureList:(id,title,itemsJson,when,repeat)=>{native.set(id,{id,title,items:JSON.parse(itemsJson),when,repeat,checked:{}});return true},
- cancelDepartureList:id=>native.delete(id),
- departureListState:id=>JSON.stringify(native.get(id)||{}),
- markDepartureItem:(id,i,checked)=>{const p=native.get(id);if(!p)return false;p.checked[i]=checked;return true}
+ scheduleDepartureList:(user,id,title,itemsJson,when,repeat)=>{if(user!=='owner')return false;native.set(id,{id,title,items:JSON.parse(itemsJson),when,repeat,checked:{}});return true},
+ cancelDepartureList:(user,id)=>{if(user==='owner')native.delete(id)},
+ departureListState:(user,id)=>JSON.stringify(user==='owner'?native.get(id)||{}:{}),
+ markDepartureItem:(user,id,i,checked)=>{const p=user==='owner'?native.get(id):null;if(!p)return false;p.checked[i]=checked;return true}
 };
 const args={session:user,model,nat,window:{},Date,Number,JSON,Array,Object,Set,Map,
  uid:()=> 'list_'+(++serial),stamp:()=>Date.now(),day:()=>date,
@@ -42,7 +45,7 @@ assert.equal(packs[0].items.length,3);
 assert(api.check(result.id,0,true));assert.equal(packs[0].checked[0],true);
 assert.equal(native.get(result.id).checked[0],true);
 // Los checks marcados en la pantalla nativa se recuperan al volver a la WebView.
-nat.markDepartureItem(result.id,1,true);
+nat.markDepartureItem('owner',result.id,1,true);
 assert.equal(api.list()[0].checked[1],true);
 packs.push({id:'another',owner:'brother',place:'Privada',items:['Clave'],checked:{}});
 assert(!api.check('another',0,true),'Prohibir cambios en lista de otra cuenta');
