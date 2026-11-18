@@ -55,7 +55,7 @@ function taskRows(){
   '<div class="ns-ts-blank"><div class="ns-ts-icon">☑</div><p>Sin tareas en esta categoría.</p><small>Usa «+ Añadir» para comenzar.</small></div>';
 }
 function deliveryLabel(status){
- return status==='completed'?'Completada':status==='accepted'?'Aceptada':'Pendiente de aceptar';
+ return status==='queued'?'Pendiente de conexión':status==='completed'?'Completada':status==='accepted'?'Aceptada':'Pendiente de aceptar';
 }
 function receivedRows(){
  const list=api.received();
@@ -72,10 +72,10 @@ function receivedRows(){
 function sentRows(){
  const result=api.sent();
  if(!result.ok)return '<p class="ns-ts-empty-mail" role="status">'+escape(result.error||'Sin conexión')+'</p>';
- return result.tasks.length?result.tasks.slice(0,30).map(t=>
+ return (result.offline?'<p class="ns-ts-empty-mail">Sin conexión · los envíos pendientes siguen guardados en este teléfono.</p>':'')+(result.tasks.length?result.tasks.slice(0,30).map(t=>
   '<div class="ns-ts-row ns-ts-mail"><div><strong>'+escape(t.title)+'</strong>'+
    '<small>Para: '+escape(t.recipient)+' · '+deliveryLabel(t.deliveryStatus)+'</small></div></div>'
- ).join(''):'<p class="ns-ts-empty-mail">Todavía no has enviado tareas.</p>';
+ ).join(''):'<p class="ns-ts-empty-mail">Todavía no has enviado tareas.</p>');
 }
 function renderTasks(){
  if(!api.ready()){app.replaceChildren();return}
@@ -206,7 +206,7 @@ app.addEventListener('submit',event=>{
    // Misma clave de envío en los reintentos del formulario abierto.
    const requestId=form.dataset.requestId||(form.dataset.requestId='send_'+Date.now()+'_'+Math.random().toString(36).slice(2));
    const result=api.sendTo(v.recipient,{id:requestId,title:v.title,category:v.category,repeat:v.repeat});
-   if(result.ok){sheet=false;renderTasks();}
+   if(result.ok){sheet=false;tab='sent';renderTasks();}
    else {let note=form.querySelector('[data-send-error]');if(!note){note=document.createElement('p');note.setAttribute('data-send-error','');note.setAttribute('role','alert');form.append(note);}note.textContent=result.error||'No se pudo enviar';}
   }else if(api.create(v)){sheet=false;renderTasks()}
  }
@@ -216,7 +216,7 @@ app.addEventListener('submit',event=>{
   if(!existing)return;
   const recipient=form.elements.recipient.value;
   const result=api.sendTo(recipient,existing);
-  if(result.ok){sheet=false;sendTaskId=null;renderTasks();}
+  if(result.ok){sheet=false;sendTaskId=null;tab='sent';renderTasks();}
   else {let note=form.querySelector('[data-send-error]');if(!note){note=document.createElement('p');note.setAttribute('role','alert');note.setAttribute('data-send-error','');form.append(note);}note.textContent=result.error||'No se pudo enviar';}
  }
  if(form.id==='ns-ts-template-form'){
