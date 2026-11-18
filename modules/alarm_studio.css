@@ -142,3 +142,17 @@
 @media(prefers-reduced-motion:reduce){
  #view-alarms .ns-alarm-studio *,#view-alarms .ns-alarm-studio *::after{transition:none!important;animation:none!important}
 }
+
+/* Controles de sonido por alarma, alineación y blancos táctiles amplios */
+#view-alarms .ns-alarm-studio .ns-as-form input[type=range]{
+ appearance:auto!important;-webkit-appearance:auto!important;min-height:44px!important;
+ border:0!important;background:transparent!important;padding:0!important;
+ accent-color:#1686f7;cursor:pointer
+}
+#view-alarms .ns-alarm-studio .ns-as-form label.ns-as-check{
+ display:flex!important;flex-direction:row!important;align-items:center!important;
+ gap:12px;min-height:48px;padding:8px 0;color:#d1e3fb!important
+}
+#view-alarms .ns-alarm-studio .ns-as-check input[type=checkbox]{
+ width:22px!important;height:22px!important;flex:none;accent-color:#1686f7;cursor:pointer
+}
