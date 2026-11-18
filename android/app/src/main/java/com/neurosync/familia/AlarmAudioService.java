@@ -21,7 +21,7 @@ public final class AlarmAudioService extends Service {
   private final Runnable[] rampTask={null};
   private void beginVolume(){
     if(player==null)return;
-    handler.removeCallbacks(rampTask[0]==null?()->{}:rampTask[0]);
+    if(rampTask[0]!=null)handler.removeCallbacks(rampTask[0]);
     final float target=Math.max(0f,Math.min(1f,targetVolume/100f));
     if(!gradualVolume){player.setVolume(target,target);return;}
     final int[] step={1};
