@@ -2802,6 +2802,9 @@ window.NeuroAlarmAPI={
    id:original?original.id:uid(),owner:session.username,
    title:title,date:date,time:time,repeat:repeat,daily:repeat==='daily',
    challenge:challenge,enabled:true,updatedAt:stamp(),
+   volumePercent:Math.max(0,Math.min(100,Number(data.volumePercent??100))),
+   vibration:data.vibration!==false,
+   gentleWake:!!data.gentleWake,
    snoozeMinutes:[1,3,5,10,15].includes(Number(data.snoozeMinutes))?Number(data.snoozeMinutes):5,
    snoozeLimit:[0,1,2,3,5,10].includes(Number(data.snoozeLimit))?Number(data.snoozeLimit):3,
    sequence:challenge==='routine_custom'?data.sequence.slice(0,5):[]
@@ -2812,6 +2815,7 @@ window.NeuroAlarmAPI={
   // Nunca guardar como programada si Android rechazó el horario.
   if(nat&&(!scheduleAlarm(draft)))return {ok:false,error:'Android no pudo programar la alarma. Revisa permisos.'};
   if(nat&&nat.setAlarmOptions)nat.setAlarmOptions(draft.id,draft.snoozeMinutes,draft.snoozeLimit);
+  if(nat&&nat.setAlarmSoundOptions)nat.setAlarmSoundOptions(draft.id,draft.volumePercent,draft.vibration,draft.gentleWake);
   if((challenge==='qr'||challenge==='barcode')&&data.qrReady&&nat&&nat.setAlarmQrCode)
     nat.setAlarmQrCode(draft.id,data.qrReady);
   var previous=original?Object.assign({},original):null;
