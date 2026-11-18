@@ -2194,6 +2194,11 @@ function sync(){
  if(nat.syncFamilyAsync){syncing=true;by('sync-status').textContent='Sincronizando…';try{nat.syncFamilyAsync(content,session.username)}catch(e){syncing=false;by('sync-status').textContent='Guardado local'}return}
  if(nat.syncFamily){try{window.neuroSyncOnSync(nat.syncFamily(content))}catch(e){by('sync-status').textContent='Guardado local'}}
 }
+// Consultar nuevas tareas en intervalos moderados sin sincronizar sesiones cerradas.
+setInterval(function(){
+ if(session&&model&&!session.google&&!syncing&&!nsStorageRecoveryBlocked&&
+    typeof document!=='undefined'&&!document.hidden)sync();
+},60000);
 by('sync-btn').onclick=sync;
 function getUsers(){if(!nat||!nat.getUsers)return [{username:session.username,role:session.role}];try{var r=JSON.parse(nat.getUsers());return r.users||[]}catch(e){return []}}
 function enter(u){
