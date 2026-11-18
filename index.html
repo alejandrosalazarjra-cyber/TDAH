@@ -2993,9 +2993,17 @@ window.NeuroDepartureAPI={
   return true;
  },
  openNative:function(id){
-  if(!session||!model||!model.packs.some(function(p){return p.id===id&&p.owner===session.username&&!p.deleted}))return false;
-  if(nat&&nat.openDepartureChecklist){nat.openDepartureChecklist(session.username,id);return true}
-  return false;
+  if(!session||!model)return false;
+  var p=model.packs.find(function(p){return p.id===id&&p.owner===session.username&&!p.deleted});
+  if(!p||!nat||!nat.openDepartureChecklist||!nat.departureListState)return false;
+  try{
+   var entry=JSON.parse(nat.departureListState(session.username,id));
+   if(entry.id!==id||JSON.stringify(entry.items)!==JSON.stringify(p.items))return false;
+   nat.openDepartureChecklist(session.username,id);return true;
+  }catch(e){return false}
+ },
+ requestPermissions:function(){
+  if(nat&&nat.requestAlarmPermissions)nat.requestAlarmPermissions();
  },
  remove:async function(id){
   if(!session||!model)return false;
