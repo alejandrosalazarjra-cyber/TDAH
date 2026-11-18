@@ -29,6 +29,60 @@ public final class SyncStore {
     String owner=row.optString("owner","");
     return "admin".equals(actor.optString("role")) || actor.optString("username").equals(owner) || "todos".equals(owner);
   }
+  /** Entrega una copia a un destinatario, con identidad del remitente verificada.
+   * La clave idempotente evita duplicados si la red reintenta la misma solicitud.
+   */
+  public static JSONObject sendTask(Context c,JSONObject request,JSONObject actor){
+    if(actor==null)return AccountStore.fail("Inicia sesión");
+    String from=actor.optString("username",""),to=request.optString("recipient","").trim().toLowerCase(java.util.Locale.ROOT);
+    String key=request.optString("requestId","");
+    JSONObject input=request.optJSONObject("task");
+    if(!to.matches("[a-z0-9_\\-]{3,30}")||to.equals(from)||
+       !AccountStore.isActive(c,to))return AccountStore.fail("Destinatario no disponible");
+    if(!key.matches("[a-zA-Z0-9_\\-]{8,100}")||input==null)
+      return AccountStore.fail("Solicitud de tarea inválida");
+    String title=input.optString("title","").trim();
+    if(title.isEmpty()||title.length()>100)return AccountStore.fail("Título inválido");
+    try{
+      synchronized(LOCK){
+        JSONObject database=read(c);
+        Map<String,JSONObject> tasks=map(database.optJSONArray("tasks"));
+        String basis="neurosync-task-v1:"+from+":"+to+":"+key;
+        String id="sent_"+java.util.UUID.nameUUIDFromBytes(basis.getBytes(java.nio.charset.StandardCharsets.UTF_8)).toString();
+        if(tasks.containsKey(id)){
+          JSONObject existing=tasks.get(id);
+          if(to.equals(existing.optString("owner"))&&from.equals(existing.optString("sentBy")))
+            return new JSONObject().put("ok",true).put("id",id).put("duplicate",true);
+          return AccountStore.fail("Conflicto de identificador");
+        }
+        if(tasks.size()>=2900)return AccountStore.fail("Límite de tareas alcanzado");
+        JSONArray steps=new JSONArray(),source=input.optJSONArray("steps");
+        if(source!=null){
+          for(int i=0;i<Math.min(20,source.length());i++){
+            String step=source.optString(i,"").trim();
+            if(!step.isEmpty())steps.put(step.substring(0,Math.min(140,step.length())));
+          }
+        }
+        String repeat=input.optString("repeat","none");
+        if(!("none".equals(repeat)||"daily".equals(repeat)||"weekly".equals(repeat)))repeat="none";
+        String date=input.optString("date","");
+        if(!date.matches("\\d{4}-\\d{2}-\\d{2}"))date=
+          new java.text.SimpleDateFormat("yyyy-MM-dd",java.util.Locale.ROOT).format(new java.util.Date());
+        JSONObject task=new JSONObject().put("id",id).put("owner",to)
+          .put("sentBy",from).put("title",title).put("date",date)
+          .put("repeat",repeat).put("category",input.optString("category","Personal").substring(0,
+             Math.min(50,input.optString("category","Personal").length())))
+          .put("steps",steps).put("doneDates",new JSONArray()).put("stepDates",new JSONObject())
+          .put("priority","normal").put("updatedAt",System.currentTimeMillis());
+        tasks.put(id,task);
+        JSONArray all=new JSONArray();for(JSONObject row:tasks.values())all.put(row);
+        database.put("tasks",all);
+        if(!c.getSharedPreferences("ns_family",0).edit().putString(KEY,database.toString()).commit())
+          return AccountStore.fail("No se pudo entregar la tarea. Vuelve a intentarlo.");
+        return new JSONObject().put("ok",true).put("id",id).put("recipient",to);
+      }
+    }catch(Exception e){return AccountStore.fail("No se pudo enviar la tarea");}
+  }
   public static JSONObject merge(Context c,JSONObject incoming,JSONObject actor){
     if(actor==null)return AccountStore.fail("Inicia sesión");
     try{
