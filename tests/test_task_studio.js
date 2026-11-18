@@ -18,7 +18,7 @@ assert(html.includes('href="./modules/task_studio.css"'));
 assert(android.includes('"/modules/task_studio.js"')&&android.includes('"/modules/task_studio.css"'));
 assert(workflow.includes('cp modules/task_studio.js modules/task_studio.css android/app/src/main/assets/modules/'));
 assert(css.includes(':focus-visible')&&css.includes('prefers-reduced-motion'));
-const start=html.indexOf('window.NeuroTasksAPI={'),end=html.indexOf('\n})();\n</script>',start);
+const start=html.indexOf('/* Bandeja de salida aislada'),end=html.indexOf('\n})();\n</script>',start);
 assert(start>0&&end>start,'Falta conexión de Task Studio a los datos');
 const tasks=[],templates=[];let uid=0,saveCount=0;
 const owner={username:'propietario',role:'user'},model={tasks,packs:[],alarms:[],pet:{xp:0,food:0}};
