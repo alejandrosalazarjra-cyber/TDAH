@@ -2266,6 +2266,7 @@ window.neuroGoogleBackupRestored=async function(raw){
 by('login-form').onsubmit=function(e){e.preventDefault();var username=by('login-user').value.trim().toLowerCase(),password=by('login-pass').value;
 try{if(by('login-remember').checked)localStorage.setItem('ns_login_last_user',username);else localStorage.removeItem('ns_login_last_user')}catch(error){}
 if(nat&&nat.loginOwner){try{var res=JSON.parse(nat.loginOwner(username,password));if(!res.ok){by('login-error').textContent=res.error||'Usuario o contraseña incorrectos';return}enter(res.user);
+        if(res.sessionPersistent===false)say(res.sessionWarning||'La sesión no pudo guardarse. Es posible que debas iniciar sesión de nuevo.');
         if(res.mustChangePassword){show('admin');say('Por seguridad, cambia la clave provisional antes de crear cuentas familiares.');}
         return}catch(err){by('login-error').textContent='Error de conexión con el teléfono principal';return}}
 
