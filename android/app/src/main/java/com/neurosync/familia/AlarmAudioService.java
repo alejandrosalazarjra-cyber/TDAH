@@ -16,6 +16,25 @@ public final class AlarmAudioService extends Service {
   private ToneGenerator backupTone;
   private Vibrator vibrator;
   private String playingAlarmId="";
+  private int targetVolume=100;
+  private boolean gradualVolume=false;
+  private final Runnable[] rampTask={null};
+  private void beginVolume(){
+    if(player==null)return;
+    handler.removeCallbacks(rampTask[0]==null?()->{}:rampTask[0]);
+    final float target=Math.max(0f,Math.min(1f,targetVolume/100f));
+    if(!gradualVolume){player.setVolume(target,target);return;}
+    final int[] step={1};
+    rampTask[0]=new Runnable(){
+      @Override public void run(){
+        if(player==null)return;
+        float gain=target*(0.15f+0.85f*step[0]/10f);
+        player.setVolume(gain,gain);
+        if(step[0]++<10)handler.postDelayed(this,3000);
+      }
+    };
+    rampTask[0].run();
+  }
   private final Handler handler=new Handler(Looper.getMainLooper());
   private final Runnable stopLater=()->stopSelf();
 
@@ -35,6 +54,8 @@ public final class AlarmAudioService extends Service {
     String title=intent.getStringExtra("title");
     if(id==null){stopSelf();return START_NOT_STICKY;}
     playingAlarmId=id;
+    targetVolume=AlarmOptionsStore.volume(this,id);
+    gradualVolume=AlarmOptionsStore.gentle(this,id);
     NotificationManager nm=getSystemService(NotificationManager.class);
     NotificationChannel channel=new NotificationChannel(CHANNEL,"Sonido de alarmas",NotificationManager.IMPORTANCE_LOW);
     channel.setSound(null,null);
@@ -62,6 +83,7 @@ public final class AlarmAudioService extends Service {
     return START_NOT_STICKY;
   }
   private void startVibration(){
+    if(!AlarmOptionsStore.vibrates(this,playingAlarmId))return;
     try{
       vibrator=(Vibrator)getSystemService(VIBRATOR_SERVICE);
       if(vibrator!=null && vibrator.hasVibrator()){
@@ -93,18 +115,20 @@ public final class AlarmAudioService extends Service {
           .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
         attempt.setDataSource(this,uri);
         attempt.setLooping(true);attempt.prepare();attempt.start();
-        player=attempt;return;
+        player=attempt;beginVolume();return;
       }catch(Exception error){
         if(attempt!=null)try{attempt.release();}catch(Exception ignored){}
         android.util.Log.w("NeuroSync","Tono no disponible, probando siguiente",error);
       }
     }
     try{
-      backupTone=new ToneGenerator(AudioManager.STREAM_ALARM,90);
+      backupTone=new ToneGenerator(AudioManager.STREAM_ALARM,
+        Math.max(0,Math.min(100,targetVolume)));
       backupTone.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD,180000);
     }catch(Exception e){android.util.Log.e("NeuroSync","Sin reproductor de emergencia",e);}
   }
   private void release(){
+    if(rampTask[0]!=null){handler.removeCallbacks(rampTask[0]);rampTask[0]=null;}
     if(vibrator!=null){try{vibrator.cancel();}catch(Exception ignored){}vibrator=null;}
     if(player!=null){try{player.stop();}catch(Exception ignored){}player.release();player=null;}
     if(backupTone!=null){backupTone.stopTone();backupTone.release();backupTone=null;}
