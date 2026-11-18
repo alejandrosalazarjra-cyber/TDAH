@@ -39,6 +39,26 @@ public final class AlarmReceiver extends BroadcastReceiver {
   else if("daily".equals(repeat)){unit=java.util.Calendar.DAY_OF_YEAR;amount=1;}
   else if("every2".equals(repeat)){unit=java.util.Calendar.DAY_OF_YEAR;amount=2;}
   else if("every3".equals(repeat)){unit=java.util.Calendar.DAY_OF_YEAR;amount=3;}
+  else if(repeat!=null&&repeat.startsWith("days:")){
+   int mask=daysMask(repeat);
+   if(mask==0)return -1;
+   java.util.Calendar base=java.util.Calendar.getInstance();
+   base.setTimeInMillis(previous);
+   java.util.Calendar candidate=java.util.Calendar.getInstance();
+   candidate.setTimeInMillis(now);
+   candidate.set(java.util.Calendar.HOUR_OF_DAY,base.get(java.util.Calendar.HOUR_OF_DAY));
+   candidate.set(java.util.Calendar.MINUTE,base.get(java.util.Calendar.MINUTE));
+   candidate.set(java.util.Calendar.SECOND,0);
+   candidate.set(java.util.Calendar.MILLISECOND,0);
+   for(int i=0;i<8;i++){
+    int mondayFirst=(candidate.get(java.util.Calendar.DAY_OF_WEEK)+5)%7;
+    if((mask&(1<<mondayFirst))!=0&&
+       candidate.getTimeInMillis()>now&&candidate.getTimeInMillis()>=previous)
+      return candidate.getTimeInMillis();
+    candidate.add(java.util.Calendar.DAY_OF_YEAR,1);
+   }
+   return -1;
+  }
   else return -1;
   java.util.Calendar calendar=java.util.Calendar.getInstance();
   calendar.setTimeInMillis(previous);
@@ -48,6 +68,14 @@ public final class AlarmReceiver extends BroadcastReceiver {
   }
   return calendar.getTimeInMillis()>now?calendar.getTimeInMillis():-1;
  }
+ /** Máscara de días de lunes (bit 0) a domingo (bit 6). */
+ static int daysMask(String value){
+  if(value==null||!value.matches("days:[0-9]{1,3}"))return 0;
+  try{
+   int mask=Integer.parseInt(value.substring(5));
+   return mask>=1&&mask<=127?mask:0;
+  }catch(NumberFormatException ex){return 0;}
+ }
  public static boolean schedule(Context ctx,String id,String title,long at,boolean daily){
    return scheduleRepeat(ctx,id,title,at,daily?"daily":"none");
  }
@@ -55,7 +83,7 @@ public final class AlarmReceiver extends BroadcastReceiver {
   try{
    if(id==null||id.length()<2||id.length()>100||at<=0)return false;
    if(!("none".equals(repeat)||"daily".equals(repeat)||"weekly".equals(repeat)
-        ||"every2".equals(repeat)||"every3".equals(repeat)))return false;
+        ||"every2".equals(repeat)||"every3".equals(repeat)||daysMask(repeat)>0))return false;
    if(title==null||title.trim().isEmpty())title="Recordatorio";
    long when=at;
    if(!"none".equals(repeat)){
