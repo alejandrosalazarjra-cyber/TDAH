@@ -32,7 +32,7 @@ assert(snapshot.includes('synchronized boolean erase(String account)'),
  'SQLite proporciona borrado específico por cuenta');
 assert(poll.includes("pollPublic()")&&poll.includes("PublicSessionVault.restore(this"),
  'El sondeo público usa token de bóveda cifrada');
-assert(poll.includes("if(!token.equals(still.optString")&&
+assert(poll.includes("!token.equals(still.optString")&&
  poll.includes('Notification.VISIBILITY_PRIVATE'),
  'Revalidación de sesión y avisos privados');
 assert(ui.includes('data-delete-public-account')&&ui.includes('data-contact-block')&&
