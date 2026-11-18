@@ -3102,6 +3102,10 @@ window.NeuroTasksAPI={
   if(!session||!session.public||!nat||!nat.publicAcceptInvite)return {ok:false,error:'Servicio no disponible'};
   try{return JSON.parse(nat.publicAcceptInvite(id))}catch(e){return {ok:false,error:'No se pudo aceptar'}}
  },
+ openLegalPage:function(page){
+  if(!['privacy','delete-account'].includes(page)||!nat||!nat.openLegalPage)return false;
+  try{nat.openLegalPage(page);return true}catch(e){return false}
+ },
  publicBlocks:function(){
   if(!session||!session.public||!nat||!nat.publicBlocks)return {ok:false,blocked:[]};
   try{return JSON.parse(nat.publicBlocks())}catch(e){return {ok:false,blocked:[],error:'No se pudo leer la lista de bloqueos'}}
