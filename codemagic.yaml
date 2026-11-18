@@ -63,6 +63,9 @@ workflows:
       - name: Construir APK Android de prueba
         script: |
           set -eu
+          # El servidor es público; el Client ID se configura en Codemagic como variable.
+          export NEUROSYNC_API_BASE_URL="https://neurosync-public-api-staging-vz3h.onrender.com"
+          export NEUROSYNC_GOOGLE_WEB_CLIENT_ID="${NEUROSYNC_GOOGLE_WEB_CLIENT_ID:-}"
           export JAVA_HOME=$(/usr/libexec/java_home -v 17)
           export PATH="$JAVA_HOME/bin:$PATH"
           cd android
