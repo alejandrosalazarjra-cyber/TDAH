@@ -13,6 +13,14 @@
 - Google Auth Platform: EXTERNAL, modo TESTING, sin publicación ni facturación.
 - **Nunca** incluir la clave JKS, contraseña, clave en Base64 ni una copia en GitHub, Render, artefactos públicos o la APK.
 
+## Verificación directa en Google Cloud
+
+El 18 de noviembre de 2026 se comprobó a través del navegador conectado de Google Cloud que el cliente OAuth Android `NeuroSync Preview` **ya existe** en el proyecto `neurosync-515121` con el paquete y SHA-1 exactos indicados arriba. No se creó un duplicado y el cliente OAuth Web no se modificó.
+
+El workflow ahora verifica dos etapas: primero la huella del JKS cargado desde los secretos y, al terminar la compilación, la huella del **APK producido** con `apksigner verify --print-certs`. Si son diferentes del cliente OAuth Android, la compilación debe fallar. Sin secretos, la compilación omite el login público.
+
+**Esta verificación no significa que ya se haya compilado o instalado un APK.** La compilación está pendiente de los tres secretos de firma y de contar con un ejecutor de CI disponible.
+
 ## Cómo activar firma persistente en GitHub Actions
 
 El propietario debe descargar y proteger los tres archivos de firma de pruebas entregados en la conversación donde se generó la clave:
