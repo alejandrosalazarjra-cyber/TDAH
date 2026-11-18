@@ -48,6 +48,7 @@ function write(book){
 function balanceFor(book,id){
  let total=book.accounts.find(x=>x.id===id)?.opening||0;
  for(const e of book.entries){
+  if(e.voidedAt)continue;
   if(e.type==='income'&&e.account===id)total+=e.amount;
   if(e.type==='expense'&&e.account===id)total-=e.amount;
   if(e.type==='transfer'){if(e.from===id)total-=e.amount;if(e.to===id)total+=e.amount}
@@ -55,7 +56,7 @@ function balanceFor(book,id){
  return total;
 }
 function stats(book,period){
- const selected=book.entries.filter(e=>month(e.date)===period);
+ const selected=book.entries.filter(e=>!e.voidedAt&&month(e.date)===period);
  const income=selected.filter(e=>e.type==='income').reduce((n,e)=>n+e.amount,0);
  const expense=selected.filter(e=>e.type==='expense').reduce((n,e)=>n+e.amount,0);
  return {income,expense,balance:book.accounts.reduce((n,a)=>n+balanceFor(book,a.id),0),
@@ -95,7 +96,8 @@ function ledger(book){
  return '<section class="ns-fi-panel"><div class="ns-fi-inline"><h3>Movimientos</h3><span>'+list.length+' registrados</span></div>'+
  (list.length?list.map(e=>'<div class="ns-fi-entry"><div><b>'+esc(e.note||e.category||'Transferencia')+'</b>'+
   '<small>'+esc(e.date)+' · '+esc(e.type==='transfer'?'Transferencia':e.category)+'</small></div>'+
-  '<strong class="'+(e.type==='income'?'ns-fi-positive':'')+'">'+(e.type==='expense'?'−':e.type==='income'?'+':'')+cop(e.amount)+'</strong></div>').join(''):
+  '<div class="ns-fi-entry-actions"><strong class="'+(e.type==='income'&&!e.voidedAt?'ns-fi-positive':'')+'">'+(e.voidedAt?'Anulado · ':e.type==='expense'?'−':e.type==='income'?'+':'')+cop(e.amount)+'</strong>'+
+  (e.voidedAt?'<small class="ns-fi-void-note">Anulado el '+esc(String(e.voidedAt).slice(0,10))+'</small>':'<button type="button" data-finance="void" data-entry-id="'+esc(e.id)+'" aria-label="Anular este movimiento">Anular</button>')+'</div></div>').join(''):
   '<p class="ns-fi-empty">Aún no hay movimientos.</p>')+'</section>';
 }
 function render(){
@@ -118,6 +120,7 @@ function render(){
   '<label class="ns-fi-privacy"><input id="ns-fi-launcher" type="checkbox" '+(book.launcher?'checked':'')+'>'+
   '<span>Mostrar resumen financiero en el inicio minimalista</span></label>'+
   '<p class="ns-fi-hint">Desactivado de forma predeterminada por privacidad. Las cifras podrían verse al desbloquear el teléfono. No se comparten con los miembros de la familia.</p>'+
+  '<div class="ns-fi-tools"><button type="button" data-finance="export">Exportar respaldo JSON</button></div>'+
   '<p class="ns-fi-hint" role="status">'+esc(state.notice)+'</p>'+
   '<div id="ns-fi-modal"></div>';
 }
@@ -167,11 +170,43 @@ function modal(type){
   state.notice='Movimiento guardado';render();
  };
 }
+/* La anulación conserva el asiento histórico y revierte su efecto contable.
+ * No eliminar físicamente datos que puedan explicar movimientos anteriores.
+ */
+function voidEntry(id){
+ const book=read();if(!book)return false;
+ const entry=book.entries.find(x=>x.id===id);
+ if(!entry||entry.voidedAt)return false;
+ entry.voidedAt=new Date().toISOString();
+ if(!write(book))return false;
+ state.notice='Movimiento anulado. Se conserva como referencia en el historial.';
+ render();return true;
+}
+function exportBook(){
+ const book=read();if(!book)return false;
+ const payload={format:'neurosync-finanzas-v1',exportedAt:new Date().toISOString(),
+  account:user(),book};
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download='neurosync-finanzas-'+today()+'.json';
+ document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1000*10);
+ return true;
+}
 root.addEventListener('click',e=>{
  const b=e.target.closest('button[data-finance]');if(!b)return;
  const a=b.dataset.finance;
  if(a==='add'||a==='account'){modal(a);return}
  if(a==='cancel'){$('#ns-fi-modal').replaceChildren();return}
+ if(a==='export'){exportBook();return}
+ if(a==='void'){
+  const id=b.dataset.entryId;if(!id)return;
+  const entry=read()?.entries.find(x=>x.id===id&&!x.voidedAt);
+  if(!entry)return;
+  const details=(entry.note||entry.category||'Movimiento')+' · '+cop(entry.amount);
+  if(window.confirm('¿Anular este movimiento?\n'+details+'\nSe conservará en el historial.'))voidEntry(id);
+  return;
+ }
  if(['overview','accounts','budget'].includes(a)){state.tab=a;render()}
 });
 root.addEventListener('change',e=>{
