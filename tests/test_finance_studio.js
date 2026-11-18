@@ -15,7 +15,7 @@ assert(script.includes('const data=stats(book,month(today()))'),'Launcher debe m
 assert(script.includes('launcher:false'),'Privacidad desactivada de forma predeterminada');
 assert(script.includes('function voidEntry(')&&script.includes('entry.voidedAt=new Date().toISOString()'));
 assert(script.includes('function exportBook(')&&script.includes("neurosync-finanzas-"));
-assert(script.includes("data-finance=confirm-void")&&!script.includes('window.confirm('));
+assert(script.includes('data-finance="confirm-void"')&&!script.includes('window.confirm('));
 assert(android.includes('canAccessSnapshot(username)'),'Actualizar launcher solo desde cuenta verificada');
 assert(launcher.includes('getBoolean("enabled",false)'),'Ocultar resumen hasta consentimiento');
 assert(launcher.includes('openNeuroSync("finance")'),'Resumen abre finanzas');
