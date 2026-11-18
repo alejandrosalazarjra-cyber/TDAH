@@ -42,4 +42,17 @@ assert(successSection.includes('AlarmOptionsStore.reset(ctx,id)'),
  'La nueva programación debe reiniciar el contador de posposiciones');
 const main=fs.readFileSync('android/app/src/main/java/com/neurosync/familia/MainActivity.java','utf8');
 assert(main.includes('alarmScheduleDiagnostics()'),'Falta diagnóstico Android en JS bridge');
+const restoreSection=receiver.slice(receiver.indexOf('private static void restore(Context ctx)'),
+ receiver.indexOf('private static void restoreSnoozes(Context ctx)'));
+assert(restoreSection.includes('next>now && program(ctx,id,next)'),
+ 'No persistir siguiente alarma si Android no la programó');
+assert(restoreSection.includes('row.getKey().equals(PREFIX+id)'),
+ 'No restaurar registros con identificador de alarma inconsistente');
+const departure=fs.readFileSync('android/app/src/main/java/com/neurosync/familia/DepartureReminderReceiver.java','utf8');
+const departureRestore=departure.slice(departure.indexOf('private static void restore(Context ctx)'),
+ departure.indexOf('@Override public void onReceive('));
+assert(departureRestore.includes('next>now&&program(ctx,id,next)'),
+ 'No persistir siguiente lista de salida si Android no la programó');
+assert(departureRestore.includes('x.getKey().equals(key(id))'),
+ 'No restaurar listas con identificador inconsistente');
 console.log('Fase 1b: horarios locales, validación y diagnóstico Android OK');
