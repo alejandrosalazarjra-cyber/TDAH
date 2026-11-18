@@ -24,6 +24,8 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
  private String memoryCode="";
  private SensorManager sensors;
  private int shakes=0;
+ private int steps=0;
+ private static final int REQ_ACTIVITY=941,REQ_CAMERA=942,REQ_PHOTO=943;
  private long lastShake=0;
  private final Handler uiHandler=new Handler(Looper.getMainLooper());
  private static final String[] WAKE_PHRASES={"Hoy elijo avanzar paso a paso","Respiro y comienzo mi dia","Una accion pequeña cuenta"};
@@ -189,6 +191,17 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
      }else{
        sensors.registerListener(this,acceleration,SensorManager.SENSOR_DELAY_UI);
      }
+   }else if("walk".equals(challenge)){
+     progress.setText("Camina 20 pasos con el teléfono");
+     prompt.setText("0 / 20 pasos");
+     root.addView(label("El contador utiliza el sensor de pasos de Android. Si tu móvil no lo tiene, utiliza la salida segura.",13));
+     beginWalking();
+   }else if("photo".equals(challenge)){
+     progress.setText("Toma una foto con la cámara");
+     prompt.setText("La fotografía no se guardará ni se enviará a internet.");
+     root.addView(label("No verificamos un lugar específico. Esta misión solo confirma la captura de una imagen.",13));
+     Button capture=button("Abrir cámara");root.addView(capture);
+     capture.setOnClickListener(v->startPhoto());
    }else if("taps".equals(challenge)){
      progress.setText("Toca el botón 12 veces para desactivar la alarma");
      Button tap=button("Tocar · 0 / 12");root.addView(tap);
@@ -253,7 +266,48 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
      });
    }
  }
+ private void beginWalking(){
+   if(Build.VERSION.SDK_INT>=29 &&
+      checkSelfPermission(android.Manifest.permission.ACTIVITY_RECOGNITION)!=android.content.pm.PackageManager.PERMISSION_GRANTED){
+     requestPermissions(new String[]{android.Manifest.permission.ACTIVITY_RECOGNITION},REQ_ACTIVITY);
+     return;
+   }
+   sensors=(SensorManager)getSystemService(SENSOR_SERVICE);
+   Sensor step=sensors==null?null:sensors.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
+   if(step==null){progress.setText("Este móvil no tiene detector de pasos disponible.");return;}
+   if(!sensors.registerListener(this,step,SensorManager.SENSOR_DELAY_NORMAL))
+     progress.setText("No se pudo activar el sensor de pasos.");
+ }
+ private void startPhoto(){
+   if(Build.VERSION.SDK_INT>=23 &&
+      checkSelfPermission(android.Manifest.permission.CAMERA)!=android.content.pm.PackageManager.PERMISSION_GRANTED){
+      requestPermissions(new String[]{android.Manifest.permission.CAMERA},REQ_CAMERA);return;
+   }
+   try{
+     android.content.Intent intent=new android.content.Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+     startActivityForResult(intent,REQ_PHOTO);
+   }catch(Exception err){progress.setText("La cámara no está disponible. Usa la salida segura.");}
+ }
+ @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] grants){
+   super.onRequestPermissionsResult(request,permissions,grants);
+   boolean allowed=grants.length>0&&grants[0]==android.content.pm.PackageManager.PERMISSION_GRANTED;
+   if(request==REQ_ACTIVITY){
+     if(allowed)beginWalking();
+     else progress.setText("Permiso de actividad denegado; puedes usar la salida segura.");
+   }else if(request==REQ_CAMERA){
+     if(allowed)startPhoto();
+     else progress.setText("Permiso de cámara denegado; puedes usar la salida segura.");
+   }
+ }
  @Override protected void onActivityResult(int requestCode,int resultCode,android.content.Intent data){
+   if(requestCode==REQ_PHOTO){
+     super.onActivityResult(requestCode,resultCode,data);
+     if(resultCode==RESULT_OK&&data!=null&&data.getExtras()!=null&&
+        data.getExtras().get("data") instanceof android.graphics.Bitmap){
+        progress.setText("Foto capturada y comprobada localmente");finishAlarm();
+     }else progress.setText("No se recibió una fotografía. Intenta nuevamente o utiliza la salida segura.");
+     return;
+   }
    super.onActivityResult(requestCode,resultCode,data);
    com.google.zxing.integration.android.IntentResult result=
        com.google.zxing.integration.android.IntentIntegrator.parseActivityResult(requestCode,resultCode,data);
@@ -266,6 +320,13 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
  @Override protected void onDestroy(){if(sensors!=null)sensors.unregisterListener(this);uiHandler.removeCallbacksAndMessages(null);super.onDestroy();}
  @Override public void onAccuracyChanged(Sensor sensor,int accuracy){}
  @Override public void onSensorChanged(SensorEvent e){
+   if("walk".equals(challenge)){
+     if(e.sensor.getType()==Sensor.TYPE_STEP_DETECTOR){
+       steps++;prompt.setText(steps+" / 20 pasos");
+       if(steps>=20){if(sensors!=null)sensors.unregisterListener(this);finishAlarm();}
+     }
+     return;
+   }
    if(!"shake".equals(challenge)||e.sensor.getType()!=Sensor.TYPE_ACCELEROMETER)return;
    float x=e.values[0],y=e.values[1],z=e.values[2];
    float force=(float)Math.sqrt(x*x+y*y+z*z);
