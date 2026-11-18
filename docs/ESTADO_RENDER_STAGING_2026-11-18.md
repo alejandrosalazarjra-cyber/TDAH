@@ -38,6 +38,16 @@ Fecha: 2026-11-18
 - API verificada externamente: `GET /health` → `{"ok":true}`.
 - La compilación de APK y el inicio de sesión en dispositivos aún no se han verificado.
 
+## 18 nov. 2026: Certificado preview de Google registrado
+
+- Proyecto Google Cloud `neurosync-515121`, cliente OAuth Android `NeuroSync Preview` creado para `com.neurosync.familia.preview`.
+- SHA-1 del certificado firmado exclusivamente para pruebas: `3E:F5:74:B7:F3:8F:09:FB:B4:81:60:BC:40:57:1E:A7:D6:A4:90:63`.
+- Cliente OAuth Android público: `1033210706025-9bjc7dkp34gmsf7v8qq3bchpr3ca6fh8.apps.googleusercontent.com`.
+- Clave privada y contraseña generadas fuera del repositorio; el usuario debe conservar los archivos de recuperación del certificado y configurar tres GitHub Secrets seguros. No deben guardarse claves privadas en Git ni en Render.
+- `android/app/build.gradle` usa `neurosyncPreview` solo con clave propia; GitHub Actions y Codemagic validan el SHA-1 antes de firmar. En ausencia de clave estable, la APK preview oculta el login público.
+- Ver `docs/FIRMA_PREVIEW_ANDROID.md` para instalación de secretos y `docs/OAUTH_GOOGLE_NEUROSYNC.md` para Google.
+- **No se compiló ni probó una APK Android real en esta etapa.** GitHub Actions falla sin iniciar pasos (runner_id 0, steps 0); se añadieron y verificaron contratos estáticos de seguridad pero no reemplazan pruebas de ejecución.
+
 ## Limitaciones obligatorias
 
 **Este despliegue NO debe utilizarse con usuarios reales ni anunciarse como listo para Google Play pública.**
