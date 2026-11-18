@@ -351,6 +351,7 @@ function limitRequest(req){
 }
 async function request(req,res){
  try{
+  if(req.method==='GET'&&serveLegal(res,new URL(req.url,'http://localhost').pathname))return;
   if(!['GET','POST','PATCH'].includes(req.method))reject(405,'Método no permitido');
   limitRequest(req);
   await handler(req,res);
