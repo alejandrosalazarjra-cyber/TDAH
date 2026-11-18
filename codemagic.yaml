@@ -18,6 +18,14 @@ workflows:
       - name: Validar funciones críticas
         script: |
           set -eu
+          # Persistencia, sesiones, recuperación tras reinicio y programación nativa.
+          node tests/test_phase1_persistence.js
+          node tests/test_phase1b_alarm_schedule.js
+          node tests/test_phase1c_session_sync.js
+          node tests/test_phase1d_native_recovery.js
+          node tests/test_phase1e_snapshot_batch.js
+          node tests/test_phase1e_restart_recovery.js
+          python3 tests/check_android_structure.py
           node tests/test_alarm_studio.js
           node tests/test_alarm_studio_days.js
           node tests/test_task_studio.js
