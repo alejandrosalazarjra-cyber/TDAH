@@ -11,7 +11,7 @@ services:
     rootDir: backend
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    dockerCommand: sh -c "NEUROSYNC_PUBLIC_DB_CONFIRM=yes node migrate.js && node server.js"
+    dockerCommand: ./start.sh
     autoDeployTrigger: off
     healthCheckPath: /health
     envVars:
