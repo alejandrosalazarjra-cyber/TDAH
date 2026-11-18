@@ -135,6 +135,7 @@ final class PublicAccountBridge {
           if(!PublicSessionVault.save(activity,token,user,"public",BuildConfig.PUBLIC_API_BASE_URL)){
             activity.googleCallback("neuroPublicLogin",failure("No se pudo proteger tu sesión en este teléfono").toString());return;
           }
+          TaskBackgroundSync.schedule(activity);
           activity.googleCallback("neuroPublicLogin",sessionUser(user).toString());
         }catch(Exception e){
           activity.googleCallback("neuroPublicLogin",failure("No se pudo iniciar sesión con el servidor").toString());
