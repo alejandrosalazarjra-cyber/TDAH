@@ -373,7 +373,12 @@ public final class MainActivity extends Activity {
       if(result.optBoolean("ok")){
         sessionToken=result.optString("token","");
         sessionUser=result.optJSONObject("user");
-        SessionVault.save(MainActivity.this,sessionToken,sessionUser,currentMode(),currentEndpoint());
+        boolean persisted=SessionVault.save(MainActivity.this,sessionToken,sessionUser,currentMode(),currentEndpoint());
+        try{
+          result.put("sessionPersistent",persisted);
+          if(!persisted)result.put("sessionWarning",
+            "No se pudo conservar la sesión en este dispositivo. Puede ser necesario iniciar sesión otra vez.");
+        }catch(Exception ignored){}
         // El aviso de contraseña inicial se gestiona en la interfaz.
         result.remove("token"); // El secreto de sesión permanece exclusivamente en Java.
       }
@@ -434,7 +439,12 @@ public final class MainActivity extends Activity {
       }
       sessionToken=result.optString("token","");
       sessionUser=user;
-      SessionVault.save(MainActivity.this,sessionToken,sessionUser,currentMode(),currentEndpoint());
+      boolean persisted=SessionVault.save(MainActivity.this,sessionToken,sessionUser,currentMode(),currentEndpoint());
+        try{
+          result.put("sessionPersistent",persisted);
+          if(!persisted)result.put("sessionWarning",
+            "No se pudo conservar la sesión en este dispositivo. Puede ser necesario iniciar sesión otra vez.");
+        }catch(Exception ignored){}
       result.remove("token");
       return result.toString();
     }
