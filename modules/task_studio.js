@@ -157,6 +157,8 @@ function renderPane(){
       '<button type="button" data-contact-unblock="'+escape(t.id)+'">Desbloquear</button></div>').join(''):
       '<p>No tienes usuarios bloqueados.</p>')+
    '<details><summary>Privacidad y cuenta</summary>'+
+   '<p><button type="button" data-open-legal="privacy">Leer política de privacidad</button> '+
+   '<button type="button" data-open-legal="delete-account">Solicitar eliminación por web</button></p>'+
    '<p>Eliminar tu cuenta borra el perfil público y las tareas compartidas relacionadas. No puedes deshacerlo.</p>'+
    '<button type="button" data-delete-public-account>Eliminar definitivamente mi cuenta</button></details>';
  }else if(sheet==='quick'){
@@ -224,6 +226,7 @@ app.addEventListener('click',async event=>{
   else {const target=app.querySelector('#ns-ts-search-result');if(target)target.textContent=result.error||'No se pudo aceptar';}
   return;
  }
+ if(el.dataset.openLegal){api.openLegalPage(el.dataset.openLegal);return;}
  if(el.dataset.contactBlock){
   if(!await api.confirm('Bloquear contacto','Esta persona no podrá encontrarte ni enviarte tareas o invitaciones.','Bloquear'))return;
   const result=api.publicBlock(el.dataset.contactBlock);
