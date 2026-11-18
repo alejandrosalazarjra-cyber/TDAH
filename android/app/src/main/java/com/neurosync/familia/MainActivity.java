@@ -668,13 +668,36 @@ public final class MainActivity extends Activity {
         return AccountStore.fail("Invitación inválida").toString();
       return publicAccounts.call("POST","/v1/contacts/invitations/"+id+"/accept",new JSONObject(),"").toString();
     }
-    @JavascriptInterface public String publicSendTask(String recipientId,String requestKey,String title){
+    @JavascriptInterface public String publicSendTask(String recipientId,String requestKey,String taskJson){
       if(recipientId==null||!recipientId.matches("[0-9a-fA-F-]{36}")||
          requestKey==null||!requestKey.matches("[A-Za-z0-9_-]{8,100}")||
-         title==null||title.trim().isEmpty()||title.length()>100)
+         taskJson==null||taskJson.length()>8000)
         return AccountStore.fail("Tarea inválida").toString();
-      return publicAccounts.call("POST","/v1/tasks",
-        payload("recipientId",recipientId,"title",title.trim()),requestKey).toString();
+      try{
+        JSONObject task=new JSONObject(taskJson);
+        String title=task.optString("title","").trim();
+        String repeat=task.optString("repeat","none");
+        String category=task.optString("category","Personal").trim();
+        String date=task.optString("date","");
+        String time=task.optString("time","");
+        org.json.JSONArray steps=task.optJSONArray("steps");
+        if(steps==null)steps=new org.json.JSONArray();
+        if(title.isEmpty()||title.length()>100||
+           !("none".equals(repeat)||"daily".equals(repeat)||"weekly".equals(repeat))||
+           category.isEmpty()||category.length()>60||steps.length()>20)
+          return AccountStore.fail("Tarea inválida").toString();
+        for(int i=0;i<steps.length();i++){
+          Object step=steps.opt(i);
+          if(!(step instanceof String)||((String)step).trim().isEmpty()||
+             ((String)step).length()>140)
+            return AccountStore.fail("Subtarea inválida").toString();
+        }
+        JSONObject body=new JSONObject()
+          .put("recipientId",recipientId).put("title",title)
+          .put("repeat",repeat).put("steps",steps)
+          .put("category",category).put("date",date).put("time",time);
+        return publicAccounts.call("POST","/v1/tasks",body,requestKey).toString();
+      }catch(Exception e){return AccountStore.fail("No se pudo preparar el envío").toString();}
     }
     @JavascriptInterface public String publicTasks(String box){
       if(!"sent".equals(box)&&!"inbox".equals(box))return AccountStore.fail("Bandeja inválida").toString();
