@@ -2973,6 +2973,11 @@ window.NeuroTasksAPI={
   if(!session||!model)return false;
   var t=model.tasks.find(function(x){return x.id===id&&!x.deleted&&(x.owner===session.username||x.owner==='todos')});
   if(!t)return false;
+  // Las tareas recibidas requieren aceptación explícita antes de completarse.
+  if(t.sentBy){
+   if(t.deliveryStatus!=='accepted')return false;
+   return window.NeuroTasksAPI.updateReceived(id,'completed').ok;
+  }
   var date=t.repeat&&t.repeat!=='none'?day():t.date;
   var current=(t.doneDates||[]).slice(),done=current.includes(date);
   t.doneDates=done?current.filter(function(d){return d!==date}):current.concat(date);
