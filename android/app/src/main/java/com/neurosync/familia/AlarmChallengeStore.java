@@ -28,9 +28,21 @@ public final class AlarmChallengeStore {
    return result.toString();
   }catch(java.security.NoSuchAlgorithmException impossible){throw new IllegalStateException(impossible);}
  }
+ /** Secuencia limitada a cinco pruebas locales implementadas y sin permisos nuevos. */
+ public static boolean validSequence(String type){
+  if(type==null||!type.startsWith("sequence:")||type.length()>100)return false;
+  String[] stages=type.substring("sequence:".length()).split(",",-1);
+  if(stages.length<2||stages.length>5)return false;
+  for(String stage:stages){
+   if(!"math".equals(stage)&&!"math_hard".equals(stage)&&!"memory".equals(stage)&&
+      !"typing".equals(stage)&&!"taps".equals(stage)&&!"shake".equals(stage))
+     return false;
+  }
+  return true;
+ }
  public static void set(Context ctx,String id,String type){
   if(id==null||id.length()>100)return;
-  if(!"math".equals(type)&&!"taps".equals(type)&&!"memory".equals(type)&&!"typing".equals(type)&&!"shake".equals(type)&&!"math_hard".equals(type)&&!"qr".equals(type)&&!"routine_focus".equals(type)&&!"routine_active".equals(type))type="none";
+  if(!"math".equals(type)&&!"taps".equals(type)&&!"memory".equals(type)&&!"typing".equals(type)&&!"shake".equals(type)&&!"math_hard".equals(type)&&!"qr".equals(type)&&!"routine_focus".equals(type)&&!"routine_active".equals(type)&&!validSequence(type))type="none";
   ctx.getSharedPreferences("ns_alarm_challenges",0).edit().putString(id,type).apply();
  }
  public static String get(Context ctx,String id){

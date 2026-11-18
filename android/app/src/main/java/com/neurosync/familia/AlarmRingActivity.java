@@ -43,7 +43,7 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
    result.setMinHeight(dp(54));result.setTextSize(15);
    result.setTextColor(Color.WHITE);
    android.graphics.drawable.GradientDrawable bg=new android.graphics.drawable.GradientDrawable();
-   bg.setColor(0xFF465FD6);bg.setCornerRadius(dp(16));result.setBackground(bg);
+   bg.setColor(0xFF0A84FF);bg.setCornerRadius(dp(17));result.setBackground(bg);
    LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-1,dp(54));
    params.setMargins(0,dp(5),0,dp(5));result.setLayoutParams(params);
    return result;
@@ -64,13 +64,22 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
    forceDismissAlarm();
  }
  private String[] routineStages(String kind){
+   if(AlarmChallengeStore.validSequence(kind))return kind.substring("sequence:".length()).split(",");
    return "routine_active".equals(kind)?new String[]{"memory","shake","math"}:new String[]{"math","typing"};
  }
  @Override public void onCreate(Bundle state){
    super.onCreate(state);
    if(Build.VERSION.SDK_INT>=27){setShowWhenLocked(true);setTurnScreenOn(true);}
    else getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED|WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
-   getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+   getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON | WindowManager.LayoutParams.FLAG_FULLSCREEN);
+   // Experiencia de alarma independiente de la WebView y sin barras superpuestas.
+   getWindow().getDecorView().setSystemUiVisibility(
+     android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
+     | android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+     | android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+     | android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+     | android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+     | android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
    id=getIntent().getStringExtra("id");
    if(id==null){finish();return;}
    openedAt=SystemClock.elapsedRealtime();
@@ -78,10 +87,12 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
    String configured=challenge;
    routineType=getIntent().getStringExtra("routineType");
    if(routineType==null)routineType="";
-   if(routineType.isEmpty()&&("routine_focus".equals(configured)||"routine_active".equals(configured)))
+   if(routineType.isEmpty()&&("routine_focus".equals(configured)||"routine_active".equals(configured)||
+       AlarmChallengeStore.validSequence(configured)))
       routineType=configured;
    if(!routineType.isEmpty()){
-     if(!"routine_focus".equals(routineType)&&!"routine_active".equals(routineType))
+     if(!"routine_focus".equals(routineType)&&!"routine_active".equals(routineType)&&
+         !AlarmChallengeStore.validSequence(routineType))
        routineType="";
      else{
        routineStep=Math.max(0,Math.min(getIntent().getIntExtra("routineStep",0),routineStages(routineType).length-1));
@@ -95,13 +106,24 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
    root.setGravity(Gravity.CENTER);
    root.setPadding(dp(22),dp(24),dp(22),dp(24));
    android.graphics.drawable.GradientDrawable background=new android.graphics.drawable.GradientDrawable(
-     android.graphics.drawable.GradientDrawable.Orientation.TL_BR,new int[]{0xFF101A31,0xFF233963,0xFF131C34});
+     android.graphics.drawable.GradientDrawable.Orientation.TL_BR,new int[]{0xFF0B1630,0xFF111B30,0xFF080D17});
    root.setBackground(background);
    ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.addView(root);
    setContentView(scroll);
-   root.addView(label("☀",52));
-   root.addView(label("ES MOMENTO DE DESPERTAR",14));
-   root.addView(label(alarmTitle,29));
+   TextView eyebrow=label("NEUROSYNC · DESPERTAR",13);
+   eyebrow.setTextColor(0xFFA7C5E6);root.addView(eyebrow);
+   TextView clock=label(android.text.format.DateFormat.format("HH:mm",
+     java.util.Calendar.getInstance()).toString(),68);
+   clock.setTextColor(0xFF1689FF);clock.setLetterSpacing(-0.055f);
+   clock.setTypeface(android.graphics.Typeface.create("sans-serif",android.graphics.Typeface.BOLD));
+   root.addView(clock);
+   TextView message=label("Tu alarma está sonando",18);
+   message.setTextColor(0xFFCFDCEF);root.addView(message);
+   TextView titleView=label(alarmTitle,26);
+   titleView.setTypeface(android.graphics.Typeface.create("sans-serif-medium",android.graphics.Typeface.NORMAL));
+   root.addView(titleView);
+   TextView divider=label("────────  ◉  ────────",15);
+   divider.setTextColor(0xFF286BA4);root.addView(divider);
    if(!routineType.isEmpty()){
      root.addView(label("RUTINA DE DESPERTAR · ETAPA "+(routineStep+1)+" DE "+routineStages(routineType).length,14));
    }
@@ -193,10 +215,17 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
      Button stop=button("Detener alarma");root.addView(stop);
      stop.setOnClickListener(v->finishAlarm());
    }
-   Button snooze=button("Posponer 5 minutos");root.addView(snooze);
-   snooze.setOnClickListener(v->{AlarmReceiver.snooze(this,id,5);finish();});
+   int snoozeMinutes=AlarmReceiver.snoozeMinutes(this,id);
+   Button snooze=button("Posponer "+snoozeMinutes+" minutos");
+   android.graphics.drawable.GradientDrawable snoozeStyle=new android.graphics.drawable.GradientDrawable();
+   snoozeStyle.setColor(0xFF263651);snoozeStyle.setCornerRadius(dp(17));snooze.setBackground(snoozeStyle);
+   root.addView(snooze);
+   snooze.setOnClickListener(v->{AlarmReceiver.snooze(this,id,snoozeMinutes);finish();});
    if(!"none".equals(challenge)){
      Button emergency=button("Detener sin desafío");
+     android.graphics.drawable.GradientDrawable emergencyStyle=new android.graphics.drawable.GradientDrawable();
+     emergencyStyle.setColor(0xFF1E293B);emergencyStyle.setCornerRadius(dp(17));
+     emergency.setBackground(emergencyStyle);
      root.addView(emergency);
      emergency.setOnClickListener(v->{
        emergency.setVisibility(android.view.View.GONE);
