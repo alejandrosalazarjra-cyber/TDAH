@@ -233,6 +233,26 @@ public final class FocusLauncherActivity extends Activity {
     TextView session=action(focus>0?
        "◷  Concentración: "+((focus+59999)/60000)+" min":"◷  Iniciar concentración",()->openNeuroSync("focus"));
     body.addView(session);
+    body.addView(gap(8));
+    // Resumen discreto de finanzas; oculto por defecto para privacidad.
+    android.content.SharedPreferences financial=getSharedPreferences("ns_finance_launcher",MODE_PRIVATE);
+    if(financial.getBoolean("enabled",false)){
+      long balance=financial.getLong("balance",0);
+      long income=financial.getLong("income",0),expense=financial.getLong("expense",0);
+      java.text.NumberFormat cop=java.text.NumberFormat.getCurrencyInstance(new Locale("es","CO"));
+      cop.setMaximumFractionDigits(0);
+      LinearLayout financeCard=vertical();pad(financeCard,12,10);
+      android.graphics.drawable.GradientDrawable financeBg=new android.graphics.drawable.GradientDrawable();
+      financeBg.setColor(CARD);financeBg.setCornerRadius(dp(14));financeCard.setBackground(financeBg);
+      TextView heading=text("＄  Mis finanzas  ·  resumen",12,MUTED,true);
+      financeCard.addView(heading);financeCard.addView(gap(5));
+      TextView total=text("Saldo: "+cop.format(balance),18,WHITE,true);
+      financeCard.addView(total);
+      TextView detail=text("Ingresos "+cop.format(income)+"  ·  Gastos "+cop.format(expense),11,MUTED,false);
+      detail.setMaxLines(2);financeCard.addView(detail);
+      financeCard.setOnClickListener(v->openNeuroSync("finance"));
+      body.addView(financeCard);
+    }
     body.addView(gap(13));
     TextView favoriteTitle=text("Favoritas",12,MUTED,true);
     body.addView(favoriteTitle);body.addView(gap(7));
@@ -251,6 +271,8 @@ public final class FocusLauncherActivity extends Activity {
     body.addView(action("⌕  Buscar aplicaciones",this::showDrawer));
     body.addView(gap(8));
     body.addView(action("✓  Agenda y tareas",()->openNeuroSync("calendar")));
+    body.addView(gap(8));
+    body.addView(action("＄  Mis finanzas",()->openNeuroSync("finance")));
     body.addView(gap(8));
     LinearLayout sections=horizontal();
     sections.addView(action("◷  Alarmas",()->openNeuroSync("alarms")),new LinearLayout.LayoutParams(0,dp(48),1));
