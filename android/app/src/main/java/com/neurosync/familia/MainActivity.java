@@ -114,6 +114,12 @@ public final class MainActivity extends Activity {
             resource="modules/departure_studio.js";mime="text/javascript";
           }else if("/modules/departure_studio.css".equals(path)){
             resource="modules/departure_studio.css";mime="text/css";
+          }else if("/modules/pomodoro_studio.js".equals(path)){
+            resource="modules/pomodoro_studio.js";mime="text/javascript";
+          }else if("/modules/pomodoro_studio.css".equals(path)){
+            resource="modules/pomodoro_studio.css";mime="text/css";
+          }else if("/assets/focus/bosque.mp4".equals(path)){
+            resource="focus/bosque.mp4";mime="video/mp4";
           }
           if(resource!=null)try{
             return new WebResourceResponse(mime,"UTF-8",getAssets().open(resource));
