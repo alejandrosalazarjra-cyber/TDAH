@@ -39,6 +39,19 @@ public final class AlarmReceiver extends BroadcastReceiver {
   else if("daily".equals(repeat)){unit=java.util.Calendar.DAY_OF_YEAR;amount=1;}
   else if("every2".equals(repeat)){unit=java.util.Calendar.DAY_OF_YEAR;amount=2;}
   else if("every3".equals(repeat)){unit=java.util.Calendar.DAY_OF_YEAR;amount=3;}
+  else if("weekdays".equals(repeat)||"weekends".equals(repeat)){
+    java.util.Calendar weekdays=java.util.Calendar.getInstance();
+    weekdays.setTimeInMillis(previous);
+    for(int n=0;n<3660;n++){
+      int d=weekdays.get(java.util.Calendar.DAY_OF_WEEK);
+      boolean weekend=d==java.util.Calendar.SATURDAY||d==java.util.Calendar.SUNDAY;
+      if(weekdays.getTimeInMillis()>now &&
+         (("weekdays".equals(repeat)&&!weekend)||("weekends".equals(repeat)&&weekend)))
+         return weekdays.getTimeInMillis();
+      weekdays.add(java.util.Calendar.DAY_OF_YEAR,1);
+    }
+    return -1;
+  }
   else return -1;
   java.util.Calendar calendar=java.util.Calendar.getInstance();
   calendar.setTimeInMillis(previous);
@@ -55,7 +68,8 @@ public final class AlarmReceiver extends BroadcastReceiver {
   try{
    if(id==null||id.length()<2||id.length()>100||at<=0)return false;
    if(!("none".equals(repeat)||"daily".equals(repeat)||"weekly".equals(repeat)
-        ||"every2".equals(repeat)||"every3".equals(repeat)))return false;
+        ||"every2".equals(repeat)||"every3".equals(repeat)
+        ||"weekdays".equals(repeat)||"weekends".equals(repeat)))return false;
    if(title==null||title.trim().isEmpty())title="Recordatorio";
    long when=at;
    if(!"none".equals(repeat)){
