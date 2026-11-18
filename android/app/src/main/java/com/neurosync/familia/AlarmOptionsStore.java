@@ -13,6 +13,23 @@ final class AlarmOptionsStore {
   ctx.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit()
    .putInt("minutes_"+id,minutes).putInt("max_"+id,max).apply();
  }
+ static void setAudio(Context ctx,String id,int volumePercent,boolean vibration,boolean gentle){
+   if(id==null||id.isEmpty()||id.length()>100)return;
+   int v=Math.max(0,Math.min(100,volumePercent));
+   ctx.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit()
+     .putInt("volume_"+id,v).putBoolean("vibration_"+id,vibration)
+     .putBoolean("gentle_"+id,gentle).apply();
+ }
+ static int volume(Context ctx,String id){
+   if(id==null)return 100;
+   return ctx.getSharedPreferences(PREFS,Context.MODE_PRIVATE).getInt("volume_"+id,100);
+ }
+ static boolean vibrates(Context ctx,String id){
+   return id==null||ctx.getSharedPreferences(PREFS,Context.MODE_PRIVATE).getBoolean("vibration_"+id,true);
+ }
+ static boolean gentle(Context ctx,String id){
+   return id!=null&&ctx.getSharedPreferences(PREFS,Context.MODE_PRIVATE).getBoolean("gentle_"+id,false);
+ }
  static int minutes(Context ctx,String id){
   if(id==null)return 5;
   return ctx.getSharedPreferences(PREFS,Context.MODE_PRIVATE).getInt("minutes_"+id,5);
@@ -37,6 +54,7 @@ final class AlarmOptionsStore {
  static void clear(Context ctx,String id){
   if(id==null)return;
   ctx.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().remove("minutes_"+id)
-   .remove("max_"+id).remove("used_"+id).apply();
+   .remove("max_"+id).remove("used_"+id)
+   .remove("volume_"+id).remove("vibration_"+id).remove("gentle_"+id).apply();
  }
 }
