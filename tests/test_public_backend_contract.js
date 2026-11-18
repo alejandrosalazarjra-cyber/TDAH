@@ -22,7 +22,7 @@ assert(docs.includes('NO configuran IP, VPN')&&docs.includes('Idempotency-Key'),
  'El usuario no debe configurar servidores y los envíos no deben duplicarse');
 assert(docs.includes('NO debe tratarse como sesión autorizada ante el backend'),
  'Distinguir autorización de Drive de identidad pública');
-assert(docs.includes('no hay todavía backend público desplegado') ||
- docs.includes('No hay todavía backend público desplegado'),
- 'No presentar el backend como servicio ya disponible');
+assert(docs.includes('API pública desplegada en Render')&&
+ docs.includes('el registro permanece bloqueado'),
+ 'El contrato debe reflejar el entorno staging real y no prometer registro abierto');
 console.log('Contrato público OK: identidades, contactos, permisos y entrega idempotente');
