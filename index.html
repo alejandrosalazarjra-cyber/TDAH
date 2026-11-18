@@ -2773,7 +2773,7 @@ window.NeuroAlarmAPI={
   var title=String(data.title||'Despertar').trim().slice(0,90);
   var date=String(data.date||day()),time=String(data.time||'07:00');
   var validRepeats=['none','daily','weekly','every2','every3','weekdays','weekends'];
-  var allowedMissions=['none','math','math_hard','typing','memory','taps','shake','qr','routine_focus','routine_active','routine_five','walk','photo'];
+  var allowedMissions=['none','math','math_hard','typing','memory','taps','shake','qr','routine_focus','routine_active','routine_five','walk','photo','routine_custom'];
   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^\d{2}:\d{2}$/.test(time))
    return {ok:false,error:'Fecha u hora inválida'};
   var dateParts=date.split('-').map(Number),timeParts=time.split(':').map(Number);
@@ -2786,13 +2786,25 @@ window.NeuroAlarmAPI={
   if(repeat==='none'&&d.getTime()<=Date.now())return {ok:false,error:'Elige una hora futura'};
   if(challenge==='qr'&&(!original||original.challenge!=='qr')&&!data.qrReady)
    return {ok:false,error:'Escanea primero el QR físico de referencia'};
+  if(challenge==='routine_custom'){
+   var sequence=Array.isArray(data.sequence)?data.sequence:[];
+   var supported=['math','math_hard','memory','typing','taps','shake','walk','photo'];
+   if(sequence.length<2||sequence.length>5||!sequence.every(function(x){return supported.includes(x)}))
+    return {ok:false,error:'Elige entre dos y cinco misiones compatibles'};
+   if(!nat||!nat.setAlarmMissionSequence)
+    return {ok:false,error:'Las secuencias personalizadas necesitan la APK Android'};
+  }
   var draft=Object.assign({},original||{},{
    id:original?original.id:uid(),owner:session.username,
    title:title,date:date,time:time,repeat:repeat,daily:repeat==='daily',
    challenge:challenge,enabled:true,updatedAt:stamp(),
    snoozeMinutes:[1,3,5,10,15].includes(Number(data.snoozeMinutes))?Number(data.snoozeMinutes):5,
-   snoozeLimit:[0,1,2,3,5,10].includes(Number(data.snoozeLimit))?Number(data.snoozeLimit):3
+   snoozeLimit:[0,1,2,3,5,10].includes(Number(data.snoozeLimit))?Number(data.snoozeLimit):3,
+   sequence:challenge==='routine_custom'?data.sequence.slice(0,5):[]
   });
+  // La secuencia se valida y guarda antes de programar la alarma.
+  if(challenge==='routine_custom'&&!nat.setAlarmMissionSequence(draft.id,JSON.stringify(data.sequence)))
+   return {ok:false,error:'No se pudo guardar la secuencia de desafíos'};
   // Nunca guardar como programada si Android rechazó el horario.
   if(nat&&(!scheduleAlarm(draft)))return {ok:false,error:'Android no pudo programar la alarma. Revisa permisos.'};
   if(nat&&nat.setAlarmOptions)nat.setAlarmOptions(draft.id,draft.snoozeMinutes,draft.snoozeLimit);
