@@ -9,7 +9,6 @@ import android.app.job.JobService;
 import android.content.*;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.os.PersistableBundle;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.*;
@@ -103,10 +102,12 @@ public final class TaskBackgroundSync extends JobService {
     }finally{c.disconnect();}
   }
   private void poll()throws Exception {
-    String mode=getPreferences(0).getString("mode","");
+    // Activity.getPreferences(0) utiliza el nombre local de MainActivity.
+    android.content.SharedPreferences settings=getSharedPreferences("MainActivity",MODE_PRIVATE);
+    String mode=settings.getString("mode","");
     String location="host";
-    if("client".equals(mode))location=getPreferences(0).getString("server","");
-    else if("cloud".equals(mode))location=getPreferences(0).getString("cloud","");
+    if("client".equals(mode))location=settings.getString("server","");
+    else if("cloud".equals(mode))location=settings.getString("cloud","");
     if(!("host".equals(mode)||"client".equals(mode)||"cloud".equals(mode)))return;
     JSONObject saved=SessionVault.restore(this,mode,location);
     if(saved==null)return;
