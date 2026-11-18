@@ -2903,6 +2903,33 @@ window.NeuroTasksAPI={
   }catch(e){return {ok:false,error:'No se pudo enviar. Comprueba la conexión y vuelve a intentarlo.'}}
  },
 
+ received:function(){
+  return session&&model?model.tasks.filter(function(t){
+   return t&&!t.deleted&&t.owner===session.username&&typeof t.sentBy==='string';
+  }).map(function(t){return Object.assign({},t)}):[];
+ },
+ sent:function(){
+  if(!session||!nat||!nat.sentTasks)return {ok:false,error:'Sin conexión con el servidor familiar',tasks:[]};
+  try{
+   var response=JSON.parse(nat.sentTasks());
+   return response&&response.ok&&Array.isArray(response.tasks)?response:
+    {ok:false,error:(response&&response.error)||'No se pudieron consultar envíos',tasks:[]};
+  }catch(e){return {ok:false,error:'No se pudo consultar la bandeja de envíos',tasks:[]}}
+ },
+ updateReceived:function(id,status){
+  if(!session||!model||!nat||!nat.updateTaskDelivery)return {ok:false,error:'Conecta con el servidor familiar'};
+  var task=model.tasks.find(function(t){return t&&t.id===id&&t.owner===session.username&&t.sentBy&&!t.deleted});
+  if(!task)return {ok:false,error:'Tarea no encontrada'};
+  try{
+   var response=JSON.parse(nat.updateTaskDelivery(id,status));
+   if(!response||!response.ok)return {ok:false,error:(response&&response.error)||'No se pudo actualizar'};
+   task.deliveryStatus=response.status;
+   task.updatedAt=Date.now();
+   if(!save())return {ok:false,error:'El servidor guardó el estado, pero no se guardó la copia local. Sincroniza nuevamente.'};
+   render();
+   return {ok:true,status:response.status};
+  }catch(e){return {ok:false,error:'No se pudo actualizar el estado. Comprueba la conexión.'}}
+ },
  canShare:function(){return !!(session&&session.role==='admin'&&!session.google)},
  share:function(id){
   if(!session||!model||session.role!=='admin'||session.google)return false;
