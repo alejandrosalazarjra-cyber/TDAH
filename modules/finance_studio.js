@@ -29,7 +29,7 @@ function read(){
 }
 function native(book){
  if(!window.NeuroFinanceAPI?.updateLauncher||!user())return;
- const data=stats(book,state.selected);
+ const data=stats(book,month(today()));
  // Nunca mostrar cifras en launcher sin consentimiento explícito.
  try{window.NeuroFinanceAPI.updateLauncher(!!book.launcher,
    Math.max(-999999999999,Math.min(999999999999,data.balance)),
@@ -189,7 +189,7 @@ root.addEventListener('submit',e=>{
  book.budgets[state.selected]=n;
  if(write(book)){state.notice='Presupuesto guardado';render()}
 });
-window.NeuroFinanceStudio={render,hideLauncher:function(){
+window.NeuroFinanceStudio={render,syncLauncher:function(){if(user()){const b=read();if(b)native(b)}},hideLauncher:function(){
  try{if(window.NeuroFinanceAPI?.updateLauncher&&user())window.NeuroFinanceAPI.updateLauncher(false,0,0,0)}catch(e){}
 }};
 render();
