@@ -130,11 +130,18 @@ function renderPane(){
    '<textarea required name="steps" placeholder="Un paso por línea (máximo 20)"></textarea>'+
    '<button type="submit">Guardar plantilla</button></form>';
  }else if(sheet==='contacts'){
+  const profile=api.publicMe();
+  const person=profile.ok&&profile.user?profile.user:{};
   const invites=api.publicInvitations();
   const pending=invites.ok&&Array.isArray(invites.invitations)?invites.invitations:[];
   const contacts=api.contacts();
   markup='<div class="ns-ts-pane-head"><h3>Contactos</h3><button type="button" data-action="close" aria-label="Cerrar">×</button></div>'+
    '<p>Busca a una persona por su identificador. Solo podrás enviar tareas cuando acepte la invitación.</p>'+
+   '<form id="ns-ts-profile-form"><h4>Mi perfil público</h4>'+
+   '<label>Nombre visible<input name="displayName" required maxlength="100" value="'+escape(person.display_name||'')+'"></label>'+
+   '<label>Mi identificador<input name="handle" required minlength="3" maxlength="30" value="'+escape(person.handle||'')+'"></label>'+
+   '<label class="ns-ts-share-option"><input name="discoverable" type="checkbox" '+(person.discoverable?'checked':'')+'> Permitir que otras personas me encuentren</label>'+
+   '<button type="submit">Guardar perfil</button><p id="ns-ts-profile-status" role="status"></p></form>'+
    '<form id="ns-ts-lookup-form"><label>Buscar usuario<input name="handle" required maxlength="31" placeholder="@usuario" autocomplete="off"></label><button type="submit">Buscar</button></form>'+
    '<div id="ns-ts-search-result" role="status"></div>'+
    '<h4>Invitaciones recibidas</h4>'+
@@ -247,6 +254,13 @@ app.addEventListener('submit',event=>{
   const result=api.sendTo(recipient,existing);
   if(result.ok){sheet=false;sendTaskId=null;tab='sent';renderTasks();}
   else {let note=form.querySelector('[data-send-error]');if(!note){note=document.createElement('p');note.setAttribute('role','alert');note.setAttribute('data-send-error','');form.append(note);}note.textContent=result.error||'No se pudo enviar';}
+ }
+ if(form.id==='ns-ts-profile-form'){
+  event.preventDefault();
+  const result=api.publicUpdateProfile(form.elements.handle.value,
+   form.elements.displayName.value,form.elements.discoverable.checked);
+  const status=app.querySelector('#ns-ts-profile-status');
+  if(status)status.textContent=result.ok?'Perfil actualizado':(result.error||'No se pudo guardar');
  }
  if(form.id==='ns-ts-lookup-form'){
   event.preventDefault();
