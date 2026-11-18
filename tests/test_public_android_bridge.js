@@ -46,4 +46,55 @@ assert(web.includes('if(!wasPublic&&nat&&nat.logout)nat.logout()'),
 assert(studio.includes('ns-ts-profile-form')&&studio.includes('ns-ts-lookup-form')&&
  studio.includes('data-invite-accept')&&studio.includes('data-invite-send'),
  'Ofrecer perfil, búsqueda e invitaciones');
+
+// Ejercitar el adaptador JS con una cuenta pública simulada, sin credenciales reales.
+const begin=web.indexOf('/* Bandeja de salida aislada');
+const end=web.indexOf('\n})();\n</script>',begin);
+assert(begin>=0&&end>begin,'No se encontró la API de tareas pública');
+const store=new Map(),delivered=[],id='22222222-2222-4222-8222-222222222222';
+let online=true;
+const account={username:'public_demo',public:true,role:'user'};
+const fakeNative={
+ publicContacts:()=>JSON.stringify({ok:true,contacts:[{id,handle:'mama',display_name:'Mamá'}]}),
+ publicSendTask:(recipient,key,title)=>{
+  if(!online)throw Error('offline');
+  delivered.push({recipient,key,title});
+  return JSON.stringify({ok:true,task:{id:'33333333-3333-4333-8333-333333333333',status:'pending'}});
+ },
+ publicTasks:box=>JSON.stringify({ok:true,tasks:box==='sent'?
+  [{id:'33333333-3333-4333-8333-333333333333',
+    title:'Comprar pan',recipient_id:id,status:'pending'}]:[]}),
+ publicMe:()=>JSON.stringify({ok:true,user:{handle:'demo',display_name:'Demo',discoverable:false}}),
+ publicLookup:()=>JSON.stringify({ok:true,user:{id,handle:'mama',display_name:'Mamá'}}),
+ publicInvite:()=>JSON.stringify({ok:true}),
+ publicAcceptInvite:()=>JSON.stringify({ok:true}),
+ publicUpdateProfile:()=>JSON.stringify({ok:true,user:{handle:'demo',display_name:'Demo'}}),
+ publicTaskAction:()=>JSON.stringify({ok:true,task:{status:'accepted'}})
+};
+const state={window:{},session:account,model:{tasks:[],packs:[],alarms:[],pet:{}},nat:fakeNative,
+ localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,String(v))},
+ day:()=> '2026-11-18',uid:()=> 'request_12345678',stamp:()=>123,Date,JSON,Number,
+ Array,String,Object,Set,Map,nsTemplateRead:()=>[],nsFocusRead:()=>({sessions:[]}),
+ nsCleanCategory:x=>x,allTasks:()=>[],render:()=>{},save:()=>true,
+ nsConfirm:async()=>true,active:x=>x,show:()=>{},openModal:()=>{}};
+const publicAPI=new Function(...Object.keys(state),web.slice(begin,end)+
+ '\nreturn window.NeuroTasksAPI;')(...Object.values(state));
+assert.equal(publicAPI.publicAccount(),true);
+assert.equal(publicAPI.contacts()[0].id,id,'Contactos públicos se seleccionan por UUID');
+assert.equal(publicAPI.publicLookup('@mama').user.handle,'mama');
+assert(publicAPI.publicInvite(id).ok);
+assert(publicAPI.publicUpdateProfile('demo','Demo',true).ok);
+const created=publicAPI.sendTo(id,{id:'send_task_1234',title:'Comprar pan'});
+assert(created.ok&&!created.queued,'Debe confirmar entrega remota');
+assert.equal(delivered[0].recipient,id);
+assert.equal(publicAPI.sent().tasks[0].deliveryStatus,'pending');
+assert(publicAPI.updateReceived('33333333-3333-4333-8333-333333333333','accepted').ok);
+online=false;
+const queued=publicAPI.sendTo(id,{id:'send_task_4567',title:'Sin conexión'});
+assert(queued.queued,'Envío sin conexión debe quedar en cola');
+assert.equal(publicAPI.outbox().length,1);
+online=true;
+assert.equal(publicAPI.retryOutbox().delivered,1);
+assert.equal(publicAPI.outbox().length,0);
+
 console.log('Puente público Android OK: sesiones separadas, permisos y UI opt-in');
