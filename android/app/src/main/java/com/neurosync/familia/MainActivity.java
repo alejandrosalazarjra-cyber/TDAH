@@ -623,7 +623,16 @@ public final class MainActivity extends Activity {
     @JavascriptInterface public String publicDeleteAccount(String confirmation){
       if(!"ELIMINAR".equals(confirmation))
         return AccountStore.fail("Confirmación inválida").toString();
-      return publicAccounts.deleteAccount().toString();
+      JSONObject previous=publicAccounts.restored();
+      JSONObject currentUser=previous.optJSONObject("user");
+      String account=currentUser==null?"":currentUser.optString("username","");
+      JSONObject reply=publicAccounts.deleteAccount();
+      if(reply.optBoolean("ok")&&reply.optBoolean("deleted")&&!account.isEmpty()){
+        // El borrado remoto ya fue confirmado: limpiar también la copia cifrada local.
+        if(!NativeSnapshotStore.get(MainActivity.this).erase(account))
+          android.util.Log.w("NeuroSync","Borrado remoto completo, copia local pendiente");
+      }
+      return reply.toString();
     }
     @JavascriptInterface public String publicInvitations(){
       return publicAccounts.call("GET","/v1/contacts/invitations",null,"").toString();
