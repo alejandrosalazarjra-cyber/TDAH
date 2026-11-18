@@ -212,11 +212,12 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
      Button stop=button("Detener alarma");root.addView(stop);
      stop.setOnClickListener(v->finishAlarm());
    }
-   Button snooze=button("Posponer 5 minutos");
+   int snoozeMinutes=AlarmReceiver.snoozeMinutes(this,id);
+   Button snooze=button("Posponer "+snoozeMinutes+" minutos");
    android.graphics.drawable.GradientDrawable snoozeStyle=new android.graphics.drawable.GradientDrawable();
    snoozeStyle.setColor(0xFF263651);snoozeStyle.setCornerRadius(dp(17));snooze.setBackground(snoozeStyle);
    root.addView(snooze);
-   snooze.setOnClickListener(v->{AlarmReceiver.snooze(this,id,5);finish();});
+   snooze.setOnClickListener(v->{AlarmReceiver.snooze(this,id,snoozeMinutes);finish();});
    if(!"none".equals(challenge)){
      Button emergency=button("Detener sin desafío");
      android.graphics.drawable.GradientDrawable emergencyStyle=new android.graphics.drawable.GradientDrawable();
