@@ -62,8 +62,11 @@ async function send(method,path,payload,auth){
  assert.equal(r.status,400);
  r=await send('POST','/v1/tasks',{recipientId, title:'Comprar pan'},token);
  assert.equal(r.status,400,'Sin clave de idempotencia no se puede enviar');
+ r=await send('GET','/v1/auth/status');
+ assert.equal(r.status,200);
+ assert.equal(r.loginEnabled,false,'El registro debe iniciar deshabilitado');
  r=await send('POST','/v1/auth/exchange',{idToken:'falso'});
- assert.equal(r.status,401,'Nunca aceptar ID tokens falsos');
+ assert.equal(r.status,503,'No abrir cuentas sin habilitación explícita');
  assert(queries.some(x=>x.sql.includes('FROM ns_public_sessions')),
   'Identidad debe recuperarse desde la sesión del servidor');
  assert(source.includes('pg_advisory_xact_lock'),
