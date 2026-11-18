@@ -1,6 +1,6 @@
 # NeuroSync — preparación del despliegue de pruebas (no producción)
 
-**Estado:** archivos de despliegue listos en GitHub. **No se ha creado un servidor, base de datos ni cuenta en Render.** No permitir registro de usuarios reales en este entorno de pruebas.
+**Estado (18 nov. 2026):** desplegado en Render como entorno **exclusivamente de pruebas**. API: https://neurosync-public-api-staging-vz3h.onrender.com ; PostgreSQL 16 privado de Render en plan Free. `GET /health` respondió `{"ok":true}` y `GET /v1/auth/status` respondió `{"ok":true,"loginEnabled":false}`. **El registro sigue deshabilitado** y no deben almacenarse datos reales. La base expira el 18 de diciembre de 2026.
 
 ## 1. Preparación técnica realizada
 
@@ -9,16 +9,16 @@
 - `backend/migrate.js`: aplica el esquema `schema_public_v1.sql` **solo** si se suministra `NEUROSYNC_PUBLIC_DB_CONFIRM=yes` y una URL PostgreSQL.
 - `render.staging.yaml`: Blueprint opcional para Render con una web gratuita de prueba y un PostgreSQL privado gratuito, **caduca a los 30 días y no tiene backups**. El auto despliegue está desactivado.
 - `.github/workflows/public-backend-check.yml`: pruebas Node aisladas de Android con PostgreSQL temporal y peticiones HTTP reales.
-- No se han generado ni guardado contraseñas, tokens o claves privadas.
+- Las credenciales de Render y las claves privadas de firma **no** se guardan en Git. La clave preview se genera por separado para el propietario, no se incluye en el repositorio.
 
-## 2. Para activar el entorno de pruebas, el desarrollador (no el usuario final)
+## 2. Activación de pruebas e integración Android (desarrollador, no usuario final)
 
-1. Crear o conectar una cuenta de alojamiento compatible con Node.js + PostgreSQL, por ejemplo [Render](https://render.com/). Conectar el repositorio `elgatojhon8-droid/TDAH` con permisos de lectura y elegir la rama `feature/pulido-contable-estabilidad-2026-11`.
-2. Importar el archivo **`render.staging.yaml`** como Blueprint, o configurar manualmente un servicio Docker usando `backend/Dockerfile`. **Revisar las condiciones del plan antes de aceptarlo**. Para almacenar información real escoger una base con backups, retención y políticas de seguridad adecuados, nunca la base gratuita temporal.
-3. Crear un proyecto Google Cloud del desarrollador, configurar la pantalla de consentimiento OAuth y obtener un **OAuth Client ID de tipo Web**. La aplicación Android debe registrarse con su paquete y las huellas de firma SHA apropiadas. El cliente Web debe coincidir con el valor `GOOGLE_CLIENT_ID` en el backend.
-4. Introducir `GOOGLE_CLIENT_ID` en los secretos/variables del servidor del proveedor, **no** en Git ni mediante un mensaje de chat. La conexión PostgreSQL `DATABASE_URL` debe ir por la red privada del proveedor.
-5. Aplicar las migraciones a una base **nueva**, comprobar `GET /health` y realizar pruebas de inscripción con cuentas de prueba; confirmar que otro usuario no puede consultar ni completar tareas ajenas.
-6. Configurar en el entorno de compilación Android `NEUROSYNC_API_BASE_URL=https://dominio-real-del-servicio` y `NEUROSYNC_GOOGLE_WEB_CLIENT_ID=...`. Esta configuración viene integrada en la APK; ningún usuario final debe escribir esas variables.
+1. **Hecho:** Render conectado al repositorio privado `elgatojhon8-droid/TDAH`, rama `feature/pulido-contable-estabilidad-2026-11`.
+2. **Hecho:** Blueprint `render.staging.yaml` aplicado a un servicio Free y un PostgreSQL Free; autodespliegue desactivado. Para información real será imprescindible una base permanente con respaldos.
+3. **Hecho:** proyecto Google Cloud `neurosync-515121`, consentimiento EXTERNAL/TESTING y cliente OAuth Web `NeuroSync Backend`. Cliente Android preview: comprobar el estado en `docs/OAUTH_GOOGLE_NEUROSYNC.md`.
+4. **Hecho:** `GOOGLE_CLIENT_ID` configurado en Render. `PUBLIC_REGISTRATION_ENABLED=false` y conexión PostgreSQL privada. El ID OAuth es público, pero las credenciales del servidor y las claves de firma siguen siendo privadas.
+5. **Hecho:** migración aplicada y ruta `/health` verificada externamente. **Pendiente:** pruebas reales de autenticación, permisos y tareas desde dos dispositivos.
+6. **Hecho:** URL pública de staging y Google Web Client ID integrados en las compilaciones de prueba; falta entregar firma preview a un gestor seguro de secretos de compilación.
 7. Compilar `assemblePreview` y verificar las tareas recibidas y enviadas desde dos móviles reales, por Wi-Fi y por datos móviles. Hacer pruebas desconectado, cambio de cuenta y token expirado.
 
 ## 3. Limitaciones y seguridad
