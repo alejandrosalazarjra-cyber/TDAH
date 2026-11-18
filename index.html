@@ -2821,6 +2821,7 @@ function nsAlarmStudioEditor(item){
  form.elements.date.value=item?(item.date||day()):day(later);
  form.elements.time.value=item?(item.time||'07:00'):later.toTimeString().slice(0,5);
  form.elements.repeat.value=item?(item.repeat||(item.daily?'daily':'none')):'none';
+ form.elements.snoozeMinutes.value=String(item&&item.snoozeMinutes||5);
  by('ns-alarm-editor-label').textContent=item?'Editar alarma':'Nueva alarma';
  nsAlarmMissionLabel();
  nsAlarmStudioTab('editor');
@@ -2885,7 +2886,7 @@ function nsAlarmStudioSetup(){
  '<label class="ns-studio-field">Repetición<select name="repeat"><option value="none">Una vez</option><option value="daily">Todos los días</option><option value="weekly">Cada semana</option><option value="every2">Cada 2 días</option><option value="every3">Cada 3 días</option></select></label>'+
  '<h3 class="ns-studio-title">Misión de despertar</h3><button type="button" id="ns-select-mission" class="ns-studio-plain">Elegir: <strong id="ns-studio-mission-name">Sin misión</strong> ›</button>'+
  '<button type="button" id="ns-alarm-qr-legacy" class="ns-studio-plain hidden">Configurar QR con cámara (editor avanzado)</button>'+
- '<h3 class="ns-studio-title">Sonido y seguridad</h3><p class="ns-studio-note">El sonido y el volumen se configuran desde Ajustes. La apertura en pantalla bloqueada necesita permisos de Android.</p>'+
+ '<h3 class="ns-studio-title">Sonido y seguridad</h3><label class="ns-studio-field">Posponer<select name="snoozeMinutes"><option value="1">1 minuto</option><option value="3">3 minutos</option><option value="5">5 minutos</option><option value="10">10 minutos</option><option value="15">15 minutos</option></select></label><p class="ns-studio-note">El sonido y el volumen se configuran desde Ajustes. La apertura en pantalla bloqueada necesita permisos de Android.</p>'+
  '<div class="ns-alarm-actions"><button type="button" id="ns-editor-settings" class="ns-studio-plain">Sonido y permisos</button><button type="submit" class="ns-studio-save">Guardar alarma</button></div></form></section>'+
  '<section class="ns-studio-pane" data-pane="missions"><h2>Misiones</h2><p class="ns-studio-note">Elige uno de los desafíos implementados en Android.</p><div id="ns-studio-mission-list"></div></section>'+
  '<section class="ns-studio-pane" data-pane="settings"><h2>Ajustes de alarma</h2><p class="ns-studio-note">Permisos, sonido, prueba y música mediante Reloj de Google.</p><div id="ns-alarm-settings-destination"></div></section>'+
@@ -2911,8 +2912,9 @@ function nsAlarmStudioSetup(){
   var old=nsEditingAlarmId?model.alarms.find(function(x){return x.id===nsEditingAlarmId}):null;
   if(old&&old.owner!==session.username&&session.role!=='admin'){say('No puedes editar una alarma de otra persona');return}
   var item=Object.assign({},old||{id:uid(),owner:session.username},{title:title,date:aDate,time:aTime,
-   repeat:repeat,daily:repeat==='daily',challenge:nsAlarmMission,updatedAt:stamp()});
-  if(!scheduleAlarm(item))return; // Si falla Android no fingir que se guardó.
+   repeat:repeat,daily:repeat==='daily',challenge:nsAlarmMission,snoozeMinutes:Number(f.snoozeMinutes.value)||5,updatedAt:stamp()});
+  if(!scheduleAlarm(item))return;
+  if(nat&&nat.setAlarmSnoozeMinutes)nat.setAlarmSnoozeMinutes(item.id,item.snoozeMinutes); // Si falla Android no fingir que se guardó.
   if(old)Object.assign(old,item);else model.alarms.push(item);
   if(!save()){say('No se pudo confirmar el guardado local');return}
   render();nsAlarmStudioTab('list');say('Alarma guardada');
