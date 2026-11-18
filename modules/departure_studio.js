@@ -83,6 +83,7 @@
    '<label>Repetir<select name="repeat">'+
    [['none','Solo una vez'],['daily','Todos los días'],['weekdays','Lunes a viernes'],['weekends','Fines de semana'],['weekly','Cada semana']]
     .map(([v,t])=>'<option value="'+v+'"'+(v===form.repeat?' selected':'')+'>'+t+'</option>').join('')+'</select></label>'+
+   '<button type="button" data-permissions class="ns-ds-permissions">Revisar permisos de notificaciones y pantalla</button>'+
    '</div><div class="ns-ds-actions"><button class="ns-ds-primary" type="submit">Guardar lista</button>'+
    '<button type="button" data-cancel>Cancelar</button></div>'+
    '<div data-notice role="status" hidden></div></form>';
@@ -133,6 +134,7 @@
   if(b.dataset.edit){showEditor(b.dataset.edit);return}
   if(b.dataset.review){showReview(b.dataset.review);return}
   if(b.dataset.delete){if(await api.remove(b.dataset.delete))render();return}
+  if(b.hasAttribute('data-permissions')){api.requestPermissions();return}
   if(b.hasAttribute('data-cancel')){form=null;render();return}
   if(b.hasAttribute('data-add')){addItem();return}
   if(b.dataset.remove!==undefined){collect();form.items.splice(+b.dataset.remove,1);editorRows();return}
