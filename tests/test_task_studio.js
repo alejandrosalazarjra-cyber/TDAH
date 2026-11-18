@@ -40,5 +40,22 @@ tasks.push({id:'foreign',title:'Privado',owner:'hermano',doneDates:[]});
 assert(!api.toggleToday('foreign'),'No permitir editar datos de otra persona');
 assert.equal(api.list().length,2);
 assert(!api.create({title:'   '}),'Rechazar tareas vacías');
+assert.equal(api.canShare(),false,'Un integrante no administrador no debe compartir tareas globales');
+assert(api.create({title:'Privada',shared:true}));
+assert.equal(tasks.at(-1).owner,'propietario','Ignorar opción de compartir de usuarios normales');
+owner.role='admin';
+assert.equal(api.canShare(),true);
+assert(api.create({title:'Cena familiar',shared:true}));
+assert.equal(tasks.at(-1).owner,'todos','Administrador puede compartir al crear');
+assert(api.toggleToday(tasks.at(-1).id),'Integrante autenticado puede marcar tarea familiar');
+assert(api.create({title:'Revisar nevera'}));
+const last=tasks.at(-1);assert.equal(last.owner,'propietario');
+assert(api.share(last.id),'Administrador puede compartir tarea existente');
+assert.equal(last.owner,'todos');
+owner.role='user';
+assert(!api.share(tasks[0].id),'Un integrante normal no puede compartir una tarea ajena');
+assert(script.includes('data-share=')&&script.includes('ns-ts-share-option'),
+ 'Task Studio necesita controles simples de compartir');
+
 assert(saveCount>=2);
 console.log('Task Studio OK: hábitos, tareas rápidas, plantillas, aislamiento y gráficos');
