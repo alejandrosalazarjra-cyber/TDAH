@@ -25,6 +25,20 @@ Variables admitidas por el servidor:
 
 El host predeterminado es local. Para uso externo se requiere un proxy HTTPS con certificado válido y una infraestructura autenticada. El proxy debe limitar tamaños y tráfico; no abrir el puerto Node directamente a internet.
 
+## Integración con la APK (solo para desarrolladores)
+
+Para compilar la APK con acceso público, el equipo debe configurar estas variables en el entorno de compilación:
+
+- `NEUROSYNC_API_BASE_URL`: dominio público de la API, por ejemplo `https://api.ejemplo.invalid`. Solo admite HTTPS y **no es un secreto**.
+- `NEUROSYNC_GOOGLE_WEB_CLIENT_ID`: identificador OAuth Web de Google usado como audiencia del ID token (también en `GOOGLE_CLIENT_ID` del backend). **No es una contraseña**.
+- Las huellas SHA-1/SHA-256, paquete Android y variante de firma deben registrarse en el proyecto Google correspondiente; en APK `preview` el `applicationId` lleva el sufijo `.preview`.
+
+Si faltan estas variables, **el botón de acceso público permanece oculto** y sigue funcionando la aplicación familiar anterior. El usuario nunca tiene que escribir una IP ni una URL.
+
+El flujo nuevo usa `PublicAccountBridge.java`, una sesión independiente guardada en `PublicSessionVault.java`, y componentes de contactos/tareas de `modules/task_studio.js`. El token de la API se queda en Android Keystore y no llega al WebView. Los envíos pendientes se reintentan desde el modelo local. La edición de perfil admite `POST /v1/me` para compatibilidad con `HttpURLConnection` en Android, además de `PATCH`.
+
+**Limitaciones de la integración actual:** no existe todavía servicio público desplegado, ni una compilación validada en teléfonos. La autenticación de Google necesita configuración real; las notificaciones push y la sincronización incremental del servicio público todavía no están conectadas. Los datos guardados en el modelo local de la app no se migran automáticamente desde Drive o el sistema familiar a la API pública.
+
 ## Endpoints implementados en esta etapa
 
 `POST /v1/auth/exchange`: recibe un **Google ID token**, verifica su firma, audiencia, emisor y vencimiento mediante la biblioteca oficial, crea/recupera una cuenta y retorna una sesión opaca de siete días.
