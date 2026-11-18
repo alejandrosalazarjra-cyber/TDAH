@@ -31,6 +31,7 @@
   {key:'routine_focus',icon:'◷',title:'Rutina mental',detail:'Matemáticas y escritura',group:'Rutinas de NeuroSync'},
   {key:'routine_active',icon:'✦',title:'Rutina activa',detail:'Memoria, movimiento y matemáticas',group:'Rutinas de NeuroSync'},
   {key:'routine_five',icon:'★',title:'Cinco desafíos',detail:'Matemáticas, memoria, escritura, toques y movimiento',group:'Rutinas de NeuroSync'},
+  {key:'routine_custom',icon:'☷',title:'Mi secuencia',detail:'Organiza entre dos y cinco desafíos',group:'Rutinas de NeuroSync'},
   {key:'none',icon:'—',title:'Sin desafío',detail:'Detener con un botón',group:'Otras opciones'}
  ];
  const planned=[
@@ -131,6 +132,10 @@
    const el=$('[name="'+key+'"]');
    if(el)state.draft[key]=el.value;
   }
+  if(state.draft.challenge==='routine_custom'){
+   state.draft.sequence=[...studio.querySelectorAll('[data-sequence-step]')]
+     .map(el=>el.value).filter(Boolean);
+  }
  }
  function editor(){
   const d=state.draft||defaultDraft();
@@ -150,6 +155,15 @@
    '<div class="ns-as-section-title">Desafío</div>'+
    '<button type="button" class="ns-as-pick" data-action="missions"><span>'+escape(mission.icon)+'</span>'+
    '<b>'+escape(mission.title)+'</b><small>Elegir ›</small></button>'+
+   (d.challenge==='routine_custom'?'<div class="ns-as-section-title">Orden de tus misiones</div>'+
+     '<p class="ns-as-hint">Las dos primeras son obligatorias. Las siguientes son opcionales.</p>'+
+     Array.from({length:5},(_,i)=>{
+       const chosen=(d.sequence||['math','typing'])[i]||'';
+       const options=[['','Sin misión']].concat(MISSIONS.filter(m=>['math','math_hard','memory','typing','taps','shake','walk','photo'].includes(m.key)).map(m=>[m.key,m.title]));
+       return '<label>Desafío '+(i+1)+'<select data-sequence-step="'+i+'">'+
+          options.filter(o=>i>=2||o[0]).map(([v,t])=>'<option value="'+v+'"'+(v===chosen?' selected':'')+'>'+t+'</option>').join('')+
+          '</select></label>';
+     }).join(''):'')+
    '<div class="ns-as-section-title">Posponer</div><div class="ns-as-field-grid">'+
    '<label>Minutos<select name="snoozeMinutes">'+[1,3,5,10,15].map(n=>'<option value="'+n+'"'+(+d.snoozeMinutes===n?' selected':'')+'>'+n+' min</option>').join('')+'</select></label>'+
    '<label>Veces<select name="snoozeLimit">'+[0,1,2,3,5,10].map(n=>'<option value="'+n+'"'+(+d.snoozeLimit===n?' selected':'')+'>'+n+'</option>').join('')+'</select></label></div>'+
@@ -268,7 +282,10 @@
   if(target.dataset.go){navigate(target.dataset.go);return}
   if(target.dataset.edit){startEditor(target.dataset.edit);return}
   if(target.dataset.mission){if(!state.draft)state.draft=defaultDraft();
-    state.draft.challenge=target.dataset.mission;state.screen='editor';render();return;}
+    state.draft.challenge=target.dataset.mission;
+    if(target.dataset.mission==='routine_custom'&&(!Array.isArray(state.draft.sequence)||state.draft.sequence.length<2))
+      state.draft.sequence=['math','typing'];
+    state.screen='editor';render();return;}
   const type=target.dataset.action;
   if(!type)return;
   if(type==='new')startEditor(null);
