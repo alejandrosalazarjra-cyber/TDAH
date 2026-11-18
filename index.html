@@ -2874,6 +2874,30 @@ window.NeuroTasksAPI={
  templates:function(){return session?nsTemplateRead().map(function(t){return Object.assign({},t)}):[]},
  today:function(){return day()},
  owner:function(){return session?session.username:''},
+ contacts:function(){
+  if(!session||!nat||!nat.taskContacts)return [];
+  try{
+   var response=JSON.parse(nat.taskContacts());
+   return response.ok&&Array.isArray(response.users)?response.users.filter(function(u){
+    return u&&typeof u.username==='string'&&u.username!==session.username;
+   }).map(function(u){return u.username}):[];
+  }catch(e){return []}
+ },
+ sendTo:function(recipient,task){
+  if(!session||!model||!nat||!nat.sendTaskToUser)return {ok:false,error:'Conecta NeuroSync al servidor familiar'};
+  if(typeof recipient!=='string'||!/^[a-z0-9_-]{3,30}$/.test(recipient)||recipient===session.username)
+   return {ok:false,error:'Selecciona una persona distinta'};
+  if(!task||!String(task.title||'').trim())return {ok:false,error:'Escribe una tarea'};
+  try{
+   var requestId=typeof task.id==='string'&&task.id.length>=8?task.id:uid();
+   var payload={title:String(task.title).trim().slice(0,100),
+    date:task.date||day(),repeat:task.repeat||'none',category:task.category||'Personal',
+    steps:Array.isArray(task.steps)?task.steps:[]};
+   var result=JSON.parse(nat.sendTaskToUser(recipient,requestId,JSON.stringify(payload)));
+   return result&&typeof result.ok==='boolean'?result:{ok:false,error:'Respuesta inválida del servidor'};
+  }catch(e){return {ok:false,error:'No se pudo enviar. Comprueba la conexión y vuelve a intentarlo.'}}
+ },
+
  canShare:function(){return !!(session&&session.role==='admin'&&!session.google)},
  share:function(id){
   if(!session||!model||session.role!=='admin'||session.google)return false;
