@@ -578,6 +578,14 @@ html,body{background:#f8fbff;color:var(--ink)}
 #view-alarms .ns-studio-danger{color:#f9b8c2}
 #view-alarms .ns-studio-pane button:focus-visible{outline:2px solid #70bbff;outline-offset:2px}
 @media(max-width:350px){#view-alarms{padding:13px 9px}#view-alarms .ns-studio-grid{grid-template-columns:1fr}}
+</style><style id="ns-weekday-editor">
+#view-alarms .ns-weekdays{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin:5px 0 14px}
+#view-alarms .ns-weekdays.hidden{display:none}
+#view-alarms .ns-weekdays label{position:relative;display:grid;place-items:center;min-height:43px}
+#view-alarms .ns-weekdays input{position:absolute;opacity:0;pointer-events:none}
+#view-alarms .ns-weekdays span{display:grid;place-items:center;border-radius:10px;min-height:43px;width:100%;background:#25354c;color:#d6e6f7;font-size:12px}
+#view-alarms .ns-weekdays input:checked+span{background:#147deb;color:#fff;font-weight:800}
+#view-alarms .ns-weekdays input:focus-visible+span{outline:2px solid #8acaff;outline-offset:1px}
 </style></head><body>
 <div id="login" class="login ns-login-v3">
  <div class="ns-login-wrap">
@@ -1931,7 +1939,7 @@ function alarmItem(a){
  var e=document.createElement('div');e.className='list-row ns-alarm-line';
  var time=(a.time||'--:--').slice(0,5);
  var repeat=a.repeat|| (a.daily?'daily':'none');
- var cadence=repeat==='daily'?'Cada día':repeat==='weekly'?'Cada semana':repeat==='every2'?'Cada 2 días':repeat==='every3'?'Cada 3 días':'Una vez';
+ var cadence=repeat==='daily'?'Cada día':repeat==='weekly'?'Cada semana':repeat==='every2'?'Cada 2 días':repeat==='every3'?'Cada 3 días':repeat.startsWith('days:')?'Días seleccionados':'Una vez';
  e.innerHTML='<div class="ns-alarm-row"><div class="ns-alarm-core"><span class="ns-alarm-hour">'+esc(time)+'</span><div class="ns-alarm-meta"><strong>'+esc(a.title||'Alarma')+'</strong><small>'+esc(a.date||'')+' · '+cadence+'</small></div></div><button class="iconbtn ns-alarm-remove" type="button" aria-label="Eliminar alarma '+esc(a.title||'')+'">×</button></div>';
  e.querySelector('button').onclick=function(){
   if(session.role!=='admin'&&a.owner==='todos'){say('Esta alarma compartida solo puede eliminarla el administrador');return}
@@ -2076,7 +2084,10 @@ function scheduleAlarm(a){
  }
  var when=local.getTime();
  var repeat=a.repeat|| (a.daily?'daily':'none');
- if(!['none','daily','weekly','every2','every3'].includes(repeat)){say('Repetición no válida');return false}
+ if(!['none','daily','weekly','every2','every3'].includes(repeat)&&
+    !(/^days:(?:[1-9]|[1-9][0-9]|1[01][0-9]|12[0-7])$/.test(repeat))){
+   say('Repetición no válida');return false
+ }
  // No sumar milisegundos para repeticiones: en cambios de zona horaria o DST
  // esa aritmética desplaza la hora de despertar. Android usa Calendar local.
  // El primer día/hora es la referencia y AlarmReceiver.nextRepeat calcula el siguiente.
@@ -2793,6 +2804,18 @@ function nsAlarmNextDate(a,now){
  if(!Number.isFinite(next.getTime()))return null;
  var repeat=a.repeat||(a.daily?'daily':'none');
  if(repeat==='none')return next.getTime()>now?next:null;
+ if(repeat.startsWith('days:')){
+  var mask=Number(repeat.slice(5));if(mask<1||mask>127)return null;
+  var reference=next.getTime();
+  var base=new Date(now);
+  base.setHours(clock[0],clock[1],0,0);
+  for(var d=0;d<8;d++){
+   var bit=(base.getDay()+6)%7;
+   if((mask&(1<<bit))&&base.getTime()>now&&base.getTime()>=reference)return base;
+   base.setDate(base.getDate()+1);
+  }
+  return null;
+ }
  var steps={daily:1,weekly:7,every2:2,every3:3}[repeat];
  if(!steps)return null;
  for(var k=0;k<5000&&next.getTime()<=now;k++)next.setDate(next.getDate()+steps);
@@ -2820,7 +2843,11 @@ function nsAlarmStudioEditor(item){
  form.elements.title.value=item?(item.title||''):'';
  form.elements.date.value=item?(item.date||day()):day(later);
  form.elements.time.value=item?(item.time||'07:00'):later.toTimeString().slice(0,5);
- form.elements.repeat.value=item?(item.repeat||(item.daily?'daily':'none')):'none';
+ var value=item?(item.repeat||(item.daily?'daily':'none')):'none';
+ form.elements.repeat.value=value.startsWith('days:')?'custom':value;
+ var mask=value.startsWith('days:')?Number(value.slice(5)):0;
+ form.querySelectorAll('[name="weekday"]').forEach(function(b,i){b.checked=!!(mask&(1<<i))});
+ by('ns-weekdays').classList.toggle('hidden',form.elements.repeat.value!=='custom');
  form.elements.snoozeMinutes.value=String(item&&item.snoozeMinutes||5);
  by('ns-alarm-editor-label').textContent=item?'Editar alarma':'Nueva alarma';
  nsAlarmMissionLabel();
@@ -2883,7 +2910,9 @@ function nsAlarmStudioSetup(){
  '<section class="ns-studio-pane" data-pane="editor"><div class="ns-alarm-head"><h2 id="ns-alarm-editor-label">Nueva alarma</h2><button type="button" id="ns-alarm-editor-back" class="ns-studio-plain">Volver</button></div>'+
  '<form id="ns-studio-alarm-form"><label class="ns-studio-field">Nombre<input name="title" required maxlength="80" placeholder="Levantarme temprano"></label>'+
  '<div class="ns-studio-grid"><label class="ns-studio-field">Fecha<input name="date" type="date" required></label><label class="ns-studio-field">Hora<input name="time" type="time" required></label></div>'+
- '<label class="ns-studio-field">Repetición<select name="repeat"><option value="none">Una vez</option><option value="daily">Todos los días</option><option value="weekly">Cada semana</option><option value="every2">Cada 2 días</option><option value="every3">Cada 3 días</option></select></label>'+
+ '<label class="ns-studio-field">Repetición<select name="repeat"><option value="none">Una vez</option><option value="daily">Todos los días</option><option value="weekly">Cada semana</option><option value="every2">Cada 2 días</option><option value="every3">Cada 3 días</option><option value="custom">Elegir días de la semana</option></select></label>'+
+ '<div id="ns-weekdays" class="ns-weekdays hidden" aria-label="Días de repetición">'+
+ ['L','M','M','J','V','S','D'].map(function(label,i){return '<label><input type="checkbox" name="weekday" value="'+i+'"><span>'+label+'</span></label>'}).join('')+'</div>'+
  '<h3 class="ns-studio-title">Misión de despertar</h3><button type="button" id="ns-select-mission" class="ns-studio-plain">Elegir: <strong id="ns-studio-mission-name">Sin misión</strong> ›</button>'+
  '<button type="button" id="ns-alarm-qr-legacy" class="ns-studio-plain hidden">Configurar QR con cámara (editor avanzado)</button>'+
  '<h3 class="ns-studio-title">Sonido y seguridad</h3><label class="ns-studio-field">Posponer<select name="snoozeMinutes"><option value="1">1 minuto</option><option value="3">3 minutos</option><option value="5">5 minutos</option><option value="10">10 minutos</option><option value="15">15 minutos</option></select></label><p class="ns-studio-note">El sonido y el volumen se configuran desde Ajustes. La apertura en pantalla bloqueada necesita permisos de Android.</p>'+
@@ -2904,9 +2933,17 @@ function nsAlarmStudioSetup(){
  by('ns-select-mission').onclick=nsAlarmStudioMissionPicker;
  by('ns-alarm-qr-legacy').onclick=function(){openModal('alarm')};
  by('ns-editor-settings').onclick=function(){nsAlarmStudioTab('settings')};
+ by('ns-studio-alarm-form').elements.repeat.onchange=function(){
+  by('ns-weekdays').classList.toggle('hidden',this.value!=='custom')
+ };
  by('ns-studio-alarm-form').onsubmit=function(event){
   event.preventDefault();if(!session||!model)return;
   var f=this.elements,title=f.title.value.trim(),aDate=f.date.value,aTime=f.time.value,repeat=f.repeat.value;
+  if(repeat==='custom'){
+   var mask=0;this.querySelectorAll('[name="weekday"]').forEach(function(b,i){if(b.checked)mask|=(1<<i)});
+   if(!mask){say('Selecciona al menos un día');return}
+   repeat='days:'+mask;
+  }
   if(!title){say('Ponle un nombre a tu alarma');return}
   if(nsAlarmMission==='qr'&&!nsEditingAlarmId){say('Registra el QR desde el editor avanzado');return}
   var old=nsEditingAlarmId?model.alarms.find(function(x){return x.id===nsEditingAlarmId}):null;
