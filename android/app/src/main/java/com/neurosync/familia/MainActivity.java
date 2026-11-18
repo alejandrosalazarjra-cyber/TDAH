@@ -164,6 +164,17 @@ public final class MainActivity extends Activity {
     }
     if(resultCode!=RESULT_OK||data==null||data.getData()==null)return;
     android.net.Uri uri=data.getData();
+    if(requestCode==195){
+      String id=selectedAlarmSoundId;selectedAlarmSoundId="";
+      if(id.isEmpty())return;
+      try{
+        int flags=data.getFlags()&Intent.FLAG_GRANT_READ_URI_PERMISSION;
+        getContentResolver().takePersistableUriPermission(uri,flags);
+        getSharedPreferences("ns_alarm_sounds",0).edit().putString(id,uri.toString()).apply();
+        if(web!=null)web.evaluateJavascript("window.neuroAlarmSoundSelected && window.neuroAlarmSoundSelected("+JSONObject.quote(id)+")",null);
+      }catch(Exception err){android.util.Log.w("NeuroSync","Sonido individual no disponible",err);}
+      return;
+    }
     if(requestCode==191){
       try{
         int flags=data.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION;
@@ -673,6 +684,28 @@ public final class MainActivity extends Activity {
         intent.setType("application/json");
         startActivityForResult(intent,193);
       });
+    }
+    private String selectedAlarmSoundId="";
+    @JavascriptInterface public void chooseSoundForAlarm(String id){
+      if(id==null||id.isEmpty()||id.length()>100)return;
+      runOnUiThread(()->{
+        selectedAlarmSoundId=id;
+        try{
+          Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT);
+          intent.addCategory(Intent.CATEGORY_OPENABLE);
+          intent.setType("audio/*");
+          intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+          startActivityForResult(intent,195);
+        }catch(Exception err){selectedAlarmSoundId="";android.util.Log.w("NeuroSync","Selector no disponible",err);}
+      });
+    }
+    @JavascriptInterface public boolean hasAlarmSound(String id){
+      if(id==null||id.isEmpty())return false;
+      return !getSharedPreferences("ns_alarm_sounds",0).getString(id,"").isEmpty();
+    }
+    @JavascriptInterface public void clearAlarmSound(String id){
+      if(id==null||id.isEmpty())return;
+      getSharedPreferences("ns_alarm_sounds",0).edit().remove(id).apply();
     }
     @JavascriptInterface public void chooseAlarmSound(){
       runOnUiThread(()->{
