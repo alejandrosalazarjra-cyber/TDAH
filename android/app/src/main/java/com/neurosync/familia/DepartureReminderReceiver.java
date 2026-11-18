@@ -86,10 +86,17 @@ public final class DepartureReminderReceiver extends android.content.BroadcastRe
     JSONObject entry=new JSONObject(String.valueOf(x.getValue()));
     String id=entry.optString("id",""),repeat=entry.optString("repeat","none");
     long when=entry.optLong("when");
+    if(!x.getKey().equals(key(id))||id.length()<2||id.length()>100)continue;
     if(when<=now&&!"none".equals(repeat)){
-     when=AlarmReceiver.nextRepeat(when,repeat,now);
-     entry.put("when",when);entry.put("checked",new JSONObject());
-     ctx.getSharedPreferences(PREF,0).edit().putString(key(id),entry.toString()).apply();
+     long next=AlarmReceiver.nextRepeat(when,repeat,now);
+     if(next>now&&program(ctx,id,next)){
+      entry.put("when",next);entry.put("checked",new JSONObject());
+      if(!ctx.getSharedPreferences(PREF,0).edit().putString(key(id),entry.toString()).commit())
+       android.util.Log.w("NeuroSync","Lista programada pero no persistida: "+id);
+     }else if(next>now){
+      android.util.Log.w("NeuroSync","No se pudo restaurar lista de salida: "+id);
+     }
+     continue;
     }
     if(when>now)program(ctx,id,when);
    }catch(Exception ignored){}
