@@ -343,6 +343,17 @@ jobs:
           print("SHA256 de HTML:",hashlib.sha256(packed).hexdigest())
           PY
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify "$APK"
+          # Validar el APK generado, NO solo el certificado importado.
+          if [ "${{ steps.preview_signing.outputs.configured }}" = 'true' ]; then
+            CERT_OUTPUT=$("$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs "$APK")
+            ACTUAL_SHA1=$(printf '%s\n' "$CERT_OUTPUT" | sed -n 's/^Signer #1 certificate SHA-1 digest: //p' | tr -d '[:space:]:')
+            EXPECTED_SHA1='3ef574b7f38f09fbb48160bc40571ea7d6a49063'
+            if [ "${ACTUAL_SHA1,,}" != "$EXPECTED_SHA1" ]; then
+              echo "::error::La APK no tiene la firma OAuth de NeuroSync Preview."
+              exit 1
+            fi
+            echo 'Certificado real del APK coincide con Google OAuth Preview.'
+          fi
 
       - name: Publicar APK para comprobar funciones SIN borrar datos
         uses: actions/upload-artifact@v4
