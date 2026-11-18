@@ -2996,10 +2996,25 @@ function nsAlarmStudioSetup(){
   if(old&&old.owner!==session.username&&session.role!=='admin'){say('No puedes editar una alarma de otra persona');return}
   var item=Object.assign({},old||{id:uid(),owner:session.username},{title:title,date:aDate,time:aTime,
    repeat:repeat,daily:repeat==='daily',challenge:nsAlarmMission,snoozeMinutes:Number(f.snoozeMinutes.value)||5,updatedAt:stamp()});
+  var previous=old?Object.assign({},old):null;
   if(!scheduleAlarm(item))return;
-  if(nat&&nat.setAlarmSnoozeMinutes)nat.setAlarmSnoozeMinutes(item.id,item.snoozeMinutes); // Si falla Android no fingir que se guardó.
+  if(nat&&nat.setAlarmSnoozeMinutes)nat.setAlarmSnoozeMinutes(item.id,item.snoozeMinutes);
   if(old)Object.assign(old,item);else model.alarms.push(item);
-  if(!save()){say('No se pudo confirmar el guardado local');return}
+  if(!save()){
+   // Restaurar modelo y configuración Android cuando el guardado principal falla.
+   if(previous){
+    Object.keys(old).forEach(function(k){delete old[k]});
+    Object.assign(old,previous);
+    scheduleAlarm(previous);
+    if(nat&&nat.setAlarmSnoozeMinutes)
+     nat.setAlarmSnoozeMinutes(previous.id,Number(previous.snoozeMinutes)||5);
+   }else{
+    model.alarms=model.alarms.filter(function(a){return a.id!==item.id});
+    if(nat&&nat.cancelAlarm)nat.cancelAlarm(item.id);
+   }
+   say('No se pudo guardar. Se conservó la configuración anterior.');
+   return;
+  }
   render();nsAlarmStudioTab('list');say('Alarma guardada');
  };
  var baseRender=renderAlarms;
