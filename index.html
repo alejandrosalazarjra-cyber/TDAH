@@ -2740,6 +2740,10 @@ window.NeuroAlarmAPI={
   if(!session||!model)return false;
   model.alarmPreferences=Object.assign({},model.alarmPreferences||{},opts);return !!save();
  },
+ scanQr:function(){
+  if(!nat||!nat.scanQrReference)return false;
+  nat.scanQrReference();return true;
+ },
  chooseSound:function(id){
   if(!id||!nat||!nat.chooseSoundForAlarm)return false;
   nat.chooseSoundForAlarm(id);return true;
