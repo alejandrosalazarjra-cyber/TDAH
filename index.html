@@ -2966,6 +2966,14 @@ function nsAlarmStudioSetup(){
    var edit=document.createElement('button');edit.type='button';edit.textContent='Editar';
    edit.className='ns-alarm-edit';edit.onclick=function(){nsAlarmStudioEditor(alarm)};
    row.appendChild(edit);
+   var copy=document.createElement('button');copy.type='button';copy.textContent='Duplicar';
+   copy.className='ns-alarm-edit';
+   copy.onclick=function(){
+    var clone=Object.assign({},alarm,{id:null});
+    nsAlarmStudioEditor(clone);
+    say('Copia lista para modificar. Guarda para crear otra alarma.');
+   };
+   row.appendChild(copy);
   });
   nsAlarmStudioNext();
  };
