@@ -18,6 +18,7 @@ function makeTest(blocked=false){
    nat:{scheduleAlarmRepeat:()=>true,notifyTaskReceived:(id,sender)=>{nativeNotices.push({id,sender});return true}},
    nsLocalSave:next=>{written=next; if(ctx.failWrite)throw Error('disk full')},
    active:xs=>xs.filter(x=>!x.deleted),scheduleAlarm:()=>{scheduled++},
+   nsCheckSentStatus:()=>{},
    render:()=>renders++,say:message=>notifications.push(message),
    Date,JSON,Array,Number,String,Object,Map,Set,Error};
  vm.createContext(ctx);vm.runInContext(code,ctx);
