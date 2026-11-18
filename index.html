@@ -531,6 +531,53 @@ html,body{background:#f8fbff;color:var(--ink)}
  border:0;background:transparent;color:#0876ba;min-height:43px;font-weight:650}
 #ns-check-local-copy:focus-visible{outline:2px solid #0876ba;outline-offset:2px}
 #ns-local-copy-result{padding:2px 12px;font-size:12px;line-height:1.45}
+</style><style id="ns-alarm-studio-theme">
+#view-alarms{color:#eef4ff;background:linear-gradient(180deg,#11192c,#101522 60%,#0e131f);border-radius:24px;padding:18px 14px 28px}
+#view-alarms .ns-alarm-studio{display:grid;gap:16px}
+#view-alarms .ns-alarm-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#view-alarms .ns-alarm-head h2{font-size:26px!important;letter-spacing:-.04em;color:#fff}
+#view-alarms .ns-alarm-subtitle{font-size:12px;color:#a9b9d2;margin:0}
+#view-alarms .ns-alarm-tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid #293447;padding-bottom:8px}
+#view-alarms .ns-alarm-tabs button{border:0;background:transparent;color:#9cacc8;min-height:44px;white-space:nowrap;padding:9px 12px;border-radius:11px;font-size:13px}
+#view-alarms .ns-alarm-tabs button[aria-selected="true"]{background:#173a65;color:#fff;font-weight:750}
+#view-alarms .ns-studio-pane{display:none;min-width:0}
+#view-alarms .ns-studio-pane.active{display:block}
+#view-alarms .ns-alarm-next{display:grid;gap:5px;padding:15px 4px;border-bottom:1px solid #303a4d;margin-bottom:5px}
+#view-alarms .ns-alarm-next .time{font:700 clamp(44px,12vw,72px)/1.12 system-ui,sans-serif;color:#3797ff;letter-spacing:-.06em;font-variant-numeric:tabular-nums}
+#view-alarms .ns-alarm-next .eta{color:#bed1e9;font-size:14px}
+#view-alarms .ns-alarm-line{border-bottom:1px solid #2c3545!important;color:#fff}
+#view-alarms .ns-alarm-hour{color:#e7f2ff}
+#view-alarms .ns-alarm-meta strong{color:#fff}
+#view-alarms .ns-alarm-meta small{color:#9daec3}
+#view-alarms .ns-alarm-edit{background:#153d65!important;color:#eaf5ff!important;border:0!important;border-radius:11px!important;padding:9px 12px!important;min-height:44px;font-weight:650}
+#view-alarms .ns-alarm-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:15px 0}
+#view-alarms .ns-studio-primary,#view-alarms .ns-studio-save{background:#1389f5;color:white;border:0;border-radius:14px;padding:13px 16px;font-weight:750;min-height:48px}
+#view-alarms .ns-studio-plain{border:1px solid #364763;background:#1b2535;color:#eef4ff;border-radius:13px;padding:11px 13px;min-height:45px}
+#view-alarms .ns-studio-field{display:grid;gap:7px;font-size:13px;font-weight:600;color:#c9d6e8;margin:13px 0}
+#view-alarms .ns-studio-field input,#view-alarms .ns-studio-field select{width:100%;background:#1c273b!important;border:1px solid #3c4a63!important;border-radius:12px!important;color:#fff!important;padding:13px!important;min-height:48px;font-size:16px}
+#view-alarms .ns-studio-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#view-alarms .ns-studio-time{font:700 clamp(38px,10vw,54px)/1.1 system-ui,sans-serif;text-align:center;color:#2794ff;padding:8px}
+#view-alarms .ns-studio-title{font-size:17px;font-weight:750;color:#fff;margin:20px 0 9px}
+#view-alarms .ns-studio-note{font-size:12px;color:#aabbd0;line-height:1.5}
+#view-alarms .ns-mission-group{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#9aaccc;margin:22px 0 7px}
+#view-alarms .ns-mission-choice{width:100%;display:flex;align-items:center;gap:12px;border:0;border-bottom:1px solid #2f3b4d;background:transparent;color:white;padding:14px 3px;text-align:left;min-height:57px}
+#view-alarms .ns-mission-choice .glyph{font-size:21px;width:30px}
+#view-alarms .ns-mission-choice .copy{flex:1;display:grid;gap:3px}
+#view-alarms .ns-mission-choice small{font-size:11px;color:#a7b6cc}
+#view-alarms .ns-mission-choice.selected{background:#173a65;border-radius:12px;padding:12px}
+#view-alarms .ns-studio-report{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+#view-alarms .ns-studio-report .metric{border-right:1px solid #374052;padding:12px 5px 12px 0}
+#view-alarms .ns-studio-report .metric:last-child{border:0}
+#view-alarms .ns-studio-report strong{display:block;font-size:26px;color:#53a7ff;font-variant-numeric:tabular-nums}
+#view-alarms .ns-studio-report small{color:#a7b7cc;font-size:11px}
+#view-alarms .ns-studio-permission{margin:8px 0;padding:10px 0;border-top:1px solid #354052}
+#view-alarms .ns-studio-pane .card,#view-alarms .ns-studio-pane .ns-wake-insights,#view-alarms .ns-studio-pane .ns-music-clock-card{background:transparent!important;border:0!important;box-shadow:none!important;color:#edf3fb}
+#view-alarms .ns-studio-pane .hint{color:#afc1d8!important}
+#view-alarms .ns-studio-pane .chip{color:#bed7f0!important}
+#view-alarms .ns-studio-pane .btn{border-radius:12px!important;min-height:44px}
+#view-alarms .ns-studio-danger{color:#f9b8c2}
+#view-alarms .ns-studio-pane button:focus-visible{outline:2px solid #70bbff;outline-offset:2px}
+@media(max-width:350px){#view-alarms{padding:13px 9px}#view-alarms .ns-studio-grid{grid-template-columns:1fr}}
 </style></head><body>
 <div id="login" class="login ns-login-v3">
  <div class="ns-login-wrap">
@@ -2702,5 +2749,190 @@ if(!nsGoogleRestored&&nsPreferredProvider!=='signed_out'&&nsPreferredProvider!==
   }
  }catch(error){by('login-error').textContent='No se pudo recuperar la sesión. Puedes iniciar sesión normalmente.'}
 }
+
+/* NeuroSync Alarm Studio: todas las vistas utilizan los mismos datos y AlarmReceiver.
+ * Las misiones disponibles coinciden con las implementadas en Android.
+ * Otras misiones y la música en streaming no se anuncian como completadas.
+ */
+var nsAlarmTab='list',nsEditingAlarmId=null,nsAlarmMission='none';
+var nsMissionCatalog=[
+ {group:'Despierta tu mente',items:[
+  ['math','Matemáticas','Tres ejercicios sencillos','🧮'],
+  ['math_hard','Matemáticas avanzadas','Ejercicios de mayor dificultad','🔢'],
+  ['memory','Memorizar código','Recordar cuatro números','🧠'],
+  ['typing','Escritura','Escribe la frase indicada','⌨️']]},
+ {group:'Despierta tu cuerpo',items:[
+  ['shake','Agitar el teléfono','Usa el acelerómetro del dispositivo','📳'],
+  ['taps','Toques de pantalla','Doce toques para despertar','👆']]},
+ {group:'Rutinas NeuroSync',items:[
+  ['routine_focus','Mente activa','Matemáticas y escritura','🎯'],
+  ['routine_active','Cuerpo y mente','Memoria, movimiento y cálculo','⚡']]},
+ {group:'Opciones especiales',items:[
+  ['none','Sin misión','Detener la alarma normalmente','◯'],
+  ['qr','Escanear QR','Requiere registrar un código físico en el editor clásico','▦']]}
+];
+function nsAlarmStudioTab(tab){
+ if(!['list','editor','missions','settings','report'].includes(tab))return;
+ nsAlarmTab=tab;
+ document.querySelectorAll('#view-alarms [data-ns-alarm-tab]').forEach(function(b){
+  b.setAttribute('aria-selected',String(b.dataset.nsAlarmTab===tab));
+ });
+ document.querySelectorAll('#view-alarms .ns-studio-pane').forEach(function(p){
+  p.classList.toggle('active',p.dataset.pane===tab);
+ });
+ if(tab==='list')nsAlarmStudioNext();
+ if(tab==='report')nsAlarmStudioReport();
+ if(tab==='settings')checkAlarmPermissions();
+ var root=by('view-alarms');
+ if(root)root.scrollIntoView({block:'start',behavior:'auto'});
+}
+function nsAlarmNextDate(a,now){
+ if(!a||!a.date||!a.time)return null;
+ var parts=a.date.split('-').map(Number),clock=a.time.split(':').map(Number);
+ var next=new Date(parts[0],parts[1]-1,parts[2],clock[0],clock[1]);
+ if(!Number.isFinite(next.getTime()))return null;
+ var repeat=a.repeat||(a.daily?'daily':'none');
+ if(repeat==='none')return next.getTime()>now?next:null;
+ var steps={daily:1,weekly:7,every2:2,every3:3}[repeat];
+ if(!steps)return null;
+ for(var k=0;k<5000&&next.getTime()<=now;k++)next.setDate(next.getDate()+steps);
+ return next.getTime()>now?next:null;
+}
+function nsAlarmStudioNext(){
+ if(!session||!model)return;
+ var now=Date.now(),arr=active(model.alarms).filter(owned).map(function(a){
+  return {alarm:a,next:nsAlarmNextDate(a,now)}
+ }).filter(function(a){return a.next}).sort(function(a,b){return a.next-b.next});
+ var time=by('ns-next-alarm-hour'),caption=by('ns-next-alarm-label'),eta=by('ns-next-alarm-eta');
+ if(!time)return;
+ if(!arr.length){time.textContent='--:--';caption.textContent='Todavía no hay una alarma futura';eta.textContent='Crea tu primera alarma';return}
+ var n=arr[0],mins=Math.max(0,Math.ceil((n.next.getTime()-now)/60000));
+ time.textContent=n.next.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false});
+ caption.textContent=n.alarm.title||'Alarma';
+ eta.textContent='Sonará en '+Math.floor(mins/60)+' h '+mins%60+' min';
+}
+function nsAlarmStudioEditor(item){
+ nsEditingAlarmId=item?item.id:null;
+ nsAlarmMission=item?(item.challenge||'none'):'none';
+ var form=by('ns-studio-alarm-form');
+ form.reset();
+ var later=new Date(Date.now()+3600000);
+ form.elements.title.value=item?(item.title||''):'';
+ form.elements.date.value=item?(item.date||day()):day(later);
+ form.elements.time.value=item?(item.time||'07:00'):later.toTimeString().slice(0,5);
+ form.elements.repeat.value=item?(item.repeat||(item.daily?'daily':'none')):'none';
+ by('ns-alarm-editor-label').textContent=item?'Editar alarma':'Nueva alarma';
+ nsAlarmMissionLabel();
+ nsAlarmStudioTab('editor');
+}
+function nsAlarmMissionLabel(){
+ var found=null;
+ nsMissionCatalog.some(function(group){return group.items.some(function(m){
+  if(m[0]!==nsAlarmMission)return false;found=m;return true
+ })});
+ by('ns-studio-mission-name').textContent=found?found[1]:'Sin misión';
+}
+function nsAlarmStudioMissionPicker(){
+ var dest=by('ns-studio-mission-list');dest.replaceChildren();
+ nsMissionCatalog.forEach(function(group){
+  var h=document.createElement('h3');h.className='ns-mission-group';h.textContent=group.group;dest.appendChild(h);
+  group.items.forEach(function(m){
+   var b=document.createElement('button');b.type='button';
+   b.className='ns-mission-choice'+(nsAlarmMission===m[0]?' selected':'');
+   b.innerHTML='<span class="glyph">'+m[3]+'</span><span class="copy"><strong>'+esc(m[1])+'</strong><small>'+esc(m[2])+'</small></span><span>›</span>';
+   b.onclick=function(){
+    if(m[0]==='qr'){
+     say('Para registrar un QR usa el editor avanzado que activa la cámara.');
+     nsAlarmStudioTab('editor');by('ns-alarm-qr-legacy').classList.remove('hidden');return;
+    }
+    nsAlarmMission=m[0];nsAlarmMissionLabel();nsAlarmStudioTab('editor');
+   };
+   dest.appendChild(b);
+  });
+ });
+ nsAlarmStudioTab('missions');
+}
+function nsAlarmStudioReport(){
+ if(!session||!model)return;
+ var ids=new Set(model.alarms.filter(owned).map(function(x){return String(x.id)}));
+ var events=[];
+ try{if(nat&&nat.alarmEventHistory)events=JSON.parse(nat.alarmEventHistory())}catch(e){}
+ if(!Array.isArray(events))events=[];
+ var since=Date.now()-7*86400000;
+ events=events.filter(function(x){return ids.has(String(x.id))&&Number(x.at)>=since});
+ ['ring','dismiss','snooze'].forEach(function(t,i){
+  by(['ns-report-ring','ns-report-dismiss','ns-report-snooze'][i]).textContent=String(events.filter(function(e){return e.action===t}).length)
+ });
+ var list=by('ns-report-log');list.replaceChildren();
+ if(!events.length){list.textContent='Todavía no hay registros reales de despertar en este dispositivo.';return}
+ events.slice(-12).reverse().forEach(function(e){
+  var row=document.createElement('div');row.className='ns-alarm-line';
+  row.textContent=({ring:'Sonó',dismiss:'Detenida',snooze:'Pospuesta'}[e.action]||'Evento')+' · '+new Date(e.at).toLocaleString('es-CO');
+  list.append(row);
+ });
+}
+function nsAlarmStudioSetup(){
+ var root=by('view-alarms');if(!root||by('ns-alarm-studio'))return;
+ var studio=document.createElement('div');studio.id='ns-alarm-studio';studio.className='ns-alarm-studio';
+ studio.innerHTML='<header class="ns-alarm-head"><div><h2>Alarmas</h2><p class="ns-alarm-subtitle">Despierta a tu ritmo</p></div><button id="ns-studio-new" class="ns-studio-primary" type="button">+ Nueva</button></header>'+
+ '<nav class="ns-alarm-tabs" aria-label="Secciones de alarmas">'+
+ '<button type="button" data-ns-alarm-tab="list">Mis alarmas</button><button type="button" data-ns-alarm-tab="missions">Misiones</button>'+
+ '<button type="button" data-ns-alarm-tab="report">Informe</button><button type="button" data-ns-alarm-tab="settings">Ajustes</button></nav>'+
+ '<section class="ns-studio-pane" data-pane="list"><div class="ns-alarm-next"><small>PRÓXIMA ALARMA</small><strong id="ns-next-alarm-hour" class="time">--:--</strong><strong id="ns-next-alarm-label"></strong><span class="eta" id="ns-next-alarm-eta"></span></div><div id="ns-alarm-list-destination"></div></section>'+
+ '<section class="ns-studio-pane" data-pane="editor"><div class="ns-alarm-head"><h2 id="ns-alarm-editor-label">Nueva alarma</h2><button type="button" id="ns-alarm-editor-back" class="ns-studio-plain">Volver</button></div>'+
+ '<form id="ns-studio-alarm-form"><label class="ns-studio-field">Nombre<input name="title" required maxlength="80" placeholder="Levantarme temprano"></label>'+
+ '<div class="ns-studio-grid"><label class="ns-studio-field">Fecha<input name="date" type="date" required></label><label class="ns-studio-field">Hora<input name="time" type="time" required></label></div>'+
+ '<label class="ns-studio-field">Repetición<select name="repeat"><option value="none">Una vez</option><option value="daily">Todos los días</option><option value="weekly">Cada semana</option><option value="every2">Cada 2 días</option><option value="every3">Cada 3 días</option></select></label>'+
+ '<h3 class="ns-studio-title">Misión de despertar</h3><button type="button" id="ns-select-mission" class="ns-studio-plain">Elegir: <strong id="ns-studio-mission-name">Sin misión</strong> ›</button>'+
+ '<button type="button" id="ns-alarm-qr-legacy" class="ns-studio-plain hidden">Configurar QR con cámara (editor avanzado)</button>'+
+ '<h3 class="ns-studio-title">Sonido y seguridad</h3><p class="ns-studio-note">El sonido y el volumen se configuran desde Ajustes. La apertura en pantalla bloqueada necesita permisos de Android.</p>'+
+ '<div class="ns-alarm-actions"><button type="button" id="ns-editor-settings" class="ns-studio-plain">Sonido y permisos</button><button type="submit" class="ns-studio-save">Guardar alarma</button></div></form></section>'+
+ '<section class="ns-studio-pane" data-pane="missions"><h2>Misiones</h2><p class="ns-studio-note">Elige uno de los desafíos implementados en Android.</p><div id="ns-studio-mission-list"></div></section>'+
+ '<section class="ns-studio-pane" data-pane="settings"><h2>Ajustes de alarma</h2><p class="ns-studio-note">Permisos, sonido, prueba y música mediante Reloj de Google.</p><div id="ns-alarm-settings-destination"></div></section>'+
+ '<section class="ns-studio-pane" data-pane="report"><h2>Informe de despertar</h2><p class="ns-studio-note">Eventos registrados por Android en los últimos 7 días.</p><div class="ns-studio-report"><div class="metric"><strong id="ns-report-ring">0</strong><small>Sonaron</small></div><div class="metric"><strong id="ns-report-dismiss">0</strong><small>Detenidas</small></div><div class="metric"><strong id="ns-report-snooze">0</strong><small>Pospuestas</small></div></div><div id="ns-report-log"></div><div id="ns-report-legacy"></div></section>';
+ root.prepend(studio);
+ var original=Array.from(root.children).find(function(n){return n!==studio&&n.classList.contains('card')&&n.querySelector('#alarms-list')});
+ var insights=Array.from(root.children).find(function(n){return n!==studio&&n.classList.contains('ns-wake-insights')});
+ var list=by('alarms-list');
+ if(list)by('ns-alarm-list-destination').appendChild(list);
+ if(insights)by('ns-report-legacy').appendChild(insights);
+ if(original){by('ns-alarm-settings-destination').appendChild(original);var legacyHeader=original.querySelector('.between');if(legacyHeader)legacyHeader.classList.add('hidden')}
+ document.querySelectorAll('#view-alarms [data-ns-alarm-tab]').forEach(function(b){b.onclick=function(){nsAlarmStudioTab(b.dataset.nsAlarmTab)}});
+ by('ns-studio-new').onclick=function(){nsAlarmStudioEditor(null)};
+ by('ns-alarm-editor-back').onclick=function(){nsAlarmStudioTab('list')};
+ by('ns-select-mission').onclick=nsAlarmStudioMissionPicker;
+ by('ns-alarm-qr-legacy').onclick=function(){openModal('alarm')};
+ by('ns-editor-settings').onclick=function(){nsAlarmStudioTab('settings')};
+ by('ns-studio-alarm-form').onsubmit=function(event){
+  event.preventDefault();if(!session||!model)return;
+  var f=this.elements,title=f.title.value.trim(),aDate=f.date.value,aTime=f.time.value,repeat=f.repeat.value;
+  if(!title){say('Ponle un nombre a tu alarma');return}
+  if(nsAlarmMission==='qr'&&!nsEditingAlarmId){say('Registra el QR desde el editor avanzado');return}
+  var old=nsEditingAlarmId?model.alarms.find(function(x){return x.id===nsEditingAlarmId}):null;
+  if(old&&old.owner!==session.username&&session.role!=='admin'){say('No puedes editar una alarma de otra persona');return}
+  var item=Object.assign({},old||{id:uid(),owner:session.username},{title:title,date:aDate,time:aTime,
+   repeat:repeat,daily:repeat==='daily',challenge:nsAlarmMission,updatedAt:stamp()});
+  if(!scheduleAlarm(item))return; // Si falla Android no fingir que se guardó.
+  if(old)Object.assign(old,item);else model.alarms.push(item);
+  if(!save()){say('No se pudo confirmar el guardado local');return}
+  render();nsAlarmStudioTab('list');say('Alarma guardada');
+ };
+ var baseRender=renderAlarms;
+ renderAlarms=function(){
+  baseRender();
+  if(!by('ns-alarm-studio'))return;
+  var items=active(model.alarms).filter(owned);
+  Array.from(by('alarms-list').children).forEach(function(row,i){
+   var alarm=items[i];if(!alarm)return;
+   var edit=document.createElement('button');edit.type='button';edit.textContent='Editar';
+   edit.className='ns-alarm-edit';edit.onclick=function(){nsAlarmStudioEditor(alarm)};
+   row.appendChild(edit);
+  });
+  nsAlarmStudioNext();
+ };
+ nsAlarmStudioTab('list');
+}
+nsAlarmStudioSetup();
+
 })();
 </script></body></html>
