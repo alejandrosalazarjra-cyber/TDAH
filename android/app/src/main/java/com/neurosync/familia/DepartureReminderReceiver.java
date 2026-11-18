@@ -109,6 +109,10 @@ public final class DepartureReminderReceiver extends android.content.BroadcastRe
   JSONObject entry=get(ctx,id);if(!id.equals(entry.optString("id")))return;
   try{
    String repeat=entry.optString("repeat","none");
+   // Un recordatorio de salida es una revisión NUEVA; no dar por comprobados
+   // los objetos que se marcaron durante una salida anterior.
+   entry.put("checked",new JSONObject());
+   ctx.getSharedPreferences(PREF,0).edit().putString(key(id),entry.toString()).commit();
    if(!"none".equals(repeat)){
     long next=AlarmReceiver.nextRepeat(entry.optLong("when"),repeat,System.currentTimeMillis());
     if(next>System.currentTimeMillis()&&program(ctx,id,next)){
