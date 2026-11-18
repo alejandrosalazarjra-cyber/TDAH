@@ -146,22 +146,31 @@ public final class AlarmReceiver extends BroadcastReceiver {
       ctx.getSharedPreferences("ns_alarms",0).edit().remove(PREFIX+id).apply();
   }catch(Exception ignored){}
  }
- public static void snooze(Context ctx,String id,int minutes){
-  if(id==null||AlarmOptionsStore.used(ctx,id)>=AlarmOptionsStore.max(ctx,id))return;
+ public static boolean snooze(Context ctx,String id,int minutes){
+  if(id==null||minutes<1||minutes>15||
+      AlarmOptionsStore.used(ctx,id)>=AlarmOptionsStore.max(ctx,id))return false;
   try{
-   String s=ctx.getSharedPreferences("ns_alarms",0).getString(PREFIX+id,null);if(s==null)return;
-   JSONObject a=new JSONObject(s);
-   AlarmOptionsStore.increment(ctx,id);
-   AlarmHistory.record(ctx,id,"snooze");
+   String raw=ctx.getSharedPreferences("ns_alarms",0).getString(PREFIX+id,null);
+   if(raw==null)return false;
+   new JSONObject(raw); // Verificar que la alarma realmente exista y esté íntegra.
    AlarmManager alarm=manager(ctx);
    long when=System.currentTimeMillis()+minutes*60000L;
    if(Build.VERSION.SDK_INT<31||alarm.canScheduleExactAlarms())
      alarm.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,when,pendingSnooze(ctx,id));
    else alarm.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,when,pendingSnooze(ctx,id));
-   ctx.getSharedPreferences("ns_alarm_snoozes",0).edit().putLong(SNOOZE_PREFIX+id,when).apply();
+   // Solo después del éxito: contar, registrar y detener el sonido.
+   if(!ctx.getSharedPreferences("ns_alarm_snoozes",0).edit().putLong(SNOOZE_PREFIX+id,when).commit()){
+     alarm.cancel(pendingSnooze(ctx,id));return false;
+   }
+   AlarmOptionsStore.increment(ctx,id);
+   AlarmHistory.record(ctx,id,"snooze");
    AlarmAudioService.stop(ctx);
    ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id.hashCode());
-  }catch(Exception ignored){}
+   return true;
+  }catch(Exception error){
+   android.util.Log.e("NeuroSync","No se pudo posponer esta alarma",error);
+   return false;
+  }
  }
  /** Diagnóstico de los registros locales: no afirma una garantía de ejecución del SO. */
  public static JSONObject diagnostics(Context ctx){
