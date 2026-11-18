@@ -203,10 +203,15 @@ root.addEventListener('click',e=>{
   const id=b.dataset.entryId;if(!id)return;
   const entry=read()?.entries.find(x=>x.id===id&&!x.voidedAt);
   if(!entry)return;
-  const details=(entry.note||entry.category||'Movimiento')+' · '+cop(entry.amount);
-  if(window.confirm('¿Anular este movimiento?\n'+details+'\nSe conservará en el historial.'))voidEntry(id);
+  $('#ns-fi-modal').innerHTML='<div class="ns-fi-shade" role="dialog" aria-modal="true" aria-label="Confirmar anulación">'+
+   '<div class="ns-fi-dialog"><h3>¿Anular movimiento?</h3>'+
+   '<p>Se corregirán los saldos y se conservará el movimiento en el historial.</p>'+
+   '<strong>'+esc(entry.note||entry.category||'Movimiento')+' · '+cop(entry.amount)+'</strong>'+
+   '<div class="ns-fi-modal-buttons"><button type="button" data-finance="confirm-void" data-entry-id="'+esc(id)+'">Confirmar anulación</button>'+
+   '<button type="button" data-finance="cancel">Cancelar</button></div></div></div>';
   return;
  }
+ if(a==='confirm-void'){voidEntry(b.dataset.entryId);return}
  if(['overview','accounts','budget'].includes(a)){state.tab=a;render()}
 });
 root.addEventListener('change',e=>{
