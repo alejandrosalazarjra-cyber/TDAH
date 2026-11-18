@@ -68,6 +68,7 @@ jobs:
           node tests/test_alarm_studio.js
           node tests/test_alarm_studio_days.js
           node tests/test_task_studio.js
+          node tests/test_departure_studio.js
 
       - name: Validar interfaz antes de compilar
         shell: bash
@@ -216,6 +217,9 @@ jobs:
           mkdir -p android/app/src/main/assets/modules
           cp modules/alarm_studio.js modules/alarm_studio.css android/app/src/main/assets/modules/
           cp modules/task_studio.js modules/task_studio.css android/app/src/main/assets/modules/
+          cp modules/departure_studio.js modules/departure_studio.css android/app/src/main/assets/modules/
+          test -s android/app/src/main/assets/modules/departure_studio.js
+          test -s android/app/src/main/assets/modules/departure_studio.css
           test -s android/app/src/main/assets/modules/alarm_studio.js
           test -s android/app/src/main/assets/modules/alarm_studio.css
           mkdir -p android/app/src/main/assets/dragon
