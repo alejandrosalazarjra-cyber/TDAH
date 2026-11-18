@@ -141,7 +141,18 @@ final class PublicAccountBridge {
         }
       });
     }catch(Exception e){
-      activity.googleCallback("neuroPublicLogin",failure("No se pudo completar el acceso con Google").toString());
+      int code=e instanceof ApiException?((ApiException)e).getStatusCode():-1;
+      String problem=code==10?
+        "Google no reconoce la firma o el paquete de esta APK. Es necesario registrar el cliente Android en Google Cloud.":
+        code==7?"Sin conexión con Google. Revisa internet e inténtalo de nuevo.":
+        code==12501?"Cancelaste el acceso. Puedes volver a intentarlo.":
+        "No se pudo completar el acceso con Google.";
+      try{
+        JSONObject response=failure(problem).put("code",code).put("configurationRequired",code==10);
+        activity.googleCallback("neuroPublicLogin",response.toString());
+      }catch(Exception ignored){
+        activity.googleCallback("neuroPublicLogin",failure(problem).toString());
+      }
     }
   }
   JSONObject call(String method,String path,JSONObject data,String requestKey){
