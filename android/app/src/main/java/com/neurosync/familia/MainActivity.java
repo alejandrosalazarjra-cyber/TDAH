@@ -607,6 +607,19 @@ public final class MainActivity extends Activity {
     @JavascriptInterface public String publicContacts(){
       return publicAccounts.call("GET","/v1/contacts",null,"").toString();
     }
+    @JavascriptInterface public void openLegalPage(String page){
+      if(!("privacy".equals(page)||"delete-account".equals(page)))return;
+      final String url="https://neurosync-public-api-staging-vz3h.onrender.com/"+page;
+      runOnUiThread(()->{
+        try{
+          Intent browser=new Intent(Intent.ACTION_VIEW,android.net.Uri.parse(url));
+          browser.addCategory(Intent.CATEGORY_BROWSABLE);
+          startActivity(browser);
+        }catch(Exception e){
+          android.util.Log.w("NeuroSync","No hay navegador para abrir políticas",e);
+        }
+      });
+    }
     @JavascriptInterface public String publicBlocks(){
       return publicAccounts.call("GET","/v1/contacts/blocks",null,"").toString();
     }
