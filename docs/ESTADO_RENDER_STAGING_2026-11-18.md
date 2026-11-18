@@ -8,7 +8,7 @@ Fecha: 2026-11-18
 - Servicio: `neurosync-public-api-staging-vz3h`.
 - URL: https://neurosync-public-api-staging-vz3h.onrender.com
 - Service ID: `srv-dbv0l7nf3r2c73emtp30`.
-- Plan: Free. Estado de deploy en Render: **live** en commit `f32ec7bece463cd4479b3b1addb01bef2949a679`.
+- Plan: Free. Estado de deploy en Render: **live** en commit `0820c1532512443ad42f09f0bb8e3c0d8f58884a` (OAuth protegido, 18 nov. 2026).
 - PostgreSQL 16: `neurosync-public-db-staging-vz3h`.
 - Database ID: `dpg-dbv0ku7f3r2c73emsr20-a`.
 - Plan PostgreSQL: Free, IP allowlist vacío, acceso externo deshabilitado.
@@ -24,6 +24,17 @@ Fecha: 2026-11-18
 - La base PostgreSQL está en estado `available`.
 - Se intentó una consulta read-only desde la integración Render, pero la base bloquea conexiones externas y se mantuvo esa protección.
 - No se completó una consulta HTTPS independiente desde el entorno del asistente; no presentarla como una prueba superada.
+
+## Progreso posterior: conexión OAuth preparada
+
+- `GET /v1/auth/status` fue añadido para exponer únicamente `loginEnabled`; no devuelve IDs ni secretos. La ruta aún no pudo comprobarse mediante un cliente HTTP externo desde esta sesión.
+- La creación de usuarios requiere tanto `GOOGLE_CLIENT_ID` como `PUBLIC_REGISTRATION_ENABLED=true`. En esta fase no se ha configurado ninguno de esos valores; el registro sigue deshabilitado.
+- La APK pública utiliza `requestIdToken` con la audiencia Web Client ID, no el token personal de Google Drive.
+- Las compilaciones de GitHub Actions y Codemagic conocen la URL HTTPS de Render y aceptan la variable del desarrollador `NEUROSYNC_GOOGLE_WEB_CLIENT_ID`.
+- El error de firma Google API 10 se identifica y muestra el paquete y SHA-1 al desarrollador, sin revelar credenciales.
+- Pasos detallados: `docs/OAUTH_GOOGLE_NEUROSYNC.md`.
+- Render verificó la migración y reportó servicio **live** tras este despliegue.
+- La compilación de APK y el inicio de sesión en dispositivos aún no se han verificado.
 
 ## Limitaciones obligatorias
 
