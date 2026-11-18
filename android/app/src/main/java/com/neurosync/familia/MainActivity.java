@@ -303,6 +303,8 @@ public final class MainActivity extends Activity {
     if(AccountStore.identity(this,sessionToken)==null)return AccountStore.fail("Sesión caducada. Inicia sesión de nuevo.");
     switch(path){
       case "/users":return AccountStore.list(this,sessionUser);
+      case "/contacts":return AccountStore.contacts(this,sessionUser);
+      case "/send-task":return SyncStore.sendTask(this,args,sessionUser);
       case "/create-user":return AccountStore.create(this,sessionUser,args.optString("username"),args.optString("password"));
       case "/change-password":return AccountStore.change(this,sessionUser,args.optString("current"),args.optString("next"));
       case "/sync":return SyncStore.merge(this,args,sessionUser);
@@ -481,6 +483,17 @@ public final class MainActivity extends Activity {
       }catch(Exception e){return AccountStore.fail("No se pudo restaurar la sesión").toString();}
     }
     @JavascriptInterface public String getUsers(){return call("/users",new JSONObject()).toString();}
+    @JavascriptInterface public String taskContacts(){
+      return call("/contacts",new JSONObject()).toString();
+    }
+    @JavascriptInterface public String sendTaskToUser(String recipient,String requestId,String taskJson){
+      try{
+        if(taskJson==null||taskJson.length()>10000)return AccountStore.fail("Tarea demasiado grande").toString();
+        JSONObject data=new JSONObject().put("recipient",recipient).put("requestId",requestId)
+          .put("task",new JSONObject(taskJson));
+        return call("/send-task",data).toString();
+      }catch(Exception e){return AccountStore.fail("Solicitud inválida").toString();}
+    }
     @JavascriptInterface public String createAccount(String username,String password){
       return call("/create-user",payload("username",username,"password",password)).toString();
     }
