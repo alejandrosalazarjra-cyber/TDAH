@@ -148,6 +148,18 @@ final class NativeSnapshotStore extends SQLiteOpenHelper {
     }
   }
 
+  /** Eliminar exclusivamente las dos revisiones cifradas de esta cuenta. */
+  synchronized boolean erase(String account){
+    try{
+      String hash=accountHash(account);
+      SQLiteDatabase db=getWritableDatabase();
+      return db.delete(TABLE,"account=?",new String[]{hash})>=0;
+    }catch(Exception ex){
+      Log.w("NeuroSync","No se pudo limpiar la copia local al eliminar cuenta",ex);
+      return false;
+    }
+  }
+
   synchronized String recover(String account){
     JSONObject response=new JSONObject();
     try{
