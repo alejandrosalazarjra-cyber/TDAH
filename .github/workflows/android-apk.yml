@@ -36,6 +36,11 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Preparar Gradle compatible con Android API 36
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+
       # Los ejecutores Ubuntu incluyen el Android SDK.
       # Omitir setup-android@v3: era el paso donde se detenía el job.
       - name: Verificar SDK Android disponible
@@ -44,13 +49,13 @@ jobs:
           set -euo pipefail
           echo "ANDROID_HOME=$ANDROID_HOME"
           test -d "$ANDROID_HOME" || { echo "::error::SDK Android no disponible"; exit 1; }
-          if [ ! -f "$ANDROID_HOME/platforms/android-35/android.jar" ] || [ ! -x "$ANDROID_HOME/build-tools/35.0.0/aapt" ]; then
-            echo "Instalando SDK Platform y Build Tools 35"
-            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0"
+          if [ ! -f "$ANDROID_HOME/platforms/android-36/android.jar" ] || [ ! -x "$ANDROID_HOME/build-tools/36.0.0/aapt" ]; then
+            echo "Instalando SDK Platform y Build Tools 36"
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"
           fi
-          test -f "$ANDROID_HOME/platforms/android-35/android.jar"
-          test -x "$ANDROID_HOME/build-tools/35.0.0/aapt"
-          echo "SDK Android 35 y herramientas APK disponibles"
+          test -f "$ANDROID_HOME/platforms/android-36/android.jar"
+          test -x "$ANDROID_HOME/build-tools/36.0.0/aapt"
+          echo "SDK Android 36 y herramientas APK disponibles"
 
       - name: Validar ciclos y evoluciones de Azul
         shell: bash
@@ -326,7 +331,7 @@ jobs:
           set -euo pipefail
           APK="android/app/build/outputs/apk/preview/app-preview.apk"
           test -s "$APK"
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | grep "package: name='com.neurosync.familia.preview' versionCode='10'"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep "package: name='com.neurosync.familia.preview' versionCode='10'"
           python3 - <<'PY'
           import zipfile,hashlib
           from pathlib import Path
@@ -343,10 +348,10 @@ jobs:
           print("APK preview contiene HTML y funciones actuales.")
           print("SHA256 de HTML:",hashlib.sha256(packed).hexdigest())
           PY
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify "$APK"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify "$APK"
           # Validar el APK generado, NO solo el certificado importado.
           if [ "${{ steps.preview_signing.outputs.configured }}" = 'true' ]; then
-            CERT_OUTPUT=$("$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs "$APK")
+            CERT_OUTPUT=$("$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$APK")
             ACTUAL_SHA1=$(printf '%s\n' "$CERT_OUTPUT" | sed -n 's/^Signer #1 certificate SHA-1 digest: //p' | tr -d '[:space:]:')
             EXPECTED_SHA1='3ef574b7f38f09fbb48160bc40571ea7d6a49063'
             if [ "${ACTUAL_SHA1,,}" != "$EXPECTED_SHA1" ]; then
@@ -373,7 +378,7 @@ jobs:
           NS_SIGNING_ALIAS: ${{ secrets.NS_SIGNING_ALIAS }}
         run: |
           set -o pipefail
-          gradle --no-daemon --stacktrace --warning-mode all assembleRelease 2>&1 | tee "$RUNNER_TEMP/neurosync-gradle.log"
+          gradle --no-daemon --stacktrace --warning-mode all assembleRelease bundleRelease 2>&1 | tee "$RUNNER_TEMP/neurosync-gradle.log"
 
       - name: Guardar registro de errores de compilación
         if: failure()
@@ -392,7 +397,7 @@ jobs:
           APK="android/app/build/outputs/apk/release/app-release.apk"
           test -s "$APK" || { echo "::error::No se generó app-release.apk"; exit 1; }
           unzip -t "$APK" >/dev/null
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee /tmp/neurosync-apk-info.txt
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | tee /tmp/neurosync-apk-info.txt
           grep -q "package: name='com.neurosync.familia' versionCode='10' versionName='10.0.0'" /tmp/neurosync-apk-info.txt
           python3 - <<'PY'
           import hashlib,zipfile
@@ -414,8 +419,29 @@ jobs:
           print('SHA256 index.html empaquetado:',hashlib.sha256(packaged).hexdigest())
           print('Tamaño APK real:',apk.stat().st_size,'bytes')
           PY
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK" | tee /tmp/neurosync-signature.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | tee /tmp/neurosync-signature.txt
           sha256sum "$APK" | tee /tmp/neurosync-apk-sha256.txt
+
+      - name: Validar Android App Bundle para Google Play
+        if: steps.signing.outputs.configured == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          AAB="android/app/build/outputs/bundle/release/app-release.aab"
+          test -s "$AAB"
+          unzip -t "$AAB" >/dev/null
+          jarsigner -verify -certs "$AAB" > /tmp/neurosync-aab-signature.txt
+          unzip -l "$AAB" | grep -q 'base/manifest/AndroidManifest.xml'
+          echo 'AAB firmado y verificado. No se publica automáticamente en Google Play.'
+
+      - name: Publicar AAB firmado para revisión en Play Console
+        if: steps.signing.outputs.configured == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: NeuroSync-Google-Play-AAB
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Publicar solo APK con firma permanente
         if: steps.signing.outputs.configured == 'true'
