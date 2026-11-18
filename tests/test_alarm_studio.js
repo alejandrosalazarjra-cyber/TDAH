@@ -6,6 +6,12 @@ const css=fs.readFileSync('modules/alarm_studio.css','utf8');
 const receiver=fs.readFileSync('android/app/src/main/java/com/neurosync/familia/AlarmReceiver.java','utf8');
 const ring=fs.readFileSync('android/app/src/main/java/com/neurosync/familia/AlarmRingActivity.java','utf8');
 const options=fs.readFileSync('android/app/src/main/java/com/neurosync/familia/AlarmOptionsStore.java','utf8');
+const main=fs.readFileSync('android/app/src/main/java/com/neurosync/familia/MainActivity.java','utf8');
+const workflow=fs.readFileSync('.github/workflows/android-apk.yml','utf8');
+assert(main.includes('"/modules/alarm_studio.js"')&&main.includes('"/modules/alarm_studio.css"'),
+ 'Los módulos deben cargarse desde los assets internos protegidos de Android');
+assert(workflow.includes('cp modules/alarm_studio.js modules/alarm_studio.css android/app/src/main/assets/modules/'),
+ 'La APK debe empaquetar los módulos');
 new vm.Script(js,{filename:'alarm_studio.js'});
 assert(html.includes('src="./modules/alarm_studio.js"'));
 assert(html.includes('href="./modules/alarm_studio.css"'));
