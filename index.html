@@ -2874,6 +2874,17 @@ window.NeuroTasksAPI={
  templates:function(){return session?nsTemplateRead().map(function(t){return Object.assign({},t)}):[]},
  today:function(){return day()},
  owner:function(){return session?session.username:''},
+ canShare:function(){return !!(session&&session.role==='admin'&&!session.google)},
+ share:function(id){
+  if(!session||!model||session.role!=='admin'||session.google)return false;
+  var task=model.tasks.find(function(t){return t.id===id&&!t.deleted&&t.owner===session.username});
+  if(!task)return false;
+  var before=task.owner,updated=task.updatedAt;
+  task.owner='todos';task.updatedAt=stamp();
+  if(!save()){task.owner=before;task.updatedAt=updated;return false}
+  render();return true;
+ },
+
  saveTemplate:function(item){
   if(!session||!model)return false;
   var steps=Array.isArray(item.steps)?item.steps.map(function(x){return String(x).trim().slice(0,140)}).filter(Boolean).slice(0,20):[];
@@ -2894,7 +2905,8 @@ window.NeuroTasksAPI={
   if(!title)return false;
   var repeat=['none','daily','weekly'].includes(item.repeat)?item.repeat:'none';
   var steps=Array.isArray(item.steps)?item.steps.map(function(v){return String(v).trim().slice(0,140)}).filter(Boolean).slice(0,20):[];
-  var task={id:uid(),title:title,owner:session.username,date:day(),time:'',repeat:repeat,
+  var share=!!item.shared&&session.role==='admin'&&!session.google;
+  var task={id:uid(),title:title,owner:share?'todos':session.username,date:day(),time:'',repeat:repeat,
    priority:'normal',energy:'medium',category:nsCleanCategory(item.category),
    steps:steps,tags:[],doneDates:[],stepDates:{},updatedAt:stamp()};
   model.tasks.push(task);
@@ -2903,7 +2915,7 @@ window.NeuroTasksAPI={
  },
  toggleToday:function(id){
   if(!session||!model)return false;
-  var t=model.tasks.find(function(x){return x.id===id&&!x.deleted&&x.owner===session.username});
+  var t=model.tasks.find(function(x){return x.id===id&&!x.deleted&&(x.owner===session.username||x.owner==='todos')});
   if(!t)return false;
   var date=t.repeat&&t.repeat!=='none'?day():t.date;
   var current=(t.doneDates||[]).slice(),done=current.includes(date);
