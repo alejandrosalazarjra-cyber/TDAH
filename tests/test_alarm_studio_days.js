@@ -10,6 +10,7 @@ new vm.Script(studio);for(const m of html.matchAll(/<script(?:[^>]*)>([\s\S]*?)<
  if(m[1].trim())new vm.Script(m[1]);
 assert(studio.includes("['custom','Elegir días']"),'El editor debe permitir elegir días');
 assert(studio.includes('data-weekday='),'Cada día debe tener un control');
+assert(html.includes('function nsAlarmNextLocal(a,now)'),'El widget debe respetar la misma repetición');
 assert(studio.includes("repeat.charAt(5+w)==='1'"),'La cuenta regresiva debe respetar la máscara');
 assert(receiver.includes('repeat.matches("days:[01]{7}")'),'Android debe validar máscaras de días');
 assert(receiver.includes("bits.charAt(dow)=='1'"),'Android debe calcular solo días seleccionados');
