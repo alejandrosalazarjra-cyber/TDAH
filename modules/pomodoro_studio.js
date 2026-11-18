@@ -77,7 +77,7 @@ function sceneChange(name){
 function pauseMedia(){if(video)video.pause();suspendAudio()}
 function resumeMedia(){
  if(!video||!visible)return;
- video.play().catch(()=>{screen.classList.remove('ns-pf-has-video')});
+ if(video.paused&&video.readyState>=2)video.play().catch(()=>{screen.classList.remove('ns-pf-has-video')});
  if(audioOn&&audio?.ctx?.state==='suspended')audio.ctx.resume().catch(()=>{});
 }
 function makeAudio(){
@@ -117,6 +117,9 @@ function render(el,state){
  visible=state.visible;
  if(!visible){pauseMedia();return}
  if(scene!==state.scene||screen.dataset.scene!==state.scene)sceneChange(state.scene);
+ const seconds=Math.ceil(Math.max(0,state.remaining)/1000);
+ $('#ns-pomodoro-count').textContent=String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');
+ $('#ns-pomodoro-status').textContent=!state.started?'Elige tu ambiente y comienza':state.running?'Concéntrate en una sola cosa':'Sesión en pausa';
  const start=$('#ns-pf-start'),finish=$('#ns-pomodoro-finish');
  start.textContent=!state.started?'Iniciar enfoque':state.running?'Pausar':'Continuar';
  finish.textContent=state.started?'Terminar sesión':'Volver';
