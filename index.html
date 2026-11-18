@@ -2725,7 +2725,7 @@ window.NeuroAlarmAPI={
   var since=Date.now()-7*86400000,focusMinutes=0,tasksCompleted=0;
   try{
    var sessions=nsFocusRead().sessions||[];
-   focusMinutes=Math.round(sessions.filter(function(e){return e&&Number(e.at||e.endedAt||0)>=since})
+   focusMinutes=Math.round(sessions.filter(function(e){return e&&(Number(e.at||e.endedAt||0)>=since||Date.parse(e.day||'')>=since)})
     .reduce(function(n,e){return n+Math.max(0,Number(e.ms)||0)},0)/60000);
   }catch(err){}
   (model.tasks||[]).filter(owned).forEach(function(t){
