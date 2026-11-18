@@ -121,6 +121,20 @@ public final class FocusLauncherActivity extends Activity {
       return false;
     });
   }
+  /** Captura el gesto horizontal aunque el ScrollView del launcher reciba el toque.
+   * No consume desplazamientos verticales ni interfiere con el cajón de apps.
+   */
+  @Override public boolean dispatchTouchEvent(MotionEvent event){
+    if(event.getActionMasked()==MotionEvent.ACTION_DOWN){
+      xStart=event.getX();yStart=event.getY();
+    }else if(event.getActionMasked()==MotionEvent.ACTION_UP&&!drawer){
+      float dx=event.getX()-xStart,dy=event.getY()-yStart;
+      if(dx<-dp(85)&&Math.abs(dx)>Math.abs(dy)*1.4f){
+        openNeuroSync("focus");return true;
+      }
+    }
+    return super.dispatchTouchEvent(event);
+  }
   @Override protected void onResume(){
     super.onResume();handler.removeCallbacks(updateClock);handler.post(updateClock);
     String today=new SimpleDateFormat("yyyy-MM-dd",Locale.US).format(new Date());
