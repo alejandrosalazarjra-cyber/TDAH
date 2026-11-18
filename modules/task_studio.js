@@ -148,7 +148,7 @@ function renderPane(){
    '<form id="ns-ts-lookup-form"><label>Buscar usuario<input name="handle" required maxlength="31" placeholder="@usuario" autocomplete="off"></label><button type="submit">Buscar</button></form>'+
    '<div id="ns-ts-search-result" role="status"></div>'+
    '<h4>Invitaciones recibidas</h4>'+
-   (pending.length?pending.slice(0,20).map(t=>'<div class="ns-ts-template"><div><strong>'+escape(t.display_name||t.handle)+'</strong><small>@'+escape(t.handle)+'</small></div><button type="button" data-invite-accept="'+escape(t.id)+'">Aceptar</button></div>').join(''):'<p>Sin invitaciones pendientes.</p>')+
+   (pending.length?pending.slice(0,20).map(t=>'<div class="ns-ts-template"><div><strong>'+escape(t.display_name||t.handle)+'</strong><small>@'+escape(t.handle)+'</small></div><button type="button" data-invite-accept="'+escape(t.id)+'">Aceptar</button><button type="button" data-invite-decline="'+escape(t.id)+'">Rechazar</button></div>').join(''):'<p>Sin invitaciones pendientes.</p>')+
    '<h4>Mis contactos</h4>'+
    (contacts.length?contacts.map(t=>'<div class="ns-ts-template"><span>'+escape(t.label||t)+'</span>'+
     (t.id?'<button type="button" data-contact-block="'+escape(t.id)+'">Bloquear</button>':'')+'</div>').join(''):'<p>Aún no tienes contactos.</p>')+
@@ -245,6 +245,12 @@ app.addEventListener('click',async event=>{
   if(!await api.confirm('Confirmación definitiva','También se eliminarán las copias locales de este perfil. ¿Eliminar definitivamente?','Eliminar'))return;
   const result=api.publicDeleteAccount();
   if(!result.ok){const target=app.querySelector('#ns-ts-search-result');if(target)target.textContent=result.error||'No se pudo eliminar';}
+  return;
+ }
+ if(el.dataset.inviteDecline){
+  const result=api.publicDeclineInvite(el.dataset.inviteDecline);
+  if(result.ok)renderTasks();
+  else{const target=app.querySelector('#ns-ts-search-result');if(target)target.textContent=result.error||'No se pudo rechazar la invitación';}
   return;
  }
  if(el.dataset.inviteSend){
