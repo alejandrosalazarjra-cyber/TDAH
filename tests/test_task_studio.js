@@ -57,5 +57,32 @@ assert(!api.share(tasks[0].id),'Un integrante normal no puede compartir una tare
 assert(script.includes('data-share=')&&script.includes('ns-ts-share-option'),
  'Task Studio necesita controles simples de compartir');
 
+
+// Cualquier usuario puede enviar una tarea a otro sin permiso de administrador.
+let sent=[];
+mocks.nat={
+ taskContacts:()=>JSON.stringify({ok:true,users:[{username:'mama'},{username:'hermano'}]}),
+ sendTaskToUser:(to,id,json)=>{sent.push({to,id,task:JSON.parse(json)});return JSON.stringify({ok:true,id:'sent_123',recipient:to});}
+};
+const remoteApi=new Function(...Object.keys(mocks),html.slice(start,end)+'\nreturn window.NeuroTasksAPI;')(...Object.values(mocks));
+owner.role='user';
+assert.deepEqual(remoteApi.contacts(),['mama','hermano']);
+const transfer=remoteApi.sendTo('mama',{id:'task_test_123',title:'Comprar pan',repeat:'none',category:'Personal'});
+assert.equal(transfer.ok,true);
+assert.equal(sent.length,1);
+assert.equal(sent[0].to,'mama');
+assert.equal(sent[0].task.title,'Comprar pan');
+assert.equal(remoteApi.sendTo('propietario',{title:'No válido'}).ok,false,'No enviarse a sí mismo');
+assert(script.includes('data-send=')&&script.includes('name="recipient"'),
+ 'Cualquier usuario debe tener selector de envío');
+const backend=fs.readFileSync('android/app/src/main/java/com/neurosync/familia/SyncStore.java','utf8');
+const accounts=fs.readFileSync('android/app/src/main/java/com/neurosync/familia/AccountStore.java','utf8');
+const service=fs.readFileSync('android/app/src/main/java/com/neurosync/familia/SyncService.java','utf8');
+assert(backend.includes('public static JSONObject sendTask(')&&backend.includes('.put("owner",to)'),
+ 'Servidor asigna tarea al destinatario autenticado');
+assert(backend.includes('nameUUIDFromBytes')&&backend.includes('if(tasks.containsKey(id))'),
+ 'Los reintentos deben evitar duplicados');
+assert(accounts.includes('public static JSONObject contacts('),'Listar destinatarios sin permisos de administrador');
+assert(service.includes('route.equals("/send-task")'),'Habilitar envío desde teléfonos conectados');
 assert(saveCount>=2);
 console.log('Task Studio OK: hábitos, tareas rápidas, plantillas, aislamiento y gráficos');
