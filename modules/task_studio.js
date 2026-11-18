@@ -49,7 +49,8 @@ function taskRows(){
   (isDone(t,today)?'✓':'')+'</button><div><strong>'+escape(t.title)+'</strong><small>'+escape(t.category||'Personal')+' · '+
   escape(t.repeat==='daily'?'Diario':t.repeat==='weekly'?'Semanal':'Una vez')+
   (t.steps?.length?' · '+t.steps.length+' pasos':'')+
-  (t.owner==='todos'?' · Compartida con la familia':'')+'</small></div>'+
+  (t.owner==='todos'?' · Compartida con la familia':'')+
+  (t.sentBy?' · Enviada por '+escape(t.sentBy):'')+'</small></div>'+
   '<button type="button" class="ns-ts-share" data-send="'+escape(t.id)+'" aria-label="Enviar '+escape(t.title)+' a otra persona">Enviar</button>'+'</div>').join(''):
   '<div class="ns-ts-blank"><div class="ns-ts-icon">☑</div><p>Sin tareas en esta categoría.</p><small>Usa «+ Añadir» para comenzar.</small></div>';
 }
