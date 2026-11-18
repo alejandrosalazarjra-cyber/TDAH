@@ -76,3 +76,9 @@
 #view-bags .ns-departure-studio :focus-visible,.ns-departure-overlay :focus-visible{outline:3px solid #68baff!important;outline-offset:2px}
 @media(max-width:370px){#view-bags .ns-departure-studio{padding:14px 10px}#view-bags .ns-ds-schedule{grid-template-columns:1fr}#view-bags .ns-ds-schedule label:last-child{grid-column:auto}}
 @media(prefers-reduced-motion:reduce){#view-bags .ns-departure-studio *, .ns-departure-overlay *{transition:none!important;animation:none!important}}
+
+#view-bags .ns-departure-studio .ns-ds-permissions{
+ grid-column:1 / -1;min-height:44px;border:1px solid #c3dbf1!important;
+ background:#e3f2ff!important;color:#136baa!important;border-radius:11px!important;
+ padding:10px 12px!important;font-size:12px!important;font-weight:750!important;
+}
