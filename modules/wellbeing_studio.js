@@ -48,6 +48,10 @@ function heatmap(d){
 function render(){
  if(!api.ready()){host.replaceChildren();return}
  const d=data(),stats=periodStats(d),latest=d.checkins.slice(-5).reverse();
+ const recentUrges=d.urges.filter(x=>dayDiff(x.date,api.today())<=29);
+ const frequent=[...new Set(recentUrges.map(x=>x.tag).filter(Boolean))]
+  .map(tag=>({tag,count:recentUrges.filter(x=>x.tag===tag).length}))
+  .sort((a,b)=>b.count-a.count).slice(0,3);
  host.innerHTML='<div class="ns-wb-head"><div><span>SEGUIMIENTO PERSONAL</span><h3>Mi bienestar, a mi ritmo</h3></div>'+
   '<button type="button" data-wb="privacy" aria-label="Información de privacidad">ⓘ</button></div>'+
   '<p class="ns-wb-description">Tu decisión personal, sin culpa. El progreso también incluye lo que aprendes sobre ti.</p>'+
@@ -56,6 +60,10 @@ function render(){
   '<div><strong>'+stats.checkins+'</strong><small>Registros diarios</small></div></div>'+
   '<div class="ns-wb-action"><button type="button" data-wb="checkin">✎ Registrar cómo me siento</button>'+
   '<button type="button" data-wb="support">◷ Necesito una pausa</button></div>'+
+  '<section class="ns-wb-panel"><h4>Situaciones de los últimos 30 días</h4>'+
+  '<p>'+recentUrges.length+' observaciones privadas · '+
+   (frequent.length?frequent.map(x=>esc(x.tag)+' ('+x.count+')').join(' · '):'Todavía no hay situaciones registradas.')+
+  '</p></section>'+
   '<section class="ns-wb-panel"><h4>Mi intención</h4><p>'+(d.objective?esc(d.objective):'¿Qué te gustaría mejorar o comprender? Puedes establecer un objetivo sin exigencias.')+'</p>'+
   '<button type="button" data-wb="objective">Editar objetivo</button></section>'+
   '<section class="ns-wb-panel"><div class="ns-wb-inline"><h4>Actividad del último mes</h4><small>Registros, no éxitos ni fracasos</small></div>'+
@@ -65,7 +73,8 @@ function render(){
   (latest.length?latest.map(x=>'<div class="ns-wb-record"><span>'+esc(x.date)+'</span><strong>'+
    (x.kind==='reset'?'Nuevo comienzo':'Estado de ánimo '+Number(x.mood)+'/5')+'</strong>'+
    (x.note?'<p>'+esc(x.note)+'</p>':'')+'</div>').join(''):'<p>Aún no hay registros. Puedes empezar cuando quieras.</p>')+
-  '</section><div class="ns-wb-footer"><button data-wb="restart">Registrar nuevo comienzo</button>'+
+  '</section><div class="ns-wb-footer"><button data-wb="date">Cambiar fecha inicial</button>'+
+  '<button data-wb="restart">Registrar nuevo comienzo</button>'+
   '<button data-wb="export">Exportar datos</button><button data-wb="erase">Borrar datos privados</button></div>'+
   '<div class="ns-wb-note">El bienestar sexual es personal. No se considera que masturbarse sea perjudicial por sí mismo. Si te causa malestar persistente o sientes pérdida de control, puedes consultar con un profesional.</div>';
 }
@@ -82,6 +91,10 @@ function showDialog(mode){
    TAGS.map(t=>'<option>'+esc(t)+'</option>').join('')+'</select></label>'+
    '<label>Nota opcional<textarea id="ns-wb-note" maxlength="240" placeholder="¿Qué observaste o qué te ayudó?"></textarea></label>'+
    '<button class="ns-wb-primary" data-wb-submit="checkin">Guardar registro</button>';
+ }else if(mode==='date'){
+  contents='<h3>Fecha inicial</h3><p>Corrige tu fecha sin perder el historial anterior.</p>'+
+   '<label>Fecha de inicio<input id="ns-wb-date" type="date" max="'+api.today()+'" value="'+esc(d.started)+'"></label>'+
+   '<button class="ns-wb-primary" data-wb-submit="date">Guardar fecha</button>';
  }else if(mode==='objective'){
   contents='<h3>Mi intención</h3><p>Define un propósito que te sirva, sin presión.</p>'+
    '<label>Objetivo personal<textarea id="ns-wb-objective" maxlength="180">'+esc(d.objective)+'</textarea></label>'+
@@ -124,7 +137,7 @@ function saveCheckin(){
  const note=dialog.querySelector('#ns-wb-note').value.trim().slice(0,240);
  d.checkins=d.checkins.filter(x=>!(x.kind==='checkin'&&x.date===date));
  d.checkins.push({date,kind:'checkin',mood,tag,note});
- if(persist(d)){closeDialog();render()}else alert('No se pudo guardar el registro. Comprueba el almacenamiento.');
+ if(persist(d)){closeDialog();render()}else{const p=document.createElement('p');p.setAttribute('role','alert');p.textContent='No se pudo guardar. Comprueba el almacenamiento disponible.';dialog.querySelector('.ns-wb-dialog').appendChild(p)}
 }
 function exportData(){
  const payload={format:'neurosync-private-wellbeing-v1',exportedAt:new Date().toISOString(),data:data()};
@@ -138,6 +151,12 @@ function onDialogClick(e){
  if(button.hasAttribute('data-wb-close')){closeDialog();return}
  const action=button.dataset.wbSubmit;if(!action)return;
  if(action==='checkin'){saveCheckin();return}
+ if(action==='date'){
+  const d=data(),date=dialog.querySelector('#ns-wb-date').value;
+  if(!isDay(date)||date>api.today())return;
+  d.started=date;
+  if(persist(d)){closeDialog();render()}return;
+ }
  if(action==='objective'){
   const d=data();d.objective=dialog.querySelector('#ns-wb-objective').value.trim().slice(0,180);
   if(persist(d)){closeDialog();render()}return;
@@ -162,7 +181,7 @@ host.addEventListener('click',e=>{
  const b=e.target.closest('button[data-wb]');if(!b)return;
  const action=b.dataset.wb;
  if(action==='export'){exportData();return}
- if(['checkin','support','objective','privacy','restart','erase'].includes(action))showDialog(action);
+ if(['checkin','support','objective','privacy','date','restart','erase'].includes(action))showDialog(action);
 });
 window.NeuroWellbeingStudio={render};
 render();
