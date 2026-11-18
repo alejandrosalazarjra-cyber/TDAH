@@ -201,6 +201,11 @@
    action('Revisar permisos en Android','permissions','ns-as-primary')+
    '<p class="ns-as-hint">Android controla la ejecución exacta y la apertura en pantalla bloqueada.</p></div>'+
    '<div class="ns-as-settings-group"><h3>Sonido y música</h3>'+
+    '<label>Aumento gradual del sonido<select id="ns-as-fade">'+
+    [[0,'Desactivado'],[15,'15 segundos'],[30,'30 segundos'],[60,'60 segundos']].map(([n,label])=>
+      '<option value="'+n+'"'+(+prefs.fadeSeconds===n?' selected':'')+'>'+label+'</option>').join('')+
+    '</select></label>'+
+    '<p class="ns-as-hint">El tono empieza suave y aumenta hasta su volumen normal. La vibración sigue activa.</p>'+
     action('Elegir tono local','sound')+
     action('Abrir Reloj de Google','clock')+
     action('Alarma con YouTube Music en Reloj','music')+
@@ -275,7 +280,7 @@
   else if(type==='permissions'){api.requestPermissions();api.checkPermissions();setTimeout(render,350)}
   else if(type==='save-settings'){
    const ok=api.setPreferences({snoozeMinutes:+$('#ns-as-default-snooze').value,
-    snoozeLimit:+$('#ns-as-default-limit').value});
+    snoozeLimit:+$('#ns-as-default-limit').value,fadeSeconds:+$('#ns-as-fade').value});
    note(ok?'Preferencias guardadas':'No se pudieron guardar las preferencias');
   }
   else if(['sound','clock','music','test'].includes(type)){
