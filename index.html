@@ -2720,6 +2720,19 @@ window.NeuroAlarmAPI={
   }catch(e){return []}
  },
  sleep:function(){return session?nsSleepRecords():[]},
+ productivity:function(){
+  if(!session||!model)return {focusMinutes:0,tasksCompleted:0,dragonXp:0};
+  var since=Date.now()-7*86400000,focusMinutes=0,tasksCompleted=0;
+  try{
+   var sessions=nsFocusRead().sessions||[];
+   focusMinutes=Math.round(sessions.filter(function(e){return e&&Number(e.at||e.endedAt||0)>=since})
+    .reduce(function(n,e){return n+Math.max(0,Number(e.ms)||0)},0)/60000);
+  }catch(err){}
+  (model.tasks||[]).filter(owned).forEach(function(t){
+   if(Array.isArray(t.doneDates)&&t.doneDates.some(function(d){return Date.parse(d)>=since}))tasksCompleted++;
+  });
+  return {focusMinutes:focusMinutes,tasksCompleted:tasksCompleted,dragonXp:Number(model.pet&&model.pet.xp)||0};
+ },
  preferences:function(){return model&&model.alarmPreferences?Object.assign({},model.alarmPreferences):{}},
  setPreferences:function(opts){
   if(!session||!model)return false;
