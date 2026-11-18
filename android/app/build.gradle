@@ -1,7 +1,7 @@
 plugins { id 'com.android.application' }
 android {
     namespace 'com.neurosync.familia'
-    compileSdk 35
+    compileSdk 36
     buildFeatures { buildConfig true }
     defaultConfig {
         // Configuración del desarrollador; nunca se solicita una URL al usuario.
@@ -18,7 +18,7 @@ android {
         buildConfigField 'String', 'PUBLIC_GOOGLE_CLIENT_ID', '"' + oauthClient + '"'
         applicationId 'com.neurosync.familia'
         minSdk 26
-        targetSdk 35
+        targetSdk 36
         versionCode 10
         versionName '10.0.0'
         manifestPlaceholders = [appLabel: 'NeuroSync Familia']
