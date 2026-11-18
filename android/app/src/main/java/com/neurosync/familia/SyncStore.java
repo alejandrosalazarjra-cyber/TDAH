@@ -73,7 +73,8 @@ public final class SyncStore {
           .put("repeat",repeat).put("category",input.optString("category","Personal").substring(0,
              Math.min(50,input.optString("category","Personal").length())))
           .put("steps",steps).put("doneDates",new JSONArray()).put("stepDates",new JSONObject())
-          .put("priority","normal").put("updatedAt",System.currentTimeMillis());
+          .put("priority","normal").put("deliveryStatus","pending")
+          .put("updatedAt",System.currentTimeMillis());
         tasks.put(id,task);
         JSONArray all=new JSONArray();for(JSONObject row:tasks.values())all.put(row);
         database.put("tasks",all);
@@ -82,6 +83,57 @@ public final class SyncStore {
         return new JSONObject().put("ok",true).put("id",id).put("recipient",to);
       }
     }catch(Exception e){return AccountStore.fail("No se pudo enviar la tarea");}
+  }
+  /** Bandeja de envíos: solo metadatos de tareas creadas por esta cuenta. */
+  public static JSONObject sentTasks(Context c,JSONObject actor){
+    if(actor==null)return AccountStore.fail("Inicia sesión");
+    try{
+      synchronized(LOCK){
+        JSONArray result=new JSONArray(),rows=read(c).optJSONArray("tasks");
+        String username=actor.optString("username","");
+        if(rows!=null)for(int i=0;i<rows.length();i++){
+          JSONObject task=rows.optJSONObject(i);
+          if(task==null||!username.equals(task.optString("sentBy"))||!task.has("sentBy"))continue;
+          result.put(new JSONObject().put("id",task.optString("id"))
+            .put("recipient",task.optString("owner"))
+            .put("title",task.optString("title"))
+            .put("deliveryStatus",task.optString("deliveryStatus","pending")));
+        }
+        return new JSONObject().put("ok",true).put("tasks",result);
+      }
+    }catch(Exception e){return AccountStore.fail("No se pudieron consultar envíos");}
+  }
+  /** Solo el destinatario decide aceptar o completar una tarea recibida. */
+  public static JSONObject updateDelivery(Context c,JSONObject request,JSONObject actor){
+    if(actor==null)return AccountStore.fail("Inicia sesión");
+    String id=request.optString("id",""),status=request.optString("status","");
+    if(!id.startsWith("sent_")||id.length()>100||!
+      ("accepted".equals(status)||"completed".equals(status)))
+      return AccountStore.fail("Estado o tarea inválidos");
+    try{
+      synchronized(LOCK){
+        JSONObject db=read(c);
+        Map<String,JSONObject> tasks=map(db.optJSONArray("tasks"));
+        JSONObject task=tasks.get(id);
+        if(task==null||!task.has("sentBy")||
+          !actor.optString("username").equals(task.optString("owner")))
+          return AccountStore.fail("Tarea no encontrada o sin permisos");
+        String previous=task.optString("deliveryStatus","pending");
+        if("completed".equals(previous)&&!"completed".equals(status))
+          return AccountStore.fail("Una tarea completada no vuelve a pendiente");
+        if("completed".equals(status)&&"pending".equals(previous))
+          return AccountStore.fail("Acepta la tarea antes de completarla");
+        if(!previous.equals(status)){
+          task.put("deliveryStatus",status);
+          task.put("updatedAt",System.currentTimeMillis());
+          JSONArray all=new JSONArray();for(JSONObject row:tasks.values())all.put(row);
+          db.put("tasks",all);
+          if(!c.getSharedPreferences("ns_family",0).edit().putString(KEY,db.toString()).commit())
+            return AccountStore.fail("No se guardó el estado. Inténtalo de nuevo");
+        }
+        return new JSONObject().put("ok",true).put("status",status);
+      }
+    }catch(Exception e){return AccountStore.fail("No se pudo actualizar el estado");}
   }
   public static JSONObject merge(Context c,JSONObject incoming,JSONObject actor){
     if(actor==null)return AccountStore.fail("Inicia sesión");
@@ -121,6 +173,7 @@ public final class SyncStore {
             if(old!=null&&old.has("sentBy")){
               change.put("sentBy",old.optString("sentBy"));
               change.put("owner",old.optString("owner"));
+              change.put("deliveryStatus",old.optString("deliveryStatus","pending"));
             }
             if(old==null||updated>old.optLong("updatedAt",0))rows.put(id,change);
           }
