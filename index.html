@@ -2878,9 +2878,9 @@ window.NeuroTasksAPI={
   var current=(t.doneDates||[]).slice(),done=current.includes(date);
   t.doneDates=done?current.filter(function(d){return d!==date}):current.concat(date);
   var oldMark=t.updatedAt;t.updatedAt=stamp();
-  if(!save()){t.doneDates=current;t.updatedAt=oldMark;return false}
-  if(!done){model.pet.food=(Number(model.pet.food)||0)+10;model.pet.xp=(Number(model.pet.xp)||0)+10;
-    save();}
+  var food=Number(model.pet.food)||0,xp=Number(model.pet.xp)||0;
+  if(!done){model.pet.food=food+10;model.pet.xp=xp+10;}
+  if(!save()){t.doneDates=current;t.updatedAt=oldMark;model.pet.food=food;model.pet.xp=xp;return false}
   render();return true;
  },
  confirm:function(title,text,yes){return nsConfirm(title,text,yes)},
