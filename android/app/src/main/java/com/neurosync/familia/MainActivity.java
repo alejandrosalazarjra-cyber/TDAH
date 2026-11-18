@@ -668,6 +668,11 @@ public final class MainActivity extends Activity {
         return AccountStore.fail("Invitación inválida").toString();
       return publicAccounts.call("POST","/v1/contacts/invitations/"+id+"/accept",new JSONObject(),"").toString();
     }
+    @JavascriptInterface public String publicDeclineInvite(String id){
+      if(id==null||!id.matches("[0-9a-fA-F-]{36}"))
+        return AccountStore.fail("Invitación inválida").toString();
+      return publicAccounts.call("POST","/v1/contacts/invitations/"+id+"/decline",new JSONObject(),"").toString();
+    }
     @JavascriptInterface public String publicSendTask(String recipientId,String requestKey,String taskJson){
       if(recipientId==null||!recipientId.matches("[0-9a-fA-F-]{36}")||
          requestKey==null||!requestKey.matches("[A-Za-z0-9_-]{8,100}")||
