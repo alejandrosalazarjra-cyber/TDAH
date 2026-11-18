@@ -73,6 +73,7 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
    forceDismissAlarm();
  }
  private String[] routineStages(String kind){
+   if("routine_five".equals(kind))return new String[]{"math","memory","typing","taps","shake"};
    return "routine_active".equals(kind)?new String[]{"memory","shake","math"}:new String[]{"math","typing"};
  }
  @Override public void onCreate(Bundle state){
@@ -95,10 +96,10 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
    String configured=challenge;
    routineType=getIntent().getStringExtra("routineType");
    if(routineType==null)routineType="";
-   if(routineType.isEmpty()&&("routine_focus".equals(configured)||"routine_active".equals(configured)))
+   if(routineType.isEmpty()&&("routine_focus".equals(configured)||"routine_active".equals(configured)||"routine_five".equals(configured)))
       routineType=configured;
    if(!routineType.isEmpty()){
-     if(!"routine_focus".equals(routineType)&&!"routine_active".equals(routineType))
+     if(!"routine_focus".equals(routineType)&&!"routine_active".equals(routineType)&&!"routine_five".equals(routineType))
        routineType="";
      else{
        routineStep=Math.max(0,Math.min(getIntent().getIntExtra("routineStep",0),routineStages(routineType).length-1));
@@ -130,9 +131,9 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
    TextView mainTitle=label(alarmTitle,26);
    mainTitle.setTypeface(null,android.graphics.Typeface.BOLD);
    root.addView(mainTitle);
-   TextView message=label("Es momento de despertar",15);
-   message.setTextColor(0xFFB7C8DD);
-   root.addView(message);
+   TextView wakeMessage=label("Es momento de despertar",15);
+   wakeMessage.setTextColor(0xFFB7C8DD);
+   root.addView(wakeMessage);
    android.view.View wave=new android.view.View(this);
    android.graphics.drawable.GradientDrawable waveBg=new android.graphics.drawable.GradientDrawable(
       android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
