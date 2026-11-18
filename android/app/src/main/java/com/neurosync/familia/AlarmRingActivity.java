@@ -64,6 +64,7 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
    forceDismissAlarm();
  }
  private String[] routineStages(String kind){
+   if(AlarmChallengeStore.validSequence(kind))return kind.substring("sequence:".length()).split(",");
    return "routine_active".equals(kind)?new String[]{"memory","shake","math"}:new String[]{"math","typing"};
  }
  @Override public void onCreate(Bundle state){
@@ -86,10 +87,12 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
    String configured=challenge;
    routineType=getIntent().getStringExtra("routineType");
    if(routineType==null)routineType="";
-   if(routineType.isEmpty()&&("routine_focus".equals(configured)||"routine_active".equals(configured)))
+   if(routineType.isEmpty()&&("routine_focus".equals(configured)||"routine_active".equals(configured)||
+       AlarmChallengeStore.validSequence(configured)))
       routineType=configured;
    if(!routineType.isEmpty()){
-     if(!"routine_focus".equals(routineType)&&!"routine_active".equals(routineType))
+     if(!"routine_focus".equals(routineType)&&!"routine_active".equals(routineType)&&
+         !AlarmChallengeStore.validSequence(routineType))
        routineType="";
      else{
        routineStep=Math.max(0,Math.min(getIntent().getIntExtra("routineStep",0),routineStages(routineType).length-1));
