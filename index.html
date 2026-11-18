@@ -2941,7 +2941,7 @@ window.NeuroDepartureAPI={
   var date=String(data.date||day()),time=String(data.time||'');
   var scheduled=!!time,when=0;
   if(scheduled){
-   if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)||!/^\\d{2}:\\d{2}$/.test(time))
+   if(!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(date)||!/^[0-9]{2}:[0-9]{2}$/.test(time))
     return {ok:false,error:'Fecha u hora inválida'};
    var parts=date.split('-').map(Number),clock=time.split(':').map(Number);
    var d=new Date(parts[0],parts[1]-1,parts[2],clock[0],clock[1]);
