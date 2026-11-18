@@ -2784,10 +2784,11 @@ function nsDragonInitActions(){
 }
 
 function logout(){
+ var wasPublic=!!(session&&session.public);
  if(window.NeuroFinanceStudio)window.NeuroFinanceStudio.hideLauncher();
  nsFlushNativeSnapshot();
  try{localStorage.setItem('ns_last_session_provider','signed_out')}catch(e){}
- clearTimeout(nsDriveBackupTimer);nsUploadDriveNow();if(session&&session.google&&nat&&nat.logoutGoogle)nat.logoutGoogle();if(session&&session.public&&nat&&nat.publicLogout)nat.publicLogout();if(nsFocusState)nsFocusSaveSession(false);nsLauncherFocusSync();syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
+ clearTimeout(nsDriveBackupTimer);nsUploadDriveNow();if(session&&session.google&&nat&&nat.logoutGoogle)nat.logoutGoogle();if(session&&session.public&&nat&&nat.publicLogout)nat.publicLogout();if(nsFocusState)nsFocusSaveSession(false);nsLauncherFocusSync();syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(!wasPublic&&nat&&nat.logout)nat.logout()}
 by('logout').onclick=logout;by('avatar').onclick=async function(){if(await nsConfirm('Cerrar sesión','¿Quieres cerrar esta sesión?','Cerrar sesión'))logout()};
 document.addEventListener('visibilitychange',function(){
  if(document.hidden){nsFlushNativeSnapshot();clearTimeout(nsDriveBackupTimer);nsUploadDriveNow()}
