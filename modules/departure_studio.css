@@ -1,0 +1,84 @@
+/* NeuroSync · Listas para salir. Interacción táctil, alto contraste y diseño adaptable. */
+#view-bags .ns-departure-legacy{display:none!important}
+#view-bags .ns-departure-studio{--ds-blue:#087df2;--ds-ink:#162c4d;--ds-line:#dfe9f4;
+ background:#f3f7fd;color:var(--ds-ink);border-radius:20px;padding:18px 14px 26px;min-height:60vh;
+ font:inherit}
+#view-bags .ns-departure-studio *,.ns-departure-overlay *{box-sizing:border-box}
+#view-bags .ns-departure-studio button,.ns-departure-overlay button{cursor:pointer;font:inherit;-webkit-tap-highlight-color:transparent}
+#view-bags .ns-ds-heading span{font-size:10px;color:#1673c9;letter-spacing:.13em;font-weight:850}
+#view-bags .ns-ds-heading h2{font-size:clamp(25px,6vw,33px);color:#142b4a!important;margin:5px 0 6px;letter-spacing:-.04em}
+#view-bags .ns-ds-heading p{font-size:13px;color:#8191a6;margin:0 0 18px}
+#view-bags .ns-ds-create,#view-bags .ns-ds-primary{border:0!important;background:var(--ds-blue)!important;color:#fff!important;
+ border-radius:14px!important;padding:14px 17px!important;font-weight:750!important;min-height:50px!important;width:100%}
+#view-bags .ns-ds-list{display:grid;gap:12px;margin:19px 0}
+#view-bags .ns-ds-card{padding:15px;background:#fff;border:1px solid #e0e9f4;border-radius:17px;box-shadow:none}
+#view-bags .ns-ds-card-main{width:100%;border:0!important;background:transparent!important;text-align:left!important;display:grid;gap:8px;
+ color:#253e5d!important;padding:0!important}
+#view-bags .ns-ds-card-main strong{font-size:17px}
+#view-bags .ns-ds-card-main span{font-size:12px;color:#8494a7}
+#view-bags .ns-ds-progress{height:7px;background:#eef3f8;border-radius:20px;margin:14px 0;overflow:hidden}
+#view-bags .ns-ds-progress i{height:100%;display:block;background:var(--ds-blue);border-radius:20px}
+#view-bags .ns-ds-row-actions{display:flex;gap:8px}
+#view-bags .ns-ds-row-actions button{flex:1;min-height:42px;padding:8px 4px!important;border:1px solid #dfebf9!important;
+ background:#eef7ff!important;color:#1265b1!important;border-radius:11px!important;font-size:12px!important;font-weight:700!important}
+#view-bags .ns-ds-empty{padding:45px 12px;text-align:center;color:#8393a9;font-size:38px}
+#view-bags .ns-ds-empty h3{font-size:17px!important;color:#1c3e61!important;margin:8px}
+#view-bags .ns-ds-empty p{font-size:13px;line-height:1.5}
+#view-bags .ns-ds-footnote{font-size:11px;color:#8b9db3;line-height:1.6}
+#view-bags .ns-ds-editor{display:grid;gap:17px}
+#view-bags .ns-ds-editor>label{display:grid;gap:8px;color:#3b5675;font-size:13px;font-weight:700}
+#view-bags .ns-ds-editor input:not([type=checkbox]),#view-bags .ns-ds-editor select{
+ display:block;width:100%;font:inherit;font-size:15px;min-height:48px;padding:11px;border-radius:12px;
+ border:1px solid #cbdcee;background:#fff;color:#183b60}
+#view-bags .ns-ds-presets{display:flex;flex-wrap:wrap;gap:8px}
+#view-bags .ns-ds-presets span{width:100%;font-size:12px;color:#8393a9}
+#view-bags .ns-ds-presets button{background:#dcefff!important;color:#126bb8!important;border:1px solid #c5e2fa!important;
+ border-radius:30px!important;padding:9px 12px!important;min-height:42px!important;font-size:12px!important}
+#view-bags .ns-ds-section-title{display:flex;justify-content:space-between;font-size:15px;font-weight:800;color:#1e446e;
+ border-bottom:1px solid #dfeaf5;padding-bottom:10px;margin-top:3px}
+#view-bags .ns-ds-section-title small{font-weight:500;color:#8194aa}
+#view-bags .ns-ds-object-row,#view-bags .ns-ds-addrow{display:flex;gap:8px;align-items:center;margin-top:9px}
+#view-bags .ns-ds-object-row>span{width:20px;flex:none;color:#7f95ae;font-size:12px;text-align:center}
+#view-bags .ns-ds-object-row input,#view-bags .ns-ds-addrow input{flex:1;min-width:0}
+#view-bags .ns-ds-object-row button{width:44px;height:48px;flex:none;background:#f5e9eb!important;color:#b54c5b!important;
+ border:0!important;border-radius:12px!important;font-size:25px!important}
+#view-bags .ns-ds-addrow button{min-height:48px;flex:none;background:#dcedff!important;color:#056bb7!important;
+ border:0!important;border-radius:12px!important;padding:8px 12px!important;font-weight:750!important;font-size:12px!important}
+#view-bags .ns-ds-switch{display:flex!important;align-items:center;gap:12px}
+#view-bags .ns-ds-switch input{width:21px;height:21px;accent-color:#087df2}
+#view-bags .ns-ds-schedule{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#view-bags .ns-ds-schedule[hidden]{display:none!important}
+#view-bags .ns-ds-schedule label{display:grid;gap:7px;font-size:12px;color:#4b6680;font-weight:700}
+#view-bags .ns-ds-schedule label:last-child{grid-column:span 2}
+#view-bags .ns-ds-actions{display:grid;gap:8px;margin-top:7px}
+#view-bags .ns-ds-actions button:not(.ns-ds-primary){min-height:46px;border:0!important;background:#e5edf7!important;
+ border-radius:12px!important;color:#4c6580!important}
+#view-bags .ns-departure-studio [data-notice]{background:#fff1d8;border-radius:10px;padding:12px;color:#85510f;font-size:12px}
+.ns-departure-overlay{position:fixed;inset:0;z-index:2147483500;background:linear-gradient(160deg,#152748,#081221);
+ color:#f4f9ff;overflow:auto;padding:calc(env(safe-area-inset-top) + 25px) 18px calc(env(safe-area-inset-bottom) + 24px);font:inherit}
+.ns-departure-overlay[hidden]{display:none!important}
+.ns-departure-overlay .ns-ds-review-head{display:flex;align-items:center;justify-content:space-between;color:#83bcf6;font-size:11px;
+ letter-spacing:.13em;font-weight:800}
+.ns-departure-overlay .ns-ds-review-head button{width:46px;height:46px;background:#233651;color:white;border:0;border-radius:50%;font-size:25px}
+.ns-departure-overlay .ns-ds-review-main{max-width:650px;margin:0 auto;text-align:center}
+.ns-departure-overlay .ns-ds-bag-icon{font-size:48px;margin-top:30px}
+.ns-departure-overlay h2{font-size:clamp(26px,8vw,38px);color:white!important;letter-spacing:-.03em;margin:11px 0 4px}
+.ns-departure-overlay p{color:#a8bbd1;font-size:14px}
+.ns-departure-overlay .ns-ds-review-main>strong{display:block;color:#65aeff;font-size:19px;margin:20px 0}
+.ns-departure-overlay .ns-ds-review-items{display:grid;gap:10px;text-align:left}
+.ns-departure-overlay .ns-ds-review-check{display:flex;align-items:center;gap:14px;min-height:66px;padding:10px 17px;background:#1c304b;
+ border:1px solid #304c71;border-radius:17px;color:#f4f8ff;font-size:17px;line-height:1.35}
+.ns-departure-overlay .ns-ds-review-check input{width:25px;height:25px;flex:none;accent-color:#1892ff}
+.ns-departure-overlay .ns-ds-finish{background:#1783ed;color:white;border:0;border-radius:17px;min-height:58px;width:100%;
+ font-weight:800;margin-top:24px}
+.ns-departure-overlay .ns-ds-finish:disabled{opacity:.48}
+.ns-departure-overlay .ns-ds-safe{border:0;background:transparent;color:#a4b7cd;min-height:48px;margin-top:8px}
+#view-bags .ns-departure-studio :focus-visible,.ns-departure-overlay :focus-visible{outline:3px solid #68baff!important;outline-offset:2px}
+@media(max-width:370px){#view-bags .ns-departure-studio{padding:14px 10px}#view-bags .ns-ds-schedule{grid-template-columns:1fr}#view-bags .ns-ds-schedule label:last-child{grid-column:auto}}
+@media(prefers-reduced-motion:reduce){#view-bags .ns-departure-studio *, .ns-departure-overlay *{transition:none!important;animation:none!important}}
+
+#view-bags .ns-departure-studio .ns-ds-permissions{
+ grid-column:1 / -1;min-height:44px;border:1px solid #c3dbf1!important;
+ background:#e3f2ff!important;color:#136baa!important;border-radius:11px!important;
+ padding:10px 12px!important;font-size:12px!important;font-weight:750!important;
+}

@@ -19,7 +19,32 @@ import java.util.concurrent.Executors;
  * La interfaz principal se distribuye dentro de la APK (no depende de Netlify).
  */
 public final class MainActivity extends Activity {
+  private String pendingNavigation="";
+  private String allowedNavigation(String value){
+    if(value==null)return "";
+    switch(value){
+      case "home":case "tasks":case "calendar":case "bags":case "alarms":
+      case "habits":case "focus":case "dragon":case "admin":return value;
+      default:return "";
+    }
+  }
+  private void deliverNavigation(){
+    if(web==null||pendingNavigation.isEmpty())return;
+    String route=pendingNavigation;
+    pendingNavigation="";
+    web.evaluateJavascript("window.neuroNavigateFromLauncher && window.neuroNavigateFromLauncher("+JSONObject.quote(route)+")",null);
+  }
+  @Override protected void onNewIntent(Intent intent){
+    super.onNewIntent(intent);
+    setIntent(intent);
+    pendingNavigation=allowedNavigation(intent==null?null:intent.getStringExtra("neurosync_view"));
+    deliverNavigation();
+  }
   private WebView web;
+  private GoogleAccountBridge googleAccounts;
+  void googleCallback(String name,String json){
+    if(web!=null)web.evaluateJavascript("window."+name+" && window."+name+"("+JSONObject.quote(json)+")",null);
+  }
   private String backupPending="";
   private boolean qrEnrollmentPending=false;
   private final ExecutorService networkWorker=Executors.newSingleThreadExecutor();
@@ -53,7 +78,9 @@ public final class MainActivity extends Activity {
   }
   @Override public void onCreate(Bundle state){
     super.onCreate(state);
+    pendingNavigation=allowedNavigation(getIntent()==null?null:getIntent().getStringExtra("neurosync_view"));
     restoreNativeSession();
+    googleAccounts=new GoogleAccountBridge(this);
     getWindow().setStatusBarColor(Color.rgb(246,248,252));
     getWindow().setNavigationBarColor(Color.rgb(255,255,255));
     getWindow().getDecorView().setSystemUiVisibility(android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
@@ -65,9 +92,52 @@ public final class MainActivity extends Activity {
     settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
     web.setWebChromeClient(new WebChromeClient());
     web.setWebViewClient(new WebViewClient(){
+      @Override public void onPageFinished(WebView view,String url){
+        super.onPageFinished(view,url);
+        deliverNavigation();
+      }
       // Solo recursos locales de la mascota; no altera la red, cuentas ni las alarmas.
       @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request){
         String path=request.getUrl().getPath();
+        // Módulos internos de alarmas: ruta exacta, sin permitir acceso a archivos arbitrarios.
+        if("appassets.androidplatform.net".equals(request.getUrl().getHost()) && path!=null){
+          String resource=null,mime=null;
+          if("/modules/alarm_studio.js".equals(path)){
+            resource="modules/alarm_studio.js";mime="text/javascript";
+          }else if("/modules/alarm_studio.css".equals(path)){
+            resource="modules/alarm_studio.css";mime="text/css";
+          }else if("/modules/task_studio.js".equals(path)){
+            resource="modules/task_studio.js";mime="text/javascript";
+          }else if("/modules/task_studio.css".equals(path)){
+            resource="modules/task_studio.css";mime="text/css";
+          }else if("/modules/departure_studio.js".equals(path)){
+            resource="modules/departure_studio.js";mime="text/javascript";
+          }else if("/modules/departure_studio.css".equals(path)){
+            resource="modules/departure_studio.css";mime="text/css";
+          }else if("/modules/pomodoro_studio.js".equals(path)){
+            resource="modules/pomodoro_studio.js";mime="text/javascript";
+          }else if("/modules/pomodoro_studio.css".equals(path)){
+            resource="modules/pomodoro_studio.css";mime="text/css";
+          }
+          else if("/modules/wellbeing_studio.js".equals(path)){
+            resource="modules/wellbeing_studio.js";mime="text/javascript";
+          }else if("/modules/wellbeing_studio.css".equals(path)){
+            resource="modules/wellbeing_studio.css";mime="text/css";
+          }
+          else if("/modules/finance_studio.js".equals(path)){
+            resource="modules/finance_studio.js";mime="text/javascript";
+          }else if("/modules/finance_studio.css".equals(path)){
+            resource="modules/finance_studio.css";mime="text/css";
+          }else if("/assets/focus/bosque.mp4".equals(path)){
+            resource="focus/bosque.mp4";mime="video/mp4";
+          }
+          if(resource!=null)try{
+            return new WebResourceResponse(mime,"UTF-8",getAssets().open(resource));
+          }catch(IOException error){
+            android.util.Log.w("NeuroSync","No se pudo cargar módulo interno de alarmas",error);
+            return null;
+          }
+        }
         if("appassets.androidplatform.net".equals(request.getUrl().getHost())
             && path!=null && path.matches("/assets/dragon/(?:etapa-[1-6]|atlases/etapa-[1-6])\\.webp")){
           try{
@@ -92,6 +162,9 @@ public final class MainActivity extends Activity {
   }
   @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
     super.onActivityResult(requestCode,resultCode,data);
+    if(requestCode==GoogleAccountBridge.REQUEST_SIGNIN){
+      googleAccounts.onResult(data);return;
+    }
     // Registro de referencia QR iniciado desde el formulario web.
     if(qrEnrollmentPending){
       com.google.zxing.integration.android.IntentResult scan=
@@ -306,6 +379,88 @@ public final class MainActivity extends Activity {
       }
       return result.toString();
     }
+    /** Diagnóstico público: paquete y huella del certificado, nunca claves privadas. */
+    @JavascriptInterface public String googleOAuthDiagnostics(){
+      JSONObject info=new JSONObject();
+      try{
+        java.security.MessageDigest digest=java.security.MessageDigest.getInstance("SHA-1");
+        byte[] cert=null;
+        if(Build.VERSION.SDK_INT>=28){
+          android.content.pm.PackageInfo pkg=getPackageManager().getPackageInfo(getPackageName(),PackageManager.GET_SIGNING_CERTIFICATES);
+          android.content.pm.SigningInfo signing=pkg.signingInfo;
+          android.content.pm.Signature[] signatures=signing.hasMultipleSigners()?signing.getApkContentsSigners():signing.getSigningCertificateHistory();
+          if(signatures!=null&&signatures.length>0)cert=signatures[0].toByteArray();
+        }else{
+          android.content.pm.PackageInfo pkg=getPackageManager().getPackageInfo(getPackageName(),PackageManager.GET_SIGNATURES);
+          if(pkg.signatures!=null&&pkg.signatures.length>0)cert=pkg.signatures[0].toByteArray();
+        }
+        StringBuilder hash=new StringBuilder();
+        if(cert!=null){for(byte value:digest.digest(cert)){if(hash.length()>0)hash.append(':');hash.append(String.format(java.util.Locale.US,"%02X",value&255));}}
+        info.put("packageName",getPackageName()).put("sha1",hash.toString())
+          .put("note","Registra este paquete y SHA-1 en un cliente OAuth de Android en Google Cloud. Play App Signing usa otro certificado.");
+      }catch(Exception ex){android.util.Log.w("NeuroSync","Error consultando certificado",ex);}
+      return info.toString();
+    }
+    @JavascriptInterface public void loginGoogle(){
+      runOnUiThread(()->googleAccounts.login());
+    }
+    @JavascriptInterface public String restoreGoogleSession(){
+      return googleAccounts.restored().toString();
+    }
+    @JavascriptInterface public void backupGoogleDrive(String json){
+      googleAccounts.backup(json);
+    }
+    @JavascriptInterface public void refreshGoogleDrive(){
+      googleAccounts.restoreDrive();
+    }
+    @JavascriptInterface public void logoutGoogle(){
+      googleAccounts.logout();
+    }
+    @JavascriptInterface public boolean adminModeEnabled(){
+      return localHost() || currentMode().isEmpty();
+    }
+    @JavascriptInterface public String loginOwner(String username,String password){
+      if(currentMode().isEmpty()){
+        getPreferences(0).edit().putString("mode","host").apply();
+        runOnUiThread(()->startServer());
+      }
+      if(!localHost())return AccountStore.fail("El acceso de administrador solo es local").toString();
+      JSONObject result=AccountStore.authenticate(MainActivity.this,username,password);
+      if(!result.optBoolean("ok"))return result.toString();
+      JSONObject user=result.optJSONObject("user");
+      if(user==null||!"admin".equals(user.optString("role"))){
+        AccountStore.revoke(MainActivity.this,result.optString("token"));
+        return AccountStore.fail("Esta opción es exclusiva del administrador").toString();
+      }
+      sessionToken=result.optString("token","");
+      sessionUser=user;
+      SessionVault.save(MainActivity.this,sessionToken,sessionUser,currentMode(),currentEndpoint());
+      result.remove("token");
+      return result.toString();
+    }
+    /** Las copias nativas se limitan a la identidad autenticada en Android.
+     * El identificador recibido del WebView NO concede acceso a otras cuentas.
+     */
+    private boolean canAccessSnapshot(String username){
+      if(username==null||username.isEmpty())return false;
+      if(sessionUser!=null&&username.equals(sessionUser.optString("username"))&&
+          !sessionToken.isEmpty()&&
+          (!localHost()||AccountStore.identity(MainActivity.this,sessionToken)!=null))return true;
+      try{
+        JSONObject google=googleAccounts.restored();
+        JSONObject account=google.optJSONObject("user");
+        return google.optBoolean("ok")&&account!=null&&
+          username.equals(account.optString("username"));
+      }catch(Exception ignored){return false;}
+    }
+    @JavascriptInterface public boolean saveNativeSnapshot(String username,String json){
+      if(!canAccessSnapshot(username))return false;
+      return NativeSnapshotStore.get(MainActivity.this).save(username,json);
+    }
+    @JavascriptInterface public String recoverNativeSnapshot(String username){
+      if(!canAccessSnapshot(username))return "{\"ok\":false,\"reason\":\"unauthorized\"}";
+      return NativeSnapshotStore.get(MainActivity.this).recover(username);
+    }
     @JavascriptInterface public String restoreSession(){
       try{
         if(sessionUser==null||sessionToken.isEmpty())return AccountStore.fail("No hay sesión guardada").toString();
@@ -343,6 +498,31 @@ public final class MainActivity extends Activity {
         });
       });
     }
+    @JavascriptInterface public void openPermissionsPanel(String target){
+      runOnUiThread(()->{
+        try{
+          Intent settings;
+          switch(target==null?"":target){
+            case "overlay":
+              settings=new Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                android.net.Uri.parse("package:"+getPackageName()));break;
+            case "usage":
+              settings=new Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS);break;
+            case "notifications":
+              settings=new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE,getPackageName());break;
+            case "app":
+              openAppSettings();return;
+            default:return;
+          }
+          startActivity(settings);
+        }catch(Exception ignored){openAppSettings();}
+      });
+    }
+    @JavascriptInterface public String alarmScheduleDiagnostics(){
+      try{return AlarmReceiver.diagnostics(MainActivity.this).toString();}
+      catch(Exception e){return "{}";}
+    }
     @JavascriptInterface public String alarmPermissions(){
       try{
         JSONObject j=new JSONObject();
@@ -350,7 +530,10 @@ public final class MainActivity extends Activity {
         boolean notifications=Build.VERSION.SDK_INT<33 || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED;
         boolean exact=Build.VERSION.SDK_INT<31 || ((AlarmManager)getSystemService(ALARM_SERVICE)).canScheduleExactAlarms();
         boolean full=Build.VERSION.SDK_INT<34 || n.canUseFullScreenIntent();
-        return j.put("notifications",notifications).put("exact",exact).put("fullScreen",full).toString();
+        boolean allowed=n.areNotificationsEnabled();
+        android.app.NotificationChannel alarmChannel=Build.VERSION.SDK_INT>=26?n.getNotificationChannel("neurosync_alarms_v4_visual"):null;
+        boolean high=alarmChannel==null||alarmChannel.getImportance()>=NotificationManager.IMPORTANCE_HIGH;
+        return j.put("notifications",notifications&&allowed).put("exact",exact).put("fullScreen",full).put("channelHigh",high).toString();
       }catch(Exception e){return "{}";}
     }
     @JavascriptInterface public void requestAlarmPermissions(){
@@ -375,6 +558,33 @@ public final class MainActivity extends Activity {
           .put("Bandeja de ideas").put("Launcher minimalista"));
         return result.toString();
       }catch(Exception ex){return "{}";}
+    }
+    /** Configura la hora mediante API oficial; selección musical queda en la app Reloj. */
+    @JavascriptInterface public void createYouTubeMusicClockAlarm(){
+      runOnUiThread(()->{
+        java.util.Calendar now=java.util.Calendar.getInstance();
+        new android.app.TimePickerDialog(MainActivity.this,(picker,hour,minute)->{
+          new AlertDialog.Builder(MainActivity.this)
+           .setTitle("Canción de YouTube Music")
+           .setMessage("Se abrirá Reloj de Android con la hora elegida. Dentro de esa alarma, toca Sonido → YouTube Music y elige tu canción con Premium. La música sonará desde Reloj; los retos de NeuroSync no controlan esa alarma.")
+           .setNegativeButton("Cancelar",null)
+           .setPositiveButton("Abrir Reloj",(dialog,which)->{
+             Intent intent=new Intent(android.provider.AlarmClock.ACTION_SET_ALARM)
+               .putExtra(android.provider.AlarmClock.EXTRA_HOUR,hour)
+               .putExtra(android.provider.AlarmClock.EXTRA_MINUTES,minute)
+               .putExtra(android.provider.AlarmClock.EXTRA_MESSAGE,"NeuroSync · Música")
+               .putExtra(android.provider.AlarmClock.EXTRA_SKIP_UI,false);
+             try{startActivity(intent);}
+             catch(Exception ex){
+               android.util.Log.w("NeuroSync","Reloj no disponible",ex);
+               new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Reloj no disponible")
+                .setMessage("Instala o abre Reloj de Google y elige Sonido → YouTube Music.")
+                .setPositiveButton("Entendido",null).show();
+             }
+           }).show();
+        },now.get(java.util.Calendar.HOUR_OF_DAY),now.get(java.util.Calendar.MINUTE),true).show();
+      });
     }
     @JavascriptInterface public void openSystemClock(){
       runOnUiThread(()->{
@@ -416,6 +626,17 @@ public final class MainActivity extends Activity {
     @JavascriptInterface public void setAlarmQrCode(String id,String value){
       AlarmChallengeStore.setQr(MainActivity.this,id,value);
     }
+    @JavascriptInterface public void setAlarmFadeSeconds(int seconds){
+      if(seconds!=0&&seconds!=15&&seconds!=30&&seconds!=60)return;
+      getSharedPreferences("ns_alarm_audio_settings",MODE_PRIVATE).edit()
+        .putInt("fadeSeconds",seconds).apply();
+    }
+    @JavascriptInterface public int getAlarmFadeSeconds(){
+      return getSharedPreferences("ns_alarm_audio_settings",MODE_PRIVATE).getInt("fadeSeconds",0);
+    }
+    @JavascriptInterface public void setAlarmOptions(String id,int snoozeMinutes,int snoozeLimit){
+      AlarmOptionsStore.set(MainActivity.this,id,snoozeMinutes,snoozeLimit);
+    }
     @JavascriptInterface public void setAlarmChallenge(String id,String challenge){
       AlarmChallengeStore.set(MainActivity.this,id,challenge);
     }
@@ -447,6 +668,17 @@ public final class MainActivity extends Activity {
     }
     @JavascriptInterface public String alarmEventHistory(){
       return AlarmHistory.read(MainActivity.this);
+    }
+    @JavascriptInterface public boolean updateFinanceLauncherSummary(
+        String username,boolean visible,long balance,long income,long expense){
+      if(!canAccessSnapshot(username))return false;
+      // Opt-in explícito. Un saldo persistido en pantalla HOME se considera sensible.
+      // No almacenar el nombre de usuario ni IDs financieros en las preferencias del launcher.
+      android.content.SharedPreferences prefs=getSharedPreferences("ns_finance_launcher",MODE_PRIVATE);
+      prefs.edit().putBoolean("enabled",visible)
+        .putLong("balance",visible?balance:0).putLong("income",visible?income:0)
+        .putLong("expense",visible?expense:0).apply();
+      return true;
     }
     @JavascriptInterface public void updateWidgetNextAlarm(String when){
       TodayWidget.setNextAlarm(MainActivity.this,when);
@@ -499,6 +731,37 @@ public final class MainActivity extends Activity {
     @JavascriptInterface public boolean testAlarm(){
       return AlarmReceiver.schedule(MainActivity.this,"test_neurosync","Prueba de alarma",System.currentTimeMillis()+60000L,false);
     }
+    /** Los identificadores nativos de salida llevan una cuenta verificada. */
+    private String departureKey(String username,String id){
+      if(!canAccessSnapshot(username)||id==null||id.length()<2||id.length()>90)return null;
+      return username+"::"+id;
+    }
+    @JavascriptInterface public boolean scheduleDepartureList(String username,String id,String title,String itemsJson,long when,String repeat){
+      String key=departureKey(username,id);
+      return key!=null&&DepartureReminderReceiver.schedule(MainActivity.this,key,title,itemsJson,when,repeat);
+    }
+    @JavascriptInterface public void cancelDepartureList(String username,String id){
+      String key=departureKey(username,id);
+      if(key!=null)DepartureReminderReceiver.cancel(MainActivity.this,key);
+    }
+    @JavascriptInterface public String departureListState(String username,String id){
+      String key=departureKey(username,id);
+      if(key==null)return "{}";
+      try{
+        JSONObject data=DepartureReminderReceiver.get(MainActivity.this,key);
+        if(key.equals(data.optString("id")))data.put("id",id);
+        return data.toString();
+      }catch(Exception ignored){return "{}";}
+    }
+    @JavascriptInterface public boolean markDepartureItem(String username,String id,int index,boolean checked){
+      String key=departureKey(username,id);
+      return key!=null&&DepartureReminderReceiver.mark(MainActivity.this,key,index,checked);
+    }
+    @JavascriptInterface public void openDepartureChecklist(String username,String id){
+      String key=departureKey(username,id);
+      if(key==null||DepartureReminderReceiver.get(MainActivity.this,key).optJSONArray("items")==null)return;
+      runOnUiThread(()->startActivity(new Intent(MainActivity.this,DepartureChecklistActivity.class).putExtra("id",key)));
+    }
     @JavascriptInterface public boolean scheduleAlarmRepeat(String id,String title,long when,String repeat){
       try{return AlarmReceiver.scheduleRepeat(MainActivity.this,id,title,when,repeat);}
       catch(Exception e){return false;}
@@ -514,5 +777,5 @@ public final class MainActivity extends Activity {
     if(web.canGoBack())web.goBack();else new AlertDialog.Builder(this).setMessage("¿Cerrar NeuroSync?")
       .setNegativeButton("Cancelar",null).setPositiveButton("Salir",(d,w)->finish()).show();
   }
-  @Override public void onDestroy(){networkWorker.shutdownNow();if(web!=null)web.destroy();super.onDestroy();}
+  @Override public void onDestroy(){if(googleAccounts!=null)googleAccounts.shutdown();networkWorker.shutdownNow();if(web!=null)web.destroy();super.onDestroy();}
 }
