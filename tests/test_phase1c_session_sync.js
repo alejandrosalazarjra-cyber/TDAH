@@ -56,4 +56,17 @@ function makeTest(blocked=false){
 assert(source.includes("ns_last_session_provider"),'Guardar la preferencia del proveedor');
 assert(source.includes("nsPreferredProvider!=='signed_out'"),'Respetar el cierre de sesión');
 assert(source.includes("nsPreferredProvider!=='google'"),'No sustituir cuenta Google ausente por admin local');
+// Un login exitoso no garantiza que la sesión se conserve si falla AndroidKeyStore.
+const vault=fs.readFileSync('android/app/src/main/java/com/neurosync/familia/SessionVault.java','utf8');
+const main=fs.readFileSync('android/app/src/main/java/com/neurosync/familia/MainActivity.java','utf8');
+assert(vault.includes('synchronized boolean save('),
+ 'La persistencia cifrada debe informar éxito o fracaso');
+assert(vault.includes('boolean stored=prefs(ctx).edit()')&&vault.includes('return stored;'),
+ 'La escritura cifrada debe comprobar SharedPreferences.commit()');
+assert((main.match(/boolean persisted=SessionVault\.save\(/g)||[]).length===2,
+ 'Ambos inicios de sesión nativos deben comprobar el guardado');
+assert(main.includes('result.put("sessionPersistent",persisted)'),
+ 'La capa Android debe notificar el estado de persistencia');
+assert(source.includes('if(res.sessionPersistent===false)say('),
+ 'La interfaz debe advertir al usuario si tendrá que volver a iniciar sesión');
 console.log('Fase 1c OK: aislamiento, transacción local, bloqueo y sesiones');
