@@ -50,7 +50,10 @@ public final class SyncStore {
             if(!admin&&!own&&!shared)continue;
             if(old!=null&&!visible(old,actor))continue;
             long updated=change.optLong("updatedAt",0);
-            if(updated<1)continue;
+            // Evitar timestamps futuros que impidan aceptar ediciones posteriores.
+            // Se admiten relojes ligeramente desajustados (hasta cinco minutos).
+            long now=System.currentTimeMillis();
+            if(updated<1||updated>now+300000L)continue;
             if(!admin&&shared){
               // Miembros: las tareas compartidas solo permiten confirmar pasos, no cambiar datos ni borrarlas.
               if(old==null||change.optBoolean("deleted"))continue;
@@ -68,7 +71,10 @@ public final class SyncStore {
           }
           database.put(collection,all);view.put(collection,subset);
         }
-        c.getSharedPreferences("ns_family",0).edit().putString(KEY,database.toString()).commit();
+        // Nunca comunicar éxito si la réplica familiar no quedó persistida.
+        if(!c.getSharedPreferences("ns_family",0).edit()
+            .putString(KEY,database.toString()).commit())
+          return AccountStore.fail("No se guardaron los cambios familiares. Intenta sincronizar de nuevo.");
         return reply.put("data",view);
       }
     }catch(Exception e){return AccountStore.fail("Error sincronizando datos");}
