@@ -20,7 +20,7 @@ assert(apk.includes('code==10')&&apk.includes('configurationRequired'),
  'La APK debe diagnosticar un SHA-1 o paquete no registrado');
 assert(html.includes("by('ns-google-fingerprint').textContent='Paquete: '"),
  'Los diagnósticos deben estar disponibles sin mostrar secretos');
-assert(github.includes('NEUROSYNC_GOOGLE_WEB_CLIENT_ID: ${{ vars.NEUROSYNC_GOOGLE_WEB_CLIENT_ID }}'),
+assert(github.includes('NEUROSYNC_GOOGLE_WEB_CLIENT_ID: ${{ vars.NEUROSYNC_GOOGLE_WEB_CLIENT_ID ||'),
  'APK GitHub Actions debe admitir configuración OAuth del desarrollador');
 assert(codemagic.includes('NEUROSYNC_GOOGLE_WEB_CLIENT_ID'),
  'APK Codemagic debe admitir la misma configuración');
