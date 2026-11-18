@@ -16,7 +16,8 @@ assert(render.includes('plan: free')&&render.includes('PRUEBAS TEMPORALES'),
 assert(render.includes('ipAllowList: []'),'La base de datos no debe tener acceso externo');
 assert(render.includes('fromDatabase:')&&render.includes('property: connectionString'),
  'La API obtiene DATABASE_URL mediante la red privada de PostgreSQL');
-assert(render.includes('sync: false'),'GOOGLE_CLIENT_ID se configura fuera del repositorio');
+assert(!render.includes('key: GOOGLE_CLIENT_ID'),
+ 'GOOGLE_CLIENT_ID se gestiona en variables privadas del servicio Render');
 assert(render.includes('healthCheckPath: /health'),'El despliegue requiere una comprobación de salud');
 assert(compose.includes('127.0.0.1:8081:8081'),'El entorno local no debe publicar el puerto en la red');
 assert(!compose.includes('5432:5432'),'La base de desarrollo no debe exponerse a la red');
@@ -25,6 +26,6 @@ assert(migrator.includes("NEUROSYNC_PUBLIC_DB_CONFIRM!=='yes'"),
 assert(workflow.includes('postgres:16-alpine')&&
  workflow.includes('node tests/test_public_backend_database.js'),
  'Las pruebas independientes requieren PostgreSQL real');
-assert(readme.includes('No se ha creado un servidor'),
- 'La guía nunca debe presentar el despliegue como finalizado');
+assert(readme.includes('exclusivamente de pruebas')&&readme.includes('loginEnabled'),
+ 'La guía documenta staging activo y registro bloqueado, nunca producción');
 console.log('Despliegue de pruebas OK: configuración segura y CI independiente');
