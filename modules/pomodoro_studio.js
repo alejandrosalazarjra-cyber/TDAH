@@ -9,7 +9,7 @@ const themes={
  bosque:{name:'Bosque',subtitle:'Encuentra tu ritmo natural',icon:'♧'},
  noche:{name:'Noche',subtitle:'Un espacio tranquilo para concentrarte',icon:'☾'}
 };
-let screen=null,video=null,canvas=null,scene='calma',audio=null,audioOn=false,ready=false,visible=false,mediaLoaded=false;
+let screen=null,video=null,scene='calma',audio=null,audioOn=false,ready=false,visible=false,wasStarted=false;
 const $=q=>screen?.querySelector(q);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function init(el){
@@ -35,9 +35,9 @@ function init(el){
   '<button type="button" id="ns-pf-audio" aria-pressed="false">♩ Activar sonido ambiental</button>'+
   '<p class="ns-pf-note">El sonido es opcional. Tu progreso se guarda aunque cierres esta pantalla.</p></div></div>';
  video=$('.ns-pf-video');
- video.addEventListener('canplay',()=>{mediaLoaded=true;screen.classList.add('ns-pf-has-video');});
- video.addEventListener('error',()=>{mediaLoaded=false;screen.classList.remove('ns-pf-has-video');});
- $('#ns-pf-exit').onclick=()=>{stopAudio(false);api.close()};
+ video.addEventListener('canplay',()=>{screen.classList.add('ns-pf-has-video');});
+ video.addEventListener('error',()=>{screen.classList.remove('ns-pf-has-video');});
+ $('#ns-pf-exit').onclick=()=>{stopAudio(true);api.close()};
  $('#ns-pf-start').onclick=()=>api.toggle();
  $('#ns-pomodoro-finish').onclick=()=>{if(api.current())api.stop();else api.close()};
  $('#ns-pf-audio').onclick=()=>toggleAudio();
@@ -67,7 +67,7 @@ function sceneChange(name){
  $('#ns-pf-theme-title').textContent=themes[name].name;
  $('#ns-pf-theme-subtitle').textContent=themes[name].subtitle;
  screen.querySelectorAll('[data-pf-scene]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.pfScene===name)));
- mediaLoaded=false;screen.classList.remove('ns-pf-has-video');
+ screen.classList.remove('ns-pf-has-video');
  video.pause();video.removeAttribute('src');video.load();
  // Siempre empieza por el recurso local en la APK. Si no existe, la escena CSS sigue animada.
  video.src='./assets/focus/'+name+'.mp4';
@@ -116,6 +116,8 @@ function render(el,state){
  init(el);
  visible=state.visible;
  if(!visible){pauseMedia();return}
+ if(wasStarted&&!state.started)stopAudio(true);
+ wasStarted=state.started;
  if(scene!==state.scene||screen.dataset.scene!==state.scene)sceneChange(state.scene);
  const seconds=Math.ceil(Math.max(0,state.remaining)/1000);
  $('#ns-pomodoro-count').textContent=String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');
