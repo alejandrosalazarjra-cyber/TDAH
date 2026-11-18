@@ -1,6 +1,6 @@
 # Servidor público de NeuroSync — prototipo de desarrollo
 
-Este directorio contiene una API Node.js + PostgreSQL **separada** del actual servidor Android/LAN. **No está desplegada ni conectada a la APK**, y no debe exponerse al público hasta cerrar los controles de seguridad y hacer pruebas reales.
+Este directorio contiene una API Node.js + PostgreSQL **separada** del actual servidor Android/LAN. **Está desplegada en Render como entorno de PRUEBAS**, con registro público deshabilitado; la APK no está validada en dispositivos y no debe abrirse al público hasta cerrar los controles de seguridad y hacer pruebas reales.
 
 ## Preparación para un desarrollador (no para los usuarios)
 
@@ -37,7 +37,7 @@ Si faltan estas variables, **el botón de acceso público permanece oculto** y s
 
 El flujo nuevo usa `PublicAccountBridge.java`, una sesión independiente guardada en `PublicSessionVault.java`, y componentes de contactos/tareas de `modules/task_studio.js`. El token de la API se queda en Android Keystore y no llega al WebView. Los envíos pendientes se reintentan desde el modelo local. La edición de perfil admite `POST /v1/me` para compatibilidad con `HttpURLConnection` en Android, además de `PATCH`.
 
-**Limitaciones de la integración actual:** no existe todavía servicio público desplegado, ni una compilación validada en teléfonos. La autenticación de Google necesita configuración real; las notificaciones push y la sincronización incremental del servicio público todavía no están conectadas. Los datos guardados en el modelo local de la app no se migran automáticamente desde Drive o el sistema familiar a la API pública.
+**Limitaciones de la integración actual:** servicio de prueba desplegado en `https://neurosync-public-api-staging-vz3h.onrender.com`, pero todavía no existe una compilación validada en teléfonos. La autenticación de Google necesita configuración real; las notificaciones push y la sincronización incremental del servicio público todavía no están conectadas. Los datos guardados en el modelo local de la app no se migran automáticamente desde Drive o el sistema familiar a la API pública.
 
 ## Endpoints implementados en esta etapa
 
