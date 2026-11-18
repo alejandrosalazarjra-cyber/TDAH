@@ -205,12 +205,19 @@ public final class AlarmReceiver extends BroadcastReceiver {
     String id=a.getString("id");
     long when=a.getLong("when");
     String repeat=a.optString("repeat",a.optBoolean("daily")?"daily":"none");
+    if(!row.getKey().equals(PREFIX+id)||id.length()<2||id.length()>100)continue;
     if(when<=now && !"none".equals(repeat)){
-      when=nextRepeat(when,repeat,now);
-      if(when>now){
-       a.put("when",when);
-       ctx.getSharedPreferences("ns_alarms",0).edit().putString(PREFIX+id,a.toString()).apply();
+      long next=nextRepeat(when,repeat,now);
+      if(next>now && program(ctx,id,next)){
+        // Persistir solo una alarma reprogramada de verdad.
+        a.put("when",next);
+        if(!ctx.getSharedPreferences("ns_alarms",0).edit()
+          .putString(PREFIX+id,a.toString()).commit())
+          android.util.Log.w("NeuroSync","Alarma programada pero no persistida: "+id);
+      }else if(next>now){
+        android.util.Log.w("NeuroSync","No se pudo restaurar alarma repetitiva: "+id);
       }
+      continue;
     }
     if(when>now)program(ctx,id,when);
     else if("none".equals(repeat)){
