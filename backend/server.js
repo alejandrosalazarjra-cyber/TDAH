@@ -267,9 +267,31 @@ async function handler(req,res){
  }
  reject(404,'Función no encontrada');
 }
+// Límite básico por proceso para el piloto. Producción: usar un almacén
+// compartido y controles adicionales en el proxy contra abuso distribuido.
+const limits=new Map();
+function limitRequest(req){
+ const path=(req.url||'').split('?')[0];
+ if(path==='/health')return;
+ const auth=String(req.headers&&req.headers.authorization||'');
+ const address=String(req.socket&&req.socket.remoteAddress||'unknown').slice(0,80);
+ const identity=auth.startsWith('Bearer ')?sha256(auth.slice(7)):address;
+ const sensitive=path==='/v1/auth/exchange'||path==='/v1/users/lookup'||
+  path==='/v1/contacts/invitations'||path==='/v1/tasks';
+ const max=sensitive?30:120,now=Date.now(),key=path+':'+identity;
+ let record=limits.get(key);
+ if(!record||record.expires<=now){record={count:0,expires:now+60000};limits.set(key,record)}
+ record.count++;
+ if(record.count>max)reject(429,'Demasiadas solicitudes. Vuelve a intentarlo.');
+ if(limits.size>10000){
+  for(const [k,v] of limits){if(v.expires<=now)limits.delete(k)}
+  if(limits.size>12000)limits.clear();
+ }
+}
 async function request(req,res){
  try{
   if(!['GET','POST','PATCH'].includes(req.method))reject(405,'Método no permitido');
+  limitRequest(req);
   await handler(req,res);
  }catch(e){
   const status=e instanceof ApiError?e.status:(e.code==='23505'?409:500);
