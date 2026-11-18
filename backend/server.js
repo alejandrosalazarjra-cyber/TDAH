@@ -237,11 +237,18 @@ async function handler(req,res){
   const title=typeof data.title==='string'?data.title.trim():'';
   const repeat=data.repeat||'none';
   const steps=Array.isArray(data.steps)?data.steps:[];
+  const category=data.category===undefined?'Personal':data.category;
+  const date=data.date===undefined?'':data.date;
+  const time=data.time===undefined?'':data.time;
+  const validDate=typeof date==='string'&&(!date||(/^\\d{4}-\\d{2}-\\d{2}$/.test(date)&&
+    !Number.isNaN(Date.parse(date))&&new Date(date).toISOString().slice(0,10)===date));
   if(!uuid(recipientId)||recipientId===user.id||!/^[A-Za-z0-9_-]{8,100}$/.test(key||'')||
    !title||title.length>100||!['none','daily','weekly'].includes(repeat)||
-   steps.length>20||steps.some(s=>typeof s!=='string'||!s.trim()||s.length>140))
+   steps.length>20||steps.some(s=>typeof s!=='string'||!s.trim()||s.length>140)||
+   typeof category!=='string'||!category.trim()||category.length>60||
+   !validDate||(typeof time!=='string'||(time&&!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(time))))
    reject(400,'Datos de tarea inválidos');
-  const canonical={recipientId,title,repeat,steps};
+  const canonical={recipientId,title,repeat,steps,category:category.trim(),date,time};
   const digest=sha256(JSON.stringify(canonical));
   const result=await transaction(async db=>{
    // Serialización por usuario/clave para reintentos concurrentes.
@@ -267,7 +274,7 @@ async function handler(req,res){
    await db.query(
     `INSERT INTO ns_public_tasks(id,sender_id,recipient_id,title,body)
      VALUES($1,$2,$3,$4,$5::jsonb)`,
-    [id,user.id,recipientId,title,JSON.stringify({repeat,steps})]);
+    [id,user.id,recipientId,title,JSON.stringify({repeat,steps,category:canonical.category,date,time})]);
    await db.query(
     'INSERT INTO ns_task_idempotency(sender_id,request_key,payload_sha256,task_id) VALUES($1,$2,$3,$4)',
     [user.id,key,digest,id]);
@@ -283,9 +290,14 @@ async function handler(req,res){
   if(!['inbox','sent'].includes(box))reject(400,'Bandeja inválida');
   const column=box==='inbox'?'recipient_id':'sender_id';
   const rows=await pool.query(
-   `SELECT id,title,status,created_at,updated_at,version,
-      sender_id,recipient_id FROM ns_public_tasks
-    WHERE ${column}=$1 ORDER BY updated_at DESC,id DESC LIMIT 100`,[user.id]);
+   `SELECT t.id,t.title,t.body,t.status,t.created_at,t.updated_at,t.version,
+      t.sender_id,t.recipient_id,
+      source.handle AS sender_handle,source.display_name AS sender_name,
+      destination.handle AS recipient_handle,destination.display_name AS recipient_name
+    FROM ns_public_tasks t
+    JOIN ns_public_users source ON source.id=t.sender_id
+    JOIN ns_public_users destination ON destination.id=t.recipient_id
+    WHERE t.${column}=$1 ORDER BY t.updated_at DESC,t.id DESC LIMIT 100`,[user.id]);
   return respond(res,200,{ok:true,tasks:rows.rows});
  }
  const action=path.match(/^\/v1\/tasks\/([a-f0-9-]{36})\/(accept|decline|complete)$/i);
