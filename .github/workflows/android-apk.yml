@@ -210,6 +210,10 @@ jobs:
           set -euo pipefail
           cp index.html android/app/src/main/assets/index.html
           test -s android/app/src/main/assets/index.html
+          mkdir -p android/app/src/main/assets/modules
+          cp modules/alarm_studio.js modules/alarm_studio.css android/app/src/main/assets/modules/
+          test -s android/app/src/main/assets/modules/alarm_studio.js
+          test -s android/app/src/main/assets/modules/alarm_studio.css
           mkdir -p android/app/src/main/assets/dragon
           cp assets/dragon/etapa-{1..6}.webp android/app/src/main/assets/dragon/
           for n in {1..6}; do test -s "android/app/src/main/assets/dragon/etapa-${n}.webp"; done
