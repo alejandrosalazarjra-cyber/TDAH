@@ -2784,8 +2784,15 @@ window.NeuroAlarmAPI={
   // Nunca guardar como programada si Android rechazó el horario.
   if(nat&&(!scheduleAlarm(draft)))return {ok:false,error:'Android no pudo programar la alarma. Revisa permisos.'};
   if(nat&&nat.setAlarmOptions)nat.setAlarmOptions(draft.id,draft.snoozeMinutes,draft.snoozeLimit);
+  var previous=original?Object.assign({},original):null;
   if(original)Object.assign(original,draft);else model.alarms.push(draft);
-  if(!save()){if(nat&&nat.cancelAlarm)nat.cancelAlarm(draft.id);return {ok:false,error:'No se pudieron guardar los cambios'};}
+  if(!save()){
+   if(original)Object.assign(original,previous);
+   else model.alarms=model.alarms.filter(function(a){return a.id!==draft.id});
+   if(nat&&nat.cancelAlarm)nat.cancelAlarm(draft.id);
+   if(previous&&previous.enabled!==false)try{scheduleAlarm(previous)}catch(err){}
+   return {ok:false,error:'No se pudieron guardar los cambios'};
+  }
   render();window.dispatchEvent(new Event('neuro-alarm-changed'));
   return {ok:true,id:draft.id};
  },
@@ -2795,14 +2802,28 @@ window.NeuroAlarmAPI={
   if(!alarm)return false;
   if(enabled){var previous=alarm.enabled;alarm.enabled=true;if(nat&&!scheduleAlarm(alarm)){alarm.enabled=previous;return false}}
   else{if(nat&&nat.cancelAlarm)nat.cancelAlarm(alarm.id);alarm.enabled=false}
-  mark(alarm);save();render();window.dispatchEvent(new Event('neuro-alarm-changed'));return true;
+  var oldUpdate=alarm.updatedAt;mark(alarm);
+  if(!save()){
+   alarm.enabled=!enabled;alarm.updatedAt=oldUpdate;
+   if(nat&&nat.cancelAlarm)nat.cancelAlarm(alarm.id);
+   if(alarm.enabled)try{scheduleAlarm(alarm)}catch(err){}
+   return false;
+  }
+  render();window.dispatchEvent(new Event('neuro-alarm-changed'));return true;
  },
  remove:async function(id){
   if(!session||!model)return false;
   var a=model.alarms.find(function(x){return x.id===id&&!x.deleted&&x.owner===session.username});
   if(!a||!await nsConfirm('Eliminar alarma','¿Eliminar '+a.title+'?','Eliminar'))return false;
   if(nat&&nat.cancelAlarm)nat.cancelAlarm(a.id);
-  a.deleted=true;mark(a);save();render();window.dispatchEvent(new Event('neuro-alarm-changed'));return true;
+  var originalUpdate=a.updatedAt;
+  a.deleted=true;mark(a);
+  if(!save()){
+   a.deleted=false;a.updatedAt=originalUpdate;
+   if(a.enabled!==false)try{scheduleAlarm(a)}catch(err){}
+   return false;
+  }
+  render();window.dispatchEvent(new Event('neuro-alarm-changed'));return true;
  }
 };
 })();
