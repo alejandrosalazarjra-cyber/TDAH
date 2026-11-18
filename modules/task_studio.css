@@ -74,3 +74,10 @@
 .ns-task-stats .ns-ts-bars small{font-size:10px;color:#8c9db2}
 @media(max-width:380px){#view-tasks .ns-task-studio,#view-habits .ns-task-stats{padding:13px 10px;border-radius:14px}.ns-task-studio .ns-ts-toolbar button{flex:1}}
 @media(prefers-reduced-motion:reduce){.ns-task-studio *, .ns-task-stats *{animation:none!important;transition:none!important}}
+
+
+/* Compartir tareas sin menús técnicos ni ventanas del sistema. */
+.ns-task-studio .ns-ts-share{flex:0 0 auto;border:1px solid #bddcf9;border-radius:11px;background:#e8f4ff;color:#075ea9;min-height:38px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer}
+.ns-task-studio .ns-ts-share-option{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid #d5e7f7;border-radius:12px;color:#24466b;font-size:13px}
+.ns-task-studio .ns-ts-pane .ns-ts-share-option input[type="checkbox"]{width:19px;min-height:19px;height:19px;flex:none;accent-color:#0873d1;margin:0}
+@media(max-width:380px){.ns-task-studio .ns-ts-share{padding:7px 9px;font-size:11px}}
