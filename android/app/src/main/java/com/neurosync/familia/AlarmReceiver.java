@@ -263,13 +263,15 @@ public final class AlarmReceiver extends BroadcastReceiver {
    Notification.Builder builder=new Notification.Builder(ctx,CHANNEL)
     .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
     .setContentTitle("⏰ "+title)
-    .setContentText("Pulsa para detener o posponer")
+    .setContentText("Pulsa para abrir tu alarma")
     .setCategory(Notification.CATEGORY_ALARM)
     .setPriority(Notification.PRIORITY_MAX)
     .setVisibility(Notification.VISIBILITY_PUBLIC)
     .setAutoCancel(false).setOngoing(true)
-    .addAction(android.R.drawable.ic_menu_recent_history,"Posponer",snoozePending)
     .setContentIntent(full).setFullScreenIntent(full,true);
+   if(AlarmOptionsStore.used(ctx,id)<AlarmOptionsStore.max(ctx,id)){
+     builder.addAction(android.R.drawable.ic_menu_recent_history,"Posponer",snoozePending);
+   }
    if("none".equals(AlarmChallengeStore.get(ctx,id))){
      builder.addAction(android.R.drawable.ic_media_pause,"Detener",stopPending);
    }
