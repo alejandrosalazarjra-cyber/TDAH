@@ -2178,12 +2178,29 @@ window.neuroSyncOnSync=function(payload,requestingUser){
    });
    staged[k]=Array.from(found.values());
   });
+  // Avisar solo de tareas nuevas dirigidas a esta cuenta, nunca de registros ajenos.
+  var known=new Set((model.tasks||[]).filter(function(t){return t&&typeof t.id==='string'})
+   .map(function(t){return t.id}));
+  var incoming=(staged.tasks||[]).filter(function(t){
+   return t&&!t.deleted&&t.owner===owner&&typeof t.sentBy==='string'&&
+    t.sentBy!==owner&&typeof t.id==='string'&&t.id.startsWith('sent_')&&
+    !known.has(t.id);
+  }).slice(0,10);
   staged._localUpdatedAt=Date.now();
   nsLocalSave(staged);
   model=staged;
+  // Después del guardado: no notificar sobre tareas que no se pudieron conservar.
+  if(incoming.length){
+   by('sync-status').textContent='Tienes '+incoming.length+' tarea(s) nuevas en Recibidas';
+   if(typeof say==='function')say('Recibiste '+incoming.length+' tarea(s) nuevas');
+   if(nat&&nat.notifyTaskReceived)incoming.forEach(function(t){
+    try{nat.notifyTaskReceived(t.id,t.sentBy)}catch(e){}
+   });
+  }
   if(nat&&(nat.scheduleAlarm||nat.scheduleAlarmRepeat))
    active(model.alarms).filter(function(a){return a.owner===owner||a.owner==='todos'}).forEach(scheduleAlarm);
-  by('sync-status').textContent='Sincronizado y guardado';render();
+  if(!incoming.length)by('sync-status').textContent='Sincronizado y guardado';
+  render();
  }catch(e){
   by('sync-status').textContent='No se aplicaron cambios: datos locales conservados';
  }
