@@ -29,6 +29,7 @@ android {
         if (System.getenv('NS_PREVIEW_KEYSTORE_FILE')) {
             create('neurosyncPreview') {
                 storeFile file(System.getenv('NS_PREVIEW_KEYSTORE_FILE'))
+                storeType 'pkcs12'
                 storePassword System.getenv('NS_PREVIEW_SIGNING_PASSWORD')
                 keyAlias System.getenv('NS_PREVIEW_SIGNING_ALIAS') ?: 'neurosync_preview'
                 keyPassword System.getenv('NS_PREVIEW_SIGNING_PASSWORD')
