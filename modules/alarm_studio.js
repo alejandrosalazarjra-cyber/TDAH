@@ -59,13 +59,9 @@
   if(initial.getTime()>now&&allowedDay(initial))return initial;
   if(repeat==='none')return null;
   const d=new Date(initial);
-  for(let n=0;n<3000&&d.getTime()<=now;n++){
+  for(let n=0;n<3000&&(d.getTime()<=now||!allowedDay(d));n++){
    if(repeat==='weekly')d.setDate(d.getDate()+7);
    else d.setDate(d.getDate()+(repeat==='every2'?2:repeat==='every3'?3:1));
-   if((repeat==='weekdays'||repeat==='weekends')&&d.getTime()>now){
-    const w=d.getDay(),weekend=w===0||w===6;
-    if((repeat==='weekdays'&&weekend)||(repeat==='weekends'&&!weekend))continue;
-   }
   }
   if(!allowedDay(d))return null;
   return d.getTime()>now?d:null;
