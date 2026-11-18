@@ -31,7 +31,7 @@ public final class AlarmChallengeStore {
  public static void set(Context ctx,String id,String type){
   if(id==null||id.length()>100)return;
   if(!"math".equals(type)&&!"taps".equals(type)&&!"memory".equals(type)&&!"typing".equals(type)&&!"shake".equals(type)&&!"math_hard".equals(type)&&!"qr".equals(type)&&!"routine_focus".equals(type)&&!"routine_active".equals(type)&&!"routine_five".equals(type)
-    &&!"walk".equals(type)&&!"photo".equals(type)&&!"routine_custom".equals(type))type="none";
+    &&!"walk".equals(type)&&!"photo".equals(type)&&!"barcode".equals(type)&&!"routine_custom".equals(type))type="none";
   ctx.getSharedPreferences("ns_alarm_challenges",0).edit().putString(id,type).apply();
  }
  public static String get(Context ctx,String id){
