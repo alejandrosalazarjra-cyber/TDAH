@@ -2771,6 +2771,8 @@ window.NeuroAlarmAPI={
   var date=String(data.date||day()),time=String(data.time||'07:00');
   var validRepeats=['none','daily','weekly','every2','every3','weekdays','weekends'];
   if(/^days:[01]{7}$/.test(data.repeat)&&data.repeat.slice(5).includes('1'))validRepeats.push(data.repeat);
+  if(String(data.repeat||'').startsWith('days:')&&!validRepeats.includes(data.repeat))
+   return {ok:false,error:'Elige al menos un día de la semana'};
   var allowedMissions=['none','math','math_hard','typing','memory','taps','shake','qr','routine_focus','routine_active','routine_five'];
   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^\d{2}:\d{2}$/.test(time))
    return {ok:false,error:'Fecha u hora inválida'};
