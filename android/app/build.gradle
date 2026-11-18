@@ -13,7 +13,9 @@ android {
         if (oauthClient && !(oauthClient ==~ /^[A-Za-z0-9._-]+\.apps\.googleusercontent\.com$/)) {
             throw new GradleException('Cliente OAuth Web inválido')
         }
-        buildConfigField 'String', 'PUBLIC_API_BASE_URL', '"' + base.replaceAll('/+
+        def cleanBase = base.endsWith('/') ? base.substring(0,base.length()-1) : base
+        buildConfigField 'String', 'PUBLIC_API_BASE_URL', '"' + cleanBase + '"'
+        buildConfigField 'String', 'PUBLIC_GOOGLE_CLIENT_ID', '"' + oauthClient + '"'
         minSdk 26
         targetSdk 35
         versionCode 10
