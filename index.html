@@ -1897,7 +1897,7 @@ function alarmItem(a){
  };
  return e;
 }
-function renderAlarms(){fill('alarms-list',active(model.alarms).filter(owned),alarmItem,'No hay alarmas. Crea una para recordar algo importante.');window.dispatchEvent(new Event('neuro-alarm-changed'))}
+function renderAlarms(){fill('alarms-list',active(model.alarms).filter(owned),alarmItem,'No hay alarmas. Crea una para recordar algo importante.')}
 function renderCalendar(){var grid=by('calendar');grid.replaceChildren();by('month-title').textContent=month.toLocaleDateString('es-CO',{month:'long',year:'numeric'});var wd=['L','M','M','J','V','S','D'];wd.forEach(function(w){var e=document.createElement('span');e.className='week-label';e.textContent=w;grid.append(e)});
 var first=new Date(month.getFullYear(),month.getMonth(),1),offset=(first.getDay()+6)%7,last=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();
 for(var j=0;j<offset;j++){grid.append(document.createElement('span'))}
@@ -1909,7 +1909,7 @@ var list=by('users-list');if(!list)return;
 if(!nat||!nat.getUsers){list.innerHTML='<p class="hint">Las cuentas familiares requieren instalar la APK Android y activar el celular principal.</p>';return}
 try{var data=JSON.parse(nat.getUsers());if(!data.ok){list.textContent=data.error||'No disponible';return}
 list.replaceChildren();data.users.forEach(function(u){var d=document.createElement('div');d.className='profile-line';d.innerHTML='<span><b>'+esc(u.username)+'</b><br><small class="muted">'+(u.role==='admin'?'Administrador':'Miembro')+'</small></span><span class="chip">'+(u.active?'Activo':'Inactivo')+'</span>';list.append(d)})}catch(e){list.textContent='No se pudo obtener la lista de miembros'}}
-function show(view){if(view==='admin'&&session.role!=='admin')return;document.querySelectorAll('.view').forEach(function(v){v.classList.toggle('active',v.id==='view-'+view)});document.querySelectorAll('[data-view]').forEach(function(b){b.classList.toggle('active',b.dataset.view===view)});by('page-title').textContent=labels[view];render();if(view==='habits'){renderStreak();nsHealthRender()}if(view==='alarms'){nsWakeRender();checkAlarmPermissions()}}
+function show(view){if(view==='admin'&&session.role!=='admin')return;document.querySelectorAll('.view').forEach(function(v){v.classList.toggle('active',v.id==='view-'+view)});document.querySelectorAll('[data-view]').forEach(function(b){b.classList.toggle('active',b.dataset.view===view)});by('page-title').textContent=labels[view];render();if(view==='habits'){renderStreak();nsHealthRender()}if(view==='alarms'){nsWakeRender();checkAlarmPermissions();if(window.NeuroAlarmStudio)window.NeuroAlarmStudio.render()}}
 document.querySelectorAll('[data-view]').forEach(function(b){b.addEventListener('click',function(){show(b.dataset.view)})});
 by('prev-month').onclick=function(){month=new Date(month.getFullYear(),month.getMonth()-1,1);renderCalendar()};by('next-month').onclick=function(){month=new Date(month.getFullYear(),month.getMonth()+1,1);renderCalendar()};
 document.querySelectorAll('[data-filter]').forEach(function(b){b.onclick=function(){filter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(function(x){x.classList.toggle('active',x===b)});render()}});
