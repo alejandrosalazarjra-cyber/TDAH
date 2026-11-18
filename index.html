@@ -2730,6 +2730,7 @@ window.NeuroAlarmAPI={
  checkPermissions:function(){checkAlarmPermissions()},
  native:function(action){
   if(!nat)return false;
+  if(action==='test'){var button=by('alarm-test');if(button){button.click();return true}return false}
   var commands={
    sound:'chooseAlarmSound',clock:'openSystemClock',music:'createYouTubeMusicClockAlarm',
    test:'testAlarm',optimization:'requestAlarmPermissions'
