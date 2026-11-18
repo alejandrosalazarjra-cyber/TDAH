@@ -2190,6 +2190,7 @@ window.neuroSyncOnSync=function(payload,requestingUser){
 };
 function sync(){
  if(!session||session.google||!nat||syncing)return;
+ nsOutboxFlush();
  var content=JSON.stringify({tasks:model.tasks,packs:model.packs,alarms:model.alarms});
  if(nat.syncFamilyAsync){syncing=true;by('sync-status').textContent='Sincronizando…';try{nat.syncFamilyAsync(content,session.username)}catch(e){syncing=false;by('sync-status').textContent='Guardado local'}return}
  if(nat.syncFamily){try{window.neuroSyncOnSync(nat.syncFamily(content))}catch(e){by('sync-status').textContent='Guardado local'}}
@@ -2199,6 +2200,9 @@ setInterval(function(){
  if(session&&model&&!session.google&&!syncing&&!nsStorageRecoveryBlocked&&
     typeof document!=='undefined'&&!document.hidden)sync();
 },60000);
+if(typeof window!=='undefined')window.addEventListener('online',function(){
+ if(session&&!session.google)nsOutboxFlush();
+});
 by('sync-btn').onclick=sync;
 function getUsers(){if(!nat||!nat.getUsers)return [{username:session.username,role:session.role}];try{var r=JSON.parse(nat.getUsers());return r.users||[]}catch(e){return []}}
 function enter(u){
@@ -2873,6 +2877,53 @@ window.NeuroAlarmAPI={
 };
 
 /* Puente Task Studio: reutiliza modelo, historial y controles de acceso existentes. */
+/* Bandeja de salida aislada por cuenta, persistida antes de intentar la red.
+ * Una entrega incierta conserva el mismo requestId para reintentos idempotentes.
+ */
+function nsOutboxKey(){return 'ns_task_outbox_v1_'+(session?session.username:'')}
+function nsOutboxRead(){
+ if(!session)return [];
+ try{
+  var raw=localStorage.getItem(nsOutboxKey());
+  var entries=raw?JSON.parse(raw):[];
+  if(!Array.isArray(entries))return null;
+  return entries.filter(function(e){
+   return e&&e.sender===session.username&&typeof e.id==='string'&&
+    typeof e.recipient==='string'&&e.task&&typeof e.task.title==='string';
+  }).slice(0,100);
+ }catch(e){return null}
+}
+function nsOutboxWrite(entries){
+ if(!session||!Array.isArray(entries))return false;
+ try{
+  var value=JSON.stringify(entries);
+  localStorage.setItem(nsOutboxKey(),value);
+  return localStorage.getItem(nsOutboxKey())===value;
+ }catch(e){return false}
+}
+function nsOutboxAttempt(entry){
+ if(!nat||!nat.sendTaskToUser)return {ok:false,error:'Servidor no conectado'};
+ try{
+  var response=JSON.parse(nat.sendTaskToUser(entry.recipient,entry.id,JSON.stringify(entry.task)));
+  return response&&response.ok===true?response:
+   {ok:false,error:response&&response.error||'No se pudo entregar'};
+ }catch(e){return {ok:false,error:'Sin conexión con el servidor'}}
+}
+function nsOutboxFlush(){
+ if(!session)return {ok:false,remaining:0};
+ var who=session.username,items=nsOutboxRead();
+ if(items===null)return {ok:false,error:'No se pudo leer la bandeja de salida',remaining:0};
+ var remaining=items.slice(),delivered=0;
+ for(var i=0;i<Math.min(10,items.length);i++){
+  if(!session||session.username!==who)break;
+  var result=nsOutboxAttempt(items[i]);
+  if(!result.ok)continue;
+  var updated=remaining.filter(function(e){return e.id!==items[i].id});
+  if(nsOutboxWrite(updated)){remaining=updated;delivered++;}
+  // Si falla eliminar del almacenamiento, se mantiene para reintentar sin duplicar.
+ }
+ return {ok:true,delivered:delivered,remaining:remaining.length};
+}
 window.NeuroTasksAPI={
  ready:function(){return !!(session&&model)},
  list:function(){return session&&model?allTasks().map(function(t){return Object.assign({},t)}):[]},
@@ -2889,19 +2940,33 @@ window.NeuroTasksAPI={
   }catch(e){return []}
  },
  sendTo:function(recipient,task){
-  if(!session||!model||!nat||!nat.sendTaskToUser)return {ok:false,error:'Conecta NeuroSync al servidor familiar'};
+  if(!session||!model)return {ok:false,error:'Inicia sesión'};
   if(typeof recipient!=='string'||!/^[a-z0-9_-]{3,30}$/.test(recipient)||recipient===session.username)
    return {ok:false,error:'Selecciona una persona distinta'};
   if(!task||!String(task.title||'').trim())return {ok:false,error:'Escribe una tarea'};
-  try{
-   var requestId=typeof task.id==='string'&&task.id.length>=8?task.id:uid();
-   var payload={title:String(task.title).trim().slice(0,100),
-    date:task.date||day(),repeat:task.repeat||'none',category:task.category||'Personal',
-    steps:Array.isArray(task.steps)?task.steps:[]};
-   var result=JSON.parse(nat.sendTaskToUser(recipient,requestId,JSON.stringify(payload)));
-   return result&&typeof result.ok==='boolean'?result:{ok:false,error:'Respuesta inválida del servidor'};
-  }catch(e){return {ok:false,error:'No se pudo enviar. Comprueba la conexión y vuelve a intentarlo.'}}
+  var entries=nsOutboxRead();
+  if(entries===null)return {ok:false,error:'No se puede leer la bandeja de salida; no se enviará para proteger tus datos'};
+  var requestId=typeof task.id==='string'&&/^[a-zA-Z0-9_-]{8,100}$/.test(task.id)?task.id:uid();
+  var payload={title:String(task.title).trim().slice(0,100),
+   date:task.date||day(),repeat:task.repeat||'none',category:task.category||'Personal',
+   steps:Array.isArray(task.steps)?task.steps:[]};
+  var entry={id:requestId,recipient:recipient,sender:session.username,task:payload,createdAt:Date.now()};
+  if(!entries.some(function(e){return e.id===requestId&&e.recipient===recipient})){
+   if(entries.length>=100)return {ok:false,error:'La bandeja de salida está llena. Sincroniza antes de seguir.'};
+   // Guardar primero: nunca anunciar una entrega si falló la persistencia local.
+   if(!nsOutboxWrite(entries.concat(entry)))return {ok:false,error:'No se pudo guardar el envío pendiente'};
+  }
+  var result=nsOutboxAttempt(entry);
+  if(result.ok){
+   var pending=nsOutboxRead();
+   if(pending!==null)nsOutboxWrite(pending.filter(function(e){return !(e.id===requestId&&e.recipient===recipient)}));
+   return result;
+  }
+  return {ok:true,queued:true,recipient:recipient,id:requestId,
+   message:'Guardada en bandeja de salida. Se enviará al recuperar la conexión.'};
  },
+ outbox:function(){return nsOutboxRead()},
+ retryOutbox:function(){return nsOutboxFlush()},
 
  received:function(){
   return session&&model?model.tasks.filter(function(t){
@@ -2909,13 +2974,20 @@ window.NeuroTasksAPI={
   }).map(function(t){return Object.assign({},t)}):[];
  },
  sent:function(){
-  if(!session||!nat||!nat.sentTasks)return {ok:false,error:'Sin conexión con el servidor familiar',tasks:[]};
+  var pending=nsOutboxRead();
+  if(pending===null)return {ok:false,error:'Bandeja de salida ilegible',tasks:[]};
+  var queued=pending.map(function(e){return {id:e.id,recipient:e.recipient,title:e.task.title,
+   deliveryStatus:'queued',localOnly:true}});
+  if(!session||!nat||!nat.sentTasks)return {ok:true,offline:true,tasks:queued};
   try{
    var response=JSON.parse(nat.sentTasks());
-   return response&&response.ok&&Array.isArray(response.tasks)?response:
-    {ok:false,error:(response&&response.error)||'No se pudieron consultar envíos',tasks:[]};
-  }catch(e){return {ok:false,error:'No se pudo consultar la bandeja de envíos',tasks:[]}}
+   if(response&&response.ok&&Array.isArray(response.tasks)){
+    return {ok:true,tasks:queued.concat(response.tasks)};
+   }
+   return {ok:true,offline:true,tasks:queued};
+  }catch(e){return {ok:true,offline:true,tasks:queued}}
  },
+
  updateReceived:function(id,status){
   if(!session||!model||!nat||!nat.updateTaskDelivery)return {ok:false,error:'Conecta con el servidor familiar'};
   var task=model.tasks.find(function(t){return t&&t.id===id&&t.owner===session.username&&t.sentBy&&!t.deleted});
