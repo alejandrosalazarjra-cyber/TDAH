@@ -48,7 +48,9 @@ function taskRows(){
   '<div class="ns-ts-row"><button type="button" class="ns-ts-check" aria-label="Cambiar estado de '+escape(t.title)+'" data-check="'+escape(t.id)+'">'+
   (isDone(t,today)?'✓':'')+'</button><div><strong>'+escape(t.title)+'</strong><small>'+escape(t.category||'Personal')+' · '+
   escape(t.repeat==='daily'?'Diario':t.repeat==='weekly'?'Semanal':'Una vez')+
-  (t.steps?.length?' · '+t.steps.length+' pasos':'')+'</small></div></div>').join(''):
+  (t.steps?.length?' · '+t.steps.length+' pasos':'')+
+  (t.owner==='todos'?' · Compartida con la familia':'')+'</small></div>'+
+  (api.canShare()&&t.owner===api.owner()?'<button type="button" class="ns-ts-share" data-share="'+escape(t.id)+'" aria-label="Compartir '+escape(t.title)+' con toda la familia">Compartir</button>':'')+'</div>').join(''):
   '<div class="ns-ts-blank"><div class="ns-ts-icon">☑</div><p>Sin tareas en esta categoría.</p><small>Usa «+ Añadir» para comenzar.</small></div>';
 }
 function renderTasks(){
@@ -96,6 +98,7 @@ function renderPane(){
    '<form id="ns-ts-quick-form"><input name="title" required maxlength="100" autocomplete="off" placeholder="¿Qué necesitas hacer?">'+
    '<div class="ns-ts-inline"><label>Categoría<select name="category"><option>Personal</option><option>Trabajo</option><option>Estudio</option><option>Salud</option><option>Movimiento</option></select></label>'+
    '<label>Repetición<select name="repeat"><option value="none">Una vez</option><option value="daily">Diaria</option><option value="weekly">Semanal</option></select></label></div>'+
+   (api.canShare()?'<label class="ns-ts-share-option"><input type="checkbox" name="shared" value="yes"> Compartir con toda la familia</label>':'')+
    '<button type="submit">Crear tarea</button><button type="button" data-action="full">Opciones avanzadas</button></form>';
  }
  pane.innerHTML=markup;
@@ -134,6 +137,13 @@ app.addEventListener('click',event=>{
  if(el.dataset.category){category=el.dataset.category;renderTasks();return}
  if(el.dataset.tab){tab=el.dataset.tab;renderTasks();return}
  if(el.dataset.check){if(api.toggleToday(el.dataset.check))renderTasks();return}
+ if(el.dataset.share){
+  if(!api.canShare())return;
+  api.confirm('Compartir tarea','Esta tarea será visible para toda la familia. Podrán marcarla como completada.','Compartir').then(function(ok){
+    if(ok){if(api.share(el.dataset.share))renderTasks();}
+  });
+  return;
+ }
  if(el.dataset.habit){
   const repeat=el.dataset.repeat,group=el.dataset.group;
   if(api.create({title:el.dataset.habit,category:group,repeat})){renderTasks()}
@@ -154,6 +164,7 @@ app.addEventListener('submit',event=>{
  const form=event.target;
  if(form.id==='ns-ts-quick-form'){
   event.preventDefault();const v=Object.fromEntries(new FormData(form).entries());
+  v.shared=form.elements.shared?.checked===true;
   if(api.create(v)){sheet=false;renderTasks()}
  }
  if(form.id==='ns-ts-template-form'){
