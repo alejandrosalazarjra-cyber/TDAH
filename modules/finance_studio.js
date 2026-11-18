@@ -193,4 +193,5 @@ window.NeuroFinanceStudio={render,syncLauncher:function(){if(user()){const b=rea
  try{if(window.NeuroFinanceAPI?.updateLauncher&&user())window.NeuroFinanceAPI.updateLauncher(false,0,0,0)}catch(e){}
 }};
 render();
+window.NeuroFinanceStudio.syncLauncher();
 })();
