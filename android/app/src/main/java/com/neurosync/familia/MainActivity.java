@@ -485,6 +485,46 @@ public final class MainActivity extends Activity {
       }catch(Exception e){return AccountStore.fail("No se pudo restaurar la sesión").toString();}
     }
     @JavascriptInterface public String getUsers(){return call("/users",new JSONObject()).toString();}
+    /** Aviso local únicamente para una tarea nueva de la cuenta autenticada.
+     * La pantalla bloqueada no expone el título de la tarea.
+     */
+    @JavascriptInterface public boolean notifyTaskReceived(String taskId,String sender){
+      JSONObject user=sessionUser;
+      if(user==null||sessionToken.isEmpty()||taskId==null||taskId.length()<5||taskId.length()>100||
+          sender==null||!sender.matches("[a-z0-9_\\-]{3,30}"))return false;
+      if(localHost()&&AccountStore.identity(MainActivity.this,sessionToken)==null)return false;
+      if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+          !=PackageManager.PERMISSION_GRANTED)return false;
+      String username=user.optString("username","");
+      if(username.isEmpty())return false;
+      String seenKey=Integer.toHexString((username+":"+taskId).hashCode())+"_"+taskId;
+      android.content.SharedPreferences seen=getSharedPreferences("ns_received_task_notices",MODE_PRIVATE);
+      if(seen.getBoolean(seenKey,false))return true;
+      try{
+        NotificationManager manager=getSystemService(NotificationManager.class);
+        if(manager==null||!manager.areNotificationsEnabled())return false;
+        final String channel="ns_family_tasks_v1";
+        manager.createNotificationChannel(new NotificationChannel(channel,"Tareas familiares",
+          NotificationManager.IMPORTANCE_DEFAULT));
+        Intent open=new Intent(MainActivity.this,MainActivity.class)
+          .putExtra("neurosync_view","tasks")
+          .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        int identifier=(username+":"+taskId).hashCode()&0x7fffffff;
+        PendingIntent action=PendingIntent.getActivity(MainActivity.this,identifier,open,
+          PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+        Notification notification=new Notification.Builder(MainActivity.this,channel)
+          .setSmallIcon(android.R.drawable.stat_notify_more)
+          .setContentTitle("Nueva tarea recibida")
+          .setContentText("Tienes una tarea nueva en tu bandeja de NeuroSync")
+          .setContentIntent(action).setAutoCancel(true)
+          .setVisibility(Notification.VISIBILITY_PRIVATE).build();
+        manager.notify("ns_task_"+username,identifier,notification);
+        return seen.edit().putBoolean(seenKey,true).commit();
+      }catch(Exception e){
+        android.util.Log.w("NeuroSync","No se pudo mostrar notificación de tarea",e);
+        return false;
+      }
+    }
     @JavascriptInterface public String sentTasks(){
       return call("/sent-tasks",new JSONObject()).toString();
     }
