@@ -28,6 +28,7 @@
   {key:'qr',icon:'▣',title:'Código QR físico',detail:'Requiere registrar previamente un código',group:'Despierta tu cuerpo'},
   {key:'routine_focus',icon:'◷',title:'Rutina mental',detail:'Matemáticas y escritura',group:'Rutinas de NeuroSync'},
   {key:'routine_active',icon:'✦',title:'Rutina activa',detail:'Memoria, movimiento y matemáticas',group:'Rutinas de NeuroSync'},
+  {key:'routine_five',icon:'★',title:'Cinco desafíos',detail:'Matemáticas, memoria, escritura, toques y movimiento',group:'Rutinas de NeuroSync'},
   {key:'none',icon:'—',title:'Sin desafío',detail:'Detener con un botón',group:'Otras opciones'}
  ];
  const planned=[
@@ -50,14 +51,23 @@
   const initial=new Date(parts[0],parts[1]-1,parts[2],clock[0],clock[1]);
   if(!Number.isFinite(initial.getTime()))return null;
   const now=Date.now();
-  if(initial.getTime()>now)return initial;
   const repeat=a.repeat||(a.daily?'daily':'none');
+  const allowedDay=d=>{
+   const w=d.getDay(),weekend=w===0||w===6;
+   return repeat==='weekdays'?!weekend:repeat==='weekends'?weekend:true;
+  };
+  if(initial.getTime()>now&&allowedDay(initial))return initial;
   if(repeat==='none')return null;
   const d=new Date(initial);
   for(let n=0;n<3000&&d.getTime()<=now;n++){
    if(repeat==='weekly')d.setDate(d.getDate()+7);
    else d.setDate(d.getDate()+(repeat==='every2'?2:repeat==='every3'?3:1));
+   if((repeat==='weekdays'||repeat==='weekends')&&d.getTime()>now){
+    const w=d.getDay(),weekend=w===0||w===6;
+    if((repeat==='weekdays'&&weekend)||(repeat==='weekends'&&!weekend))continue;
+   }
   }
+  if(!allowedDay(d))return null;
   return d.getTime()>now?d:null;
  }
  function until(date){
@@ -95,7 +105,7 @@
    return '<article class="ns-as-alarm-row">'+
     '<button type="button" class="ns-as-row-main" data-edit="'+escape(a.id)+'" aria-label="Editar '+escape(a.title)+'">'+
     '<strong>'+escape(a.time||'--:--')+'</strong><span><b>'+escape(a.title||'Alarma')+'</b>'+
-    '<small>'+escape(a.repeat==='daily'?'Todos los días':a.repeat==='weekly'?'Semanal':a.repeat==='every2'?'Cada 2 días':a.repeat==='every3'?'Cada 3 días':'Una vez')+
+    '<small>'+escape(a.repeat==='daily'?'Todos los días':a.repeat==='weekly'?'Semanal':a.repeat==='every2'?'Cada 2 días':a.repeat==='every3'?'Cada 3 días':a.repeat==='weekdays'?'Lun a vie':a.repeat==='weekends'?'Fines de semana':'Una vez')+
     ' · '+escape(mission?mission.title:'Sin desafío')+'</small>'+
     '<small>'+escape(date?until(date):'Desactivada o vencida')+'</small></span></button>'+
     '<label class="ns-as-switch"><input type="checkbox" data-toggle="'+escape(a.id)+'" '+
@@ -126,7 +136,7 @@
  }
  function editor(){
   const d=state.draft||defaultDraft();
-  const mission=MISSIONS.find(m=>m.key===d.challenge)||MISSIONS[9];
+  const mission=MISSIONS.find(m=>m.key===d.challenge)||MISSIONS.find(m=>m.key==='none');
   const edit=!!state.editing;
   shell(edit?'Editar alarma':'Nueva alarma','Configura solo lo necesario',
    '<form id="ns-as-form" class="ns-as-form">'+
@@ -136,7 +146,7 @@
    '<label>Primera fecha<input type="date" name="date" required value="'+escape(d.date)+'"></label>'+
    '<label>Repetición<select name="repeat">'+
    [['none','Una vez'],['daily','Todos los días'],['weekly','Una vez por semana'],
-    ['every2','Cada 2 días'],['every3','Cada 3 días']]
+    ['every2','Cada 2 días'],['every3','Cada 3 días'],['weekdays','Lunes a viernes'],['weekends','Sábados y domingos']]
     .map(([v,t])=>'<option value="'+v+'"'+(d.repeat===v?' selected':'')+'>'+t+'</option>').join('')+
    '</select></label>'+
    '<div class="ns-as-section-title">Desafío</div>'+
