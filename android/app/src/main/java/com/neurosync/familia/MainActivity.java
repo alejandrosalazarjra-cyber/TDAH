@@ -525,6 +525,43 @@ public final class MainActivity extends Activity {
         return false;
       }
     }
+    /** Aviso de estado de tareas enviadas; únicamente metadatos ya filtrados por servidor. */
+    @JavascriptInterface public boolean notifySentTaskStatus(String taskId,String status){
+      JSONObject user=sessionUser;
+      if(user==null||sessionToken.isEmpty()||taskId==null||
+         !taskId.matches("sent_[a-zA-Z0-9-]{8,90}")||
+         !("accepted".equals(status)||"completed".equals(status)))return false;
+      if(localHost()&&AccountStore.identity(MainActivity.this,sessionToken)==null)return false;
+      if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+          !=PackageManager.PERMISSION_GRANTED)return false;
+      String username=user.optString("username","");
+      if(username.isEmpty())return false;
+      try{
+        NotificationManager manager=getSystemService(NotificationManager.class);
+        if(manager==null||!manager.areNotificationsEnabled())return false;
+        String channel="ns_family_tasks_v1";
+        manager.createNotificationChannel(new NotificationChannel(channel,"Tareas familiares",
+          NotificationManager.IMPORTANCE_DEFAULT));
+        String identity=username+":"+taskId+":"+status;
+        int notificationId=identity.hashCode()&0x7fffffff;
+        Intent open=new Intent(MainActivity.this,MainActivity.class)
+          .putExtra("neurosync_view","tasks")
+          .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        PendingIntent tap=PendingIntent.getActivity(MainActivity.this,notificationId,open,
+          PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+        Notification notice=new Notification.Builder(MainActivity.this,channel)
+          .setSmallIcon(android.R.drawable.stat_notify_more)
+          .setContentTitle("accepted".equals(status)?"Tarea aceptada":"Tarea completada")
+          .setContentText("Revisa el estado de una tarea que enviaste")
+          .setContentIntent(tap).setAutoCancel(true)
+          .setVisibility(Notification.VISIBILITY_PRIVATE).build();
+        manager.notify("ns_task_status_"+username,notificationId,notice);
+        return true;
+      }catch(Exception e){
+        android.util.Log.w("NeuroSync","No se pudo avisar del estado de tarea",e);
+        return false;
+      }
+    }
     @JavascriptInterface public String sentTasks(){
       return call("/sent-tasks",new JSONObject()).toString();
     }
