@@ -120,7 +120,8 @@
   const d=new Date(Date.now()+3600000);d.setSeconds(0,0);
   const pref=api.preferences();
   return {title:'Despertar',date:dateKey(d),time:pad(d.getHours())+':'+pad(d.getMinutes()),
-   repeat:'none',challenge:'none',snoozeMinutes:pref.snoozeMinutes||5,snoozeLimit:pref.snoozeLimit??3};
+   repeat:'none',challenge:'none',snoozeMinutes:pref.snoozeMinutes||5,snoozeLimit:pref.snoozeLimit??3,
+   volumePercent:100,vibration:true,gentleWake:false};
  }
  function startEditor(id){
   state.editing=id||null;
@@ -137,6 +138,12 @@
    state.draft.sequence=[...studio.querySelectorAll('[data-sequence-step]')]
      .map(el=>el.value).filter(Boolean);
   }
+  const volume=$('[name="volumePercent"]');
+  if(volume)state.draft.volumePercent=+volume.value;
+  const vibration=$('[name="vibration"]');
+  if(vibration)state.draft.vibration=vibration.checked;
+  const gentle=$('[name="gentleWake"]');
+  if(gentle)state.draft.gentleWake=gentle.checked;
  }
  function editor(){
   const d=state.draft||defaultDraft();
@@ -173,6 +180,9 @@
     action(d.challenge==='barcode'?'Escanear código de barras':'Escanear QR de referencia',
       d.challenge==='barcode'?'barcode':'qr'):'')+
    '<div class="ns-as-section-title">Sonido</div>'+
+   '<label>Volumen del sonido ('+(d.volumePercent??100)+'%)<input type="range" name="volumePercent" min="0" max="100" step="5" value="'+(d.volumePercent??100)+'"></label>'+
+   '<label class="ns-as-check"><input name="vibration" type="checkbox" '+(d.vibration!==false?'checked':'')+'> Vibrar cuando suene</label>'+
+   '<label class="ns-as-check"><input name="gentleWake" type="checkbox" '+(d.gentleWake?'checked':'')+'> Subir el volumen gradualmente (30 s)</label>'+
    '<p class="ns-as-hint">'+(edit&&api.hasSound(state.editing)?'Tono personalizado seleccionado':'Tono local predeterminado')+'</p>'+
    (edit?action('Elegir tono para esta alarma','sound-alarm')+action('Usar tono predeterminado','clear-sound'):'<p class="ns-as-hint">Guarda la alarma para asignarle un tono individual.</p>')+
    '<div class="ns-as-sticky"><button type="submit" class="ns-as-save">'+(edit?'Guardar cambios':'Guardar alarma')+'</button>'+
@@ -183,7 +193,12 @@
    const date=nextOccurrence(Object.assign({},d,{enabled:true}));
    $('#ns-as-next-preview').textContent=date?until(date):'Elige una fecha futura';
   }
-  form.addEventListener('input',preview);
+  form.addEventListener('input',e=>{
+    if(e.target&&e.target.name==='volumePercent'){
+      const label=e.target.closest('label');if(label)label.childNodes[0].textContent='Volumen del sonido ('+e.target.value+'%)';
+    }
+    preview();
+  });
   form.addEventListener('change',preview);
   form.onsubmit=e=>{
    e.preventDefault();captureDraft();
