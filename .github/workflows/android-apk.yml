@@ -70,6 +70,7 @@ jobs:
           node tests/test_task_studio.js
           node tests/test_departure_studio.js
           node tests/test_pomodoro_studio.js
+          node tests/test_wellbeing_studio.js
 
       - name: Validar interfaz antes de compilar
         shell: bash
@@ -220,6 +221,7 @@ jobs:
           cp modules/task_studio.js modules/task_studio.css android/app/src/main/assets/modules/
           cp modules/departure_studio.js modules/departure_studio.css android/app/src/main/assets/modules/
           cp modules/pomodoro_studio.js modules/pomodoro_studio.css android/app/src/main/assets/modules/
+          cp modules/wellbeing_studio.js modules/wellbeing_studio.css android/app/src/main/assets/modules/
           test -s android/app/src/main/assets/modules/pomodoro_studio.js
           test -s android/app/src/main/assets/modules/pomodoro_studio.css
           # La escena Bosque fue generada con Higgsfield. Si el origen deja de estar
