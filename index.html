@@ -2914,7 +2914,8 @@ function nsOutboxFlush(){
  var who=session.username,items=nsOutboxRead();
  if(items===null)return {ok:false,error:'No se pudo leer la bandeja de salida',remaining:0};
  var remaining=items.slice(),delivered=0;
- for(var i=0;i<Math.min(10,items.length);i++){
+ // Un intento por ciclo: el puente nativo síncrono no debe bloquear la pantalla durante decenas de segundos.
+ for(var i=0;i<Math.min(1,items.length);i++){
   if(!session||session.username!==who)break;
   var result=nsOutboxAttempt(items[i]);
   if(!result.ok)continue;
@@ -2951,7 +2952,11 @@ window.NeuroTasksAPI={
    date:task.date||day(),repeat:task.repeat||'none',category:task.category||'Personal',
    steps:Array.isArray(task.steps)?task.steps:[]};
   var entry={id:requestId,recipient:recipient,sender:session.username,task:payload,createdAt:Date.now()};
-  if(!entries.some(function(e){return e.id===requestId&&e.recipient===recipient})){
+  var existing=entries.find(function(e){return e.id===requestId&&e.recipient===recipient});
+  if(existing){
+   // La solicitud guardada es inmutable: nunca cambiar su contenido al reintentar.
+   entry=existing;
+  }else{
    if(entries.length>=100)return {ok:false,error:'La bandeja de salida está llena. Sincroniza antes de seguir.'};
    // Guardar primero: nunca anunciar una entrega si falló la persistencia local.
    if(!nsOutboxWrite(entries.concat(entry)))return {ok:false,error:'No se pudo guardar el envío pendiente'};
