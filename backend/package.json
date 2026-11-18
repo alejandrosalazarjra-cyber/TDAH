@@ -1,0 +1,16 @@
+{
+  "name": "neurosync-public-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "API pública independiente de NeuroSync; no sustituye el servidor LAN existente",
+  "type": "commonjs",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js"
+  },
+  "dependencies": {
+    "pg": "^8.13.0",
+    "google-auth-library": "^9.15.0"
+  }
+}
