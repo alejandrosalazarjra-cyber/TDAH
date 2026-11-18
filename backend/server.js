@@ -7,6 +7,7 @@ const http=require('node:http');
 const {randomUUID,randomBytes,createHash}=require('node:crypto');
 const {Pool}=require('pg');
 const {OAuth2Client}=require('google-auth-library');
+const {serveLegal}=require('./legal_pages');
 
 const DB=process.env.DATABASE_URL;
 const GOOGLE_CLIENT_ID=process.env.GOOGLE_CLIENT_ID;
