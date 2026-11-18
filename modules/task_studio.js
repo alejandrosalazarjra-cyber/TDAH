@@ -92,14 +92,19 @@ function renderTasks(){
   '<button data-tab="sent" '+(tab==='sent'?'aria-pressed="true"':'')+'>Enviadas</button></div>'+
   '<div class="ns-ts-items">'+(tab==='received'?receivedRows():tab==='sent'?sentRows():taskRows())+'</div>'+
   '<div class="ns-ts-toolbar"><button data-action="habits">+ Catálogo de hábitos</button>'+
-  '<button data-action="templates">Plantillas de tareas</button></div>'+
+  '<button data-action="templates">Plantillas de tareas</button>'+
+  (api.publicAccount()?'<button data-action="contacts">Mis contactos</button>':'')+'</div>'+
   '<div class="ns-ts-pane" id="ns-ts-pane"></div>';
  if(sheet)renderPane();
 }
 function recipientOptions(includeSelf){
  const contacts=api.contacts();
  return (includeSelf?'<option value="">Solo para mí</option>':'<option value="">Selecciona a alguien</option>')+
-  contacts.map(u=>'<option value="'+escape(u)+'">'+escape(u)+'</option>').join('');
+  contacts.map(u=>{
+   const value=typeof u==='string'?u:u.id;
+   const label=typeof u==='string'?u:u.label;
+   return '<option value="'+escape(value)+'">'+escape(label)+'</option>';
+  }).join('');
 }
 function renderPane(){
  const pane=app.querySelector('#ns-ts-pane');if(!pane)return;
@@ -124,6 +129,18 @@ function renderPane(){
    '<input required name="title" maxlength="100" placeholder="Nombre de la plantilla">'+
    '<textarea required name="steps" placeholder="Un paso por línea (máximo 20)"></textarea>'+
    '<button type="submit">Guardar plantilla</button></form>';
+ }else if(sheet==='contacts'){
+  const invites=api.publicInvitations();
+  const pending=invites.ok&&Array.isArray(invites.invitations)?invites.invitations:[];
+  const contacts=api.contacts();
+  markup='<div class="ns-ts-pane-head"><h3>Contactos</h3><button type="button" data-action="close" aria-label="Cerrar">×</button></div>'+
+   '<p>Busca a una persona por su identificador. Solo podrás enviar tareas cuando acepte la invitación.</p>'+
+   '<form id="ns-ts-lookup-form"><label>Buscar usuario<input name="handle" required maxlength="31" placeholder="@usuario" autocomplete="off"></label><button type="submit">Buscar</button></form>'+
+   '<div id="ns-ts-search-result" role="status"></div>'+
+   '<h4>Invitaciones recibidas</h4>'+
+   (pending.length?pending.slice(0,20).map(t=>'<div class="ns-ts-template"><div><strong>'+escape(t.display_name||t.handle)+'</strong><small>@'+escape(t.handle)+'</small></div><button type="button" data-invite-accept="'+escape(t.id)+'">Aceptar</button></div>').join(''):'<p>Sin invitaciones pendientes.</p>')+
+   '<h4>Mis contactos</h4>'+
+   (contacts.length?contacts.map(t=>'<p>'+escape(t.label||t)+'</p>').join(''):'<p>Aún no tienes contactos.</p>');
  }else if(sheet==='quick'){
   markup='<div class="ns-ts-pane-head"><h3>Nueva tarea</h3><button type="button" data-action="close" aria-label="Cerrar">×</button></div>'+
    '<form id="ns-ts-quick-form"><input name="title" required maxlength="100" autocomplete="off" placeholder="¿Qué necesitas hacer?">'+
@@ -182,6 +199,18 @@ app.addEventListener('click',event=>{
  if(el.dataset.send){
   sendTaskId=el.dataset.send;sheet='send';renderTasks();return;
  }
+ if(el.dataset.inviteAccept){
+  const result=api.publicAcceptInvite(el.dataset.inviteAccept);
+  if(result.ok)renderTasks();
+  else {const target=app.querySelector('#ns-ts-search-result');if(target)target.textContent=result.error||'No se pudo aceptar';}
+  return;
+ }
+ if(el.dataset.inviteSend){
+  const result=api.publicInvite(el.dataset.inviteSend);
+  const target=app.querySelector('#ns-ts-search-result');
+  if(target)target.textContent=result.ok?'Invitación enviada. Podrás compartir tareas cuando la acepten.':(result.error||'No se pudo enviar');
+  return;
+ }
  if(el.dataset.habit){
   const repeat=el.dataset.repeat,group=el.dataset.group;
   if(api.create({title:el.dataset.habit,category:group,repeat})){renderTasks()}
@@ -194,7 +223,7 @@ app.addEventListener('click',event=>{
   sheet=false;renderTasks();return;
  }
  const action=el.dataset.action;
- if(['habits','templates','quick'].includes(action)){sheet=action;renderTasks()}
+ if(['habits','templates','quick','contacts'].includes(action)){sheet=action;renderTasks()}
  else if(action==='close'){sheet=false;renderTasks()}
  else if(action==='full'){api.openExistingEditor()}
 });
@@ -218,6 +247,16 @@ app.addEventListener('submit',event=>{
   const result=api.sendTo(recipient,existing);
   if(result.ok){sheet=false;sendTaskId=null;tab='sent';renderTasks();}
   else {let note=form.querySelector('[data-send-error]');if(!note){note=document.createElement('p');note.setAttribute('role','alert');note.setAttribute('data-send-error','');form.append(note);}note.textContent=result.error||'No se pudo enviar';}
+ }
+ if(form.id==='ns-ts-lookup-form'){
+  event.preventDefault();
+  const result=api.publicLookup(form.elements.handle.value.trim());
+  const target=app.querySelector('#ns-ts-search-result');
+  if(!target)return;
+  if(!result.ok){target.textContent=result.error||'No se pudo buscar';return;}
+  if(!result.user){target.textContent='No se encontró un perfil público con ese identificador.';return;}
+  target.innerHTML='<div class="ns-ts-template"><div><strong>'+escape(result.user.display_name)+'</strong><small>@'+escape(result.user.handle)+'</small></div>'+
+   '<button type="button" data-invite-send="'+escape(result.user.id)+'">Invitar</button></div>';
  }
  if(form.id==='ns-ts-template-form'){
   event.preventDefault();const v=Object.fromEntries(new FormData(form).entries());
