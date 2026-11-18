@@ -74,12 +74,14 @@ public final class MainActivity extends Activity {
   private void forgetNativeSession(){
     if(localHost()&&!sessionToken.isEmpty())AccountStore.revoke(this,sessionToken);
     SessionVault.clear(this);
+    TaskBackgroundSync.cancel(this);
     sessionUser=null;sessionToken="";
   }
   @Override public void onCreate(Bundle state){
     super.onCreate(state);
     pendingNavigation=allowedNavigation(getIntent()==null?null:getIntent().getStringExtra("neurosync_view"));
     restoreNativeSession();
+    if(sessionUser!=null)TaskBackgroundSync.schedule(this);
     googleAccounts=new GoogleAccountBridge(this);
     getWindow().setStatusBarColor(Color.rgb(246,248,252));
     getWindow().setNavigationBarColor(Color.rgb(255,255,255));
@@ -379,6 +381,7 @@ public final class MainActivity extends Activity {
         sessionToken=result.optString("token","");
         sessionUser=result.optJSONObject("user");
         boolean persisted=SessionVault.save(MainActivity.this,sessionToken,sessionUser,currentMode(),currentEndpoint());
+        if(persisted)TaskBackgroundSync.schedule(MainActivity.this);
         try{
           result.put("sessionPersistent",persisted);
           if(!persisted)result.put("sessionWarning",
@@ -445,6 +448,7 @@ public final class MainActivity extends Activity {
       sessionToken=result.optString("token","");
       sessionUser=user;
       boolean persisted=SessionVault.save(MainActivity.this,sessionToken,sessionUser,currentMode(),currentEndpoint());
+        if(persisted)TaskBackgroundSync.schedule(MainActivity.this);
         try{
           result.put("sessionPersistent",persisted);
           if(!persisted)result.put("sessionWarning",
