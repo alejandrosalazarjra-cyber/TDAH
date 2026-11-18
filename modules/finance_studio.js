@@ -13,6 +13,39 @@ const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const cop=n=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(n);
 const peso=x=>{const n=Number(x);return Number.isSafeInteger(n)&&n>=0&&n<=999999999999?n:null};
 const month=x=>String(x||'').slice(0,7);
+// Verificación calendaria estricta: Date.parse puede normalizar fechas imposibles.
+function validDate(value){
+ if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value))return false;
+ const [year,mon,day]=value.split('-').map(Number);
+ if(year<1900||year>9999||mon<1||mon>12||day<1)return false;
+ return day<=new Date(Date.UTC(year,mon,0)).getUTCDate();
+}
+// Rechazar libros dañados sin modificar el respaldo almacenado.
+function validBook(b){
+ if(!b||b.version!==1||!Array.isArray(b.accounts)||!Array.isArray(b.entries)||
+    !b.budgets||typeof b.budgets!=='object'||Array.isArray(b.budgets)||
+    b.accounts.length<1||b.accounts.length>30)return false;
+ const ids=new Set(),entryIds=new Set();
+ for(const a of b.accounts){
+  if(!a||typeof a.id!=='string'||!a.id||ids.has(a.id)||
+     typeof a.name!=='string'||peso(a.opening)===null)return false;
+  ids.add(a.id);
+ }
+ for(const e of b.entries){
+  if(!e||typeof e.id!=='string'||!e.id||entryIds.has(e.id)||
+    !validDate(e.date)||peso(e.amount)===null||e.amount<1||
+    !['income','expense','transfer'].includes(e.type))return false;
+  entryIds.add(e.id);
+  if(e.voidedAt!=null&&(typeof e.voidedAt!=='string'||!Number.isFinite(Date.parse(e.voidedAt))))return false;
+  if(e.type==='transfer'){
+   if(!ids.has(e.from)||!ids.has(e.to)||e.from===e.to)return false;
+  }else if(!ids.has(e.account))return false;
+ }
+ for(const [period,value] of Object.entries(b.budgets)){
+  if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(period)||peso(value)===null)return false;
+ }
+ return true;
+}
 const uuid=()=>String(Date.now())+'-'+Math.random().toString(36).slice(2,10);
 const state={selected:month(today()),tab:'overview',notice:''};
 function user(){return window.NeuroFinanceAPI?.account()||null}
@@ -23,7 +56,7 @@ function read(){
  try{
   const raw=localStorage.getItem(key());if(!raw)return newBook();
   const book=JSON.parse(raw);
-  if(!book||!Array.isArray(book.accounts)||!Array.isArray(book.entries)||typeof book.budgets!=='object')throw Error('Formato inválido');
+  if(!validBook(book))throw Error('Formato inválido');
   return book;
  }catch(e){state.notice='No se puede leer el libro financiero. No se sobrescribirá hasta recuperar sus datos.';return null}
 }
@@ -157,7 +190,7 @@ function modal(type){
    if(!v.name.trim()||b.accounts.length>=30){msg.textContent='Revisa el nombre o el límite de cuentas.';return}
    b.accounts.push({id:uuid(),name:v.name.trim().slice(0,50),opening:amount});
   }else{
-   if(!/^\d{4}-\d{2}-\d{2}$/.test(v.date)||!Number.isFinite(Date.parse(v.date+'T12:00:00'))||v.date>today()){
+   if(!validDate(v.date)||v.date>today()){
     msg.textContent='La fecha debe ser válida y no futura.';return}
    if(!b.accounts.some(a=>a.id===v.account)){msg.textContent='Cuenta inválida.';return}
    if(v.type==='transfer'&&(!b.accounts.some(a=>a.id===v.to)||v.to===v.account)){msg.textContent='Elige otra cuenta de destino.';return}
