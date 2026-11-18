@@ -602,6 +602,14 @@ public final class MainActivity extends Activity {
     @JavascriptInterface public void setAlarmQrCode(String id,String value){
       AlarmChallengeStore.setQr(MainActivity.this,id,value);
     }
+    @JavascriptInterface public void setAlarmFadeSeconds(int seconds){
+      if(seconds!=0&&seconds!=15&&seconds!=30&&seconds!=60)return;
+      getSharedPreferences("ns_alarm_audio_settings",MODE_PRIVATE).edit()
+        .putInt("fadeSeconds",seconds).apply();
+    }
+    @JavascriptInterface public int getAlarmFadeSeconds(){
+      return getSharedPreferences("ns_alarm_audio_settings",MODE_PRIVATE).getInt("fadeSeconds",0);
+    }
     @JavascriptInterface public void setAlarmOptions(String id,int snoozeMinutes,int snoozeLimit){
       AlarmOptionsStore.set(MainActivity.this,id,snoozeMinutes,snoozeLimit);
     }
