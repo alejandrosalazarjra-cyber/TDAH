@@ -75,4 +75,8 @@ const badBudget=malformed(validLedger);badBudget.budgets=null;
 assert.equal(validators.validBook(badBudget),false,'No aceptar presupuestos nulos');
 const badAmount=malformed(validLedger);badAmount.entries[0].amount=-10;
 assert.equal(validators.validBook(badAmount),false,'No aceptar montos negativos');
+const textAmount=malformed(validLedger);textAmount.entries[0].amount='1000';
+assert.equal(validators.validBook(textAmount),false,'No permitir montos de texto que concatenen saldos');
+const textOpening=malformed(validLedger);textOpening.accounts[0].opening='10000';
+assert.equal(validators.validBook(textOpening),false,'No permitir saldos iniciales de texto');
 console.log('Finanzas OK: asientos, conciliación de saldos, transferencias, categorías, privacidad del launcher');
