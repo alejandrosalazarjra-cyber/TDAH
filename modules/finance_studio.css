@@ -57,3 +57,16 @@
 #view-finance :focus-visible{outline:3px solid #1686f7!important;outline-offset:2px}
 @media(max-width:550px){#view-finance .ns-fi-summary{grid-template-columns:1fr 1fr}#view-finance .ns-fi-summary>.ns-fi-balance{grid-column:span 2}#view-finance .ns-fi-head>button{font-size:12px}}
 @media(prefers-reduced-motion:reduce){#view-finance *{animation:none!important;transition:none!important}}
+
+/* Acciones contables claras y reversibles; sin botones apretados. */
+#view-finance .ns-fi-entry-actions{display:grid;justify-items:end;gap:4px;max-width:44%;text-align:right}
+#view-finance .ns-fi-entry-actions strong{white-space:normal;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+#view-finance .ns-fi-entry-actions button{min-height:36px;padding:6px 10px;background:#edf4fc;color:#41698c;
+ border:1px solid #d7e7f5;border-radius:9px;font-size:11px}
+#view-finance .ns-fi-void-note{font-size:10px;color:#8f9daf}
+#view-finance .ns-fi-tools{display:flex;flex-wrap:wrap;gap:10px;margin-top:13px}
+#view-finance .ns-fi-tools button{background:#e8f3fd;color:#176ea9;border:1px solid #c8e1f7;
+ border-radius:12px;padding:10px 14px;font-size:12px;font-weight:700}
+#view-finance .ns-fi-dialog>p{font-size:13px;color:#627990;line-height:1.5}
+#view-finance .ns-fi-dialog>strong{color:#284968}
+#view-finance .ns-fi-modal-buttons button[data-finance=confirm-void]{background:#a74051;color:#fff}
