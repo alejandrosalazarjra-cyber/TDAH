@@ -54,6 +54,7 @@
   const repeat=a.repeat||(a.daily?'daily':'none');
   const allowedDay=d=>{
    const w=d.getDay(),weekend=w===0||w===6;
+   if(/^days:[01]{7}$/.test(repeat))return repeat.charAt(5+w)==='1';
    return repeat==='weekdays'?!weekend:repeat==='weekends'?weekend:true;
   };
   if(initial.getTime()>now&&allowedDay(initial))return initial;
@@ -101,7 +102,7 @@
    return '<article class="ns-as-alarm-row">'+
     '<button type="button" class="ns-as-row-main" data-edit="'+escape(a.id)+'" aria-label="Editar '+escape(a.title)+'">'+
     '<strong>'+escape(a.time||'--:--')+'</strong><span><b>'+escape(a.title||'Alarma')+'</b>'+
-    '<small>'+escape(a.repeat==='daily'?'Todos los días':a.repeat==='weekly'?'Semanal':a.repeat==='every2'?'Cada 2 días':a.repeat==='every3'?'Cada 3 días':a.repeat==='weekdays'?'Lun a vie':a.repeat==='weekends'?'Fines de semana':'Una vez')+
+    '<small>'+escape(a.repeat==='daily'?'Todos los días':a.repeat==='weekly'?'Semanal':a.repeat==='every2'?'Cada 2 días':a.repeat==='every3'?'Cada 3 días':a.repeat==='weekdays'?'Lun a vie':a.repeat==='weekends'?'Fines de semana':/^days:[01]{7}$/.test(a.repeat)?'Días personalizados':'Una vez')+
     ' · '+escape(mission?mission.title:'Sin desafío')+'</small>'+
     '<small>'+escape(date?until(date):'Desactivada o vencida')+'</small></span></button>'+
     '<label class="ns-as-switch"><input type="checkbox" data-toggle="'+escape(a.id)+'" '+
@@ -129,6 +130,9 @@
    const el=$('[name="'+key+'"]');
    if(el)state.draft[key]=el.value;
   }
+  if(state.draft.repeat==='custom'){
+   state.draft.repeat='days:'+Array.from(studio.querySelectorAll('[data-weekday]')).map(x=>x.checked?'1':'0').join('');
+  }
  }
  function editor(){
   const d=state.draft||defaultDraft();
@@ -142,9 +146,13 @@
    '<label>Primera fecha<input type="date" name="date" required value="'+escape(d.date)+'"></label>'+
    '<label>Repetición<select name="repeat">'+
    [['none','Una vez'],['daily','Todos los días'],['weekly','Una vez por semana'],
-    ['every2','Cada 2 días'],['every3','Cada 3 días'],['weekdays','Lunes a viernes'],['weekends','Sábados y domingos']]
-    .map(([v,t])=>'<option value="'+v+'"'+(d.repeat===v?' selected':'')+'>'+t+'</option>').join('')+
+    ['every2','Cada 2 días'],['every3','Cada 3 días'],['weekdays','Lunes a viernes'],['weekends','Sábados y domingos'],['custom','Elegir días']]
+    .map(([v,t])=>'<option value="'+v+'"'+((v==='custom'?/^days:[01]{7}$/.test(d.repeat):d.repeat===v)?' selected':'')+'>'+t+'</option>').join('')+
    '</select></label>'+
+   '<fieldset id="ns-as-custom-days" class="ns-as-days" '+(!/^days:[01]{7}$/.test(d.repeat)?'hidden':'')+'><legend>Días de la semana</legend>'+
+   [['D',0],['L',1],['M',2],['X',3],['J',4],['V',5],['S',6]].map(([label,i])=>
+     '<label><input type="checkbox" data-weekday="'+i+'" '+((/^days:[01]{7}$/.test(d.repeat)?d.repeat.charAt(5+i):'0111110'.charAt(i))==='1'?'checked':'')+'><span>'+label+'</span></label>').join('')+
+   '</fieldset>'+
    '<div class="ns-as-section-title">Desafío</div>'+
    '<button type="button" class="ns-as-pick" data-action="missions"><span>'+escape(mission.icon)+'</span>'+
    '<b>'+escape(mission.title)+'</b><small>Elegir ›</small></button>'+
@@ -162,7 +170,13 @@
    $('#ns-as-next-preview').textContent=date?until(date):'Elige una fecha futura';
   }
   form.addEventListener('input',preview);
-  form.addEventListener('change',preview);
+  form.addEventListener('change',e=>{
+   if(e.target.name==='repeat'){
+    const days=$('#ns-as-custom-days');
+    if(days)days.hidden=e.target.value!=='custom';
+   }
+   preview();
+  });
   form.onsubmit=e=>{
    e.preventDefault();captureDraft();
    const result=api.createOrUpdate(state.draft,state.editing);
