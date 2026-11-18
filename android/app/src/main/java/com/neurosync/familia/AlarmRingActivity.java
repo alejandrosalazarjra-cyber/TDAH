@@ -237,7 +237,10 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
    if(allowedSnoozes>0){
      Button snooze=secondaryButton("Posponer "+snoozeMinutes+" min · "+allowedSnoozes+" restante(s)");
      root.addView(snooze);
-     snooze.setOnClickListener(v->{AlarmReceiver.snooze(this,id,snoozeMinutes);finish();});
+     snooze.setOnClickListener(v->{
+       if(AlarmReceiver.snooze(this,id,snoozeMinutes))finish();
+       else Toast.makeText(this,"No se pudo posponer. La alarma sigue activa.",Toast.LENGTH_LONG).show();
+     });
    }
    if(!"none".equals(challenge)){
      Button emergency=secondaryButton("Detener sin desafío");
