@@ -36,7 +36,18 @@ assert(poll.includes("!token.equals(still.optString")&&
  poll.includes('Notification.VISIBILITY_PRIVATE'),
  'Revalidación de sesión y avisos privados');
 assert(ui.includes('data-delete-public-account')&&ui.includes('data-contact-block')&&
- ui.includes('data-decline'), 'Controles visibles de privacidad y rechazo');
+ ui.includes('data-decline')&&ui.includes('data-invite-decline'),
+ 'Controles visibles de privacidad y rechazo');
+assert(backend.includes('/decline
+assert(html.includes('publicDeleteAccount:function()')&&html.includes('session=null;model=null;'),
+ 'Después del borrado no queda una sesión activa en JS');
+assert(contract.includes('API pública desplegada en Render')&&
+ contract.includes('el registro permanece bloqueado'),
+ 'El contrato no contradice el estado del entorno piloto');
+console.log('Readiness básico OK: API, cuentas, bloqueo, borrado y sondeo sin secretos WebView');
+)&&main.includes('publicDeclineInvite(String id)')&&
+ html.includes('publicDeclineInvite:function(id)'),
+ 'Rechazar invitaciones solo desde su destinatario autenticado');
 assert(html.includes('publicDeleteAccount:function()')&&html.includes('session=null;model=null;'),
  'Después del borrado no queda una sesión activa en JS');
 assert(contract.includes('API pública desplegada en Render')&&
