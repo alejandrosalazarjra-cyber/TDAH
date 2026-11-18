@@ -57,7 +57,9 @@ async function actor(req){
  return result.rows[0];
 }
 async function exchange(data){
- if(!oauth)reject(503,'El acceso público aún no está habilitado');
+ // La existencia del cliente OAuth no debe abrir inscripciones por accidente.
+ if(!oauth||process.env.PUBLIC_REGISTRATION_ENABLED!=='true')
+  reject(503,'El acceso público aún no está habilitado');
  if(typeof data.idToken!=='string'||data.idToken.length>10000)
   reject(400,'Identidad de Google inválida');
  let identity;
@@ -104,6 +106,11 @@ async function handler(req,res){
  const path=url.pathname;
  if(path==='/health'&&req.method==='GET'){
   await pool.query('SELECT 1');return respond(res,200,{ok:true});
+ }
+ if(path==='/v1/auth/status'&&req.method==='GET'){
+  // Solo valores booleanos, nunca IDs, secretos ni datos de las cuentas.
+  return respond(res,200,{ok:true,loginEnabled:!!oauth&&
+   process.env.PUBLIC_REGISTRATION_ENABLED==='true'});
  }
  if(path==='/v1/auth/exchange'&&req.method==='POST'){
   const result=await exchange(await body(req));return respond(res,result.status,result.data);
