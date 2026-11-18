@@ -100,6 +100,7 @@ public final class AlarmReceiver extends BroadcastReceiver {
   ctx.getSharedPreferences("ns_alarm_snoozes",0).edit().remove(SNOOZE_PREFIX+id).apply();
   ctx.getSharedPreferences("ns_alarms",0).edit().remove(PREFIX+id).apply();
   AlarmChallengeStore.remove(ctx,id);
+  ctx.getSharedPreferences("ns_alarm_preferences",0).edit().remove("snooze_"+id).apply();
   ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id.hashCode());
  }
  public static void dismiss(Context ctx,String id){
@@ -116,6 +117,17 @@ public final class AlarmReceiver extends BroadcastReceiver {
     if("none".equals(entry.optString("repeat","none")))
       ctx.getSharedPreferences("ns_alarms",0).edit().remove(PREFIX+id).apply();
   }catch(Exception ignored){}
+ }
+ /** Preferencias locales de aplazamiento. No dependen del WebView o la red. */
+ public static void setSnoozeMinutes(Context ctx,String id,int minutes){
+  if(id==null||id.length()<2||id.length()>100)return;
+  if(minutes!=1&&minutes!=3&&minutes!=5&&minutes!=10&&minutes!=15)return;
+  ctx.getSharedPreferences("ns_alarm_preferences",0).edit()
+    .putInt("snooze_"+id,minutes).apply();
+ }
+ public static int snoozeMinutes(Context ctx,String id){
+  int value=ctx.getSharedPreferences("ns_alarm_preferences",0).getInt("snooze_"+id,5);
+  return value==1||value==3||value==5||value==10||value==15?value:5;
  }
  public static void snooze(Context ctx,String id,int minutes){
   try{
