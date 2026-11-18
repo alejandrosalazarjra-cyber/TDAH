@@ -37,6 +37,7 @@
   <activity android:name=".DepartureChecklistActivity" android:exported="false" android:showWhenLocked="true" android:turnScreenOn="true" android:excludeFromRecents="true" android:theme="@android:style/Theme.Material.NoActionBar"/>
   <service android:name=".AlarmAudioService" android:exported="false" android:foregroundServiceType="mediaPlayback"/>
   <service android:name=".SyncService" android:exported="false" android:foregroundServiceType="dataSync"/>
+  <service android:name=".TaskBackgroundSync" android:permission="android.permission.BIND_JOB_SERVICE" android:exported="true"/>
   <service android:name=".FocusOverlayService" android:exported="false"/>
   <receiver android:name=".TodayWidget" android:exported="true">
     <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter>
