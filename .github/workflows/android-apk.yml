@@ -256,6 +256,32 @@ jobs:
           cp assets/dragon/atlases/etapa-{1..6}.webp android/app/src/main/assets/dragon/atlases/
           for n in {1..6}; do test -s "android/app/src/main/assets/dragon/atlases/etapa-${n}.webp"; done
 
+      - name: Preparar certificado estable de APK preview para Google OAuth
+        id: preview_signing
+        shell: bash
+        env:
+          NS_PREVIEW_SIGNING_KEY_B64: ${{ secrets.NS_PREVIEW_SIGNING_KEY_B64 }}
+          NS_PREVIEW_SIGNING_PASSWORD: ${{ secrets.NS_PREVIEW_SIGNING_PASSWORD }}
+          NS_PREVIEW_SIGNING_ALIAS: ${{ secrets.NS_PREVIEW_SIGNING_ALIAS }}
+        run: |
+          set -euo pipefail
+          if [ -z "$NS_PREVIEW_SIGNING_KEY_B64" ] || [ -z "$NS_PREVIEW_SIGNING_PASSWORD" ] || [ -z "$NS_PREVIEW_SIGNING_ALIAS" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Sin firma preview estable: se compilará la APK de prueba con inicio de sesión público oculto."
+            exit 0
+          fi
+          mkdir -p "$RUNNER_TEMP/ns-preview-signing"
+          printf '%s' "$NS_PREVIEW_SIGNING_KEY_B64" | base64 -d > "$RUNNER_TEMP/ns-preview-signing/neurosync-preview.jks"
+          chmod 600 "$RUNNER_TEMP/ns-preview-signing/neurosync-preview.jks"
+          NS_PREVIEW_KEYSTORE_FILE="$RUNNER_TEMP/ns-preview-signing/neurosync-preview.jks"
+          keytool -list -v -keystore "$NS_PREVIEW_KEYSTORE_FILE" -storepass:env NS_PREVIEW_SIGNING_PASSWORD -alias "$NS_PREVIEW_SIGNING_ALIAS" > "$RUNNER_TEMP/ns-preview-signing/fingerprint.txt"
+          if ! grep -F 'SHA1: 3E:F5:74:B7:F3:8F:09:FB:B4:81:60:BC:40:57:1E:A7:D6:A4:90:63' "$RUNNER_TEMP/ns-preview-signing/fingerprint.txt" >/dev/null; then
+            echo "::error::La clave preview no coincide con la firma registrada para Google OAuth. No se utilizará."
+            exit 1
+          fi
+          echo "NS_PREVIEW_KEYSTORE_FILE=$NS_PREVIEW_KEYSTORE_FILE" >> "$GITHUB_ENV"
+          echo "configured=true" >> "$GITHUB_OUTPUT"
+          echo "Certificado preview validado; firma registrada en Google Cloud."
       - name: Preparar firma permanente de distribución
         id: signing
         shell: bash
@@ -282,6 +308,8 @@ jobs:
         env:
           NS_SIGNING_PASSWORD: ${{ secrets.NS_SIGNING_PASSWORD }}
           NS_SIGNING_ALIAS: ${{ secrets.NS_SIGNING_ALIAS }}
+          NS_PREVIEW_SIGNING_PASSWORD: ${{ secrets.NS_PREVIEW_SIGNING_PASSWORD }}
+          NS_PREVIEW_SIGNING_ALIAS: ${{ secrets.NS_PREVIEW_SIGNING_ALIAS }}
           # URL pública de pruebas; el usuario no la introduce manualmente.
           NEUROSYNC_API_BASE_URL: https://neurosync-public-api-staging-vz3h.onrender.com
           # Configurar esta variable en GitHub Actions > Variables cuando exista OAuth.
