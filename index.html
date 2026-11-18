@@ -3009,7 +3009,7 @@ function nsOutboxAttempt(entry){
  if(!nat)return {ok:false,error:'Servidor no conectado'};
  try{
   var raw=session&&session.public&&nat.publicSendTask?
-   nat.publicSendTask(entry.recipient,entry.id,entry.task.title):
+   nat.publicSendTask(entry.recipient,entry.id,JSON.stringify(entry.task)):
    nat.sendTaskToUser&&nat.sendTaskToUser(entry.recipient,entry.id,JSON.stringify(entry.task));
   if(!raw)return {ok:false,error:'Transporte no disponible'};
   var response=JSON.parse(raw);
@@ -3153,7 +3153,7 @@ window.NeuroTasksAPI={
   if(entries===null)return {ok:false,error:'No se puede leer la bandeja de salida; no se enviará para proteger tus datos'};
   var requestId=typeof task.id==='string'&&/^[a-zA-Z0-9_-]{8,100}$/.test(task.id)?task.id:uid();
   var payload={title:String(task.title).trim().slice(0,100),
-   date:task.date||day(),repeat:task.repeat||'none',category:task.category||'Personal',
+   date:task.date||day(),time:task.time||'',repeat:task.repeat||'none',category:task.category||'Personal',
    steps:Array.isArray(task.steps)?task.steps:[]};
   var entry={id:requestId,recipient:recipient,sender:session.username,task:payload,createdAt:Date.now()};
   var existing=entries.find(function(e){return e.id===requestId&&e.recipient===recipient});
@@ -3190,8 +3190,12 @@ window.NeuroTasksAPI={
    try{
     var result=JSON.parse(nat.publicTasks('inbox'));
     return result.ok&&Array.isArray(result.tasks)?result.tasks.map(function(t){
-     return {id:t.id,title:t.title,owner:session.username,sentBy:t.sender_id,
-      deliveryStatus:t.status,date:day()};
+     var details=t.body&&typeof t.body==='object'?t.body:{};
+     return {id:t.id,title:t.title,owner:session.username,
+      sentBy:t.sender_name||t.sender_handle||t.sender_id,
+      deliveryStatus:t.status,date:details.date||day(),
+      repeat:details.repeat||'none',category:details.category||'Personal',
+      steps:Array.isArray(details.steps)?details.steps:[]};
     }):[];
    }catch(e){return []}
   }
@@ -3208,7 +3212,9 @@ window.NeuroTasksAPI={
    try{
     var reply=JSON.parse(nat.publicTasks('sent'));
     return {ok:true,offline:!reply.ok,tasks:offline.concat(reply.ok&&Array.isArray(reply.tasks)?reply.tasks.map(function(t){
-     return {id:t.id,title:t.title,recipient:t.recipient_id,deliveryStatus:t.status};
+     return {id:t.id,title:t.title,
+      recipient:t.recipient_name||t.recipient_handle||t.recipient_id,
+      deliveryStatus:t.status};
     }):[])};
    }catch(e){return {ok:true,offline:true,tasks:offline}}
   }
