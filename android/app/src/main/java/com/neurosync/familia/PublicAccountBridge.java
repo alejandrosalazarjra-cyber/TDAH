@@ -78,6 +78,8 @@ final class PublicAccountBridge {
         }
       }
       JSONObject response=new JSONObject(result.toString("UTF-8"));
+      // HTTP 4xx es error de autorización/validación, no una desconexión temporal.
+      if(status>=400)response.put("httpStatus",status);
       if(status==401)PublicSessionVault.clear(activity);
       return response;
     }catch(Exception e){
