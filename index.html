@@ -2246,7 +2246,9 @@ window.neuroSyncOnSync=function(payload,requestingUser){
  }
 };
 function sync(){
- if(!session||session.google||session.public||!nat||syncing)return;
+ if(!session||session.google||!nat||syncing)return;
+ // Cuentas públicas: reintentar la cola, sin usar nunca /sync del servidor LAN.
+ if(session.public){nsOutboxFlush();return}
  nsOutboxFlush();
  var content=JSON.stringify({tasks:model.tasks,packs:model.packs,alarms:model.alarms});
  if(nat.syncFamilyAsync){syncing=true;by('sync-status').textContent='Sincronizando…';try{nat.syncFamilyAsync(content,session.username)}catch(e){syncing=false;by('sync-status').textContent='Guardado local'}return}
