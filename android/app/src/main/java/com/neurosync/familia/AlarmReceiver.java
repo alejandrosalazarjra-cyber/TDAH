@@ -34,6 +34,18 @@ public final class AlarmReceiver extends BroadcastReceiver {
  /** Avanza calendariamente conservando la hora local (incluido horario de verano). */
  static long nextRepeat(long previous,String repeat,long now){
   if(previous<=0)return -1;
+  // Máscara de domingo a sábado: days:0111110 = lunes a viernes.
+  if(repeat!=null&&repeat.matches("days:[01]{7}")&&repeat.substring(5).contains("1")){
+    java.util.Calendar selected=java.util.Calendar.getInstance();
+    selected.setTimeInMillis(previous);
+    String bits=repeat.substring(5);
+    for(int i=0;i<=3700;i++){
+      int dow=selected.get(java.util.Calendar.DAY_OF_WEEK)-1;
+      if(selected.getTimeInMillis()>now&&bits.charAt(dow)=='1')return selected.getTimeInMillis();
+      selected.add(java.util.Calendar.DAY_OF_YEAR,1);
+    }
+    return -1;
+  }
   int unit,amount;
   if("weekly".equals(repeat)){unit=java.util.Calendar.WEEK_OF_YEAR;amount=1;}
   else if("daily".equals(repeat)){unit=java.util.Calendar.DAY_OF_YEAR;amount=1;}
@@ -69,12 +81,14 @@ public final class AlarmReceiver extends BroadcastReceiver {
    if(id==null||id.length()<2||id.length()>100||at<=0)return false;
    if(!("none".equals(repeat)||"daily".equals(repeat)||"weekly".equals(repeat)
         ||"every2".equals(repeat)||"every3".equals(repeat)
-        ||"weekdays".equals(repeat)||"weekends".equals(repeat)))return false;
+        ||"weekdays".equals(repeat)||"weekends".equals(repeat)
+        ||(repeat!=null&&repeat.matches("days:[01]{7}")&&repeat.substring(5).contains("1"))))return false;
    if(title==null||title.trim().isEmpty())title="Recordatorio";
    long when=at;
    if(!"none".equals(repeat)){
     long next=nextRepeat(when,repeat,System.currentTimeMillis());
-    if(next>0)when=next;
+    if(next<=System.currentTimeMillis())return false;
+    when=next;
    }
    if(when<=System.currentTimeMillis())return false;
    JSONObject entry=new JSONObject().put("id",id).put("title",title).put("when",when).put("repeat",repeat);
