@@ -2768,6 +2768,7 @@ window.NeuroAlarmAPI={
   });
   // Nunca guardar como programada si Android rechazó el horario.
   if(nat&&(!scheduleAlarm(draft)))return {ok:false,error:'Android no pudo programar la alarma. Revisa permisos.'};
+  if(nat&&nat.setAlarmOptions)nat.setAlarmOptions(draft.id,draft.snoozeMinutes,draft.snoozeLimit);
   if(original)Object.assign(original,draft);else model.alarms.push(draft);
   if(!save()){if(nat&&nat.cancelAlarm)nat.cancelAlarm(draft.id);return {ok:false,error:'No se pudieron guardar los cambios'};}
   render();window.dispatchEvent(new Event('neuro-alarm-changed'));
