@@ -13,6 +13,9 @@ assert(html.includes("window.NeuroFinanceStudio.hideLauncher()"),'Ocultar resume
 assert(script.includes('ns_private_finance_v1_'),'Se requiere separación por cuenta');
 assert(script.includes('const data=stats(book,month(today()))'),'Launcher debe mostrar el mes actual');
 assert(script.includes('launcher:false'),'Privacidad desactivada de forma predeterminada');
+assert(script.includes('function voidEntry(')&&script.includes('entry.voidedAt=new Date().toISOString()'));
+assert(script.includes('function exportBook(')&&script.includes("neurosync-finanzas-"));
+assert(script.includes("data-finance=confirm-void")&&!script.includes('window.confirm('));
 assert(android.includes('canAccessSnapshot(username)'),'Actualizar launcher solo desde cuenta verificada');
 assert(launcher.includes('getBoolean("enabled",false)'),'Ocultar resumen hasta consentimiento');
 assert(launcher.includes('openNeuroSync("finance")'),'Resumen abre finanzas');
@@ -37,8 +40,16 @@ assert.equal(report.income,500000,'Transferencias NO son ingresos');
 assert.equal(report.expense,20000,'Transferencias NO son gastos');
 assert.equal(report.remaining,130000);
 assert.equal(report.categories[0][0],'Alimentación');
+// Anular conserva el asiento para auditoría y recalcula todos los reportes.
+book.entries.find(e=>e.type==='expense').voidedAt='2026-11-18T12:00:00Z';
+const cancelled=stats(book,'2026-11');
+assert.equal(cancelled.expense,0,'No contabilizar gastos anulados');
+assert.equal(cancelled.balance,900000,'Se restaura el saldo por un gasto anulado');
+assert.deepEqual(cancelled.categories,[],'Las gráficas deben excluir movimientos anulados');
+assert.equal(cancelled.remaining,150000,'El presupuesto vuelve a estar disponible');
+assert.equal(book.entries.length,3,'No borrar historial contable original');
 const noActivity=stats(book,'2026-10');
 assert.equal(noActivity.income,0);
 assert.equal(noActivity.expense,0);
-assert.equal(noActivity.balance,880000,'Saldo de cuentas = saldo actual, no movimientos del mes');
+assert.equal(noActivity.balance,900000,'Saldo de cuentas = saldo actual, no movimientos del mes');
 console.log('Finanzas OK: asientos, conciliación de saldos, transferencias, categorías, privacidad del launcher');
