@@ -9,8 +9,8 @@ services:
     plan: free
     region: virginia
     rootDir: backend
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     dockerCommand: sh -c "NEUROSYNC_PUBLIC_DB_CONFIRM=yes node migrate.js && node server.js"
     autoDeployTrigger: off
     healthCheckPath: /health
