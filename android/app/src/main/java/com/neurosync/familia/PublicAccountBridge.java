@@ -162,6 +162,19 @@ final class PublicAccountBridge {
     if(token.length()<40)return failure("Sesión pública inválida");
     return request(method,path,data,token,requestKey);
   }
+  JSONObject deleteAccount(){
+    // El borrado es explícito: el servidor decide qué eliminar por el token verificado.
+    JSONObject result=call("POST","/v1/me/delete",newDeleteConfirmation(),"");
+    if(result.optBoolean("ok")&&result.optBoolean("deleted")){
+      PublicSessionVault.clear(activity);
+      TaskBackgroundSync.cancel(activity);
+    }
+    return result;
+  }
+  private JSONObject newDeleteConfirmation(){
+    try{return new JSONObject().put("confirm","ELIMINAR");}
+    catch(Exception ignored){return new JSONObject();}
+  }
   JSONObject logout(){
     JSONObject saved=credentials();
     // Borrado local prioritario: ninguna llamada futura puede usar el token.
