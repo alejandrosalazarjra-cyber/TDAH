@@ -1,0 +1,155 @@
+/* NeuroSync Alarm Studio — diseño original inspirado en la claridad de Alarmy.
+   No reproduce textos, ilustraciones ni elementos propietarios de otras apps. */
+#view-alarms .ns-alarm-legacy{display:none!important}
+#view-alarms{padding:0!important;margin:0!important;min-height:100dvh}
+#view-alarms .ns-alarm-studio,#view-alarms .ns-alarm-studio *{box-sizing:border-box}
+#view-alarms .ns-alarm-studio{
+ --as-bg:#0e1220;--as-ink:#f4f8ff;--as-muted:#9ca9bd;--as-line:#293145;
+ --as-blue:#1686f7;--as-blue-dim:#143d70;--as-surface:#191e2d;--as-soft:#222a3c;
+ background:linear-gradient(172deg,#1b2346 0%,#0e1220 30%,#0a0e18 100%)!important;
+ color:var(--as-ink)!important;min-height:calc(100dvh - 122px);width:100%;
+ padding:24px clamp(14px,4vw,25px) 98px;font-family:Inter,system-ui,-apple-system,sans-serif;
+ isolation:isolate;overflow:hidden
+}
+#view-alarms .ns-alarm-studio .ns-as-header{background:transparent!important;border:0!important;padding:0!important;margin:0!important}
+#view-alarms .ns-alarm-studio .ns-as-header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px}
+#view-alarms .ns-alarm-studio .ns-as-brand{font-size:10px;letter-spacing:.14em;font-weight:800;color:#77aff1}
+#view-alarms .ns-alarm-studio .ns-as-dot{width:7px;height:7px;border-radius:100%;background:#259dff}
+#view-alarms .ns-alarm-studio h2{font-size:clamp(27px,7vw,35px)!important;color:#f8fbff!important;letter-spacing:-.045em!important;line-height:1.13;margin:0!important}
+#view-alarms .ns-alarm-studio .ns-as-header p{color:#9aaec9;font-size:13px;margin:7px 0 19px}
+#view-alarms .ns-alarm-studio .ns-as-nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;
+ margin:5px -5px 19px;padding:4px 5px 10px}
+#view-alarms .ns-alarm-studio .ns-as-nav::-webkit-scrollbar{display:none}
+#view-alarms .ns-alarm-studio button{font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#view-alarms .ns-alarm-studio .ns-as-nav button{flex:0 0 auto;min-height:44px;padding:9px 12px;
+ background:transparent!important;color:#92a0bd!important;border:0!important;border-radius:12px!important;font-size:12px;font-weight:700}
+#view-alarms .ns-alarm-studio .ns-as-nav button[aria-current=page]{background:#204575!important;color:#e5f5ff!important}
+#view-alarms .ns-alarm-studio .ns-as-content{width:100%;max-width:700px;margin:auto}
+#view-alarms .ns-alarm-studio .ns-as-next{padding:24px 5px 29px;border-bottom:1px solid var(--as-line);text-align:center}
+#view-alarms .ns-alarm-studio .ns-as-eyebrow{font-size:11px;font-weight:800;letter-spacing:.15em;color:#92bcf3}
+#view-alarms .ns-alarm-studio .ns-as-bigtime{font-size:clamp(65px,16vw,100px);font-weight:750;
+ font-variant-numeric:tabular-nums;letter-spacing:-.08em;line-height:1.12;color:var(--as-blue)!important;margin:5px 0 4px}
+#view-alarms .ns-alarm-studio .ns-as-emptytime{color:#54627a!important}
+#view-alarms .ns-alarm-studio .ns-as-next h3{font-size:18px!important;color:#f3f8ff!important;margin:3px 0 6px}
+#view-alarms .ns-alarm-studio .ns-as-next p{font-size:15px;color:#b8c5d9;margin:0}
+#view-alarms .ns-alarm-studio .ns-as-between{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:21px 0 8px}
+#view-alarms .ns-alarm-studio .ns-as-between h3,#view-alarms .ns-alarm-studio .ns-as-settings-group h3,
+#view-alarms .ns-alarm-studio .ns-as-mission-group h3,#view-alarms .ns-alarm-studio .ns-as-chart h3{
+ font-size:17px!important;font-weight:750!important;color:#f4f8ff!important;line-height:1.25;margin:12px 0!important}
+#view-alarms .ns-alarm-studio .ns-as-action{display:inline-flex!important;align-items:center;justify-content:center;
+ min-height:45px!important;padding:10px 13px!important;white-space:normal;border-radius:12px!important;
+ color:#a9cffd!important;background:#162e51!important;border:1px solid #24466f!important;
+ font-weight:750;font-size:13px!important;box-shadow:none!important}
+#view-alarms .ns-alarm-studio .ns-as-primary{color:#fff!important;background:var(--as-blue)!important;border-color:var(--as-blue)!important}
+#view-alarms .ns-alarm-studio .ns-as-action:active{filter:brightness(.88)}
+#view-alarms .ns-alarm-studio .ns-as-alarm-row{display:flex;justify-content:space-between;align-items:center;gap:10px;
+ border-bottom:1px solid var(--as-line);padding:13px 0;min-height:90px}
+#view-alarms .ns-alarm-studio .ns-as-row-main{flex:1;min-width:0;display:flex;align-items:center;gap:16px;
+ text-align:left;border:0!important;background:transparent!important;padding:5px 0!important;color:var(--as-ink)!important}
+#view-alarms .ns-alarm-studio .ns-as-row-main>strong{font-size:clamp(27px,8vw,38px);line-height:1;
+ font-variant-numeric:tabular-nums;letter-spacing:-.07em}
+#view-alarms .ns-alarm-studio .ns-as-row-main>span{display:grid;gap:4px;min-width:0}
+#view-alarms .ns-alarm-studio .ns-as-row-main b{font-size:13px;color:#f3f8ff;overflow-wrap:anywhere}
+#view-alarms .ns-alarm-studio .ns-as-row-main small{font-size:11px;color:var(--as-muted)}
+#view-alarms .ns-alarm-studio .ns-as-switch{position:relative;width:49px;height:44px;flex:none;display:grid;place-items:center;cursor:pointer}
+#view-alarms .ns-alarm-studio .ns-as-switch input{position:absolute;opacity:0;width:48px;height:44px;z-index:1;cursor:pointer}
+#view-alarms .ns-alarm-studio .ns-as-switch span{display:block;width:46px;height:26px;border-radius:30px;
+ background:#343e51;position:relative;transition:background .14s}
+#view-alarms .ns-alarm-studio .ns-as-switch span:after{content:"";position:absolute;top:3px;left:3px;
+ width:20px;height:20px;background:#dce7f3;border-radius:100%;transition:transform .14s}
+#view-alarms .ns-alarm-studio .ns-as-switch input:checked+span{background:var(--as-blue)}
+#view-alarms .ns-alarm-studio .ns-as-switch input:checked+span:after{transform:translateX(20px);background:#fff}
+#view-alarms .ns-alarm-studio :focus-visible{outline:3px solid #65b5ff!important;outline-offset:3px!important}
+#view-alarms .ns-alarm-studio .ns-as-empty{text-align:center;padding:35px 10px;color:var(--as-muted)}
+#view-alarms .ns-alarm-studio .ns-as-empty span{font-size:35px;color:#4d7097}
+#view-alarms .ns-alarm-studio .ns-as-empty h3{font-size:17px;color:#fff;margin:10px 0 4px}
+#view-alarms .ns-alarm-studio .ns-as-footer-links{display:flex;gap:10px;flex-wrap:wrap;margin:25px 0 10px}
+#view-alarms .ns-alarm-studio .ns-as-form{display:grid;gap:17px;padding-bottom:40px}
+#view-alarms .ns-alarm-studio .ns-as-form label,
+#view-alarms .ns-alarm-studio .ns-as-settings-group label{display:grid;gap:8px;color:#c4d2e7;font-size:13px;font-weight:650}
+#view-alarms .ns-alarm-studio input:not([type=checkbox]),#view-alarms .ns-alarm-studio select{
+ width:100%;min-height:48px;padding:11px 12px!important;background:#1b263a!important;
+ border:1px solid #36445e!important;border-radius:13px!important;box-shadow:none!important;
+ color:#fff!important;color-scheme:dark;font-family:inherit;font-size:16px!important}
+#view-alarms .ns-alarm-studio option{color:#fff;background:#1b263a}
+#view-alarms .ns-alarm-studio .ns-as-time-field{padding:22px 17px;border:1px solid #263e61;
+ border-radius:20px;background:linear-gradient(142deg,#14284b,#141d31)}
+#view-alarms .ns-alarm-studio .ns-as-time-field input[type=time]{min-height:82px;font-size:clamp(44px,12vw,65px)!important;
+ text-align:center;letter-spacing:-.05em;background:transparent!important;border:0!important;color:#1686f7!important;
+ font-variant-numeric:tabular-nums}
+#view-alarms .ns-alarm-studio .ns-as-time-field p{font-size:13px;color:#a9bad2;text-align:center;margin:3px 0}
+#view-alarms .ns-alarm-studio .ns-as-section-title{font-size:15px;font-weight:750;color:#f2f7ff;
+ border-bottom:1px solid #263349;padding:8px 0}
+#view-alarms .ns-alarm-studio .ns-as-pick{display:flex;align-items:center;gap:12px;text-align:left;
+ background:transparent!important;border:0!important;border-bottom:1px solid #2c364c!important;
+ color:#fff!important;padding:10px 0!important;min-height:54px!important}
+#view-alarms .ns-alarm-studio .ns-as-pick span:first-child{width:38px;height:38px;display:grid;place-items:center;
+ background:#263d5c;border-radius:11px;font-size:20px;color:#87c5ff}
+#view-alarms .ns-alarm-studio .ns-as-pick b{flex:1;font-size:14px}
+#view-alarms .ns-alarm-studio .ns-as-pick small{color:#91a9c9}
+#view-alarms .ns-alarm-studio .ns-as-field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#view-alarms .ns-alarm-studio .ns-as-sticky{display:flex;gap:10px;flex-wrap:wrap;padding-top:15px}
+#view-alarms .ns-alarm-studio .ns-as-save{flex:1;min-width:150px;min-height:55px!important;
+ border:0!important;border-radius:14px!important;background:var(--as-blue)!important;color:white!important;
+ font-size:15px!important;font-weight:800}
+#view-alarms .ns-alarm-studio .ns-as-danger{color:#ffaaaa!important;background:#3d202b!important;border-color:#5e303c!important}
+#view-alarms .ns-alarm-studio .ns-as-missions{display:grid;gap:13px}
+#view-alarms .ns-alarm-studio .ns-as-mission-group{border-bottom:1px solid #273145;padding-bottom:15px}
+#view-alarms .ns-alarm-studio .ns-as-mission{display:flex;align-items:center;width:100%;gap:12px;
+ padding:12px 4px!important;min-height:66px;border:0!important;border-bottom:1px solid #2a3549!important;
+ background:transparent!important;text-align:left;color:#eaf4ff!important}
+#view-alarms .ns-alarm-studio .ns-as-mission-icon{display:grid;place-items:center;flex:none;width:42px;height:42px;
+ border-radius:13px;background:#1a446d;color:#8dd4ff;font-size:20px}
+#view-alarms .ns-alarm-studio .ns-as-mission span:nth-child(2){flex:1;display:grid;gap:5px;min-width:0}
+#view-alarms .ns-alarm-studio .ns-as-mission strong{font-size:14px;color:#fff}
+#view-alarms .ns-alarm-studio .ns-as-mission small{font-size:11px;color:#8d9eb7}
+#view-alarms .ns-alarm-studio .ns-as-mission.chosen .ns-as-mission-icon{background:#176dcc}
+#view-alarms .ns-alarm-studio .ns-as-soon{color:#a8bdd8;padding:14px 0;margin:12px 0;border-bottom:1px solid #293145}
+#view-alarms .ns-alarm-studio .ns-as-soon summary{cursor:pointer;font-size:13px;font-weight:700;min-height:44px}
+#view-alarms .ns-alarm-studio .ns-as-soon p,#view-alarms .ns-alarm-studio .ns-as-soon small{font-size:12px;color:#8d9eb7}
+#view-alarms .ns-alarm-studio .ns-as-settings-group{padding:11px 0 20px;border-bottom:1px solid #273145;display:grid;gap:11px}
+#view-alarms .ns-alarm-studio .ns-as-settings-line{display:flex;justify-content:space-between;align-items:center;
+ min-height:50px;gap:14px;border-bottom:1px solid #1c2638;font-size:13px;color:#e3edf9}
+#view-alarms .ns-alarm-studio .ns-as-settings-line small{color:#8d9db1}
+#view-alarms .ns-alarm-studio .ns-as-settings-line b{font-size:12px}
+#view-alarms .ns-alarm-studio .ns-as-settings-line b.ok{color:#89dbb7}
+#view-alarms .ns-alarm-studio .ns-as-settings-line b.missing{color:#ffbf7d}
+#view-alarms .ns-alarm-studio .ns-as-hint{font-size:12px;color:#8fa3bb;line-height:1.5}
+#view-alarms .ns-alarm-studio .ns-as-settings-group>p{font-size:13px;color:#d0dded;line-height:1.45}
+#view-alarms .ns-alarm-studio .ns-as-report-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;
+ padding:16px 0 18px;border-bottom:1px solid var(--as-line)}
+#view-alarms .ns-alarm-studio .ns-as-report-stats>div{display:grid;gap:5px}
+#view-alarms .ns-alarm-studio .ns-as-report-stats strong{font-size:35px;color:#e5f3ff;font-variant-numeric:tabular-nums}
+#view-alarms .ns-alarm-studio .ns-as-report-stats small{font-size:11px;color:#9eacc1}
+#view-alarms .ns-alarm-studio .ns-as-chart{padding:20px 0;border-bottom:1px solid var(--as-line)}
+#view-alarms .ns-alarm-studio .ns-as-bars{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;
+ align-items:end;min-height:150px;margin-top:16px}
+#view-alarms .ns-alarm-studio .ns-as-bars>div{display:grid;align-items:end;justify-items:center;gap:7px;font-size:11px}
+#view-alarms .ns-alarm-studio .ns-as-bars span,#view-alarms .ns-alarm-studio .ns-as-bars small{color:#9db0c7;font-size:11px}
+#view-alarms .ns-alarm-studio .ns-as-bar-track{height:100px;width:100%;max-width:26px;display:flex;align-items:end;
+ background:#20293c;border-radius:8px;overflow:hidden}
+#view-alarms .ns-alarm-studio .ns-as-bar-track i{display:block;width:100%;min-height:2px;border-radius:6px;background:var(--as-blue)}
+#view-alarms .ns-alarm-studio .ns-as-status{position:sticky;bottom:8px;margin-top:14px;
+ padding:12px 14px;background:#293e5e;border:1px solid #4b6588;border-radius:12px;
+ color:#fff;font-size:12px;line-height:1.5;z-index:2}
+#view-alarms .ns-alarm-studio .ns-as-status[hidden]{display:none}
+@media(max-width:365px){
+ #view-alarms .ns-alarm-studio{padding:17px 11px 88px}
+ #view-alarms .ns-alarm-studio .ns-as-row-main{gap:9px}
+ #view-alarms .ns-alarm-studio .ns-as-row-main>strong{font-size:26px}
+ #view-alarms .ns-alarm-studio .ns-as-nav button{padding:8px 9px;font-size:11px}
+}
+@media(prefers-reduced-motion:reduce){
+ #view-alarms .ns-alarm-studio *,#view-alarms .ns-alarm-studio *::after{transition:none!important;animation:none!important}
+}
+
+/* Selección compacta de los siete días; accesible incluso en pantallas estrechas. */
+#view-alarms .ns-alarm-studio .ns-as-days{display:flex;flex-wrap:wrap;gap:7px;border:0;padding:8px 0;margin:0}
+#view-alarms .ns-alarm-studio .ns-as-days[hidden]{display:none!important}
+#view-alarms .ns-alarm-studio .ns-as-days legend{color:#a9bbd4;font-size:13px;font-weight:700;padding:0 0 12px}
+#view-alarms .ns-alarm-studio .ns-as-days label{display:grid;place-items:center;width:42px;height:44px;position:relative}
+#view-alarms .ns-alarm-studio .ns-as-days input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+#view-alarms .ns-alarm-studio .ns-as-days span{width:40px;height:40px;display:grid;place-items:center;
+ border:1px solid #42516a;background:#1a263b;color:#aebdd1;border-radius:12px;font-weight:800}
+#view-alarms .ns-alarm-studio .ns-as-days input:checked+span{background:#176fe3;border-color:#278cff;color:#fff}
+#view-alarms .ns-alarm-studio .ns-as-days input:focus-visible+span{outline:3px solid #82baff;outline-offset:2px}
