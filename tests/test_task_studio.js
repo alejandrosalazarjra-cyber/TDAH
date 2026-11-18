@@ -22,7 +22,10 @@ const start=html.indexOf('window.NeuroTasksAPI={'),end=html.indexOf('\n})();\n</
 assert(start>0&&end>start,'Falta conexión de Task Studio a los datos');
 const tasks=[],templates=[];let uid=0,saveCount=0;
 const owner={username:'propietario',role:'user'},model={tasks,packs:[],alarms:[],pet:{xp:0,food:0}};
-const mocks={window:{dispatchEvent:()=>{}},model,session:owner,Date,Number,Array,Object,JSON,Set,Map,
+const storageState=new Map();
+const storage={getItem:k=>storageState.has(k)?storageState.get(k):null,
+ setItem:(k,v)=>{if(storage.fail)throw Error('disk full');storageState.set(k,String(v));}};
+const mocks={window:{dispatchEvent:()=>{}},model,session:owner,localStorage:storage,Date,Number,Array,Object,JSON,Set,Map,
  uid:()=> 'task_'+(++uid),stamp:()=>123,day:()=> '2026-11-18',nsTemplateRead:()=>templates,
  nsTemplateWrite:x=>{templates.splice(0,templates.length,...x)},
  nsPlanRender:()=>{},nsCleanCategory:x=>x||'Personal',active:xs=>xs.filter(x=>!x.deleted),
@@ -73,6 +76,34 @@ assert.equal(sent.length,1);
 assert.equal(sent[0].to,'mama');
 assert.equal(sent[0].task.title,'Comprar pan');
 assert.equal(remoteApi.sendTo('propietario',{title:'No válido'}).ok,false,'No enviarse a sí mismo');
+
+const outboxKey='ns_task_outbox_v1_propietario';
+assert.equal(remoteApi.outbox().length,0,'El envío exitoso debe salir de la bandeja local');
+let offline=true;
+mocks.nat.sendTaskToUser=(to,id,json)=>{if(offline)throw Error('offline');
+ sent.push({to,id,task:JSON.parse(json)});return JSON.stringify({ok:true,id:'sent_offline',recipient:to});};
+const offlineApi=new Function(...Object.keys(mocks),html.slice(start,end)+'\nreturn window.NeuroTasksAPI;')(...Object.values(mocks));
+const queued=offlineApi.sendTo('mama',{id:'task_offline_987',title:'Traer llaves'});
+assert.equal(queued.ok,true);
+assert.equal(queued.queued,true,'No declarar entrega cuando falla la conexión');
+assert.equal(offlineApi.outbox().length,1,'Persistir un envío pendiente por cuenta');
+const same=offlineApi.sendTo('mama',{id:'task_offline_987',title:'Traer llaves'});
+assert.equal(same.queued,true);
+assert.equal(offlineApi.outbox().length,1,'No duplicar reintentos');
+assert.equal(offlineApi.sent().tasks[0].deliveryStatus,'queued','Mostrar pendientes aun sin servidor');
+offline=false;
+const flushed=offlineApi.retryOutbox();
+assert.equal(flushed.delivered,1,'Enviar al recuperar conexión');
+assert.equal(offlineApi.outbox().length,0,'Retirar de la bandeja solo tras éxito remoto');
+storage.fail=true;
+const blocked=offlineApi.sendTo('mama',{id:'task_blocked_987',title:'No perder'});
+assert.equal(blocked.ok,false,'No enviar si el teléfono no puede guardar la cola');
+storage.fail=false;
+assert.equal(offlineApi.outbox().length,0,'Un error de almacenamiento no debe crear un envío falso');
+assert(!storageState.has('ns_task_outbox_v1_hermano'),'No crear cola de otra cuenta');
+assert(script.includes('Pendiente de conexión'),'Mostrar envío sin conexión en la interfaz');
+assert(html.includes("window.addEventListener('online'"),'Reintentar al recuperar la conexión');
+
 assert(script.includes('data-send=')&&script.includes('name="recipient"'),
  'Cualquier usuario debe tener selector de envío');
 const backend=fs.readFileSync('android/app/src/main/java/com/neurosync/familia/SyncStore.java','utf8');
