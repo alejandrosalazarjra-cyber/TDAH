@@ -121,6 +121,26 @@ async function handler(req,res){
     [sha256(req.headers.authorization.slice(7)),user.id]);
   return respond(res,200,{ok:true});
  }
+
+ if(path==='/v1/me/delete'&&req.method==='POST'){
+  const data=await body(req);
+  if(data.confirm!=='ELIMINAR')reject(400,'Escribe ELIMINAR para confirmar');
+  // La transacción elimina también las copias compartidas, referencias e historial.
+  // No se cambia el estado de otras cuentas ni se exponen sus credenciales.
+  await transaction(async db=>{
+   const ids='SELECT id FROM ns_public_tasks WHERE sender_id=$1 OR recipient_id=$1';
+   await db.query('DELETE FROM ns_user_events WHERE task_id IN ('+ids+')',[user.id]);
+   await db.query('DELETE FROM ns_task_idempotency WHERE task_id IN ('+ids+')',[user.id]);
+   await db.query('DELETE FROM ns_public_tasks WHERE sender_id=$1 OR recipient_id=$1',[user.id]);
+   await db.query('DELETE FROM ns_user_events WHERE user_id=$1',[user.id]);
+   await db.query('DELETE FROM ns_contact_invitations WHERE requester_id=$1 OR recipient_id=$1',[user.id]);
+   await db.query('DELETE FROM ns_contact_blocks WHERE blocker_id=$1 OR blocked_id=$1',[user.id]);
+   await db.query('DELETE FROM ns_device_push_tokens WHERE user_id=$1',[user.id]);
+   await db.query('DELETE FROM ns_public_sessions WHERE user_id=$1',[user.id]);
+   await db.query('DELETE FROM ns_public_users WHERE id=$1',[user.id]);
+  });
+  return respond(res,200,{ok:true,deleted:true});
+ }
  if(path==='/v1/me'&&req.method==='GET')return respond(res,200,{ok:true,user});
  if(path==='/v1/me'&&(req.method==='PATCH'||req.method==='POST')){
   const data=await body(req),name=String(data.displayName||'').trim();
@@ -145,6 +165,29 @@ async function handler(req,res){
  }
  if(path==='/v1/contacts'&&req.method==='GET'){
   return respond(res,200,{ok:true,contacts:await contacts(pool,user)});
+ }
+ if(path==='/v1/contacts/blocks'&&req.method==='GET'){
+  const found=await pool.query(
+   `SELECT b.blocked_id AS id,u.handle,u.display_name
+    FROM ns_contact_blocks b JOIN ns_public_users u ON u.id=b.blocked_id
+    WHERE b.blocker_id=$1 ORDER BY u.handle LIMIT 100`,[user.id]);
+  return respond(res,200,{ok:true,blocked:found.rows});
+ }
+ if(path==='/v1/contacts/block'&&req.method==='POST'){
+  const data=await body(req);inviteAllowed(data);
+  if(data.recipientId===user.id)reject(400,'No puedes bloquearte');
+  const found=await pool.query('SELECT id FROM ns_public_users WHERE id=$1',[data.recipientId]);
+  if(!found.rowCount)reject(404,'Usuario no encontrado');
+  await pool.query(
+   'INSERT INTO ns_contact_blocks(blocker_id,blocked_id) VALUES($1,$2) ON CONFLICT DO NOTHING',
+   [user.id,data.recipientId]);
+  return respond(res,200,{ok:true,blocked:true});
+ }
+ if(path==='/v1/contacts/unblock'&&req.method==='POST'){
+  const data=await body(req);inviteAllowed(data);
+  await pool.query('DELETE FROM ns_contact_blocks WHERE blocker_id=$1 AND blocked_id=$2',
+   [user.id,data.recipientId]);
+  return respond(res,200,{ok:true,blocked:false});
  }
  if(path==='/v1/contacts/invitations'&&req.method==='POST'){
   const data=await body(req);inviteAllowed(data);
@@ -263,12 +306,21 @@ async function handler(req,res){
   });
   return respond(res,200,{ok:true,task:{id:result.id,status:result.status}});
  }
+ if(path==='/v1/events/latest'&&req.method==='GET'){
+  const latest=await pool.query(
+   'SELECT COALESCE(MAX(sequence),0)::text AS cursor FROM ns_user_events WHERE user_id=$1',
+   [user.id]);
+  return respond(res,200,{ok:true,nextCursor:latest.rows[0].cursor});
+ }
  if(path==='/v1/events'&&req.method==='GET'){
   const cursor=url.searchParams.get('cursor')||'0';
   if(!/^\d{1,18}$/.test(cursor))reject(400,'Cursor inválido');
   const events=await pool.query(
-   `SELECT sequence,task_id,event_type,created_at FROM ns_user_events
-    WHERE user_id=$1 AND sequence>$2::bigint ORDER BY sequence ASC LIMIT 100`,
+   `SELECT e.sequence,e.task_id,e.event_type,e.created_at,
+      CASE WHEN t.sender_id=$1 THEN 'sender' ELSE 'recipient' END AS task_role
+    FROM ns_user_events e JOIN ns_public_tasks t ON t.id=e.task_id
+    WHERE e.user_id=$1 AND e.sequence>$2::bigint
+    ORDER BY e.sequence ASC LIMIT 100`,
     [user.id,cursor]);
   return respond(res,200,{ok:true,events:events.rows,
     nextCursor:events.rows.length?String(events.rows.at(-1).sequence):cursor});
