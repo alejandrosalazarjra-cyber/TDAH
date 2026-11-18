@@ -2004,6 +2004,8 @@ function closeModal(){by('modal').classList.add('hidden')}
 by('close-modal').onclick=closeModal;by('modal').onclick=function(e){if(e.target===by('modal'))closeModal()};
 document.querySelectorAll('[data-open]').forEach(function(b){b.onclick=function(){openModal(b.dataset.open)}});
 window.neuroQrEnrollment=function(raw){
+ if(typeof raw==='string'&&raw.length>0&&raw.length<=2048)
+  window.dispatchEvent(new CustomEvent('neuro-alarm-qr-ready',{detail:raw}));
  var form=by('popup-form');
  if(!form||!form.elements.qrValue)return;
  if(typeof raw!=='string'||!raw){say('Escaneo cancelado');return}
