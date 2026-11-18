@@ -77,3 +77,6 @@
 @media(max-height:660px){#ns-pomodoro-screen .ns-pf-heading{margin:2px 0}#ns-pomodoro-screen .ns-pomodoro-content{min-height:95px}
 #ns-pomodoro-screen #ns-pomodoro-count{font-size:clamp(61px,16vw,88px)}#ns-pomodoro-screen .ns-pf-controls{gap:7px;padding:10px}}
 @media(prefers-reduced-motion:reduce){#ns-pomodoro-screen .ns-pf-backdrop *{animation:none!important;transition:none!important}}
+
+/* Diálogo de confirmación visible sobre el estudio a pantalla completa. */
+body.ns-pomodoro-active>.ns-overlay{z-index:2147483620!important}
