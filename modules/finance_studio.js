@@ -15,7 +15,7 @@ const peso=x=>{const n=Number(x);return Number.isSafeInteger(n)&&n>=0&&n<=999999
 const month=x=>String(x||'').slice(0,7);
 const uuid=()=>String(Date.now())+'-'+Math.random().toString(36).slice(2,10);
 const state={selected:month(today()),tab:'overview',notice:''};
-function user(){return typeof session!=='undefined'&&session?session.username:null}
+function user(){return window.NeuroFinanceAPI?.account()||null}
 function key(){return 'ns_private_finance_v1_'+user()}
 function newBook(){return {version:1,accounts:[{id:'cash',name:'Efectivo',opening:0},{id:'bank',name:'Banco',opening:0}],entries:[],budgets:{},launcher:false}}
 function read(){
@@ -28,10 +28,10 @@ function read(){
  }catch(e){state.notice='No se puede leer el libro financiero. No se sobrescribirá hasta recuperar sus datos.';return null}
 }
 function native(book){
- if(!window.Native||!Native.updateFinanceLauncherSummary||!user())return;
+ if(!window.NeuroFinanceAPI?.updateLauncher||!user())return;
  const data=stats(book,state.selected);
  // Nunca mostrar cifras en launcher sin consentimiento explícito.
- try{Native.updateFinanceLauncherSummary(user(),!!book.launcher,
+ try{window.NeuroFinanceAPI.updateLauncher(!!book.launcher,
    Math.max(-999999999999,Math.min(999999999999,data.balance)),
    data.income,data.expense);
  }catch(e){}
@@ -190,7 +190,7 @@ root.addEventListener('submit',e=>{
  if(write(book)){state.notice='Presupuesto guardado';render()}
 });
 window.NeuroFinanceStudio={render,hideLauncher:function(){
- try{if(window.Native&&Native.updateFinanceLauncherSummary&&user())Native.updateFinanceLauncherSummary(user(),false,0,0,0)}catch(e){}
+ try{if(window.NeuroFinanceAPI?.updateLauncher&&user())window.NeuroFinanceAPI.updateLauncher(false,0,0,0)}catch(e){}
 }};
 render();
 })();
