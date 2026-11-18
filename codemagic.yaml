@@ -29,6 +29,7 @@ workflows:
           node tests/test_alarm_studio.js
           node tests/test_alarm_studio_days.js
           node tests/test_task_studio.js
+          node tests/test_task_sent_notifications.js
           node tests/test_departure_studio.js
           node tests/test_pomodoro_studio.js
           node tests/test_wellbeing_studio.js
