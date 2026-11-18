@@ -96,6 +96,15 @@ async function main(){
   assert.equal(answer.status,200);
   answer=await call('GET','/v1/contacts',token);
   assert(answer.data.contacts.some(c=>c.id===bob));
+  answer=await call('POST','/v1/contacts/invitations',token,{recipientId:stranger});
+  assert.equal(answer.status,201);
+  const toDecline=answer.data.invitation.id;
+  answer=await call('POST','/v1/contacts/invitations/'+toDecline+'/decline',tokenStranger);
+  assert.equal(answer.status,200);
+  assert.equal(answer.data.invitation.state,'declined');
+  answer=await call('GET','/v1/contacts',token);
+  assert(!answer.data.contacts.some(c=>c.id===stranger),
+    'Una invitación rechazada no crea contactos');
   answer=await call('POST','/v1/me/delete',tokenBob,{confirm:'incorrecto'});
   assert.equal(answer.status,400,'Borrado exige confirmación exacta');
   answer=await call('POST','/v1/me/delete',tokenBob,{confirm:'ELIMINAR'});
