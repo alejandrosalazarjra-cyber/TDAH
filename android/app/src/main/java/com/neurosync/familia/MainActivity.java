@@ -47,6 +47,7 @@ public final class MainActivity extends Activity {
   }
   private String backupPending="";
   private boolean qrEnrollmentPending=false;
+  private String selectedAlarmSoundId="";
   private final ExecutorService networkWorker=Executors.newSingleThreadExecutor();
   private volatile String sessionToken="";
   private volatile JSONObject sessionUser=null;
@@ -685,7 +686,6 @@ public final class MainActivity extends Activity {
         startActivityForResult(intent,193);
       });
     }
-    private String selectedAlarmSoundId="";
     @JavascriptInterface public void chooseSoundForAlarm(String id){
       if(id==null||id.isEmpty()||id.length()>100)return;
       runOnUiThread(()->{
