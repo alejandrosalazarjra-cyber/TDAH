@@ -42,8 +42,12 @@ public final class MainActivity extends Activity {
   }
   private WebView web;
   private GoogleAccountBridge googleAccounts;
+  private PublicAccountBridge publicAccounts;
   void googleCallback(String name,String json){
-    if(web!=null)web.evaluateJavascript("window."+name+" && window."+name+"("+JSONObject.quote(json)+")",null);
+    // Los callbacks del servidor público llegan en el hilo de red.
+    runOnUiThread(()->{
+      if(web!=null)web.evaluateJavascript("window."+name+" && window."+name+"("+JSONObject.quote(json)+")",null);
+    });
   }
   private String backupPending="";
   private boolean qrEnrollmentPending=false;
@@ -83,6 +87,7 @@ public final class MainActivity extends Activity {
     restoreNativeSession();
     if(sessionUser!=null)TaskBackgroundSync.schedule(this);
     googleAccounts=new GoogleAccountBridge(this);
+    publicAccounts=new PublicAccountBridge(this);
     getWindow().setStatusBarColor(Color.rgb(246,248,252));
     getWindow().setNavigationBarColor(Color.rgb(255,255,255));
     getWindow().getDecorView().setSystemUiVisibility(android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
@@ -166,6 +171,9 @@ public final class MainActivity extends Activity {
     super.onActivityResult(requestCode,resultCode,data);
     if(requestCode==GoogleAccountBridge.REQUEST_SIGNIN){
       googleAccounts.onResult(data);return;
+    }
+    if(requestCode==PublicAccountBridge.SIGNIN_REQUEST){
+      publicAccounts.onResult(data);return;
     }
     // Registro de referencia QR iniciado desde el formulario web.
     if(qrEnrollmentPending){
@@ -567,6 +575,59 @@ public final class MainActivity extends Activity {
         return false;
       }
     }
+    // Acceso público opcional; el WebView nunca recibe tokens OAuth ni bearer.
+    @JavascriptInterface public boolean publicAvailable(){
+      return publicAccounts!=null&&publicAccounts.available();
+    }
+    @JavascriptInterface public void publicLogin(){
+      runOnUiThread(()->{if(publicAccounts!=null)publicAccounts.login();});
+    }
+    @JavascriptInterface public String publicRestore(){
+      return publicAccounts==null?"{}":publicAccounts.restored().toString();
+    }
+    @JavascriptInterface public String publicLogout(){
+      return publicAccounts==null?"{}":publicAccounts.logout().toString();
+    }
+    @JavascriptInterface public String publicContacts(){
+      return publicAccounts.call("GET","/v1/contacts",null,"").toString();
+    }
+    @JavascriptInterface public String publicInvitations(){
+      return publicAccounts.call("GET","/v1/contacts/invitations",null,"").toString();
+    }
+    @JavascriptInterface public String publicLookup(String handle){
+      if(handle==null||!handle.replace("@","").matches("[a-zA-Z0-9_]{3,30}"))
+        return AccountStore.fail("Identificador inválido").toString();
+      return publicAccounts.call("GET","/v1/users/lookup?handle="+handle.toLowerCase(java.util.Locale.ROOT).replace("@",""),null,"").toString();
+    }
+    @JavascriptInterface public String publicInvite(String recipientId){
+      if(recipientId==null||!recipientId.matches("[0-9a-fA-F-]{36}"))
+        return AccountStore.fail("Destinatario inválido").toString();
+      return publicAccounts.call("POST","/v1/contacts/invitations",
+        payload("recipientId",recipientId),"").toString();
+    }
+    @JavascriptInterface public String publicAcceptInvite(String id){
+      if(id==null||!id.matches("[0-9a-fA-F-]{36}"))
+        return AccountStore.fail("Invitación inválida").toString();
+      return publicAccounts.call("POST","/v1/contacts/invitations/"+id+"/accept",new JSONObject(),"").toString();
+    }
+    @JavascriptInterface public String publicSendTask(String recipientId,String requestKey,String title){
+      if(recipientId==null||!recipientId.matches("[0-9a-fA-F-]{36}")||
+         requestKey==null||!requestKey.matches("[A-Za-z0-9_-]{8,100}")||
+         title==null||title.trim().isEmpty()||title.length()>100)
+        return AccountStore.fail("Tarea inválida").toString();
+      return publicAccounts.call("POST","/v1/tasks",
+        payload("recipientId",recipientId,"title",title.trim()),requestKey).toString();
+    }
+    @JavascriptInterface public String publicTasks(String box){
+      if(!"sent".equals(box)&&!"inbox".equals(box))return AccountStore.fail("Bandeja inválida").toString();
+      return publicAccounts.call("GET","/v1/tasks?box="+box,null,"").toString();
+    }
+    @JavascriptInterface public String publicTaskAction(String taskId,String action){
+      if(taskId==null||!taskId.matches("[0-9a-fA-F-]{36}")||
+         !("accept".equals(action)||"decline".equals(action)||"complete".equals(action)))
+        return AccountStore.fail("Acción inválida").toString();
+      return publicAccounts.call("POST","/v1/tasks/"+taskId+"/"+action,new JSONObject(),"").toString();
+    }
     @JavascriptInterface public String sentTasks(){
       return call("/sent-tasks",new JSONObject()).toString();
     }
@@ -890,5 +951,5 @@ public final class MainActivity extends Activity {
     if(web.canGoBack())web.goBack();else new AlertDialog.Builder(this).setMessage("¿Cerrar NeuroSync?")
       .setNegativeButton("Cancelar",null).setPositiveButton("Salir",(d,w)->finish()).show();
   }
-  @Override public void onDestroy(){if(googleAccounts!=null)googleAccounts.shutdown();networkWorker.shutdownNow();if(web!=null)web.destroy();super.onDestroy();}
+  @Override public void onDestroy(){if(googleAccounts!=null)googleAccounts.shutdown();if(publicAccounts!=null)publicAccounts.shutdown();networkWorker.shutdownNow();if(web!=null)web.destroy();super.onDestroy();}
 }
