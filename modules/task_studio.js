@@ -55,7 +55,7 @@ function taskRows(){
   '<div class="ns-ts-blank"><div class="ns-ts-icon">☑</div><p>Sin tareas en esta categoría.</p><small>Usa «+ Añadir» para comenzar.</small></div>';
 }
 function deliveryLabel(status){
- return status==='queued'?'Pendiente de conexión':status==='completed'?'Completada':status==='accepted'?'Aceptada':'Pendiente de aceptar';
+ return status==='failed'?'Envío rechazado':status==='queued'?'Pendiente de conexión':status==='completed'?'Completada':status==='accepted'?'Aceptada':'Pendiente de aceptar';
 }
 function receivedRows(){
  const list=api.received();
@@ -74,7 +74,8 @@ function sentRows(){
  if(!result.ok)return '<p class="ns-ts-empty-mail" role="status">'+escape(result.error||'Sin conexión')+'</p>';
  return (result.offline?'<p class="ns-ts-empty-mail">Sin conexión · los envíos pendientes siguen guardados en este teléfono.</p>':'')+(result.tasks.length?result.tasks.slice(0,30).map(t=>
   '<div class="ns-ts-row ns-ts-mail"><div><strong>'+escape(t.title)+'</strong>'+
-   '<small>Para: '+escape(t.recipient)+' · '+deliveryLabel(t.deliveryStatus)+'</small></div></div>'
+   '<small>Para: '+escape(t.recipient)+' · '+deliveryLabel(t.deliveryStatus)+'</small>'+
+  (t.error?'<small role="status">'+escape(t.error)+'</small>':'')+'</div></div>'
  ).join(''):'<p class="ns-ts-empty-mail">Todavía no has enviado tareas.</p>');
 }
 function renderTasks(){
