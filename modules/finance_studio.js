@@ -28,12 +28,12 @@ function validBook(b){
  const ids=new Set(),entryIds=new Set();
  for(const a of b.accounts){
   if(!a||typeof a.id!=='string'||!a.id||ids.has(a.id)||
-     typeof a.name!=='string'||peso(a.opening)===null)return false;
+     typeof a.name!=='string'||typeof a.opening!=='number'||peso(a.opening)===null)return false;
   ids.add(a.id);
  }
  for(const e of b.entries){
   if(!e||typeof e.id!=='string'||!e.id||entryIds.has(e.id)||
-    !validDate(e.date)||peso(e.amount)===null||e.amount<1||
+    !validDate(e.date)||typeof e.amount!=='number'||peso(e.amount)===null||e.amount<1||
     !['income','expense','transfer'].includes(e.type))return false;
   entryIds.add(e.id);
   if(e.voidedAt!=null&&(typeof e.voidedAt!=='string'||!Number.isFinite(Date.parse(e.voidedAt))))return false;
@@ -42,7 +42,7 @@ function validBook(b){
   }else if(!ids.has(e.account))return false;
  }
  for(const [period,value] of Object.entries(b.budgets)){
-  if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(period)||peso(value)===null)return false;
+  if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(period)||typeof value!=='number'||peso(value)===null)return false;
  }
  return true;
 }
