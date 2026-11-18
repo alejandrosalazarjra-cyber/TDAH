@@ -106,6 +106,7 @@ public final class AlarmReceiver extends BroadcastReceiver {
   if(id==null)return;
   manager(ctx).cancel(pendingSnooze(ctx,id));
   ctx.getSharedPreferences("ns_alarm_snoozes",0).edit().remove(SNOOZE_PREFIX+id).apply();
+  AlarmOptionsStore.reset(ctx,id);
   AlarmHistory.record(ctx,id,"dismiss");
   AlarmAudioService.stop(ctx);
   ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id.hashCode());
@@ -118,9 +119,11 @@ public final class AlarmReceiver extends BroadcastReceiver {
   }catch(Exception ignored){}
  }
  public static void snooze(Context ctx,String id,int minutes){
+  if(id==null||AlarmOptionsStore.used(ctx,id)>=AlarmOptionsStore.max(ctx,id))return;
   try{
    String s=ctx.getSharedPreferences("ns_alarms",0).getString(PREFIX+id,null);if(s==null)return;
    JSONObject a=new JSONObject(s);
+   AlarmOptionsStore.increment(ctx,id);
    AlarmHistory.record(ctx,id,"snooze");
    AlarmManager alarm=manager(ctx);
    long when=System.currentTimeMillis()+minutes*60000L;
@@ -223,9 +226,10 @@ public final class AlarmReceiver extends BroadcastReceiver {
     if("none".equals(AlarmChallengeStore.get(ctx,alarmId)))dismiss(ctx,alarmId);
     return;
   }
-  if(POSTPONE.equals(intent.getAction())){snooze(ctx,intent.getStringExtra("id"),5);return;}
+  if(POSTPONE.equals(intent.getAction())){String alarmId=intent.getStringExtra("id");snooze(ctx,alarmId,AlarmOptionsStore.minutes(ctx,alarmId));return;}
   if(!FIRE.equals(intent.getAction())&&!SNOOZE.equals(intent.getAction()))return;
   String id=intent.getStringExtra("id");if(id==null)return;
+  if(FIRE.equals(intent.getAction()))AlarmOptionsStore.reset(ctx,id);
   if(SNOOZE.equals(intent.getAction()))
     ctx.getSharedPreferences("ns_alarm_snoozes",0).edit().remove(SNOOZE_PREFIX+id).apply();
   String raw=ctx.getSharedPreferences("ns_alarms",0).getString(PREFIX+id,null);if(raw==null)return;
