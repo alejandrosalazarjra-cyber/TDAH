@@ -106,6 +106,10 @@ public final class MainActivity extends Activity {
             resource="modules/alarm_studio.js";mime="text/javascript";
           }else if("/modules/alarm_studio.css".equals(path)){
             resource="modules/alarm_studio.css";mime="text/css";
+          }else if("/modules/task_studio.js".equals(path)){
+            resource="modules/task_studio.js";mime="text/javascript";
+          }else if("/modules/task_studio.css".equals(path)){
+            resource="modules/task_studio.css";mime="text/css";
           }
           if(resource!=null)try{
             return new WebResourceResponse(mime,"UTF-8",getAssets().open(resource));
