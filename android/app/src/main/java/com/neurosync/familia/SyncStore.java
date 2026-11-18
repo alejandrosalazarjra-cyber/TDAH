@@ -84,22 +84,25 @@ public final class SyncStore {
       }
     }catch(Exception e){return AccountStore.fail("No se pudo enviar la tarea");}
   }
+  private static JSONArray sentSummary(JSONObject database,String username)throws Exception{
+    JSONArray result=new JSONArray(),rows=database.optJSONArray("tasks");
+    if(rows!=null)for(int i=0;i<rows.length();i++){
+      JSONObject task=rows.optJSONObject(i);
+      if(task==null||!username.equals(task.optString("sentBy"))||!task.has("sentBy"))continue;
+      result.put(new JSONObject().put("id",task.optString("id"))
+        .put("recipient",task.optString("owner"))
+        .put("title",task.optString("title"))
+        .put("deliveryStatus",task.optString("deliveryStatus","pending")));
+    }
+    return result;
+  }
   /** Bandeja de envíos: solo metadatos de tareas creadas por esta cuenta. */
   public static JSONObject sentTasks(Context c,JSONObject actor){
     if(actor==null)return AccountStore.fail("Inicia sesión");
     try{
       synchronized(LOCK){
-        JSONArray result=new JSONArray(),rows=read(c).optJSONArray("tasks");
-        String username=actor.optString("username","");
-        if(rows!=null)for(int i=0;i<rows.length();i++){
-          JSONObject task=rows.optJSONObject(i);
-          if(task==null||!username.equals(task.optString("sentBy"))||!task.has("sentBy"))continue;
-          result.put(new JSONObject().put("id",task.optString("id"))
-            .put("recipient",task.optString("owner"))
-            .put("title",task.optString("title"))
-            .put("deliveryStatus",task.optString("deliveryStatus","pending")));
-        }
-        return new JSONObject().put("ok",true).put("tasks",result);
+        return new JSONObject().put("ok",true)
+          .put("tasks",sentSummary(read(c),actor.optString("username","")));
       }
     }catch(Exception e){return AccountStore.fail("No se pudieron consultar envíos");}
   }
@@ -195,7 +198,8 @@ public final class SyncStore {
         if(!c.getSharedPreferences("ns_family",0).edit()
             .putString(KEY,database.toString()).commit())
           return AccountStore.fail("No se guardaron los cambios familiares. Intenta sincronizar de nuevo.");
-        return reply.put("data",view);
+        return reply.put("data",view)
+          .put("sentTasks",sentSummary(database,actor.optString("username","")));
       }
     }catch(Exception e){return AccountStore.fail("Error sincronizando datos");}
   }
