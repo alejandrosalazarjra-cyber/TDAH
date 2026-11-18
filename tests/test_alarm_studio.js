@@ -34,6 +34,12 @@ assert(java.includes('setSnoozeMinutes(Context ctx,String id,int minutes)'),'Fal
 assert(ring.includes('AlarmReceiver.snoozeMinutes(this,id)'),'La pantalla debe usar la preferencia');
 assert(ring.includes('Detener sin desafío'),'Se requiere salida accesible de seguridad');
 assert(main.includes('setAlarmSnoozeMinutes(String id,int minutes)'));
+const challenge=fs.readFileSync('android/app/src/main/java/com/neurosync/familia/AlarmChallengeStore.java','utf8');
+assert(challenge.includes('validSequence(String type)'),'Misiones múltiples deben validarse');
+assert(ring.includes('AlarmChallengeStore.validSequence(configured)'),'Alarma sonando debe ejecutar secuencia');
+assert(html.includes('nsAlarmMissionSequence.length<5'),'Límite de 5 misiones');
+assert(html.includes('ns-alarm-mission-done'),'Aplicación explícita de misiones');
+assert(html.includes('ns-report-productivity'),'Informe debe enlazar con progreso');
 assert(html.includes('if(!scheduleAlarm(item))return'),'No guardar como éxito si Android rechaza la alarma');
 assert(html.includes("var baseRender=renderAlarms"),'La vista debe compartir el render anterior');
-console.log('Alarm Studio QA OK: navegación, sintaxis JS, días de semana, posponer y seguridad');
+console.log('Alarm Studio QA OK: navegación, misiones combinadas, repeticiones, posponer, informes y seguridad');
