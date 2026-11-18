@@ -25,7 +25,7 @@ const day=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.ge
 const app=document.createElement('section');app.className='ns-task-studio';
 const stats=document.createElement('section');stats.className='ns-task-stats';
 tasksHost.insertBefore(app,tasksHost.firstChild);progressHost.insertBefore(stats,progressHost.firstChild);
-let tab='all',category='Todas',sheet=false,selectedPreset=null,creating=false;
+let tab='all',category='Todas',sheet=false,selectedPreset=null,creating=false,sendTaskId=null;
 function items(){return api.list()}
 function isDone(t,date){
  return Array.isArray(t.doneDates)&&t.doneDates.includes(t.repeat==='none'?t.date:date);
@@ -50,7 +50,7 @@ function taskRows(){
   escape(t.repeat==='daily'?'Diario':t.repeat==='weekly'?'Semanal':'Una vez')+
   (t.steps?.length?' · '+t.steps.length+' pasos':'')+
   (t.owner==='todos'?' · Compartida con la familia':'')+'</small></div>'+
-  (api.canShare()&&t.owner===api.owner()?'<button type="button" class="ns-ts-share" data-share="'+escape(t.id)+'" aria-label="Compartir '+escape(t.title)+' con toda la familia">Compartir</button>':'')+'</div>').join(''):
+  '<button type="button" class="ns-ts-share" data-send="'+escape(t.id)+'" aria-label="Enviar '+escape(t.title)+' a otra persona">Enviar</button>'+'</div>').join(''):
   '<div class="ns-ts-blank"><div class="ns-ts-icon">☑</div><p>Sin tareas en esta categoría.</p><small>Usa «+ Añadir» para comenzar.</small></div>';
 }
 function renderTasks(){
@@ -69,6 +69,11 @@ function renderTasks(){
   '<button data-action="templates">Plantillas de tareas</button></div>'+
   '<div class="ns-ts-pane" id="ns-ts-pane"></div>';
  if(sheet)renderPane();
+}
+function recipientOptions(includeSelf){
+ const contacts=api.contacts();
+ return (includeSelf?'<option value="">Solo para mí</option>':'<option value="">Selecciona a alguien</option>')+
+  contacts.map(u=>'<option value="'+escape(u)+'">'+escape(u)+'</option>').join('');
 }
 function renderPane(){
  const pane=app.querySelector('#ns-ts-pane');if(!pane)return;
@@ -98,8 +103,13 @@ function renderPane(){
    '<form id="ns-ts-quick-form"><input name="title" required maxlength="100" autocomplete="off" placeholder="¿Qué necesitas hacer?">'+
    '<div class="ns-ts-inline"><label>Categoría<select name="category"><option>Personal</option><option>Trabajo</option><option>Estudio</option><option>Salud</option><option>Movimiento</option></select></label>'+
    '<label>Repetición<select name="repeat"><option value="none">Una vez</option><option value="daily">Diaria</option><option value="weekly">Semanal</option></select></label></div>'+
-   (api.canShare()?'<label class="ns-ts-share-option"><input type="checkbox" name="shared" value="yes"> Compartir con toda la familia</label>':'')+
-   '<button type="submit">Crear tarea</button><button type="button" data-action="full">Opciones avanzadas</button></form>';
+   '<label>Enviar a<select name="recipient">'+recipientOptions(true)+'</select></label>'+
+   '<button type="submit">Guardar o enviar</button><button type="button" data-action="full">Opciones avanzadas</button></form>';
+ }else if(sheet==='send'){
+  const existing=items().find(t=>t.id===sendTaskId);
+  markup='<div class="ns-ts-pane-head"><h3>Enviar tarea</h3><button type="button" data-action="close" aria-label="Cerrar">×</button></div>'+
+   (existing?'<p>'+escape(existing.title)+'</p><form id="ns-ts-send-form"><label>Destinatario<select name="recipient" required>'+recipientOptions(false)+'</select></label><button type="submit">Enviar tarea</button></form>':
+   '<p>No se encontró la tarea.</p>');
  }
  pane.innerHTML=markup;
  if(sheet==='quick')pane.querySelector('[name=title]')?.focus();
@@ -137,12 +147,8 @@ app.addEventListener('click',event=>{
  if(el.dataset.category){category=el.dataset.category;renderTasks();return}
  if(el.dataset.tab){tab=el.dataset.tab;renderTasks();return}
  if(el.dataset.check){if(api.toggleToday(el.dataset.check))renderTasks();return}
- if(el.dataset.share){
-  if(!api.canShare())return;
-  api.confirm('Compartir tarea','Esta tarea será visible para toda la familia. Podrán marcarla como completada.','Compartir').then(function(ok){
-    if(ok){if(api.share(el.dataset.share))renderTasks();}
-  });
-  return;
+ if(el.dataset.send){
+  sendTaskId=el.dataset.send;sheet='send';renderTasks();return;
  }
  if(el.dataset.habit){
   const repeat=el.dataset.repeat,group=el.dataset.group;
@@ -164,8 +170,22 @@ app.addEventListener('submit',event=>{
  const form=event.target;
  if(form.id==='ns-ts-quick-form'){
   event.preventDefault();const v=Object.fromEntries(new FormData(form).entries());
-  v.shared=form.elements.shared?.checked===true;
-  if(api.create(v)){sheet=false;renderTasks()}
+  if(v.recipient){
+   // Misma clave de envío en los reintentos del formulario abierto.
+   const requestId=form.dataset.requestId||(form.dataset.requestId='send_'+Date.now()+'_'+Math.random().toString(36).slice(2));
+   const result=api.sendTo(v.recipient,{id:requestId,title:v.title,category:v.category,repeat:v.repeat});
+   if(result.ok){sheet=false;renderTasks();}
+   else {let note=form.querySelector('[data-send-error]');if(!note){note=document.createElement('p');note.setAttribute('data-send-error','');note.setAttribute('role','alert');form.append(note);}note.textContent=result.error||'No se pudo enviar';}
+  }else if(api.create(v)){sheet=false;renderTasks()}
+ }
+ if(form.id==='ns-ts-send-form'){
+  event.preventDefault();
+  const existing=items().find(t=>t.id===sendTaskId);
+  if(!existing)return;
+  const recipient=form.elements.recipient.value;
+  const result=api.sendTo(recipient,existing);
+  if(result.ok){sheet=false;sendTaskId=null;renderTasks();}
+  else {let note=form.querySelector('[data-send-error]');if(!note){note=document.createElement('p');note.setAttribute('role','alert');note.setAttribute('data-send-error','');form.append(note);}note.textContent=result.error||'No se pudo enviar';}
  }
  if(form.id==='ns-ts-template-form'){
   event.preventDefault();const v=Object.fromEntries(new FormData(form).entries());
