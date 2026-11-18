@@ -17,6 +17,27 @@ public final class AlarmAudioService extends Service {
   private Vibrator vibrator;
   private final Handler handler=new Handler(Looper.getMainLooper());
   private final Runnable stopLater=()->stopSelf();
+  private Runnable volumeRamp;
+  /** Volumen progresivo opcional: nunca modifica el volumen global del teléfono. */
+  private void beginVolumeRamp(){
+    if(player==null)return;
+    final int seconds=getSharedPreferences("ns_alarm_audio_settings",MODE_PRIVATE)
+       .getInt("fadeSeconds",0);
+    if(seconds<=0){player.setVolume(1f,1f);return;}
+    final int steps=Math.max(1,seconds*2);
+    final long started=SystemClock.elapsedRealtime();
+    player.setVolume(0.15f,0.15f);
+    volumeRamp=new Runnable(){
+      @Override public void run(){
+        if(player==null)return;
+        float elapsed=(SystemClock.elapsedRealtime()-started)/(seconds*1000f);
+        float volume=Math.min(1f,0.15f+0.85f*Math.max(0f,elapsed));
+        try{player.setVolume(volume,volume);}catch(IllegalStateException e){return;}
+        if(volume<1f)handler.postDelayed(this,500);
+      }
+    };
+    handler.postDelayed(volumeRamp,500);
+  }
 
   public static void start(Context context,String id,String title){
     Intent intent=new Intent(context,AlarmAudioService.class).setAction(START)
@@ -89,7 +110,7 @@ public final class AlarmAudioService extends Service {
           .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
         attempt.setDataSource(this,uri);
         attempt.setLooping(true);attempt.prepare();attempt.start();
-        player=attempt;return;
+        player=attempt;beginVolumeRamp();return;
       }catch(Exception error){
         if(attempt!=null)try{attempt.release();}catch(Exception ignored){}
         android.util.Log.w("NeuroSync","Tono no disponible, probando siguiente",error);
@@ -101,6 +122,7 @@ public final class AlarmAudioService extends Service {
     }catch(Exception e){android.util.Log.e("NeuroSync","Sin reproductor de emergencia",e);}
   }
   private void release(){
+    if(volumeRamp!=null){handler.removeCallbacks(volumeRamp);volumeRamp=null;}
     if(vibrator!=null){try{vibrator.cancel();}catch(Exception ignored){}vibrator=null;}
     if(player!=null){try{player.stop();}catch(Exception ignored){}player.release();player=null;}
     if(backupTone!=null){backupTone.stopTone();backupTone.release();backupTone=null;}

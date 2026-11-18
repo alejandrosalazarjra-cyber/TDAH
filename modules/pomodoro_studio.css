@@ -1,0 +1,82 @@
+/* NeuroSync Focus Studio: vista inmersiva al deslizar a la izquierda desde el launcher.
+ * CSS original con escenas animadas cuando no hay un MP4 descargado.
+ */
+#view-home #focus-studio{display:none!important}
+#ns-pomodoro-screen{inset:0!important;width:100vw!important;height:100dvh!important;
+ padding:0!important;z-index:2147483600!important;background:#0b1a30!important;display:none!important;
+ box-sizing:border-box!important;overflow:hidden!important;text-align:center!important}
+#ns-pomodoro-screen.is-visible{display:block!important}
+#ns-pomodoro-screen *{box-sizing:border-box}
+#ns-pomodoro-screen .ns-pf-backdrop{position:absolute;inset:0;overflow:hidden;background:#17374a;pointer-events:none}
+#ns-pomodoro-screen .ns-pf-sky{position:absolute;inset:0;transition:background .6s ease;background:
+ linear-gradient(180deg,#77c4d6 0%,#aed9ca 42%,#297a8b 100%)}
+#ns-pomodoro-screen .ns-pf-orb{position:absolute;top:16%;left:50%;width:30vmin;height:30vmin;max-width:210px;max-height:210px;
+ transform:translateX(-50%);border-radius:50%;background:#fff1bb;
+ box-shadow:0 0 120px 50px #ffefc15c;animation:ns-pf-breathe 9s ease-in-out infinite}
+#ns-pomodoro-screen .ns-pf-layer{position:absolute;left:-15%;width:130%;border-radius:50% 50% 0 0}
+#ns-pomodoro-screen .ns-pf-far{height:45%;bottom:-18%;background:#417f82;animation:ns-pf-drift 14s ease-in-out infinite alternate}
+#ns-pomodoro-screen .ns-pf-near{height:30%;bottom:-13%;background:#1a566b;animation:ns-pf-drift 18s ease-in-out infinite alternate-reverse}
+#ns-pomodoro-screen .ns-pf-fog{position:absolute;top:35%;left:-35%;width:170%;height:27%;filter:blur(40px);opacity:.55;
+ background:linear-gradient(90deg,transparent,#d6f9ff5c,transparent);animation:ns-pf-drift 21s ease-in-out infinite alternate}
+#ns-pomodoro-screen .ns-pf-sparkles{position:absolute;inset:0;opacity:.25;background-image:
+ radial-gradient(circle at 11% 16%,white 1px,transparent 2px),
+ radial-gradient(circle at 76% 24%,white 1px,transparent 2px),
+ radial-gradient(circle at 59% 59%,white 1px,transparent 2px);
+ background-size:190px 190px;animation:ns-pf-breathe 7s ease-in-out infinite}
+#ns-pomodoro-screen[data-scene=bosque] .ns-pf-sky{background:linear-gradient(180deg,#183c36 0%,#35664d 52%,#142f35 100%)}
+#ns-pomodoro-screen[data-scene=bosque] .ns-pf-orb{top:22%;left:65%;width:22vmin;height:22vmin;background:#e6edb5;opacity:.7}
+#ns-pomodoro-screen[data-scene=bosque] .ns-pf-far{height:60%;bottom:-12%;background:repeating-linear-gradient(90deg,#113d32 0 16px,#275743 16px 31px,#0c322e 31px 42px);
+ clip-path:polygon(0 12%,5% 0,11% 18%,17% 2%,26% 11%,32% 0,41% 16%,50% 5%,60% 19%,66% 2%,75% 15%,83% 0,93% 18%,100% 3%,100% 100%,0 100%)}
+#ns-pomodoro-screen[data-scene=bosque] .ns-pf-near{height:38%;bottom:-12%;background:#103329;clip-path:polygon(0 22%,10% 5%,22% 24%,35% 7%,45% 30%,55% 10%,65% 22%,76% 2%,85% 18%,100% 5%,100% 100%,0 100%)}
+#ns-pomodoro-screen[data-scene=noche] .ns-pf-sky{background:linear-gradient(180deg,#080e28 0%,#131b43 49%,#18284b 100%)}
+#ns-pomodoro-screen[data-scene=noche] .ns-pf-orb{top:16%;left:71%;width:24vmin;height:24vmin;background:#e0e6f6;
+ box-shadow:0 0 100px 30px #d5ddf640;opacity:.82}
+#ns-pomodoro-screen[data-scene=noche] .ns-pf-far{height:34%;background:#192c51}
+#ns-pomodoro-screen[data-scene=noche] .ns-pf-near{height:25%;background:#111a34}
+#ns-pomodoro-screen[data-scene=noche] .ns-pf-sparkles{opacity:.75;animation:ns-pf-breathe 4s ease-in-out infinite alternate}
+#ns-pomodoro-screen .ns-pf-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s}
+#ns-pomodoro-screen.ns-pf-has-video .ns-pf-video{opacity:1}
+#ns-pomodoro-screen .ns-pf-backdrop:after{content:"";position:absolute;inset:0;
+ background:linear-gradient(180deg,#06162e50 0%,#03142920 35%,#05162f9c 100%);pointer-events:none}
+#ns-pomodoro-screen .ns-pf-interface{position:relative;z-index:1;display:flex;flex-direction:column;
+ width:100%;max-width:780px;margin:0 auto;height:100%;height:100dvh;padding:calc(env(safe-area-inset-top) + 14px) 22px calc(env(safe-area-inset-bottom) + 20px);
+ color:#fff;overflow-y:auto;overscroll-behavior:contain}
+#ns-pomodoro-screen .ns-pf-top{display:flex;justify-content:space-between;align-items:center;min-height:44px;gap:10px}
+#ns-pomodoro-screen .ns-pf-top span{font-size:11px;letter-spacing:.14em;font-weight:800;color:#e3f4ff}
+#ns-pomodoro-screen .ns-pf-top button{width:46px;height:46px;flex:none;border:1px solid #ffffff55;border-radius:50%;background:#0b244d88;color:#fff;font-size:24px}
+#ns-pomodoro-screen .ns-pf-heading{margin:12px 0 0}
+#ns-pomodoro-screen .ns-pf-heading h2{font-size:clamp(27px,8vw,44px);font-weight:750;color:#fff;margin:2px 0}
+#ns-pomodoro-screen .ns-pf-heading p{font-size:14px;color:#ebf5ff;margin:0}
+#ns-pomodoro-screen .ns-pomodoro-content{flex:1;justify-content:center;min-height:140px;max-height:50vh;padding:10px 0}
+#ns-pomodoro-screen .ns-pomodoro-caption{font-size:11px;letter-spacing:.24em;color:#effaff;font-weight:750}
+#ns-pomodoro-screen #ns-pomodoro-count{font-size:clamp(70px,19vw,114px);line-height:1.05;font-variant-numeric:tabular-nums;
+ color:white;text-shadow:0 2px 30px #0008;font-weight:700;letter-spacing:-.065em}
+#ns-pomodoro-screen #ns-pomodoro-status{font-size:14px;color:#e9f5ff;margin:11px 0}
+#ns-pomodoro-screen .ns-pf-controls{background:#0b203caa;backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);
+ border:1px solid #ffffff38;border-radius:24px;padding:18px 14px 12px;display:grid;gap:12px;margin-bottom:3px}
+#ns-pomodoro-screen .ns-pf-scenes,#ns-pomodoro-screen .ns-pf-duration{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+#ns-pomodoro-screen .ns-pf-duration{grid-template-columns:repeat(4,minmax(0,1fr))}
+#ns-pomodoro-screen .ns-pf-scenes button,#ns-pomodoro-screen .ns-pf-duration button{
+ min-height:44px;padding:8px 2px;border-radius:13px;background:#ffffff17;color:#fff;border:1px solid #ffffff1f;
+ font-size:12px;font-weight:700}
+#ns-pomodoro-screen [aria-pressed=true]{background:#1686f7b3!important;border-color:#80ccff!important;color:white!important}
+#ns-pomodoro-screen .ns-pf-task{display:grid;gap:6px;color:#dfedff;font-size:12px;text-align:left}
+#ns-pomodoro-screen .ns-pf-task select{min-height:43px;border:1px solid #ffffff50;border-radius:11px;background:#142849b3;color:white;
+ font-size:14px;padding:8px 11px}
+#ns-pomodoro-screen .ns-pf-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+#ns-pomodoro-screen .ns-pf-actions button{min-height:49px;border:0;border-radius:14px;font-size:14px;font-weight:800}
+#ns-pomodoro-screen #ns-pf-start{background:#1788f9;color:white}
+#ns-pomodoro-screen #ns-pomodoro-finish{background:#ffffff20!important;border:1px solid #ffffff59!important;color:white;
+ width:100%;margin:0;min-height:49px;border-radius:14px}
+#ns-pomodoro-screen #ns-pf-audio{width:100%;min-height:43px;border:1px solid #ffffff28;border-radius:12px;
+ background:transparent;color:#deefff;font-size:12px}
+#ns-pomodoro-screen .ns-pf-note{color:#b9cadc;font-size:11px;margin:0;text-align:center;line-height:1.4}
+#ns-pomodoro-screen :focus-visible{outline:3px solid #9bd4ff!important;outline-offset:2px}
+@keyframes ns-pf-breathe{0%,100%{opacity:.4;transform:translateX(-50%) scale(.97)}50%{opacity:1;transform:translateX(-50%) scale(1.03)}}
+@keyframes ns-pf-drift{from{transform:translateX(-3%)}to{transform:translateX(3%)}}
+@media(max-height:660px){#ns-pomodoro-screen .ns-pf-heading{margin:2px 0}#ns-pomodoro-screen .ns-pomodoro-content{min-height:95px}
+#ns-pomodoro-screen #ns-pomodoro-count{font-size:clamp(61px,16vw,88px)}#ns-pomodoro-screen .ns-pf-controls{gap:7px;padding:10px}}
+@media(prefers-reduced-motion:reduce){#ns-pomodoro-screen .ns-pf-backdrop *{animation:none!important;transition:none!important}}
+
+/* Diálogo de confirmación visible sobre el estudio a pantalla completa. */
+body.ns-pomodoro-active>.ns-overlay{z-index:2147483620!important}
