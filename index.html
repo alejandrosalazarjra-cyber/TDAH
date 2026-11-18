@@ -2946,7 +2946,7 @@ function nsAlarmStudioSetup(){
  '<div class="ns-alarm-actions"><button type="button" id="ns-editor-settings" class="ns-studio-plain">Sonido y permisos</button><button type="submit" class="ns-studio-save">Guardar alarma</button></div></form></section>'+
  '<section class="ns-studio-pane" data-pane="missions"><h2>Misiones</h2><p class="ns-studio-note">Elige desafíos implementados en Android.</p><label class="ns-studio-field ns-mission-multi"><span><input type="checkbox" id="ns-alarm-multi"> Combinar varias misiones</span></label><p class="ns-studio-note" id="ns-alarm-mission-count">Una misión</p><div id="ns-studio-mission-list"></div><button type="button" id="ns-alarm-mission-done" class="ns-studio-primary">Aplicar misiones</button></section>'+
  '<section class="ns-studio-pane" data-pane="settings"><h2>Ajustes de alarma</h2><p class="ns-studio-note">Permisos, sonido, prueba y música mediante Reloj de Google.</p><div id="ns-alarm-settings-destination"></div></section>'+
- '<section class="ns-studio-pane" data-pane="report"><h2>Informe de despertar</h2><p class="ns-studio-note">Eventos registrados por Android en los últimos 7 días.</p><div class="ns-studio-report"><div class="metric"><strong id="ns-report-ring">0</strong><small>Sonaron</small></div><div class="metric"><strong id="ns-report-dismiss">0</strong><small>Detenidas</small></div><div class="metric"><strong id="ns-report-snooze">0</strong><small>Pospuestas</small></div></div><div id="ns-report-log"></div><div id="ns-report-legacy"></div></section>';
+ '<section class="ns-studio-pane" data-pane="report"><h2>Informe de despertar</h2><p class="ns-studio-note">Eventos registrados por Android en los últimos 7 días.</p><div class="ns-studio-report"><div class="metric"><strong id="ns-report-ring">0</strong><small>Sonaron</small></div><div class="metric"><strong id="ns-report-dismiss">0</strong><small>Detenidas</small></div><div class="metric"><strong id="ns-report-snooze">0</strong><small>Pospuestas</small></div></div><div id="ns-report-log"></div><div id="ns-report-legacy"></div><button type="button" class="ns-studio-plain" id="ns-report-productivity">Ver sueño, hábitos y concentración</button></section>';
  root.prepend(studio);
  var original=Array.from(root.children).find(function(n){return n!==studio&&n.classList.contains('card')&&n.querySelector('#alarms-list')});
  var insights=Array.from(root.children).find(function(n){return n!==studio&&n.classList.contains('ns-wake-insights')});
@@ -2969,6 +2969,7 @@ function nsAlarmStudioSetup(){
   if(nsAlarmMultiMode){
    var simple=['math','math_hard','memory','typing','shake','taps'];
    nsAlarmMissionSequence=simple.includes(nsAlarmMission)?[nsAlarmMission]:[];
+   nsAlarmMission=nsAlarmMissionSequence[0]||'none';
   }else{
    nsAlarmMission=nsAlarmMissionSequence[0]||'none';
    nsAlarmMissionSequence=[];
@@ -2977,6 +2978,7 @@ function nsAlarmStudioSetup(){
  };
  by('ns-alarm-qr-legacy').onclick=function(){openModal('alarm')};
  by('ns-editor-settings').onclick=function(){nsAlarmStudioTab('settings')};
+ by('ns-report-productivity').onclick=function(){show('habits')};
  by('ns-studio-alarm-form').elements.repeat.onchange=function(){
   by('ns-weekdays').classList.toggle('hidden',this.value!=='custom')
  };
