@@ -216,6 +216,7 @@
   const events=api.events().filter(e=>+e.at>=weekStart&&+e.at<=now);
   const counts=t=>events.filter(e=>e.action===t).length;
   const stats=[['Sonaron',counts('ring')],['Detenidas',counts('dismiss')],['Pospuestas',counts('snooze')]];
+  const productivity=api.productivity();
   const bars=Array.from({length:7},(_,i)=>{
    const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-(6-i));
    return {date:d,day:d.toLocaleDateString('es-CO',{weekday:'short'}),
@@ -229,6 +230,10 @@
    '<div class="ns-as-report-stats">'+stats.map(([l,v])=>'<div><strong>'+v+'</strong><small>'+l+'</small></div>').join('')+'</div>'+
    '<section class="ns-as-chart"><h3>Alarmas que sonaron</h3><div class="ns-as-bars">'+bars.map(x=>
     '<div><span>'+x.count+'</span><div class="ns-as-bar-track"><i style="height:'+(x.count/max*100)+'%"></i></div><small>'+escape(x.day)+'</small></div>').join('')+'</div></section>'+
+   '<section class="ns-as-settings-group"><h3>Productividad y Azul</h3>'+
+    '<div class="ns-as-report-stats"><div><strong>'+productivity.focusMinutes+'</strong><small>Min de enfoque</small></div>'+
+    '<div><strong>'+productivity.tasksCompleted+'</strong><small>Tareas de 7 días</small></div>'+
+    '<div><strong>'+productivity.dragonXp+'</strong><small>XP de Azul</small></div></div></section>'+
    '<section class="ns-as-settings-group"><h3>Diario del sueño</h3><p>'+
     (sleeps.length?sleeps.length+' registro(s) recientes':'Sin registros de descanso esta semana')+
     '</p><p class="ns-as-hint">El sueño se registra voluntariamente desde Progreso; no se estima a partir de la alarma.</p>'+
