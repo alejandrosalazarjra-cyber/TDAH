@@ -2,7 +2,64 @@ plugins { id 'com.android.application' }
 android {
     namespace 'com.neurosync.familia'
     compileSdk 35
+    buildFeatures { buildConfig true }
     defaultConfig {
+        // Configuración del desarrollador; nunca se solicita una URL al usuario.
+        def base = System.getenv('NEUROSYNC_API_BASE_URL') ?: ''
+        def oauthClient = System.getenv('NEUROSYNC_GOOGLE_WEB_CLIENT_ID') ?: ''
+        if (base && !(base ==~ /^https:\/\/[A-Za-z0-9.-]+(?::443)?\/?$/)) {
+            throw new GradleException('NEUROSYNC_API_BASE_URL debe ser una URL HTTPS sin ruta ni credenciales')
+        }
+        if (oauthClient && !(oauthClient ==~ /^[A-Za-z0-9._-]+\.apps\.googleusercontent\.com$/)) {
+            throw new GradleException('Cliente OAuth Web inválido')
+        }
+        buildConfigField 'String', 'PUBLIC_API_BASE_URL', '"' + base.replaceAll('/+
+        minSdk 26
+        targetSdk 35
+        versionCode 10
+        versionName '10.0.0'
+        manifestPlaceholders = [appLabel: 'NeuroSync Familia']
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    signingConfigs {
+        if (System.getenv('NS_KEYSTORE_FILE')) {
+            create('neurosyncRelease') {
+                storeFile file(System.getenv('NS_KEYSTORE_FILE'))
+                storePassword System.getenv('NS_SIGNING_PASSWORD')
+                keyAlias System.getenv('NS_SIGNING_ALIAS') ?: 'neurosync'
+                keyPassword System.getenv('NS_SIGNING_PASSWORD')
+            }
+        }
+    }
+    buildTypes {
+        preview {
+            initWith debug
+            // Usar una firma persistente cuando haya un keystore seguro en GitHub Secrets.
+            // Evita que el SHA-1 de OAuth cambie entre ejecuciones de GitHub Actions.
+            if (System.getenv('NS_KEYSTORE_FILE')) {
+                signingConfig signingConfigs.neurosyncRelease
+            }
+            applicationIdSuffix '.preview'
+            versionNameSuffix '-preview'
+            manifestPlaceholders = [appLabel: 'NeuroSync PRUEBA 10']
+            matchingFallbacks = ['debug']
+        }
+        release {
+            minifyEnabled false
+            if (System.getenv('NS_KEYSTORE_FILE')) {
+                signingConfig signingConfigs.neurosyncRelease
+            }
+        }
+    }
+}
+
+// ZXing Android Embedded: escáner QR de código abierto, sin aplicación externa.
+dependencies {
+    implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
+    implementation 'com.google.android.gms:play-services-auth:21.5.0'
+}
+,'') + '"'
+        buildConfigField 'String', 'PUBLIC_GOOGLE_CLIENT_ID', '"' + oauthClient + '"'
         applicationId 'com.neurosync.familia'
         minSdk 26
         targetSdk 35
