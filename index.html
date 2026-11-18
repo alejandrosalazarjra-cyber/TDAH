@@ -2150,6 +2150,42 @@ by('pet-feed').onclick=function(){
 var syncing=false;
 /* El servidor familiar es una fuente de cambios, nunca autorización para
  * escribir sobre los datos privados de otra sesión ni saltarse la copia local. */
+/* Estado de envíos: historial mínimo por cuenta, sin registrar tareas privadas ajenas.
+ * El primer contacto establece una línea base para no notificar cambios antiguos.
+ */
+function nsSentStatusKey(username){return 'ns_sent_status_v1_'+username}
+function nsCheckSentStatus(items,username){
+ if(!session||session.username!==username||!Array.isArray(items))return;
+ var key=nsSentStatusKey(username),old=null;
+ try{
+  var raw=localStorage.getItem(key);
+  if(raw)old=JSON.parse(raw);
+  if(old!==null&&(!old||typeof old!=='object'||Array.isArray(old)))return;
+ }catch(e){return}
+ var next={};
+ items.slice(0,3000).forEach(function(t){
+  if(!t||typeof t.id!=='string'||!t.id.startsWith('sent_')||
+     !['pending','accepted','completed'].includes(t.deliveryStatus))return;
+  next[t.id]=t.deliveryStatus;
+ });
+ // Persistir primero para evitar avisos duplicados tras un reinicio.
+ try{
+  var json=JSON.stringify(next);localStorage.setItem(key,json);
+  if(localStorage.getItem(key)!==json)return;
+ }catch(e){return}
+ if(old===null)return;
+ for(var id of Object.keys(next)){
+  var previous=old[id],current=next[id];
+  if(previous!=='pending'&&previous!=='accepted')continue;
+  if(current===previous||current==='pending')continue;
+  if(previous==='accepted'&&current!=='completed')continue;
+  try{
+   if(nat&&nat.notifySentTaskStatus)nat.notifySentTaskStatus(id,current);
+  }catch(e){}
+  if(typeof say==='function')say(current==='accepted'?
+   'Una de tus tareas enviadas fue aceptada':'Una de tus tareas enviadas fue completada');
+ }
+}
 window.neuroSyncOnSync=function(payload,requestingUser){
  syncing=false;
  if(!session||!model||(requestingUser&&session.username!==requestingUser))return;
@@ -2189,6 +2225,8 @@ window.neuroSyncOnSync=function(payload,requestingUser){
   staged._localUpdatedAt=Date.now();
   nsLocalSave(staged);
   model=staged;
+  // La respuesta pertenece a esta cuenta y el guardado local ya fue confirmado.
+  nsCheckSentStatus(res.sentTasks,owner);
   // Después del guardado: no notificar sobre tareas que no se pudieron conservar.
   if(incoming.length){
    by('sync-status').textContent='Tienes '+incoming.length+' tarea(s) nuevas en Recibidas';
