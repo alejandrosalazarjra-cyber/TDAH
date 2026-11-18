@@ -231,6 +231,15 @@ async function handler(req,res){
   if(!result.rowCount)reject(404,'Invitación no disponible');
   return respond(res,200,{ok:true,invitation:result.rows[0]});
  }
+ const declineInvite=path.match(new RegExp('^/v1/contacts/invitations/([a-f0-9-]{36})/decline$','i'));
+ if(declineInvite&&req.method==='POST'){
+  const result=await pool.query(
+   `UPDATE ns_contact_invitations SET state='declined',changed_at=now()
+    WHERE id=$1 AND recipient_id=$2 AND state='pending'
+    RETURNING id,state`,[declineInvite[1],user.id]);
+  if(!result.rowCount)reject(404,'Invitación no disponible');
+  return respond(res,200,{ok:true,invitation:result.rows[0]});
+ }
  if(path==='/v1/tasks'&&req.method==='POST'){
   const data=await body(req);
   const recipientId=data.recipientId,key=req.headers['idempotency-key'];
