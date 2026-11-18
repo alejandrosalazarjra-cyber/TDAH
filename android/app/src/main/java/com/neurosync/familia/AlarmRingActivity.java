@@ -40,12 +40,21 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
  }
  private Button button(String text){
    Button result=new Button(this);result.setText(text);result.setAllCaps(false);
-   result.setMinHeight(dp(54));result.setTextSize(15);
+   result.setMinHeight(dp(56));result.setTextSize(16);
+   result.setTypeface(null,android.graphics.Typeface.BOLD);
    result.setTextColor(Color.WHITE);
    android.graphics.drawable.GradientDrawable bg=new android.graphics.drawable.GradientDrawable();
-   bg.setColor(0xFF465FD6);bg.setCornerRadius(dp(16));result.setBackground(bg);
-   LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-1,dp(54));
-   params.setMargins(0,dp(5),0,dp(5));result.setLayoutParams(params);
+   bg.setColor(0xFF1686F7);bg.setCornerRadius(dp(18));result.setBackground(bg);
+   LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-1,dp(56));
+   params.setMargins(0,dp(7),0,dp(7));result.setLayoutParams(params);
+   return result;
+ }
+ private Button secondaryButton(String text){
+   Button result=button(text);
+   android.graphics.drawable.GradientDrawable bg=new android.graphics.drawable.GradientDrawable();
+   bg.setColor(0xFF243451);bg.setCornerRadius(dp(18));
+   bg.setStroke(dp(1),0xFF3A587B);
+   result.setBackground(bg);
    return result;
  }
  private void forceDismissAlarm(){
@@ -64,13 +73,22 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
    forceDismissAlarm();
  }
  private String[] routineStages(String kind){
+   if("routine_five".equals(kind))return new String[]{"math","memory","typing","taps","shake"};
    return "routine_active".equals(kind)?new String[]{"memory","shake","math"}:new String[]{"math","typing"};
  }
  @Override public void onCreate(Bundle state){
    super.onCreate(state);
    if(Build.VERSION.SDK_INT>=27){setShowWhenLocked(true);setTurnScreenOn(true);}
    else getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED|WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
-   getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+   getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON | WindowManager.LayoutParams.FLAG_FULLSCREEN);
+   // Experiencia de alarma independiente de la WebView y sin barras superpuestas.
+   getWindow().getDecorView().setSystemUiVisibility(
+     android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
+     | android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+     | android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+     | android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+     | android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+     | android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
    id=getIntent().getStringExtra("id");
    if(id==null){finish();return;}
    openedAt=SystemClock.elapsedRealtime();
@@ -78,10 +96,10 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
    String configured=challenge;
    routineType=getIntent().getStringExtra("routineType");
    if(routineType==null)routineType="";
-   if(routineType.isEmpty()&&("routine_focus".equals(configured)||"routine_active".equals(configured)))
+   if(routineType.isEmpty()&&("routine_focus".equals(configured)||"routine_active".equals(configured)||"routine_five".equals(configured)))
       routineType=configured;
    if(!routineType.isEmpty()){
-     if(!"routine_focus".equals(routineType)&&!"routine_active".equals(routineType))
+     if(!"routine_focus".equals(routineType)&&!"routine_active".equals(routineType)&&!"routine_five".equals(routineType))
        routineType="";
      else{
        routineStep=Math.max(0,Math.min(getIntent().getIntExtra("routineStep",0),routineStages(routineType).length-1));
@@ -95,13 +113,34 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
    root.setGravity(Gravity.CENTER);
    root.setPadding(dp(22),dp(24),dp(22),dp(24));
    android.graphics.drawable.GradientDrawable background=new android.graphics.drawable.GradientDrawable(
-     android.graphics.drawable.GradientDrawable.Orientation.TL_BR,new int[]{0xFF101A31,0xFF233963,0xFF131C34});
+     android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
+     new int[]{0xFF1B2344,0xFF101725,0xFF090E17});
    root.setBackground(background);
    ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.addView(root);
    setContentView(scroll);
-   root.addView(label("☀",52));
-   root.addView(label("ES MOMENTO DE DESPERTAR",14));
-   root.addView(label(alarmTitle,29));
+   TextView brand=label("NEUROSYNC · ALARMA",12);
+   brand.setTextColor(0xFF86BAED);
+   brand.setLetterSpacing(0.13f);
+   root.addView(brand);
+   TextView clock=label(new java.text.SimpleDateFormat("HH:mm",java.util.Locale.getDefault())
+      .format(new java.util.Date()),64);
+   clock.setTextColor(0xFF1686F7);
+   clock.setTypeface(null,android.graphics.Typeface.BOLD);
+   clock.setLetterSpacing(-0.06f);
+   root.addView(clock);
+   TextView mainTitle=label(alarmTitle,26);
+   mainTitle.setTypeface(null,android.graphics.Typeface.BOLD);
+   root.addView(mainTitle);
+   TextView wakeMessage=label("Es momento de despertar",15);
+   wakeMessage.setTextColor(0xFFB7C8DD);
+   root.addView(wakeMessage);
+   android.view.View wave=new android.view.View(this);
+   android.graphics.drawable.GradientDrawable waveBg=new android.graphics.drawable.GradientDrawable(
+      android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
+      new int[]{0x001686F7,0xFF1686F7,0xFF41C1ED,0x001686F7});
+   waveBg.setCornerRadius(dp(4));wave.setBackground(waveBg);
+   LinearLayout.LayoutParams waveParams=new LinearLayout.LayoutParams(-1,dp(3));
+   waveParams.setMargins(0,dp(22),0,dp(24));root.addView(wave,waveParams);
    if(!routineType.isEmpty()){
      root.addView(label("RUTINA DE DESPERTAR · ETAPA "+(routineStep+1)+" DE "+routineStages(routineType).length,14));
    }
@@ -193,10 +232,15 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
      Button stop=button("Detener alarma");root.addView(stop);
      stop.setOnClickListener(v->finishAlarm());
    }
-   Button snooze=button("Posponer 5 minutos");root.addView(snooze);
-   snooze.setOnClickListener(v->{AlarmReceiver.snooze(this,id,5);finish();});
+   final int snoozeMinutes=AlarmOptionsStore.minutes(this,id);
+   final int allowedSnoozes=AlarmOptionsStore.max(this,id)-AlarmOptionsStore.used(this,id);
+   if(allowedSnoozes>0){
+     Button snooze=secondaryButton("Posponer "+snoozeMinutes+" min · "+allowedSnoozes+" restante(s)");
+     root.addView(snooze);
+     snooze.setOnClickListener(v->{AlarmReceiver.snooze(this,id,snoozeMinutes);finish();});
+   }
    if(!"none".equals(challenge)){
-     Button emergency=button("Detener sin desafío");
+     Button emergency=secondaryButton("Detener sin desafío");
      root.addView(emergency);
      emergency.setOnClickListener(v->{
        emergency.setVisibility(android.view.View.GONE);
@@ -204,7 +248,7 @@ public final class AlarmRingActivity extends Activity implements SensorEventList
        root.addView(message);
        Button confirm=button("Sí, detener ahora");root.addView(confirm);
        confirm.setOnClickListener(w->forceDismissAlarm());
-       Button back=button("Volver al desafío");root.addView(back);
+       Button back=secondaryButton("Volver al desafío");root.addView(back);
        back.setOnClickListener(w->{root.removeView(message);root.removeView(confirm);root.removeView(back);emergency.setVisibility(android.view.View.VISIBLE);});
      });
    }
