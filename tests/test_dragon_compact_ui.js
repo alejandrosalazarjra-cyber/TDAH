@@ -5,7 +5,7 @@ const vm=require('node:vm');
 const assert=require('node:assert/strict');
 const html=fs.readFileSync('index.html','utf8');
 function single(id){
- const matches=html.match(new RegExp('id="'+id+'"','g'))||[];
+ const matches=html.match(new RegExp('<[a-z]+[^<>]*id="'+id+'"','gi'))||[];
  assert.equal(matches.length,1,'El elemento '+id+' debe aparecer exactamente una vez');
 }
 for(const id of ['ns-companion-title','ns-companion-stage','ns-dragon-energy',
