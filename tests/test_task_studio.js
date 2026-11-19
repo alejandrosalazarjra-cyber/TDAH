@@ -107,7 +107,7 @@ storage.fail=false;
 assert.equal(offlineApi.outbox().length,0,'Un error de almacenamiento no debe crear un envío falso');
 assert(!storageState.has('ns_task_outbox_v1_hermano'),'No crear cola de otra cuenta');
 assert(script.includes('Pendiente de conexión'),'Mostrar envío sin conexión en la interfaz');
-assert(html.includes('Math.min(1,items.length)'),
+assert(html.includes('Math.min(1,eligible.length)'),
  'Limitar los reintentos síncronos para no bloquear la pantalla');
 
 assert(html.includes("window.addEventListener('online'"),'Reintentar al recuperar la conexión');
