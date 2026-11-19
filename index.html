@@ -529,43 +529,6 @@ html,body{background:#f8fbff;color:var(--ink)}
 
 
 
-/* Portada compacta 2026-11: navegación visible y contenido funcional primero. */
-#view-home .ns-home-intro{display:flex!important;align-items:center;justify-content:space-between;gap:10px;margin:0 0 7px!important;min-height:45px}
-#view-home .ns-home-intro .ns-minimal-entry{margin:0!important;flex:0 0 auto}
-#view-home .ns-home-intro #ns-launcher-direct{min-height:38px!important;padding:7px 11px!important;border-radius:12px!important;box-shadow:none!important;gap:5px;font-size:12px}
-#view-home .ns-home-intro #ns-launcher-direct strong{font-size:12px}
-#view-home .ns-feature-tiles{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:4px!important;margin:1px 0 9px!important}
-#view-home .ns-feature-tile{min-height:53px!important;padding:7px 6px!important;border:1px solid #e0ebf5!important;border-radius:10px!important;box-shadow:none!important;align-items:center!important;justify-content:center!important;text-align:center!important;gap:2px!important}
-#view-home .ns-feature-tile>span{font-size:17px!important}
-#view-home .ns-feature-tile strong{font-size:11px!important;line-height:1.15!important}
-#view-home .ns-feature-tile small{display:none!important}
-#view-home .ns-home-companion{margin:0 0 8px!important;padding:11px 12px 10px!important;border-radius:17px!important;box-shadow:none!important}
-#view-home .ns-companion-meter{margin:1px 0 5px!important}
-#view-home .ns-companion-care{gap:6px!important;margin:3px 0 0!important}
-#view-home .ns-care-btn{min-height:42px!important;padding:6px!important;border-radius:11px!important;box-shadow:none!important}
-#view-home .ns-companion-scene-slot{min-height:125px!important;max-height:150px!important;margin:0!important}
-#view-home .ns-companion-scene-slot #dragon-scene{height:145px!important;min-height:125px!important}
-#view-home .ns-companion-scene-slot #dragon-scene .ns-dragon-sprite{max-height:145px!important}
-#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-xp{margin:2px 0 7px!important}
-#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-play-controls{display:contents!important}
-#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-interactions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
-#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-action-btn,
-#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-pet-btn{min-height:41px!important;width:100%!important;flex:auto!important;margin:0!important;padding:7px 3px!important;font-size:11px!important;border-radius:11px!important}
-#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-more{margin:4px 0 0!important;padding-top:0!important}
-#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-more>summary{padding:8px 25px 8px 2px!important;font-size:12px!important}
-#view-home #quick-capture-card{margin:4px 0 10px!important;padding:11px 12px!important}
-#view-home #quick-capture-card h2{font-size:15px!important}
-#view-home #quick-capture-card .chip{display:none!important}
-#view-home #quick-capture-card form{margin-top:7px!important;gap:6px!important}
-#view-home #quick-capture-input{min-width:0!important;flex:1 1 120px!important}
-@media(max-width:390px){
- #view-home .ns-home-intro #ns-launcher-direct{padding:6px 8px!important}
- #view-home .ns-feature-tile{min-height:49px!important}
- #view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-interactions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important}
- #view-home .ns-companion-scene-slot{min-height:120px!important;max-height:140px!important}
- #view-home .ns-companion-scene-slot #dragon-scene{height:135px!important}
-}
-
 /* Azul: una sola sección de mascota. Los controles originales se reubican bajo la escena. */
 #view-home .ns-home-companion>.ns-dragon-copy{padding:1px 0 4px!important;margin:0!important;width:100%!important;min-width:0!important}
 #view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-profile{display:none!important}
@@ -652,6 +615,44 @@ html,body{background:#f8fbff;color:var(--ink)}
 @media(prefers-reduced-motion:reduce){
  #view-home .ns-care-btn,#view-home .ns-dragon-more>summary:after{transition:none!important}
 }
+/* Portada compacta 2026-11: navegación visible y contenido funcional primero. */
+#view-home .ns-home-intro{display:flex!important;align-items:center;justify-content:space-between;gap:10px;margin:0 0 7px!important;min-height:45px}
+#view-home .ns-home-intro .ns-minimal-entry{margin:0!important;flex:0 0 auto}
+#view-home .ns-home-intro #ns-launcher-direct{min-height:38px!important;padding:7px 11px!important;border-radius:12px!important;box-shadow:none!important;gap:5px;font-size:12px}
+#view-home .ns-home-intro #ns-launcher-direct strong{font-size:12px}
+#view-home .ns-feature-tiles{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:4px!important;margin:1px 0 9px!important}
+#view-home .ns-feature-tile{min-height:53px!important;padding:7px 6px!important;border:1px solid #e0ebf5!important;border-radius:10px!important;box-shadow:none!important;align-items:center!important;justify-content:center!important;text-align:center!important;gap:2px!important}
+#view-home .ns-feature-tile>span{font-size:17px!important}
+#view-home .ns-feature-tile strong{font-size:11px!important;line-height:1.15!important}
+#view-home .ns-feature-tile small{display:none!important}
+#view-home .ns-home-companion{margin:0 0 8px!important;padding:11px 12px 10px!important;border-radius:17px!important;box-shadow:none!important}
+#view-home .ns-companion-meter{margin:1px 0 5px!important}
+#view-home .ns-companion-care{gap:6px!important;margin:3px 0 0!important}
+#view-home .ns-care-btn{min-height:42px!important;padding:6px!important;border-radius:11px!important;box-shadow:none!important}
+#view-home .ns-companion-scene-slot{min-height:125px!important;max-height:150px!important;margin:0!important}
+#view-home .ns-companion-scene-slot #dragon-scene{height:145px!important;min-height:125px!important}
+#view-home .ns-companion-scene-slot #dragon-scene .ns-dragon-sprite{max-height:145px!important}
+#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-xp{margin:2px 0 7px!important}
+#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-play-controls{display:contents!important}
+#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-interactions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
+#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-action-btn,
+#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-pet-btn{min-height:41px!important;width:100%!important;flex:auto!important;margin:0!important;padding:7px 3px!important;font-size:11px!important;border-radius:11px!important}
+#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-more{margin:4px 0 0!important;padding-top:0!important}
+#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-more>summary{padding:8px 25px 8px 2px!important;font-size:12px!important}
+#view-home #quick-capture-card{margin:4px 0 10px!important;padding:11px 12px!important}
+#view-home #quick-capture-card h2{font-size:15px!important}
+#view-home #quick-capture-card .chip{display:none!important}
+#view-home #quick-capture-card form{margin-top:7px!important;gap:6px!important}
+#view-home #quick-capture-input{min-width:0!important;flex:1 1 120px!important}
+@media(max-width:390px){
+ #view-home .ns-home-intro #ns-launcher-direct{padding:6px 8px!important}
+ #view-home .ns-feature-tile{min-height:49px!important}
+ #view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-interactions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important}
+ #view-home .ns-companion-scene-slot{min-height:120px!important;max-height:140px!important}
+ #view-home .ns-companion-scene-slot #dragon-scene{height:135px!important}
+}
+
+
 </style><style id="ns-local-recovery-menu">
 #ns-check-local-copy{display:block;width:100%;text-align:left;padding:10px 12px;
  border:0;background:transparent;color:#0876ba;min-height:43px;font-weight:650}
@@ -2664,7 +2665,7 @@ function nsOrganizeHome(){
  move('#view-home .ns-dragon-quest-card',dragon);
  move('#focus-studio',focus);
  move('#view-home .stats',more);
- move('#view-home #quick-capture-card',by('view-home').querySelector('.grid>.stack'));
+ // La captura rápida permanece junto a Azul; no volver a moverla hacia abajo.
  // Las tareas y el dragón permanecen visibles en la portada.
  move('#view-home .card:has(#jump-challenge)',more);
  move('#view-home .card:has(#daily-summary)',more);
