@@ -690,7 +690,7 @@ html,body{background:#f8fbff;color:var(--ink)}
        <div class="ns-companion-identity"><strong id="ns-companion-title">Azul</strong><span id="ns-companion-stage" class="ns-companion-stage">Etapa 1</span></div>
        <button type="button" class="ns-companion-view" id="ns-home-dragon-details">Detalles <span aria-hidden="true">›</span></button>
      </div>
-     <div class="ns-companion-meter" id="ns-companion-energy-slot"></div>
+     <div class="ns-companion-meter" id="ns-companion-energy-slot"><span class="ns-dragon-energy" id="ns-dragon-energy" aria-live="polite">⚡ 100/100 · 🍎 0 puntos</span></div>
      <div class="ns-companion-care" role="group" aria-label="Cuidados de Azul">
        <button class="ns-care-btn ns-care-walk" id="dragon-walk" type="button"><span aria-hidden="true">🚶</span><strong>Caminar</strong></button>
        <button class="ns-care-btn ns-care-feed" id="pet-feed" type="button"><span aria-hidden="true">🍎</span><strong>Comer</strong><small>20 puntos</small></button>
@@ -2600,8 +2600,7 @@ function nsOrganizeHome(){
  // Se mantiene su id="dragon-scene", por lo que las evoluciones y acciones existentes continúan.
  var originalScene=by('dragon-scene'),sceneSlot=by('ns-companion-scene-slot');
  if(originalScene&&sceneSlot&&originalScene.parentNode!==sceneSlot)sceneSlot.appendChild(originalScene);
- var energy=by('ns-dragon-energy'),meterSlot=by('ns-companion-energy-slot');
- if(energy&&meterSlot&&energy.parentNode!==meterSlot)meterSlot.appendChild(energy);
+
  var dragon=nsHomeExtra('Misiones y aventuras de Azul','ns-extra-dragon');
  var focus=nsHomeExtra('Temporizador Pomodoro y concentración','ns-extra-focus');
  var more=nsHomeExtra('Ver más de mi día','ns-extra-day');
