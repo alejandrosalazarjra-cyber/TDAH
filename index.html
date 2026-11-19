@@ -294,7 +294,405 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
 .ns-dragon-figure.has-atlas .ns-dragon-atlas{display:block}
 .ns-dragon-figure.has-atlas > .ns-dragon-sprite,.ns-dragon-figure.has-atlas > svg{display:none}
 @media(prefers-reduced-motion:reduce){.ns-dragon-figure.has-atlas,.ns-dragon-figure.has-atlas .ns-dragon-atlas{animation:none!important;transition:none!important}}
-</style></head><body>
+</style><style>
+/* Pantalla Pomodoro: oculta menús, navegación y tarjetas durante la sesión. */
+#ns-pomodoro-screen{position:fixed;inset:0;width:100%;height:100%;height:100dvh;z-index:2147483600;display:none;align-items:center;justify-content:center;box-sizing:border-box;padding:24px;background:linear-gradient(160deg,#071b34,#0c3152 55%,#133b65);color:#fff;font-family:system-ui,-apple-system,sans-serif;text-align:center}
+#ns-pomodoro-screen.is-visible{display:flex}
+#ns-pomodoro-screen .ns-pomodoro-content{width:100%;max-width:460px;display:flex;align-items:center;flex-direction:column}
+.ns-pomodoro-caption{font-size:13px;letter-spacing:.23em;color:#b5d9f7;font-weight:700}
+#ns-pomodoro-count{font-variant-numeric:tabular-nums;font-size:clamp(74px,19vw,126px);font-weight:650;letter-spacing:-.065em;line-height:1.45}
+#ns-pomodoro-status{font-size:16px;color:#c3d9ef;margin:4px 0 48px}
+#ns-pomodoro-finish{border:1px solid #8ab5d7;border-radius:18px;background:rgba(255,255,255,.13);color:#fff;font-size:17px;font-weight:650;min-height:58px;padding:12px 25px;width:min(100%,320px)}
+#ns-pomodoro-finish:focus-visible{outline:3px solid #fff;outline-offset:3px}
+body.ns-pomodoro-active{overflow:hidden}
+</style>
+<style>
+.ns-google-login{margin-top:22px;width:100%;display:flex;align-items:center;justify-content:center;gap:14px;background:#fff!important;color:#1b3554!important;border:1px solid #cedce9!important;box-shadow:0 6px 22px #1a5c9014}
+.ns-google-symbol{font-family:Arial,sans-serif;font-size:26px;font-weight:800;color:#4285f4}
+.ns-google-note{font-size:12px;text-align:center!important;margin:12px 0 6px}
+.ns-owner-access{display:block;margin:12px auto 4px;background:transparent;border:0;color:#52799a;text-decoration:underline;font-size:13px;cursor:pointer;padding:11px}
+#ns-admin-login{margin-top:12px}
+</style><style>
+/* Portada compacta: mantener la actividad principal visible y el resto plegado. */
+#view-home .ns-brand-hero{display:none}
+#view-home>.grid{display:block}
+#view-home>.grid>.stack:empty{display:none}
+#view-home .ns-feature-tiles{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+#view-home .ns-feature-tile{min-width:0;padding:11px 6px}
+#view-home .ns-feature-tile strong{font-size:12px}
+#view-home .ns-feature-tile small{font-size:10px}
+.ns-home-extra{margin:14px 0;border:1px solid #d5e4f0;border-radius:20px;background:#f6fbff;padding:12px}
+.ns-home-extra>summary{cursor:pointer;padding:7px 9px;color:#143e69;font-weight:750;font-size:15px}
+.ns-home-extra[open]>summary{margin-bottom:12px}
+.ns-home-extra>.card,.ns-home-extra>.stats{margin:12px 0}
+#ns-user-popover{position:fixed;z-index:100090;top:66px;right:10px;width:min(370px,calc(100vw - 20px));max-height:calc(100dvh - 82px);overflow-y:auto;background:#fff;border:1px solid #d1e3f2;box-shadow:0 24px 68px #113b6450;border-radius:23px;padding:15px;color:#173959}
+#ns-user-popover.hidden{display:none}
+.ns-user-menu-header{display:flex;align-items:center;gap:12px;padding:4px 3px 15px;border-bottom:1px solid #e1ebf3}
+.ns-user-menu-header>div:nth-child(2){min-width:0;flex:1}
+.ns-user-menu-header small{display:block;font-size:12px;color:#54758f;overflow-wrap:anywhere}
+.ns-user-avatar{width:41px;height:41px;border-radius:50%;background:#e5f2ff;display:grid;place-items:center;color:#087cc8}
+#ns-close-account{font-size:23px;border:0;background:transparent;color:#456684;padding:6px}
+.ns-user-menu-actions{display:grid;gap:5px;margin:9px 0}
+.ns-user-menu-actions button{background:transparent;border:0;border-radius:12px;min-height:43px;text-align:left;padding:9px 12px;color:#173b60;font-size:14px}
+.ns-user-menu-actions button:active,.ns-user-menu-actions button:focus-visible{background:#e4f3ff}
+.ns-user-section{padding:6px 0;border-top:1px solid #e0edf6}
+.ns-user-section>summary{padding:10px;cursor:pointer;font-weight:700}
+#ns-user-launcher-container>.card,#ns-user-backup-container>.card,#ns-user-permission-container>div{margin:8px 0;box-shadow:none}
+#ns-user-popover .btn{font-size:13px;min-height:42px}
+@media(max-width:340px){#view-home .ns-feature-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style><style>
+#ns-google-developer-info{margin-top:12px;text-align:left;border-radius:15px;background:#fff8eb;border:1px solid #e4c995;padding:12px;color:#674a12}
+#ns-google-developer-info.hidden{display:none}
+#ns-google-developer-info summary{font-size:13px;font-weight:700;cursor:pointer}
+#ns-google-fingerprint{font-family:monospace;font-size:12px;line-height:1.6}
+.ns-music-clock-card{margin:12px 0}
+.ns-music-clock-card h3{margin-bottom:8px}
+</style>
+<style id="ns-text-first-2026">
+/* Línea visual: navegación por palabras, sin tarjetas; conservar affordances y accesibilidad. */
+:root{--bg:#f8fbff;--paper:transparent;--border:#dce7ef;--shadow:none;--ink:#122e4c;--muted:#5f7690;--blue:#0877bb}
+html,body{background:#f8fbff;color:var(--ink)}
+.main{background:#f8fbff!important}
+#app .view{max-width:100%;padding-bottom:9px}
+#app .view .card,#app .view .stat,#app .view .ns-feature-tile,
+#app .view .ns-dragon-quest-card,#app .view .ns-wake-insights,
+#app .view .ns-music-clock-card,#app .view .ns-health-summary,
+#app .view .ns-task-tools,#app .view .ns-home-extra,
+#app .view .ns-dragon-room-controls,
+#app .view .ns-dragon-coach,#app .view .ns-dragon-day-plan{
+ background:transparent!important;border:0!important;border-radius:0!important;
+ box-shadow:none!important;backdrop-filter:none!important;
+}
+#app .view .card{padding:15px 0!important;margin:0!important}
+#app .view .card+.card{border-top:1px solid #dde8f1!important}
+#app .view .ns-home-extra{border-top:1px solid #dce7ef!important;padding:12px 0!important;margin:4px 0!important}
+#app .view .ns-home-extra>summary{padding:8px 0!important;font-weight:700;letter-spacing:-.015em}
+#app .view .ns-feature-tiles{gap:0!important;grid-template-columns:repeat(3,minmax(0,1fr));margin:7px 0 17px!important}
+#app .view .ns-feature-tile{display:flex!important;flex-direction:column;align-items:flex-start;text-align:left;gap:4px!important;padding:10px 7px!important;min-height:72px!important;border-right:1px solid #dde8f1!important}
+#app .view .ns-feature-tile:nth-child(3n){border-right:0!important}
+#app .view .ns-feature-tile>span{font-size:19px!important}
+#app .view .ns-feature-tile strong{font-size:12px!important;font-weight:650;line-height:1.2}
+#app .view .ns-feature-tile small{font-size:10px!important;color:#718397}
+#app .view .ns-home-intro{padding:5px 0 7px}
+#app .view .ns-home-intro h2{font-size:clamp(21px,5vw,27px);line-height:1.2;margin-bottom:2px}
+#app .view .ns-home-intro .ns-eyebrow{display:none}
+#app .view .ns-dragon-hero{display:grid;gap:10px;padding:12px 0!important}
+#app .view .ns-dragon-scene{background:transparent!important;border:0!important;box-shadow:none!important}
+#app .view .ns-dragon-scene img,#app .view .ns-dragon-figure{max-width:100%}
+#app .view .ns-dragon-status,#app .view .ns-dragon-message{background:transparent!important;border:0!important}
+#app .view .stats{display:flex;justify-content:space-between;gap:14px}
+#app .view .stat{flex:1;padding:8px 3px!important;text-align:left}
+#app .view .list-row,#app .view .task,#app .view .ns-dragon-missions>*,#app .view .ns-dragon-realms>*,
+#app .view .ns-wake-list>*{background:transparent!important;border:0!important;border-bottom:1px solid #e1eaf2!important;border-radius:0!important;box-shadow:none!important;margin:0!important;padding:13px 2px!important}
+#app .view h2{font-size:clamp(19px,4.5vw,23px);line-height:1.25;letter-spacing:-.025em}
+#app .view h3{font-size:16px;line-height:1.3;letter-spacing:-.01em}
+#app .view .chip{background:transparent!important;border:0!important;box-shadow:none!important;color:#65829c!important;padding:3px 0!important}
+#app .view .btn:not(.ns-focus-toggle),#app .view .iconbtn,
+#app .view .tab,#app .view [data-ns-scene],
+#app .view [data-focus-minutes]{background:transparent!important;box-shadow:none!important;border:0!important;border-radius:0!important;color:#0876ba!important;text-decoration:none}
+#app .view .btn{min-height:43px;padding:9px 7px!important;font-weight:650}
+#app .view .btn:focus-visible,#app .view .ns-feature-tile:focus-visible{outline:2px solid #168acd!important;outline-offset:2px!important;border-radius:6px!important}
+#app .view .btn:active,#app .view .ns-feature-tile:active{background:#e8f3fb!important}
+#app .view .tab.active{color:#0c3756!important;border-bottom:2px solid #0b80b9!important}
+#app .view input:not([type=checkbox]),#app .view textarea,#app .view select,
+#app .view .ns-task-tools input,#app .view .ns-task-tools select{
+ border:0!important;border-bottom:1px solid #b7cddd!important;border-radius:0!important;
+ box-shadow:none!important;background:transparent!important;padding:10px 2px!important
+}
+#app .view .progress{border-radius:5px;height:5px}
+#app .view .ns-scene-art{background:transparent!important;box-shadow:none!important}
+#app .view .ns-focus-ring{box-shadow:none!important}
+#app .view .ns-focus-ring:before,#app .view .ns-focus-ring:after{box-shadow:none!important}
+#app .view .ns-dragon-room-controls select{background:transparent!important}
+#app .view .ns-wake-grid>div,#app .view .ns-health-grid>div,#app .view .ns-focus-metrics>div{background:transparent!important;border:0!important;box-shadow:none!important}
+#app .view .ns-wake-grid,#app .view .ns-health-grid,#app .view .ns-focus-metrics{gap:6px!important}
+#app .view .ns-wake-grid strong{font-variant-numeric:tabular-nums}
+#app .view #ns-user-permission-container>div{padding:5px!important;margin:0!important;border:0!important;background:transparent!important}
+#ns-user-popover{border:0!important;border-radius:16px!important;box-shadow:0 12px 35px #183b5830!important;background:#fbfdff!important}
+#ns-user-popover button{background:transparent!important;border:0!important}
+#ns-user-popover .ns-user-avatar{background:transparent!important}
+.nav-mobile{background:#fbfdff!important;border-top:1px solid #dde7ef!important;border-radius:0!important;box-shadow:none!important}
+.nav-mobile button{background:transparent!important;border-radius:0!important}
+.nav-mobile button.active{background:transparent!important;border-top:2px solid #0876ba!important;color:#0876ba!important}
+#login{background:#f8fbff!important}
+#login .ns-login-form,#login .login-card{background:transparent!important;box-shadow:none!important;border:0!important;border-radius:0!important;padding:18px 0!important}
+#login .ns-login-features>*,#login .ns-login-brand{background:transparent!important;border:0!important;box-shadow:none!important}
+#login .ns-google-login{border:0!important;border-bottom:1px solid #c8d8e5!important;border-radius:0!important;box-shadow:none!important;background:transparent!important}
+#login .ns-login-footer{opacity:.7}
+#login .ns-auth-fields input{background:transparent!important;border:0!important;border-bottom:1px solid #bdcedb!important;border-radius:0!important}
+#login .ns-owner-access{text-decoration:none!important}
+@media(max-width:450px){
+ .main{padding:10px 17px calc(86px + env(safe-area-inset-bottom))!important}
+ .top{margin-bottom:8px}
+ #app .view .grid{gap:4px!important}
+ #app .view .ns-feature-tiles{grid-template-columns:repeat(3,minmax(0,1fr))}
+ #app .view .ns-feature-tile{padding:8px 5px!important}
+ #app .view .ns-feature-tile strong{font-size:11px!important}
+ #app .view .card{padding:11px 0!important}
+ #app .view .ns-dragon-hero{padding:8px 0!important}
+}
+</style>
+<style id="ns-text-only-alarm-lines">
+#app .view .ns-alarm-line{padding:15px 0!important}
+.ns-alarm-row{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:69px}
+.ns-alarm-core{display:flex;align-items:center;gap:16px;min-width:0;flex:1}
+.ns-alarm-hour{font:650 clamp(34px,9vw,49px)/1.05 system-ui,sans-serif;letter-spacing:-.07em;font-variant-numeric:tabular-nums;color:#10385d;white-space:nowrap}
+.ns-alarm-meta{display:grid;gap:3px;min-width:0}
+.ns-alarm-meta strong{font-size:14px;font-weight:650;overflow-wrap:anywhere}
+.ns-alarm-meta small{font-size:11px;color:#72889e}
+#app .view .ns-alarm-remove{font-size:22px!important;color:#738ba1!important;min-width:44px;min-height:44px}
+#app .view .ns-wake-insights .ns-wake-grid{display:flex;justify-content:space-between;gap:12px}
+#app .view .ns-wake-insights .ns-wake-grid>div{padding:8px 0!important}
+#view-alarms>.card:first-child{padding-top:2px!important}
+@media(max-width:370px){.ns-alarm-core{gap:8px}.ns-alarm-meta strong{font-size:12px}}
+</style><style id="ns-minimal-launcher-visible">
+.ns-minimal-entry{margin:4px 0 9px;padding:0!important;background:transparent!important;border:0!important}
+#ns-launcher-direct{display:flex;align-items:center;gap:13px;width:100%;min-height:51px;text-align:left;background:transparent;border:0;border-bottom:1px solid #dce7ef;color:#123a5d;padding:10px 2px;font-size:15px}
+#ns-launcher-direct span:first-child{font-size:23px;color:#0876ba}
+#ns-launcher-direct strong{font-size:15px;font-weight:650;flex:1}
+#ns-launcher-direct span:last-child{font-size:24px;color:#8297aa}
+#ns-launcher-direct:focus-visible{outline:2px solid #0876ba;outline-offset:2px;border-radius:4px}
+#ns-launcher-direct:active{background:#eaf5ff}
+</style><style id="ns-blue-actions-visible-azul">
+/* Eliminar el aspecto rústico sin reconstruir los módulos ni tapar la mascota. */
+:root{--ns-action-blue:#0A84FF;--ns-action-dark:#0869D1;--ns-action-soft:#E9F4FF}
+#app .view .btn:not(.ghost):not(.secondary):not(.iconbtn):not(.tab),
+#app .view button.btn:not(.ghost):not(.secondary):not(.iconbtn):not(.tab),
+#app .view #ns-focus-toggle{
+ background:var(--ns-action-blue)!important;color:white!important;
+ border:1px solid var(--ns-action-blue)!important;border-radius:13px!important;
+ box-shadow:0 4px 12px rgba(10,132,255,.13)!important;
+ padding:10px 14px!important;min-height:44px;
+ font-weight:700;transition:background-color .14s ease,transform .14s ease;
+}
+#app .view .btn.secondary:not(.tab){
+ background:var(--ns-action-soft)!important;color:#086CC7!important;
+ border:1px solid #D2E7FF!important;border-radius:13px!important;
+ box-shadow:none!important;padding:10px 13px!important;
+ min-height:43px;font-weight:650;
+}
+#app .view .btn.ghost{color:#086CC7!important}
+#app .view .btn:not(.ghost):active{transform:scale(.98);background:var(--ns-action-dark)!important;color:#fff!important}
+#app .view .btn.secondary:active{background:#D7EAFF!important;color:#0869D1!important}
+#app .view .btn:focus-visible,#ns-launcher-direct:focus-visible,#ns-home-dragon-details:focus-visible{
+ outline:3px solid #69B9FF!important;outline-offset:2px!important
+}
+#ns-launcher-direct{background:var(--ns-action-blue)!important;color:#fff!important;
+ border:0!important;border-radius:14px!important;padding:12px 15px!important;min-height:52px;
+ box-shadow:0 5px 16px #0A84FF26!important}
+#ns-launcher-direct strong,#ns-launcher-direct span{color:#fff!important}
+#ns-launcher-direct:active{background:var(--ns-action-dark)!important}
+#view-home .ns-home-intro{margin:0!important;padding:3px 0 0!important}
+#view-home .ns-home-intro h2{font-size:clamp(21px,5vw,26px);margin-bottom:0}
+#view-home .ns-home-companion{
+ margin:9px 0 12px;padding:13px 13px 3px;
+ border:1px solid #D7E9F8;border-radius:19px;
+ background:linear-gradient(155deg,#F2F9FF,#DDEFFF 70%,#E5F5FF);
+ overflow:hidden;max-width:100%;
+}
+#view-home .ns-companion-heading{display:flex;align-items:start;justify-content:space-between;gap:9px}
+#view-home .ns-companion-heading>div{display:grid;gap:2px;min-width:0}
+#view-home .ns-companion-eyebrow{color:#397DB0;font-size:10px;letter-spacing:.11em;font-weight:800}
+#view-home #ns-companion-title{color:#143A60;font-size:17px;line-height:1.3}
+#view-home .ns-companion-heading small{color:#537C9A;font-size:11px;line-height:1.35}
+#view-home #ns-home-dragon-details{border:0;background:transparent;color:#086CC7;min-height:42px;
+ font-size:12px;font-weight:750;padding:9px 2px;white-space:nowrap}
+#view-home .ns-companion-scene-slot{width:100%;display:flex;justify-content:center;align-items:center;
+ min-height:168px;max-height:206px;overflow:hidden}
+#view-home .ns-companion-scene-slot #dragon-scene{
+ width:min(100%,310px)!important;max-width:310px;height:192px!important;min-height:160px!important;
+ flex:0 0 auto!important;background:transparent!important;box-shadow:none!important;
+ margin:0 auto!important;overflow:visible!important;isolation:auto!important;
+}
+#view-home .ns-companion-scene-slot #dragon-scene .ns-dragon-figure{width:100%;max-width:195px!important}
+#view-home .ns-companion-scene-slot #dragon-scene .ns-dragon-sprite{max-height:186px!important}
+#view-home .ns-companion-scene-slot #dragon-scene .ns-dragon-room-window,
+#view-home .ns-companion-scene-slot #dragon-scene .ns-dragon-room-floor{opacity:.25}
+#view-home .ns-companion-scene-slot #dragon-scene .ns-dragon-glow{opacity:.6}
+#view-home .ns-dragon-hero{min-height:unset!important;gap:0!important}
+#view-home .ns-dragon-copy{width:100%!important}
+#view-home .ns-dragon-copy h2{font-size:18px!important;margin:5px 0 7px!important}
+#view-home .ns-feature-tiles{margin:9px 0 15px!important}
+#view-home .ns-dragon-actions{gap:8px!important}
+#view-home .ns-dragon-actions .btn{flex:1 1 130px;min-height:42px}
+#app .view .btn[disabled]{opacity:.5;box-shadow:none!important}
+@media(max-width:380px){
+ #view-home .ns-home-companion{padding:11px 10px 2px}
+ #view-home .ns-companion-scene-slot{min-height:153px;max-height:181px}
+ #view-home .ns-companion-scene-slot #dragon-scene{height:172px!important}
+ #view-home .ns-companion-scene-slot #dragon-scene .ns-dragon-figure{max-width:174px!important}
+ #view-home .ns-companion-heading small{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+ #app .view .btn{transition:none!important}
+}
+
+
+
+/* Azul: una sola sección de mascota. Los controles originales se reubican bajo la escena. */
+#view-home .ns-home-companion>.ns-dragon-copy{padding:1px 0 4px!important;margin:0!important;width:100%!important;min-width:0!important}
+#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-profile{display:none!important}
+#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-xp{margin:4px 0 12px!important}
+#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-interactions{margin-bottom:2px}
+#view-home .ns-dragon-hero:empty{display:none!important}
+#view-home .ns-dragon-hero{display:none!important}
+#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-more{border-top:1px solid #d8e9f7!important}
+@media(max-width:390px){#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-interactions{display:grid!important;grid-template-columns:1fr!important}#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-pet-btn{width:100%!important}}
+
+/* Azul: controles prioritarios encima de la mascota, una sola acción por función. */
+#view-home .ns-home-companion{padding:15px 16px 13px!important;border-radius:22px;
+ background:linear-gradient(165deg,#f4faff 0%,#e5f2ff 68%,#e9f7ff 100%);border:1px solid #c9e2f6;
+ box-shadow:0 8px 24px rgba(24,88,156,.07)}
+#view-home .ns-companion-heading{align-items:center}
+#view-home .ns-companion-heading .ns-companion-identity{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+#view-home #ns-companion-title{font-size:19px;font-weight:800;color:#153a65}
+#view-home .ns-companion-stage{font-size:11px;color:#276291;font-weight:700;background:#ffffffbd;
+ border:1px solid #c7e2f7;border-radius:100px;padding:4px 9px}
+#view-home #ns-home-dragon-details{font-size:12px;font-weight:750;color:#1264ac}
+#view-home .ns-companion-meter{min-height:23px;display:flex;align-items:center;margin:2px 0 9px}
+#view-home #ns-dragon-energy{font-size:12px;color:#426b8d;font-weight:650;letter-spacing:.005em}
+#view-home .ns-companion-care{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:7px 0 2px}
+#view-home .ns-care-btn{display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;min-height:56px;
+ padding:10px 8px;border:1px solid #b7d9f7;border-radius:16px;box-shadow:0 3px 9px #438cc019;
+ background:#fff;color:#125092;font-size:13px;font-weight:700;transition:transform .15s ease,background .15s ease}
+#view-home .ns-care-btn strong{font-size:14px;white-space:nowrap}
+#view-home .ns-care-btn small{font-size:10px;font-weight:700;color:#4d77a1;white-space:nowrap}
+#view-home .ns-care-feed{background:#076bc7;border-color:#076bc7;color:#fff}
+#view-home .ns-care-feed small{color:#e7f4ff}
+#view-home .ns-care-feed.ns-care-low{background:#d6e6f5;border-color:#c6dbed;color:#4b6784;box-shadow:none}
+#view-home .ns-care-feed.ns-care-low small{color:#537491}
+#view-home .ns-care-btn:active{transform:scale(.97)}
+#view-home .ns-care-btn:focus-visible,#view-home .ns-dragon-action-btn:focus-visible,
+#view-home .ns-dragon-more>summary:focus-visible,#view-home .ns-dragon-more button:focus-visible{
+ outline:3px solid #58aeed;outline-offset:2px}
+#view-home .ns-companion-scene-slot{min-height:180px;max-height:220px;margin:3px 0 0}
+#view-home .ns-dragon-message{font-size:12px!important;color:#2e577d!important;background:transparent!important;
+ border:0!important;border-radius:0!important;padding:2px 0 0!important;max-width:none!important;
+ margin:0!important;text-align:center!important}
+#view-home .ns-dragon-message[hidden]{display:none!important}
+#view-home .ns-dragon-hero{display:block!important;padding:12px 0 4px!important;min-height:0!important}
+#view-home .ns-dragon-copy{min-width:0!important;width:100%!important}
+#view-home .ns-dragon-profile{display:flex;align-items:center;margin-bottom:5px}
+#view-home .ns-dragon-profile h2{font-size:18px!important;margin:0!important}
+#view-home .ns-dragon-xp{max-width:none!important;margin:5px 0 13px!important}
+#view-home .ns-dragon-xp .between{margin-bottom:7px}
+#view-home .ns-dragon-interactions{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch}
+#view-home .ns-dragon-play-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;flex:2 1 220px;
+ margin:0!important;padding:0!important}
+#view-home .ns-dragon-action-btn,#view-home .ns-dragon-pet-btn,
+#view-home .ns-dragon-more button{min-height:43px;border-radius:13px;border:1px solid #d0e3f3;
+ background:#f1f7fd;color:#18568a;padding:9px 12px;font-weight:700;font-size:12px;
+ box-shadow:none;cursor:pointer}
+#view-home .ns-dragon-pet-btn{flex:1 1 100px;background:#fff}
+#view-home .ns-dragon-more{margin:10px 0 0;border-top:1px solid #e1eaf2;padding-top:5px}
+#view-home .ns-dragon-more>summary{list-style:none;cursor:pointer;font-size:13px;
+ font-weight:700;color:#326489;padding:11px 28px 11px 2px;position:relative}
+#view-home .ns-dragon-more>summary::-webkit-details-marker{display:none}
+#view-home .ns-dragon-more>summary:after{content:'⌄';position:absolute;right:6px;top:9px;
+ font-size:18px;transition:transform .16s ease}
+#view-home .ns-dragon-more[open]>summary:after{transform:rotate(180deg)}
+#view-home .ns-dragon-extra-actions,#view-home .ns-dragon-utility-actions,
+#view-home .ns-dragon-focus-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:4px 0 8px}
+#view-home .ns-dragon-coach,#view-home .ns-dragon-day-plan{max-width:none!important;padding:7px 0!important}
+#ns-focus-hint:empty,#ns-health-note:empty,#alarm-permission-status:empty,
+#view-home .ns-dragon-coach:empty,#view-home .ns-dragon-message:empty{display:none!important}
+#view-home .ns-dragon-day-plan{border-top:1px solid #e1eaf2}
+#view-home .ns-dragon-day-plan .between{gap:8px;align-items:center}
+#view-home .ns-dragon-day-plan strong{font-size:12px}
+#view-home .ns-dragon-day-plan .ns-dragon-advice-btn{min-height:34px!important;padding:6px 9px;
+ border:0;background:transparent;font-size:11px;color:#2861a0}
+#view-home .ns-dragon-quest-card{padding-top:12px!important}
+#view-home .ns-dragon-quest-card h2{font-size:17px}
+#view-home .ns-brand-hero{display:none!important}
+@media(max-width:390px){
+ #view-home .ns-home-companion{padding:12px!important}
+ #view-home .ns-care-btn{gap:5px;padding:8px 5px;min-height:54px}
+ #view-home .ns-care-btn strong{font-size:12px}
+ #view-home .ns-care-btn small{font-size:9px}
+ #view-home .ns-dragon-play-controls{flex:1 1 100%}
+ #view-home .ns-dragon-pet-btn{flex:1 1 100%}
+}
+@media(prefers-reduced-motion:reduce){
+ #view-home .ns-care-btn,#view-home .ns-dragon-more>summary:after{transition:none!important}
+}
+/* Portada compacta 2026-11: navegación visible y contenido funcional primero. */
+#view-home .ns-home-intro{display:flex!important;align-items:center;justify-content:space-between;gap:10px;margin:0 0 7px!important;min-height:45px}
+#view-home .ns-home-intro .ns-minimal-entry{margin:0!important;flex:0 0 auto}
+#view-home .ns-home-intro #ns-launcher-direct{min-height:38px!important;padding:7px 11px!important;border-radius:12px!important;box-shadow:none!important;gap:5px;font-size:12px}
+#view-home .ns-home-intro #ns-launcher-direct strong{font-size:12px}
+#view-home .ns-feature-tiles{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:4px!important;margin:1px 0 9px!important}
+#view-home .ns-feature-tile{min-height:53px!important;padding:7px 6px!important;border:1px solid #e0ebf5!important;border-radius:10px!important;box-shadow:none!important;align-items:center!important;justify-content:center!important;text-align:center!important;gap:2px!important}
+#view-home .ns-feature-tile>span{font-size:17px!important}
+#view-home .ns-feature-tile strong{font-size:11px!important;line-height:1.15!important}
+#view-home .ns-feature-tile small{display:none!important}
+#view-home .ns-home-companion{margin:0 0 8px!important;padding:11px 12px 10px!important;border-radius:17px!important;box-shadow:none!important}
+#view-home .ns-companion-meter{margin:1px 0 5px!important}
+#view-home .ns-companion-care{gap:6px!important;margin:3px 0 0!important}
+#view-home .ns-care-btn{min-height:42px!important;padding:6px!important;border-radius:11px!important;box-shadow:none!important}
+#view-home .ns-companion-scene-slot{min-height:125px!important;max-height:150px!important;margin:0!important}
+#view-home .ns-companion-scene-slot #dragon-scene{height:145px!important;min-height:125px!important}
+#view-home .ns-companion-scene-slot #dragon-scene .ns-dragon-sprite{max-height:145px!important}
+#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-xp{margin:2px 0 7px!important}
+#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-play-controls{display:contents!important}
+#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-interactions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
+#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-action-btn,
+#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-pet-btn{min-height:41px!important;width:100%!important;flex:auto!important;margin:0!important;padding:7px 3px!important;font-size:11px!important;border-radius:11px!important}
+#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-more{margin:4px 0 0!important;padding-top:0!important}
+#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-more>summary{padding:8px 25px 8px 2px!important;font-size:12px!important}
+#view-home #quick-capture-card{margin:4px 0 10px!important;padding:11px 12px!important}
+#view-home #quick-capture-card h2{font-size:15px!important}
+#view-home #quick-capture-card .chip{display:none!important}
+#view-home #quick-capture-card form{margin-top:7px!important;gap:6px!important}
+#view-home #quick-capture-input{min-width:0!important;flex:1 1 120px!important}
+@media(max-width:390px){
+ #view-home .ns-home-intro #ns-launcher-direct{padding:6px 8px!important}
+ #view-home .ns-feature-tile{min-height:49px!important}
+ #view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-interactions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important}
+ #view-home .ns-companion-scene-slot{min-height:120px!important;max-height:140px!important}
+ #view-home .ns-companion-scene-slot #dragon-scene{height:135px!important}
+}
+
+
+
+/* Menú de cuenta: avatar único, sin salida accidental ni accesos de administración duplicados. */
+#app .top-right #avatar{display:grid!important;place-items:center!important;width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;border:2px solid #fff!important;border-radius:50%!important;background:linear-gradient(140deg,#1663bc,#0a94dd)!important;color:white!important;font-size:16px!important;font-weight:750!important;box-shadow:0 2px 8px #0b52972a!important}
+#app .top-right #avatar[aria-expanded="true"]{outline:2px solid #53adf4;outline-offset:2px}
+#app .sidebar-bottom #logout{display:none!important}
+#app .sidebar .nav.admin-only,#app .nav-mobile .admin-only{display:none!important}
+#ns-user-popover{overscroll-behavior:contain;scrollbar-width:thin}
+#ns-user-popover .admin-only.hidden{display:none!important}
+#ns-account-legal .ns-legal-section{margin:3px 8px;border-bottom:1px solid #e2edf5}
+#ns-account-legal .ns-legal-section>summary{cursor:pointer;min-height:42px;padding:12px 7px;font-size:13px;color:#244e74}
+#ns-account-legal .ns-legal-section>p{font-size:12px;line-height:1.55;color:#536d83;padding:4px 9px 12px;margin:0}
+#ns-user-popover .ns-legal-note{font-size:12px;line-height:1.5;color:#647b8e;padding:7px 12px;margin:0}
+
+/* Cuenta: destino único de seguridad, respaldos y permisos, sin duplicaciones. */
+#ns-user-popover #ns-account-security.hidden{display:none!important}
+#ns-account-security-container .card{margin:0!important;padding:8px 10px!important;background:transparent!important;border:0!important;box-shadow:none!important}
+#ns-account-security-container h2{display:none!important}
+#ns-account-security-container p{font-size:12px!important;line-height:1.5}
+#ns-account-security-container form{padding:5px 0!important}
+#ns-account-security-container label{font-size:13px!important}
+#ns-account-security-container input{width:100%;max-width:100%;min-height:43px;border:1px solid #d6e4ef;border-radius:9px;padding:9px;background:#fff;color:#183c59}
+#ns-account-security-container button[type=submit]{background:#0878d4!important;color:#fff!important;border:0!important;border-radius:10px!important;padding:11px 13px!important;min-height:43px}
+#ns-account-backup #ns-user-backup-container .card{border:0!important;box-shadow:none!important;padding:7px 0!important;margin:0!important}
+#ns-account-backup #ns-user-backup-container h2{display:none!important}
+#ns-account-about #ns-account-version{overflow-wrap:anywhere}
+
+/* Opciones avanzadas conservadas, pero fuera de la vista principal hasta abrirlas. */
+#app .view .ns-inline-options{padding:8px 0!important;border-top:1px solid #dce7f1!important;margin:7px 0!important}
+#app .view .ns-inline-options>summary{cursor:pointer;min-height:43px;display:flex;align-items:center;font-size:13px;font-weight:700;color:#1b5c93}
+#ns-account-alarm-tools-container{padding:5px 9px}
+#ns-account-alarm-tools-container #ns-alarm-tools-original{margin:0!important;padding:6px 0!important;border:0!important;background:transparent!important}
+#ns-account-alarm-tools-container #ns-alarm-tools-original .row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+#ns-account-alarm-tools-container #ns-alarm-tools-original button{font-size:12px!important;min-height:43px!important;white-space:normal}
+#ns-account-alarm-tools-container #ns-alarm-tools-original .hint{font-size:12px;overflow-wrap:anywhere}
+</style><style id="ns-local-recovery-menu">
+#ns-check-local-copy{display:block;width:100%;text-align:left;padding:10px 12px;
+ border:0;background:transparent;color:#0876ba;min-height:43px;font-weight:650}
+#ns-check-local-copy:focus-visible{outline:2px solid #0876ba;outline-offset:2px}
+#ns-local-copy-result{padding:2px 12px;font-size:12px;line-height:1.45}
+</style><link rel="stylesheet" href="./modules/alarm_studio.css"><link rel="stylesheet" href="./modules/task_studio.css"><link rel="stylesheet" href="./modules/departure_studio.css"><link rel="stylesheet" href="./modules/pomodoro_studio.css"><link rel="stylesheet" href="./modules/wellbeing_studio.css"><link rel="stylesheet" href="./modules/finance_studio.css"></head><body>
 <div id="login" class="login ns-login-v3">
  <div class="ns-login-wrap">
   <div class="ns-login-brand"><img src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%20role%3D%22img%22%20aria-label%3D%22NeuroSync%3A%20drag%C3%B3n%20y%20lista%20de%20tareas%22%3E%0A%3Cdefs%3E%3ClinearGradient%20id%3D%22bg%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23063674%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%230866c6%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2303c4ec%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22wing%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2345eeff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%230d7fe6%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22paper%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ffffff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23c8f2ff%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%0A%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%22248%22%20height%3D%22248%22%20rx%3D%2258%22%20fill%3D%22url(%23bg)%22%2F%3E%0A%3Cpath%20d%3D%22M28%20158Q32%2078%20103%2063Q63%20103%2075%20152Q95%20104%20151%2077Q107%20127%20113%20175Q88%20205%2055%20201Q37%20184%2028%20158Z%22%20fill%3D%22url(%23wing)%22%2F%3E%0A%3Cpath%20d%3D%22M77%2043Q109%2073%20128%2075Q115%2051%20119%2033Q142%2061%20166%2065Q195%2076%20203%20103Q209%20118%20193%20128Q181%20135%20160%20121Q144%20116%20124%20128Q100%20147%20102%20182Q78%20156%2087%20132Q91%20113%20113%20101Q87%2098%2059%20122Q73%2081%20109%2087Q87%2067%2077%2043Z%22%20fill%3D%22%23f7feff%22%2F%3E%0A%3Cpath%20d%3D%22M159%20103Q171%20101%20178%20107Q170%20116%20159%20108Z%22%20fill%3D%22%23073878%22%2F%3E%0A%3Crect%20x%3D%22128%22%20y%3D%22127%22%20width%3D%22100%22%20height%3D%2290%22%20rx%3D%2218%22%20fill%3D%22url(%23paper)%22%2F%3E%0A%3Cg%20stroke%3D%22%23078fe6%22%20stroke-width%3D%228%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m143%20149%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20173%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20196%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22M175%20151h37M175%20175h37M175%20199h27%22%2F%3E%3C%2Fg%3E%0A%3Cpath%20d%3D%22M44%20207Q111%20251%20190%20220%22%20fill%3D%22none%22%20stroke%3D%22%235ff0fd%22%20stroke-width%3D%2216%22%20stroke-linecap%3D%22round%22%2F%3E%0A%3Cpath%20d%3D%22m219%2058%206%2016%2016%206-16%206-6%2016-6-16-16-6%2016-6Z%22%20fill%3D%22%2394ffff%22%2F%3E%0A%3C%2Fsvg%3E" alt="Logo NeuroSync"><span>Neuro<b>Sync</b></span></div>
@@ -310,7 +708,12 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
     <div><span aria-hidden="true">↗</span>Tus metas<br>en progreso</div>
   </div>
   <form id="login-form" class="card login-card ns-login-form">
-    <h2>Inicia sesión</h2><p class="hint">Continúa donde quedaste.</p>
+    <h2>NeuroSync</h2>
+    <button type="button" class="btn ns-google-login" id="ns-google-login"><span class="ns-google-symbol">G</span> Continuar con Google</button>
+    <button type="button" class="btn ns-google-login hidden" id="ns-public-login"><span class="ns-google-symbol">G</span> Entrar a NeuroSync público</button>
+    <p class="hint ns-google-note">Respaldo personal en Google Drive, con tu autorización.</p>
+    <button type="button" class="ns-owner-access" id="ns-owner-access" aria-expanded="false">Acceso del administrador</button>
+    <div class="hidden" id="ns-admin-login">
     <div class="stack ns-auth-fields">
       <label class="field">Usuario<input id="login-user" autocomplete="username" required placeholder="Usuario o correo" inputmode="text"></label>
       <label class="field">Contraseña
@@ -319,16 +722,17 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
     </div>
     <div class="ns-login-extras"><label class="ns-remember"><input type="checkbox" id="login-remember"> Recordar mi usuario</label><button type="button" class="ns-login-help" id="login-help">¿Olvidaste tu contraseña?</button></div>
     <button type="submit" class="btn ns-login-submit">Iniciar sesión <span aria-hidden="true">→</span></button>
+    </div>
     <p id="login-error" class="hint ns-login-error" role="alert"></p>
-    <p id="login-build" class="hint ns-login-build">Versión de la aplicación: verificando…</p>
-    <details class="ns-connection-details"><summary>Configurar teléfono principal y conexión</summary>
-      <div class="ns-connection-actions">
-       <button class="btn secondary" id="setup-host" type="button">Soy el administrador</button>
-       <button class="btn ghost" id="setup-client" type="button">Conectar por internet</button>
-       <button class="btn ghost" id="setup-lan" type="button">Red local avanzada</button>
-      </div>
+    <details id="ns-google-developer-info" class="hidden ns-google-diagnostics">
+      <summary>Detalles técnicos para configurar Google</summary>
+      <p class="hint">Registra un cliente OAuth de tipo Android con estos datos en Google Cloud. Es una configuración del desarrollador, no debes cambiar tu contraseña.</p>
+      <pre id="ns-google-fingerprint" style="white-space:pre-wrap;overflow-wrap:anywhere;user-select:text"></pre>
+      <p class="hint">Para la versión publicada en Play Store registra también el SHA-1 del certificado de firma de Play, que puede ser diferente.</p>
     </details>
-    <div class="alert ns-login-security">Por seguridad, cambia la clave inicial del administrador después de ingresar. No compartas contraseñas.</div>
+    <p id="login-build" class="hint ns-login-build">Versión de la aplicación: verificando…</p>
+
+
   </form>
   <div class="ns-login-footer"><img src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%20role%3D%22img%22%20aria-label%3D%22NeuroSync%3A%20drag%C3%B3n%20y%20lista%20de%20tareas%22%3E%0A%3Cdefs%3E%3ClinearGradient%20id%3D%22bg%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23063674%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%230866c6%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2303c4ec%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22wing%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2345eeff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%230d7fe6%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22paper%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ffffff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23c8f2ff%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%0A%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%22248%22%20height%3D%22248%22%20rx%3D%2258%22%20fill%3D%22url(%23bg)%22%2F%3E%0A%3Cpath%20d%3D%22M28%20158Q32%2078%20103%2063Q63%20103%2075%20152Q95%20104%20151%2077Q107%20127%20113%20175Q88%20205%2055%20201Q37%20184%2028%20158Z%22%20fill%3D%22url(%23wing)%22%2F%3E%0A%3Cpath%20d%3D%22M77%2043Q109%2073%20128%2075Q115%2051%20119%2033Q142%2061%20166%2065Q195%2076%20203%20103Q209%20118%20193%20128Q181%20135%20160%20121Q144%20116%20124%20128Q100%20147%20102%20182Q78%20156%2087%20132Q91%20113%20113%20101Q87%2098%2059%20122Q73%2081%20109%2087Q87%2067%2077%2043Z%22%20fill%3D%22%23f7feff%22%2F%3E%0A%3Cpath%20d%3D%22M159%20103Q171%20101%20178%20107Q170%20116%20159%20108Z%22%20fill%3D%22%23073878%22%2F%3E%0A%3Crect%20x%3D%22128%22%20y%3D%22127%22%20width%3D%22100%22%20height%3D%2290%22%20rx%3D%2218%22%20fill%3D%22url(%23paper)%22%2F%3E%0A%3Cg%20stroke%3D%22%23078fe6%22%20stroke-width%3D%228%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m143%20149%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20173%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20196%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22M175%20151h37M175%20175h37M175%20199h27%22%2F%3E%3C%2Fg%3E%0A%3Cpath%20d%3D%22M44%20207Q111%20251%20190%20220%22%20fill%3D%22none%22%20stroke%3D%22%235ff0fd%22%20stroke-width%3D%2216%22%20stroke-linecap%3D%22round%22%2F%3E%0A%3Cpath%20d%3D%22m219%2058%206%2016%2016%206-16%206-6%2016-6-16-16-6%2016-6Z%22%20fill%3D%22%2394ffff%22%2F%3E%0A%3C%2Fsvg%3E" alt="">Tu dragón de productividad te acompaña en cada paso.</div>
  </div>
@@ -341,16 +745,53 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
   <button class="nav" data-view="bags"><span>▣</span><span class="nav-label">Mis listas</span></button>
   <button class="nav" data-view="alarms"><span>◷</span><span class="nav-label">Alarmas</span></button>
   <button class="nav" data-view="habits"><span>◉</span><span class="nav-label">Mi progreso</span></button>
+  <button class="nav" data-view="finance"><span>＄</span><span class="nav-label">Finanzas</span></button>
   <button class="nav admin-only" data-view="admin"><span>♙</span><span class="nav-label">Administración</span></button>
-  <div class="sidebar-bottom"><button id="logout" class="btn ghost" style="width:100%">Salir de la cuenta</button></div>
+  <div class="sidebar-bottom"><button id="logout" class="btn ghost" style="width:100%">Cerrar sesión</button></div>
  </aside>
  <main class="main">
   <header class="top"><div class="ns-top-title"><div class="ns-mobile-brand"><img src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%20role%3D%22img%22%20aria-label%3D%22NeuroSync%3A%20drag%C3%B3n%20y%20lista%20de%20tareas%22%3E%0A%3Cdefs%3E%3ClinearGradient%20id%3D%22bg%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23063674%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%230866c6%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2303c4ec%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22wing%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2345eeff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%230d7fe6%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22paper%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ffffff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23c8f2ff%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%0A%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%22248%22%20height%3D%22248%22%20rx%3D%2258%22%20fill%3D%22url(%23bg)%22%2F%3E%0A%3Cpath%20d%3D%22M28%20158Q32%2078%20103%2063Q63%20103%2075%20152Q95%20104%20151%2077Q107%20127%20113%20175Q88%20205%2055%20201Q37%20184%2028%20158Z%22%20fill%3D%22url(%23wing)%22%2F%3E%0A%3Cpath%20d%3D%22M77%2043Q109%2073%20128%2075Q115%2051%20119%2033Q142%2061%20166%2065Q195%2076%20203%20103Q209%20118%20193%20128Q181%20135%20160%20121Q144%20116%20124%20128Q100%20147%20102%20182Q78%20156%2087%20132Q91%20113%20113%20101Q87%2098%2059%20122Q73%2081%20109%2087Q87%2067%2077%2043Z%22%20fill%3D%22%23f7feff%22%2F%3E%0A%3Cpath%20d%3D%22M159%20103Q171%20101%20178%20107Q170%20116%20159%20108Z%22%20fill%3D%22%23073878%22%2F%3E%0A%3Crect%20x%3D%22128%22%20y%3D%22127%22%20width%3D%22100%22%20height%3D%2290%22%20rx%3D%2218%22%20fill%3D%22url(%23paper)%22%2F%3E%0A%3Cg%20stroke%3D%22%23078fe6%22%20stroke-width%3D%228%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m143%20149%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20173%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20196%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22M175%20151h37M175%20175h37M175%20199h27%22%2F%3E%3C%2Fg%3E%0A%3Cpath%20d%3D%22M44%20207Q111%20251%20190%20220%22%20fill%3D%22none%22%20stroke%3D%22%235ff0fd%22%20stroke-width%3D%2216%22%20stroke-linecap%3D%22round%22%2F%3E%0A%3Cpath%20d%3D%22m219%2058%206%2016%2016%206-16%206-6%2016-6-16-16-6%2016-6Z%22%20fill%3D%22%2394ffff%22%2F%3E%0A%3C%2Fsvg%3E" alt=""><span>Neuro<b>Sync</b></span></div><h1 id="page-title">Mi día</h1><div class="sub" id="greeting">Organiza tus próximos pasos</div>
   <div class="hint" id="installed-build" aria-live="polite">Comprobando versión instalada…</div></div>
-   <div class="top-right"><span class="sync-state" id="sync-status">Guardado local</span><button id="sync-btn" class="btn secondary" aria-label="Sincronizar">↻</button><button class="avatar" id="avatar" type="button" aria-label="Cerrar sesión de mi cuenta" title="Mi cuenta">A</button></div></header>
+   <div class="top-right"><span class="sync-state" id="sync-status">Guardado local</span><button id="sync-btn" class="btn secondary" aria-label="Sincronizar">↻</button><button class="avatar" id="avatar" type="button" aria-label="Abrir menú de mi cuenta" aria-controls="ns-user-popover" aria-expanded="false" title="Mi cuenta">A</button></div></header>
+  <aside id="ns-user-popover" class="hidden" role="dialog" aria-label="Cuenta y configuración">
+   <div class="ns-user-menu-header"><div class="ns-user-avatar">◉</div><div><strong id="ns-account-name">Mi cuenta</strong><small id="ns-account-email">Ajustes personales</small></div><button type="button" id="ns-close-account" aria-label="Cerrar menú">×</button></div>
+   <details class="ns-user-section hidden" id="ns-account-security"><summary>♙ Seguridad de la cuenta</summary><div id="ns-account-security-container"></div></details>
+   <details class="ns-user-section" id="ns-account-permissions"><summary>⚙ Permisos y configuración</summary>
+    <div class="ns-user-menu-actions"><button type="button" id="ns-user-alarm-permissions">Permisos de alarmas</button><button type="button" data-native-permission="notifications">Notificaciones</button><button type="button" data-native-permission="overlay">Ventanas flotantes</button><button type="button" data-native-permission="usage">Acceso de uso (opcional)</button><button type="button" data-native-permission="app">Ajustes de Android</button></div>
+    <div id="ns-user-permission-container"></div>
+   </details>
+   <details class="ns-user-section" id="ns-account-alarm-tools"><summary>◷ Diagnóstico de alarmas</summary><div id="ns-account-alarm-tools-container"></div></details>
+   <details class="ns-user-section" id="ns-account-launcher"><summary>⌂ Inicio minimalista</summary><div id="ns-user-launcher-container"></div></details>
+   <details class="ns-user-section" id="ns-account-backup"><summary>☁ Respaldo y datos</summary><div id="ns-user-backup-container"></div><button type="button" class="ns-backup-check" id="ns-check-local-copy">Comprobar copia en este teléfono</button><p class="hint" id="ns-local-copy-result" aria-live="polite"></p></details>
+   <details class="ns-user-section" id="ns-account-legal"><summary>ⓘ Políticas y términos</summary>
+    <details class="ns-legal-section"><summary>Política de privacidad</summary><p>Documento oficial pendiente de publicación. Antes del lanzamiento debe indicar responsable del tratamiento, datos recogidos, finalidades, proveedores, almacenamiento, conservación, derechos y contacto.</p></details>
+    <details class="ns-legal-section"><summary>Términos y condiciones</summary><p>Documento oficial pendiente de publicación. Debe especificar titular del servicio, reglas de cuenta, condiciones de uso, soporte y responsabilidades.</p></details>
+    <details class="ns-legal-section"><summary>Uso de permisos</summary><p>Las alarmas, notificaciones y ventanas flotantes requieren las autorizaciones correspondientes de Android. El acceso de uso es opcional. Puedes revisar y revocar estos permisos en los ajustes de Android.</p></details>
+    <p class="ns-legal-note">Información preliminar: no sustituye los documentos legales oficiales revisados.</p>
+   </details>
+   <details class="ns-user-section" id="ns-account-about"><summary>ⓘ Acerca de NeuroSync</summary><p class="ns-legal-note" id="ns-account-version">Versión no identificada</p></details>
+   <div class="ns-user-menu-actions"><button type="button" class="admin-only" data-account-go="admin">Administrar usuarios</button></div>
+   <div class="ns-user-menu-actions"><button type="button" id="ns-account-logout">Cerrar sesión</button></div>
+  </aside>
   <section class="view active" id="view-home">
-   <div class="ns-home-intro"><div><span class="ns-eyebrow">TU DÍA EN EQUILIBRIO</span><h2 id="ns-home-welcome">Tu día está listo para avanzar</h2><p>Avanza a tu ritmo. Tu dragón te acompaña hoy.</p></div></div>
+   <div class="ns-home-intro"><div><h2 id="ns-home-welcome">Mi día</h2></div></div>
+   <section class="ns-home-companion" aria-label="Azul, tu dragón">
+     <div class="ns-companion-heading">
+       <div class="ns-companion-identity"><strong id="ns-companion-title">Azul</strong><span id="ns-companion-stage" class="ns-companion-stage">Etapa 1</span></div>
+       <button type="button" class="ns-companion-view" id="ns-home-dragon-details">Detalles <span aria-hidden="true">›</span></button>
+     </div>
+     <div class="ns-companion-meter" id="ns-companion-energy-slot"><span class="ns-dragon-energy" id="ns-dragon-energy" aria-live="polite">⚡ 100/100 · 🍎 0 puntos</span></div>
+     <div class="ns-companion-care" role="group" aria-label="Cuidados de Azul">
+       <button class="ns-care-btn ns-care-walk" id="dragon-walk" type="button"><span aria-hidden="true">🚶</span><strong>Caminar</strong></button>
+       <button class="ns-care-btn ns-care-feed" id="pet-feed" type="button"><span aria-hidden="true">🍎</span><strong>Comer</strong><small>20 puntos</small></button>
+     </div>
+     <div class="ns-companion-scene-slot" id="ns-companion-scene-slot"></div>
+     <p class="ns-dragon-message" id="dragon-message" role="status" aria-live="polite" hidden></p>
+   </section>
    <div class="ns-brand-hero"><div class="ns-brand-hero-copy"><span class="ns-eyebrow">TU DRAGÓN DE PRODUCTIVIDAD</span><h2>Tu dragón te acompaña hoy</h2><span class="ns-hero-missions"><span aria-hidden="true">✓</span><span id="ns-hero-missions">Tus misiones están listas</span></span></div><img src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%20role%3D%22img%22%20aria-label%3D%22NeuroSync%3A%20drag%C3%B3n%20y%20lista%20de%20tareas%22%3E%0A%3Cdefs%3E%3ClinearGradient%20id%3D%22bg%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23063674%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%230866c6%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2303c4ec%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22wing%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2345eeff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%230d7fe6%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22paper%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ffffff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23c8f2ff%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%0A%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%22248%22%20height%3D%22248%22%20rx%3D%2258%22%20fill%3D%22url(%23bg)%22%2F%3E%0A%3Cpath%20d%3D%22M28%20158Q32%2078%20103%2063Q63%20103%2075%20152Q95%20104%20151%2077Q107%20127%20113%20175Q88%20205%2055%20201Q37%20184%2028%20158Z%22%20fill%3D%22url(%23wing)%22%2F%3E%0A%3Cpath%20d%3D%22M77%2043Q109%2073%20128%2075Q115%2051%20119%2033Q142%2061%20166%2065Q195%2076%20203%20103Q209%20118%20193%20128Q181%20135%20160%20121Q144%20116%20124%20128Q100%20147%20102%20182Q78%20156%2087%20132Q91%20113%20113%20101Q87%2098%2059%20122Q73%2081%20109%2087Q87%2067%2077%2043Z%22%20fill%3D%22%23f7feff%22%2F%3E%0A%3Cpath%20d%3D%22M159%20103Q171%20101%20178%20107Q170%20116%20159%20108Z%22%20fill%3D%22%23073878%22%2F%3E%0A%3Crect%20x%3D%22128%22%20y%3D%22127%22%20width%3D%22100%22%20height%3D%2290%22%20rx%3D%2218%22%20fill%3D%22url(%23paper)%22%2F%3E%0A%3Cg%20stroke%3D%22%23078fe6%22%20stroke-width%3D%228%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m143%20149%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20173%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22m143%20196%208%208%2013-15%22%2F%3E%3Cpath%20d%3D%22M175%20151h37M175%20175h37M175%20199h27%22%2F%3E%3C%2Fg%3E%0A%3Cpath%20d%3D%22M44%20207Q111%20251%20190%20220%22%20fill%3D%22none%22%20stroke%3D%22%235ff0fd%22%20stroke-width%3D%2216%22%20stroke-linecap%3D%22round%22%2F%3E%0A%3Cpath%20d%3D%22m219%2058%206%2016%2016%206-16%206-6%2016-6-16-16-6%2016-6Z%22%20fill%3D%22%2394ffff%22%2F%3E%0A%3C%2Fsvg%3E" alt="" aria-hidden="true"></div>
+   <div class="ns-minimal-entry">
+     <button type="button" id="ns-launcher-direct" aria-label="Abrir modo minimalista"><span>⌂</span><strong>Modo minimalista</strong><span aria-hidden="true">›</span></button>
+   </div>
    <div class="ns-feature-tiles">
     <button type="button" data-view="tasks" class="ns-feature-tile"><span>☑</span><strong>Tareas de hoy</strong><small id="ns-tile-tasks">Sin tareas pendientes</small></button>
     <button type="button" data-view="home" class="ns-feature-tile" id="ns-tile-focus-open"><span>◎</span><strong>Concentración</strong><small id="ns-tile-focus">Listo para comenzar</small></button>
@@ -363,29 +804,38 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
     <div class="stack">
      <div class="card hero ns-dragon-hero">
  <div class="ns-dragon-copy">
-  <span class="chip">TU DRAGÓN DE PRODUCTIVIDAD</span>
-  <h2 style="margin-top:12px" id="pet-headline">Tu dragón está creciendo</h2>
-  <p class="muted" id="pet-detail">Cada tarea completada alimenta tu progreso.</p>
-  <div class="ns-dragon-xp"><div class="between"><span id="dragon-stage">Huevo místico</span><span id="pet-level" class="chip">Nivel 1</span></div><div class="progress"><div id="dragon-xp-fill" style="width:0%"></div></div><small id="dragon-xp-label">0 XP</small></div>
-  <div class="ns-dragon-energy" id="ns-dragon-energy" aria-live="polite">Energía: 100/100</div>
-  <div class="ns-dragon-play-controls" id="ns-dragon-play-controls" role="group" aria-label="Acciones del dragón"></div>
-  <div class="ns-dragon-actions">
-   <button class="btn" id="pet-feed" type="button">🍎 Alimentar · 20</button>
-   <button class="btn secondary" id="dragon-pet" type="button">♡ Acariciar</button>
-   <button class="btn secondary" id="dragon-next" type="button">Mi siguiente paso</button><button class="btn secondary" id="dragon-start-focus" type="button">Iniciar 5 min juntos</button>
+  <div class="ns-dragon-profile"><h2 id="pet-headline">Azul</h2></div>
+  <div class="ns-dragon-xp"><div class="between"><span id="dragon-stage">Huevo místico</span><span id="pet-level" class="chip">Etapa 1</span></div><div class="progress"><div id="dragon-xp-fill" style="width:0%"></div></div><small id="dragon-xp-label">0 XP</small></div>
+  <div class="ns-dragon-interactions" aria-label="Interacciones con Azul">
+   <div class="ns-dragon-play-controls" id="ns-dragon-play-controls" role="group" aria-label="Jugar o descansar"></div>
+   <button class="ns-dragon-pet-btn" id="dragon-pet" type="button">♡ Acariciar</button>
   </div>
-  <div class="ns-dragon-actions">
-   <button class="btn ghost" id="dragon-name" type="button">Cambiar nombre</button>
-   <button class="btn ghost" id="dragon-decorate" type="button">Personalizar</button>
-  </div>
-  <p class="ns-dragon-message" id="dragon-message" aria-live="polite">Estoy contigo. ¿Qué hacemos primero?</p>
-  <div class="ns-dragon-status" id="dragon-status">Un paso a la vez, sin presión.</div><div class="ns-dragon-coach" id="dragon-coach" aria-live="polite"></div><div class="ns-dragon-day-plan" id="dragon-day-plan"><div class="between"><strong>Mi compañero durante el día</strong><button class="btn ghost" id="dragon-advice-toggle" type="button">Silenciar consejos hoy</button></div><p class="hint">Sugerencias basadas en tus horarios, recordatorios y listas. Sin avisos invasivos.</p><div id="dragon-day-suggestions"></div></div>
+  <details class="ns-dragon-more">
+   <summary>Personalizar y otras acciones</summary>
+   <div id="ns-dragon-extra-actions" class="ns-dragon-extra-actions" role="group" aria-label="Acciones adicionales"></div>
+   <div class="ns-dragon-utility-actions">
+    <button type="button" id="dragon-name">Cambiar nombre</button>
+    <button type="button" id="dragon-decorate">Personalizar</button>
+   </div>
+  </details>
+  <details class="ns-dragon-more ns-dragon-focus-panel">
+   <summary>Misiones y concentración</summary>
+   <div class="ns-dragon-focus-actions">
+    <button type="button" id="dragon-next">Siguiente tarea</button>
+    <button type="button" id="dragon-start-focus">Enfoque · 5 min</button>
+   </div>
+   <div class="ns-dragon-coach" id="dragon-coach" aria-live="polite"></div>
+   <div class="ns-dragon-day-plan" id="dragon-day-plan">
+    <div class="between"><strong>Para hoy</strong><button class="ns-dragon-advice-btn" id="dragon-advice-toggle" type="button">Pausar sugerencias</button></div>
+    <div id="dragon-day-suggestions"></div>
+   </div>
+  </details>
  </div>
  <div class="ns-dragon-scene" id="dragon-scene" data-room="nest"><div class="ns-dragon-room-window"></div><div class="ns-dragon-room-floor"></div><span class="ns-dragon-companion-prop" id="dragon-companion-prop" aria-hidden="true"></span><div class="ns-dragon-room-prop" id="dragon-room-prop" aria-hidden="true">✦</div><div class="ns-dragon-glow"></div><div class="pet ns-dragon-figure" id="pet-face" role="img" aria-label="Dragón de productividad en evolución"></div><span class="ns-dragon-scenery" aria-hidden="true">✦</span></div>
  </div>
      <div class="card ns-dragon-quest-card">
        <div class="between"><h2>La guarida de tu dragón</h2><span class="chip" id="dragon-quest-date">Mis misiones</span></div>
-       <p class="hint">Las misiones se completan con tus tareas y sesiones reales. Nunca pierdes experiencia por descansar.</p>
+       
        <div class="ns-dragon-quest-grid">
          <div><h3>Misiones de hoy</h3><div id="dragon-missions" class="ns-dragon-missions"></div></div>
          <div><h3>Aventuras y habitación</h3><div id="dragon-realms" class="ns-dragon-realms"></div></div>
@@ -403,11 +853,11 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
         <button type="button" class="btn secondary" id="jump-challenge">Alarmas con retos</button>
         <button type="button" class="btn secondary" id="jump-progress">Progreso privado</button>
        </div>
-       <p class="hint">Si estas funciones no aparecen, comprueba el número de versión que se muestra arriba.</p>
+       
      </div>
      <div class="card" id="quick-capture-card">
       <div class="between"><h2>Vacía tu mente</h2><span class="chip">Captura rápida</span></div>
-      <p class="hint">Escribe lo que te preocupa recordar. No necesitas organizarlo todavía.</p>
+      
       <form id="quick-capture-form" class="row">
        <input id="quick-capture-input" aria-label="Escribe una idea o tarea" maxlength="160" required placeholder="Ej. Comprar jabón, llevar toalla..." style="flex:1;min-width:160px">
        <button class="btn" type="submit">Guardar</button>
@@ -418,8 +868,8 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
       <div class="row" style="margin-top:12px"><button class="btn secondary" type="button" id="focus-five">Comenzar 5 minutos</button><span class="hint" id="focus-clock">Un inicio pequeño es suficiente.</span></div>
      </div>
      <div class="card ns-focus-studio" id="focus-studio" data-scene="calma">
-       <div class="between"><h2>Estudio de concentración</h2><span class="chip">Sin distracciones</span></div>
-       <p class="hint">Trabaja en una sola actividad. Tu tiempo y tu historial se guardan únicamente en este dispositivo.</p>
+       <div class="between"><h2>Estudio de concentración</h2></div>
+       
        <div class="ns-scene-art" aria-hidden="true"><span class="ns-orb"></span><span class="ns-hill ns-hill-back"></span><span class="ns-hill ns-hill-front"></span><span class="ns-star ns-star-one">✦</span><span class="ns-star ns-star-two">✧</span></div>
        <div class="ns-focus-ring" aria-live="polite"><div><strong id="ns-focus-time">25:00</strong><span id="ns-focus-phase">Listo para comenzar</span></div></div>
        <div class="ns-scene-select" role="group" aria-label="Ambiente visual"><button type="button" class="selected" data-ns-scene="calma">☀ Calma</button><button type="button" data-ns-scene="bosque">♧ Bosque</button><button type="button" data-ns-scene="noche">☾ Noche</button></div>
@@ -434,13 +884,13 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
         <button type="button" class="btn secondary" id="ns-focus-stop">Terminar sesión</button>
        </div>
        <div class="ns-focus-metrics"><div><strong id="ns-focus-today">0 min</strong><span>Hoy</span></div><div><strong id="ns-focus-sessions">0</strong><span>Sesiones terminadas</span></div><div><strong id="ns-focus-week">0 min</strong><span>Últimos 7 días</span></div></div>
-       <p class="hint" id="ns-focus-hint">Puedes pausar y continuar sin perder tu tiempo.</p>
+       <p class="hint" id="ns-focus-hint"></p>
       </div>
       <div class="card"><div class="between"><h2>Mis 3 prioridades</h2><button class="btn secondary" data-open="task">+ Nueva tarea</button></div><div id="home-tasks"></div></div>
     </div>
     <div class="stack">
-     <div class="card"><div class="between"><h2>Inicio minimalista de Android</h2><span class="chip">Nuevo</span></div><p class="hint">Sustituye voluntariamente la pantalla de inicio de tu celular. Incluye aplicaciones, favoritos, reloj y acceso a tareas. Puedes volver al inicio original cuando quieras.</p><div class="row"><button type="button" class="btn" id="open-minimal-home">Vista previa del inicio</button><button type="button" class="btn secondary" id="set-default-home">Usar como inicio predeterminado</button></div><p class="hint" style="margin-top:10px">Podrás volver a tu pantalla anterior desde Ajustes → Aplicaciones predeterminadas → Inicio.</p></div>
-     <div class="card"><h2>Hoy, paso a paso</h2><div id="daily-summary" class="muted small"></div><div class="progress" style="margin:13px 0"><div id="daily-bar" style="width:0%"></div></div><p class="hint">Avanzar también incluye descansar. Puedes dividir cualquier tarea en pasos pequeños.</p></div>
+     <div class="card"><div class="between"><h2>Inicio minimalista de Android</h2><span class="chip">Nuevo</span></div><p class="hint">Activa NeuroSync como pantalla de inicio.</p><div class="row"><button type="button" class="btn" id="open-minimal-home">Vista previa del inicio</button><button type="button" class="btn secondary" id="set-default-home">Usar como inicio predeterminado</button></div><p class="hint" style="margin-top:10px">Para volver: Ajustes → Inicio predeterminado.</p></div>
+     <div class="card"><h2>Hoy, paso a paso</h2><div id="daily-summary" class="muted small"></div><div class="progress" style="margin:13px 0"><div id="daily-bar" style="width:0%"></div></div></div>
      <div class="card"><div class="between"><h2>Próximas alarmas</h2><button class="btn secondary" data-view="alarms">Ver</button></div><div id="home-alarms"></div></div>
      <div class="card"><h2>Recordatorio antes de salir</h2><div id="home-bags"></div><button class="btn secondary" data-view="bags">Ver mis listas</button></div>
     </div>
@@ -448,7 +898,7 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
   </section>
   <section class="view" id="view-tasks">
    <div class="card"><div class="between"><h2>Bandeja de entrada</h2><span class="chip" id="inbox-count">0 capturas</span></div>
-    <p class="hint">Aquí puedes guardar ideas sin fecha. Cuando estés preparado, convierte una en tarea de hoy.</p>
+    
     <div id="inbox-list"></div>
    </div>
    <div class="card" style="margin-top:15px"><div class="between"><h2>Tareas organizadas</h2><button class="btn" data-open="task">+ Crear tarea</button></div><div class="tabs" id="task-filters"><button class="tab active" data-filter="all">Todas</button><button class="tab" data-filter="pending">Pendientes</button><button class="tab" data-filter="overdue">Vencidas</button><button class="tab" data-filter="done">Realizadas</button></div>
@@ -460,33 +910,36 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
 <div id="ns-category-summary" class="ns-category-summary"></div><div id="tasks-list"></div>
 <div class="ns-plan-panels">
  <div class="ns-plan-panel"><div class="between"><h3>Mis plantillas</h3><button type="button" class="btn secondary" id="ns-template-create">Guardar plantilla</button></div>
- <p class="hint">Reutiliza listas de pasos sin volver a escribirlas. Se guardan en tu cuenta de este dispositivo.</p><div id="ns-templates-list"></div></div>
+ <div id="ns-templates-list"></div></div>
  <div class="ns-plan-panel"><h3>Progreso por categoría</h3><div id="ns-category-stats"></div></div>
 </div></div></section>
   <section class="view" id="view-calendar">
 <div class="card ns-weekly-card"><div class="between"><h2>Agenda semanal</h2><div class="row"><button class="btn ghost" id="ns-week-prev" type="button">‹</button><button class="btn secondary" id="ns-week-today" type="button">Hoy</button><button class="btn ghost" id="ns-week-next" type="button">›</button></div></div>
 <p class="hint" id="ns-week-heading">Tus próximos siete días</p><div id="ns-week-grid" class="ns-week-grid"></div></div>
 <div class="grid"><div class="card"><div class="between"><button class="btn ghost" id="prev-month">‹</button><h2 id="month-title" style="margin:0"></h2><button class="btn ghost" id="next-month">›</button></div><div class="calendar-grid" id="calendar" style="margin-top:20px"></div></div><div class="card"><h2 id="selected-title">Actividades del día</h2><div id="day-tasks"></div><button class="btn secondary" data-open="task">+ Agregar</button></div></div></section>
+  <section class="view" id="view-finance"><div id="ns-finance-studio" aria-label="Finanzas personales"></div></section>
   <section class="view" id="view-bags"><div class="card"><div class="between"><h2>Listas para salir</h2><button class="btn" data-open="bag">+ Nueva lista</button></div><p class="muted small">Prepara lo que llevarás al gimnasio, al trabajo, al estudio o a cualquier destino.</p><div id="bags-list"></div></div></section>
   <section class="view" id="view-alarms">
    <div class="card ns-wake-insights">
     <div class="between"><h2>Cómo van mis despertadores</h2><span class="chip">Registro local</span></div>
-    <p class="hint">Se registra cuándo suenan, se posponen y se detienen tus alarmas. Solo aparecen las de tu cuenta.</p>
+    
     <div class="ns-wake-grid"><div><strong id="ns-wake-fired">0</strong><span>Sonaron · 7 días</span></div><div><strong id="ns-wake-dismissed">0</strong><span>Detenidas</span></div><div><strong id="ns-wake-snoozed">0</strong><span>Pospuestas</span></div></div>
-    <div id="ns-wake-list" class="ns-wake-list"><p class="hint">En Android aparecerá tu historial al sonar una alarma.</p></div>
+    <div id="ns-wake-list" class="ns-wake-list"></div>
    </div>
-   <div class="card"><div class="between"><h2>Alarmas y recordatorios</h2><button class="btn" data-open="alarm">+ Crear alarma</button></div><p class="muted small">En Android, la aplicación programa notificaciones del sistema. Puedes crear alarmas para una fecha o repetirlas diariamente.</p><div style="margin:14px 0 17px;border:1px solid var(--border);border-radius:16px;padding:14px;background:#fafbfe">
+   <div class="card"><div class="between"><h2>Alarmas y recordatorios</h2><button class="btn" data-open="alarm">+ Crear alarma</button></div><div id="ns-alarm-tools-original" style="margin:14px 0 17px;border:1px solid var(--border);border-radius:16px;padding:14px;background:#fafbfe">
 <div class="between" style="margin-bottom:9px"><b style="font-size:14px">Sonido y pantalla de alarma</b><span class="chip" id="alarm-permission-indicator">Android</span></div>
-<p class="hint" id="alarm-permission-status">Los permisos se solicitan cuando programas una alarma.</p>
+<p class="hint" id="alarm-permission-status"></p>
+<p class="hint" id="ns-alarm-schedule-summary" aria-live="polite">Comprobando registros de alarmas…</p>
 <div class="row" style="margin-top:12px">
+<button type="button" class="btn secondary" id="alarm-permissions-open">Permitir pantalla completa</button>
 <button type="button" class="btn secondary" id="alarm-test">Probar en 1 min</button>
 <button type="button" class="btn ghost" id="alarm-local-sound">Elegir sonido</button>
-<button type="button" class="btn ghost" id="alarm-clock-music">Abrir Reloj de Google</button></div>
-</div><p class="hint" style="margin-top:10px">Para usar canciones de YouTube Music, configura una alarma en Reloj de Google. Las alarmas propias de NeuroSync tienen desafíos y tonos locales, pero no pueden reproducir directamente YouTube Music.</p><div id="alarms-list"></div></div></section>
+<button type="button" class="btn ghost" id="alarm-clock-music">Abrir Reloj</button></div>
+</div><div id="alarms-list"></div></div></section>
   <section class="view" id="view-habits">
    <div class="card ns-health-summary">
     <div class="between"><h2>Mi panorama semanal</h2><span class="chip">Solo en mi cuenta</span></div>
-    <p class="hint">Concentración, sueño y alarmas de los últimos siete días. Los registros de descanso y concentración se conservan en este dispositivo y no se comparten con tu familia.</p>
+    
     <div class="ns-health-grid">
      <div><strong id="ns-health-focus">—</strong><span>Concentración · 7 días</span></div>
      <div><strong id="ns-health-sleep">—</strong><span>Sueño promedio</span></div>
@@ -494,11 +947,11 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
     </div>
     <h3>Minutos de concentración por día</h3>
     <div id="ns-health-chart" class="ns-health-chart" aria-label="Gráfico semanal de concentración"></div>
-    <p id="ns-health-note" class="hint">El gráfico se actualiza con tus sesiones guardadas.</p>
+    <p id="ns-health-note" class="hint"></p>
    </div>
    <div class="card ns-sleep-diary">
      <div class="between"><h2>Mi diario del sueño</h2><span class="chip">Privado</span></div>
-     <p class="hint">Registra tu descanso de forma voluntaria. No se comparte con tu familia y no sustituye una evaluación médica.</p>
+     <p class="hint">Registro privado; no sustituye una consulta médica.</p>
      <form id="ns-sleep-form" class="form-grid">
        <label class="field">Fecha del despertar<input id="ns-sleep-day" type="date" required></label>
        <label class="field">Hora de acostarte<input id="ns-sleep-bed" type="time" required></label>
@@ -518,7 +971,8 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
    <div class="card" style="max-width:600px;margin:auto">
     <span class="chip">Solo en este teléfono</span>
     <h2 style="margin-top:14px">Mi contador NoFap</h2>
-    <p class="hint">Un objetivo elegido por ti, sin juicios ni castigos. Este registro no se comparte con tu familia ni afecta a la mascota.</p>
+    <div id="ns-private-wellbeing"></div>
+    <p class="hint">Registro privado, sin efectos sobre Azul.</p>
     <div style="text-align:center;padding:22px 8px">
      <strong id="streak-days" style="font-size:clamp(52px,12vw,84px);color:var(--ink)">0</strong>
      <p style="font-weight:600">días desde tu fecha registrada</p>
@@ -528,13 +982,13 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
       <button class="btn secondary" type="button" id="streak-start">Elegir fecha de inicio</button>
       <button class="btn ghost" type="button" id="streak-reset">Registrar un nuevo comienzo</button>
     </div>
-    <p class="hint" style="margin-top:20px">Puedes empezar otra vez sin perder el historial. Un tropiezo no define tu valor.</p>
+    
     <h2>Historial privado</h2><div id="streak-history"></div>
    </div>
   </section>
-  <section class="view" id="view-admin"><div class="grid"><div class="stack"><div class="card"><div class="between"><h2>Miembros de la familia</h2><button class="btn" data-open="user">+ Crear cuenta</button></div><p class="muted small">Cada persona tiene su propio usuario. Las actividades se asignan por responsable.</p><div id="users-list"></div></div><div class="card"><h2>Flujos de trabajo</h2><p class="small muted">Crea una tarea recurrente y asígnala a un miembro. Puedes añadir subtareas, horario y fecha.</p><button class="btn secondary" data-open="task">+ Crear flujo / tarea</button></div></div><div class="stack"><div class="card"><h2>Respaldo personal</h2>
-<p class="hint">Guarda y recupera tus tareas, listas, alarmas y progreso de mascota antes de reinstalar una APK.</p>
-<div class="row"><button class="btn secondary" type="button" id="backup-export">Exportar respaldo</button><button class="btn ghost" type="button" id="backup-import">Importar respaldo</button></div></div><div class="card"><h2>Seguridad</h2><p class="muted small">Cambia la contraseña inicial del administrador. Usa una diferente para cada persona.</p><form id="password-form" class="stack" style="gap:10px"><label class="field">Contraseña actual<input id="current-pass" type="password" required></label><label class="field">Contraseña nueva (mín. 10 caracteres)<input id="new-pass" type="password" minlength="10" required></label><button class="btn" type="submit">Cambiar contraseña</button></form></div><div class="card"><h2>Teléfono principal</h2><p class="muted small">La sincronización por internet usa una base central en Cloudflare cuando esté activada. Tu cuenta controla miembros y tareas; no necesitas Netlify, Tailscale ni Play Store.</p><button class="btn secondary" id="configure-network">Configurar conexión</button></div></div></div></section>
+  <section class="view" id="view-admin"><div class="grid"><div class="stack"><div class="card"><div class="between"><h2>Miembros de la familia</h2></div><p class="muted small">Cada integrante utiliza su propia cuenta de Google. Los datos personales se guardan por separado. Compartir tareas entre cuentas requiere una sincronización familiar adicional.</p><div id="users-list" class="hidden"></div></div><div class="card"><h2>Flujos de trabajo</h2><p class="small muted">Crea una tarea recurrente y asígnala a un miembro. Puedes añadir subtareas, horario y fecha.</p><button class="btn secondary" data-open="task">+ Crear flujo / tarea</button></div></div><div class="stack"><div class="card"><h2>Respaldo personal</h2>
+
+<div class="row"><button class="btn secondary" type="button" id="backup-export">Exportar respaldo</button><button class="btn ghost" type="button" id="backup-import">Importar respaldo</button></div></div><div class="card" id="ns-original-security-card"><h2>Seguridad</h2><p class="muted small">Cambia la contraseña inicial del administrador. Usa una diferente para cada persona.</p><form id="password-form" class="stack" style="gap:10px"><label class="field">Contraseña actual<input id="current-pass" type="password" required></label><label class="field">Contraseña nueva (mín. 10 caracteres)<input id="new-pass" type="password" minlength="10" required></label><button class="btn" type="submit">Cambiar contraseña</button></form></div></div></div></section>
  </main>
  <nav class="nav-mobile" aria-label="Navegación principal">
   <button class="active" data-view="home"><span>⌂</span>Hoy</button><button data-view="tasks"><span>☑</span>Tareas</button><button data-view="calendar"><span>▦</span>Agenda</button><button data-view="bags"><span>▣</span>Listas</button><button data-view="alarms"><span>◷</span>Alarmas</button><button data-view="habits"><span>◉</span>Progreso</button><button class="admin-only" data-view="admin"><span>♙</span>Admin</button>
@@ -546,7 +1000,7 @@ input,select,textarea{border-radius:15px;border-color:#cfdef0;background:#fcfeff
 (function(){
 'use strict';
 var by=function(id){return document.getElementById(id)}, nat=window.AndroidBridge, session=null, model=null, filter='all', selected=new Date(), month=new Date();
-var labels={home:'Mi día',tasks:'Mis tareas',calendar:'Calendario',bags:'Mis listas',alarms:'Mis alarmas',habits:'Mi progreso',admin:'Administración'};
+var labels={home:'Mi día',tasks:'Mis tareas',calendar:'Calendario',bags:'Mis listas',alarms:'Mis alarmas',habits:'Mi progreso',finance:'Mis finanzas',admin:'Administración'};
 var localKey=function(){return 'ns_v2_'+(session?session.username:'visitor')};
 var stamp=function(){return Date.now()}, uid=function(){return String(Date.now())+'_'+Math.random().toString(36).slice(2,9)};
 var day=function(d){var x=d||new Date();return x.getFullYear()+'-'+('0'+(x.getMonth()+1)).slice(-2)+'-'+('0'+x.getDate()).slice(-2)};
@@ -612,16 +1066,33 @@ function nsHealthRender(){
  });
  by('ns-health-note').textContent=total?'Total de la semana: '+total+' minutos registrados.':'Todavía no hay sesiones registradas durante estos siete días.';
 }
+/* Próxima alarma para el widget: misma semántica de repetición que Android. */
+function nsAlarmNextLocal(a,now){
+ if(!a||a.deleted||a.enabled===false||!a.date||!a.time)return null;
+ var d=new Date(a.date+'T'+a.time+':00');
+ if(!Number.isFinite(d.getTime()))return null;
+ var repeat=a.repeat||(a.daily?'daily':'none'),today=now||new Date();
+ function accepted(){
+  var weekday=d.getDay(),weekend=weekday===0||weekday===6;
+  if(repeat==='weekdays')return !weekend;
+  if(repeat==='weekends')return weekend;
+  if(/^days:[01]{7}$/.test(repeat))return repeat.charAt(5+weekday)==='1';
+  return true;
+ }
+ if(d>today&&accepted())return d;
+ if(repeat==='none')return null;
+ for(var n=0;n<3700&&(d<=today||!accepted());n++)
+  d.setDate(d.getDate()+(repeat==='weekly'?7:repeat==='every2'?2:repeat==='every3'?3:1));
+ return d>today&&accepted()?d:null;
+}
 function nsWidgetAlarmSummary(){
  if(!session||!nat||!nat.updateWidgetNextAlarm)return;
  var next=null,now=new Date();
- (model.alarms||[]).filter(function(a){return !a.deleted&&(a.owner===session.username||a.owner==='todos')&&a.date&&a.time}).forEach(function(a){
-  var t=new Date(a.date+'T'+a.time+':00');if(!Number.isFinite(t.getTime()))return;
-  var rep=a.repeat||(a.daily?'daily':'none');
-  if(rep==='daily'){while(t<=now)t.setDate(t.getDate()+1)}
-  else if(rep==='weekly'){while(t<=now)t.setDate(t.getDate()+7)}
-  if(t<=now)return;
-  if(!next||t<next)next=t;
+ (model.alarms||[]).filter(function(a){
+  return !a.deleted&&(a.owner===session.username||a.owner==='todos');
+ }).forEach(function(a){
+  var d=nsAlarmNextLocal(a,now);
+  if(d&&(!next||d<next))next=d;
  });
  var label=next?next.toLocaleDateString('es-CO',{day:'2-digit',month:'short'})+' '+next.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}):'';
  try{nat.updateWidgetNextAlarm(label)}catch(e){}
@@ -827,7 +1298,7 @@ function nsDragonSvg(stage,accessory){
  return '<svg viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><ellipse cx="131" cy="208" rx="73" ry="9" fill="#819bd43a"/>'+stageGlow+wing+fins+'<path class="ns-dragon-tail" d="M169 162 Q224 144 228 179 Q230 202 202 189" fill="none" stroke="#3b70ce" stroke-width="24" stroke-linecap="round"/><path d="M202 188 L218 175 L220 195 Z" fill="#9be9fa"/><ellipse cx="135" cy="163" rx="59" ry="46" fill="'+stageTone+'" stroke="#2e58a9" stroke-width="4"/><ellipse cx="133" cy="172" rx="39" ry="33" fill="#a8dffd"/><path d="M92 180 Q74 183 79 203 L106 203 Q116 185 110 177Z M158 178 Q182 180 181 201 L155 203 Q143 188 148 177Z" fill="#4388de" stroke="#2e58a9" stroke-width="3"/>'+horns+crest+'<path d="M86 104 C84 64 109 54 133 57 C168 55 188 86 177 121 C194 135 172 155 143 151 L108 151 C76 150 68 126 86 104Z" fill="#5599ed" stroke="#2c61b5" stroke-width="4"/><ellipse cx="133" cy="133" rx="40" ry="21" fill="#9dd8fb"/><ellipse class="ns-dragon-eye" cx="108" cy="105" rx="15" ry="18" fill="#fff"/><ellipse class="ns-dragon-eye" cx="155" cy="105" rx="15" ry="18" fill="#fff"/><ellipse cx="111" cy="108" rx="7" ry="10" fill="#253c75"/><ellipse cx="152" cy="108" rx="7" ry="10" fill="#253c75"/><circle cx="114" cy="104" r="3" fill="#fff"/><circle cx="155" cy="104" r="3" fill="#fff"/><ellipse cx="118" cy="130" rx="4" ry="3" fill="#417eb9"/><ellipse cx="149" cy="130" rx="4" ry="3" fill="#417eb9"/><path d="M123 140 Q133 147 143 140" stroke="#345c96" stroke-width="3" stroke-linecap="round" fill="none"/><circle cx="85" cy="122" r="7" fill="#f99dbb" opacity=".65"/><circle cx="178" cy="122" r="7" fill="#f99dbb" opacity=".65"/>'+costume+stageOrnaments+stars+'</svg>';
 }
 function nsDragonMessage(text,animate){
- var message=by('dragon-message');if(message)message.textContent=text;
+ var message=by('dragon-message');if(message){message.textContent=text;message.hidden=!text;}
  var figure=by('pet-face');if(figure&&animate){figure.classList.remove('ns-happy');void figure.offsetWidth;figure.classList.add('ns-happy')}
 }
 function nsDragonRender(){
@@ -861,13 +1332,14 @@ function nsDragonRender(){
  }
  nsDragonCheckEvolution(idx);
  by('pet-face').setAttribute('aria-label',p.name+', '+spec.name);
- by('pet-headline').textContent=p.name+' · Tu compañero';
+ by('pet-headline').textContent=p.name;
+ var companionName=by('ns-companion-title');if(companionName)companionName.textContent=p.name;
+ var companionStage=by('ns-companion-stage');if(companionStage)companionStage.textContent='Etapa '+(idx+1);
  by('dragon-stage').textContent=spec.name;
  by('pet-level').textContent='Etapa '+(idx+1)+' / 6';
  var current=spec.min,goal=next?next.min:current;
  by('dragon-xp-fill').style.width=(next?Math.min(100,100*(p.xp-current)/(goal-current)):100)+'%';
- by('dragon-xp-label').textContent=next?p.xp+' / '+goal+' XP para evolucionar':p.xp+' XP · Evolución máxima';
- by('pet-detail').textContent=next?'Completa tareas y sesiones de concentración para ayudar a '+p.name+' a crecer.':'¡Evolución máxima! Puedes seguir reuniendo XP y cuidando a tu dragón.';
+ by('dragon-xp-label').textContent=next?p.xp+' / '+goal+' XP':p.xp+' XP · Máxima etapa';
  by('stat-food').textContent=Math.floor(p.food);
  nsDragonQuestRender();nsDragonSyncActivity();nsDragonCoachRender();nsDragonDayRender();
 }
@@ -922,7 +1394,7 @@ function nsDragonQuestRender(){
  by('dragon-room-prop').textContent=furniture.symbol;
  by('dragon-room-select').value=p.room;
  by('dragon-furniture-select').value=p.furniture;
- var status=by('dragon-status');status.textContent=progress.tasks+' tareas completadas hoy · '+progress.minutes+' min de enfoque · '+Math.floor(p.food)+' puntos';
+ var status=by('dragon-status');if(status)status.textContent=progress.tasks+' tareas · '+progress.minutes+' min · '+Math.floor(p.food)+' puntos';
  var root=by('dragon-missions');root.replaceChildren();
  nsDragonMissions.forEach(function(m){
   var count=progress[m.type],claimed=claims.includes(m.id),complete=count>=m.count;
@@ -1001,13 +1473,7 @@ function nsDragonCoachRender(){
  var root=by('dragon-coach');if(!root)return;
  root.replaceChildren();
  var mode=nsDragonActivity(),suggestions=nsDragonSuggestedTasks();
- var title=document.createElement('strong');
- title.textContent=mode==='studying'?'Estudiando juntos':mode==='resting'?'Descanso consciente':'Tu siguiente misión';
- root.append(title);
- var detail=document.createElement('p');detail.className='hint';
- detail.textContent=mode==='studying'?'Tu dragón lee mientras tú te concentras.':mode==='resting'?'Tu dragón también descansa; retoma cuando quieras.':!suggestions.length?'No hay tareas pendientes para hoy. Puedes descansar.':'Elige un paso pequeño. No tienes que hacerlo todo de una vez.';
- root.append(detail);
- if(mode!=='ready')return;
+ if(mode!=='ready'||!suggestions.length)return;
  suggestions.forEach(function(t){
   var button=document.createElement('button');button.type='button';button.className='ns-dragon-mission-choice';
   var label=document.createElement('span');label.textContent=t.title;
@@ -1109,7 +1575,7 @@ function nsDragonDayRender(){
  var area=by('dragon-day-suggestions'),toggle=by('dragon-advice-toggle');if(!area||!toggle)return;
  area.replaceChildren();var muted=nsDragonAdviceMuted();
  toggle.textContent=muted?'Activar consejos':'Silenciar consejos hoy';
- if(muted){var p=document.createElement('p');p.className='hint';p.textContent='Los consejos están pausados hasta mañana. Tus alarmas y tareas siguen funcionando.';area.append(p);return}
+ if(muted){var p=document.createElement('p');p.className='hint';p.textContent='Sugerencias pausadas hasta mañana.';area.append(p);return}
  nsDragonDaySuggestions().forEach(function(item){
   var row=document.createElement('div');row.className='ns-dragon-day-row';
   var info=document.createElement('div'),title=document.createElement('strong'),detail=document.createElement('small');
@@ -1130,13 +1596,13 @@ function nsDragonInit(){
  by('dragon-scene').onclick=function(){nsDragonMessage('¡Qué gusto verte! Sigamos a nuestro ritmo.',true);nsDragonAnimate('play')};
  by('dragon-pet').onclick=function(){
   var p=nsDragonData(),today=day(),n=Number(p.pets[today])||0;
-  if(n>=3){nsDragonMessage('Ya recibí mis caricias de hoy. ¡Sigamos con una tarea pequeña!',true);return}
+  if(n>=3){nsDragonMessage('Caricias de hoy agotadas.',true);return}
   p.pets[today]=n+1;
   var keys=Object.keys(p.pets).sort();if(keys.length>45)keys.slice(0,keys.length-45).forEach(function(k){delete p.pets[k]});
-  save();nsDragonMessage('¡Gracias por la caricia! Me encanta acompañarte. ♡',true)
+  save();nsDragonMessage('♡ Acariciado',true)
  };
  by('dragon-next').onclick=function(){
-  var t=nsDragonSuggestedTasks()[0];if(!t){nsDragonMessage('Estás al día. Puedes descansar o planificar algo nuevo.',true);return}
+  var t=nsDragonSuggestedTasks()[0];if(!t){nsDragonMessage('Sin tareas pendientes.',true);return}
   model.focusId=t.id;save();renderFocus();nsDragonCoachRender();nsDragonMessage('Empecemos con: '+nextStep(t).label,true)
  };
  by('dragon-start-focus').onclick=nsDragonBeginFocus;
@@ -1239,6 +1705,7 @@ function nsSleepInit(){
 
 function nsSceneKey(){return 'ns_focus_scene_v1_'+(session?session.username:'visitante')}
 function nsSceneApply(name){var allowed=['calma','bosque','noche'];if(allowed.indexOf(name)<0)name='calma';by('focus-studio').dataset.scene=name;
+ if(window.NSPomodoroStudio)window.NSPomodoroStudio.scene(name);
  document.querySelectorAll('[data-ns-scene]').forEach(function(b){b.classList.toggle('selected',b.dataset.nsScene===name);b.setAttribute('aria-pressed',String(b.dataset.nsScene===name))});
  if(session)localStorage.setItem(nsSceneKey(),name)}
 function nsSceneRestore(){nsSceneApply(session?localStorage.getItem(nsSceneKey())||'calma':'calma')}
@@ -1263,12 +1730,39 @@ function nsFocusStats(){
  by('ns-focus-week').textContent=Math.floor(weekMs/60000)+' min';
  by('ns-focus-sessions').textContent=records.filter(function(x){return x.completed}).length;
 }
+var nsPomodoroExpanded=false;
+function nsFocusFullscreen(state,remaining){
+ var screen=document.getElementById('ns-pomodoro-screen');
+ if(!screen){
+  screen=document.createElement('section');screen.id='ns-pomodoro-screen';
+  screen.setAttribute('role','dialog');screen.setAttribute('aria-modal','true');
+  screen.setAttribute('aria-label','Pomodoro de concentración a pantalla completa');
+  screen.innerHTML='<div class="ns-pomodoro-content"><div class="ns-pomodoro-caption">MODO CONCENTRACIÓN</div><div id="ns-pomodoro-count" role="timer" aria-live="off">25:00</div><div id="ns-pomodoro-status">Listo para comenzar</div><button type="button" id="ns-pomodoro-finish">Terminar sesión</button></div>';
+  document.body.appendChild(screen);
+  screen.querySelector('#ns-pomodoro-finish').addEventListener('click',function(){
+   if(nsFocusState)by('ns-focus-stop').click();
+   else{nsPomodoroExpanded=false;nsFocusRender()}
+  });
+ }
+ var visible=!!(nsPomodoroExpanded&&session);
+ screen.classList.toggle('is-visible',visible);
+ screen.setAttribute('aria-hidden',String(!visible));
+ document.body.classList.toggle('ns-pomodoro-active',visible);
+ screen.querySelector('#ns-pomodoro-count').textContent=nsFocusFormat(remaining);
+ screen.querySelector('#ns-pomodoro-status').textContent=!state?'Elige tu ambiente y comienza':state.running?'Concéntrate en una sola cosa':'Sesión en pausa';
+ if(window.NSPomodoroStudio)window.NSPomodoroStudio.render(screen,{
+  visible:visible,scene:by('focus-studio').dataset.scene||'calma',
+  minutes:state?state.duration:nsFocusDuration,remaining:remaining,
+  running:!!(state&&state.running),started:!!state
+ });
+}
 function nsFocusRender(){
  var state=nsFocusState,total=(state?state.duration:nsFocusDuration)*60000,remaining=Math.max(0,total-nsFocusElapsed());
+ nsFocusFullscreen(state,remaining);
  by('ns-focus-time').textContent=nsFocusFormat(remaining);
  by('ns-focus-phase').textContent=!state?'Listo para comenzar':state.running?'Concentrándote':'En pausa';
  by('ns-focus-toggle').textContent=state?(state.running?'Pausar':'Continuar'):'Iniciar enfoque';
- by('ns-focus-hint').textContent=state?'Tiempo registrado: '+Math.floor(nsFocusElapsed()/60000)+' minutos · Puedes pausar cuando lo necesites.':'Selecciona una duración y una tarea.';
+ by('ns-focus-hint').textContent=state?Math.floor(nsFocusElapsed()/60000)+' min registrados':'';
  var ring=by('focus-studio').querySelector('.ns-focus-ring');ring.style.setProperty('--ns-progress',(100*nsFocusElapsed()/total).toFixed(1)+'%');
  document.querySelectorAll('[data-focus-minutes]').forEach(function(b){b.classList.toggle('selected',Number(b.dataset.focusMinutes)===(state?state.duration:nsFocusDuration));b.disabled=!!state});
  nsDragonSyncActivity();nsDragonCoachRender();nsDragonDayRender();
@@ -1312,9 +1806,101 @@ function nsDialog(o){return new Promise(function(resolve){
 function nsConfirm(title,message,ok){return nsDialog({title:title,message:message,ok:ok||'Confirmar'})}
 function nsPrompt(title,value,extra){return nsDialog(Object.assign({title:title,value:value||'',input:true,ok:'Guardar'},extra||{}))}
 function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+/* Fase 1: recuperación local versionada. Los datos corruptos jamás se borran silenciosamente. */
+function nsValidModel(x){return !!(x&&typeof x==='object'&&!Array.isArray(x)&&Array.isArray(x.tasks)&&Array.isArray(x.packs)&&Array.isArray(x.alarms)&&x.pet&&typeof x.pet==='object')}
+function nsReadModel(raw){if(!raw)return null;try{var v=JSON.parse(raw);return nsValidModel(v)?v:null}catch(e){return null}}
+/* Fase 1d: segunda copia independiente del motor WebView.
+ * No borra localStorage: lo complementa con SQLite cifrado de Android.
+ * El servidor de respaldo nunca lee ni conserva contraseñas o tokens.
+ */
+function nsReadNativeSnapshot(){
+ if(!session||!nat||!nat.recoverNativeSnapshot)return null;
+ try{
+  var response=JSON.parse(nat.recoverNativeSnapshot(session.username));
+  return response.ok&&nsValidModel(response.model)?response.model:null;
+ }catch(e){return null}
+}
+/* Copias secundarias agrupadas: el guardado principal continúa siendo inmediato.
+ * Se evita cifrar y escribir SQLite en cada tecla o cambio visual.
+ * El último contenido válido reemplaza los cambios pendientes de la misma cuenta.
+ */
+var nsNativePending=null,nsNativeTimer=null,nsNativeDelayMs=1300;
+function nsFlushNativeSnapshot(){
+ if(nsNativeTimer!==null){clearTimeout(nsNativeTimer);nsNativeTimer=null}
+ var pending=nsNativePending;nsNativePending=null;
+ if(!pending||!nat||!nat.saveNativeSnapshot)return false;
+ // No permitir que una cuenta utilice por accidente el respaldo de otra.
+ if(!session||session.username!==pending.username)return false;
+ try{
+  var ok=!!nat.saveNativeSnapshot(pending.username,pending.json);
+  if(!ok){nsNativePending=pending;return false}
+  return true;
+ }catch(err){nsNativePending=pending;return false}
+}
+function nsQueueNativeSnapshot(data,serialized){
+ if(!session||!nat||!nat.saveNativeSnapshot||!nsValidModel(data))return;
+ var json=serialized||JSON.stringify(data);
+ nsNativePending={username:session.username,json:json};
+ if(nsNativeTimer!==null)clearTimeout(nsNativeTimer);
+ nsNativeTimer=setTimeout(nsFlushNativeSnapshot,nsNativeDelayMs);
+}
+function nsSeedNativeSnapshot(data){
+ if(!session||!nat||!nat.saveNativeSnapshot||!nsValidModel(data))return;
+ try{
+  if(nsReadNativeSnapshot())return; // No reemplazar un respaldo anterior al abrir.
+  nsQueueNativeSnapshot(data);
+ }catch(e){}
+}
+function nsLocalSave(data){
+ if(!session||!nsValidModel(data))throw Error('Datos no válidos');
+ var key=localKey(),previous=localStorage.getItem(key),old=nsReadModel(previous);
+ var json=JSON.stringify(data);
+ if(old&&previous!==json)localStorage.setItem(key+'_anterior',previous);
+ if(old&&Date.now()-Number(localStorage.getItem(key+'_recovery_at')||0)>900000){
+  localStorage.setItem(key+'_rescate',previous);
+  localStorage.setItem(key+'_recovery_at',String(Date.now()));
+ }
+ localStorage.setItem(key,json);
+ if(localStorage.getItem(key)!==json)throw Error('No se pudo verificar el guardado');
+ // La copia SQLite es secundaria. Se agrupan escrituras consecutivas
+ // y al ocultar/salir se fuerza la última versión, sin borrar localStorage.
+ nsQueueNativeSnapshot(data,json);
+ return true;
+}
+function nsRecoveryCandidate(key){
+ // Elegir el snapshot válido más reciente: no preferir una copia SQLite antigua
+ // sobre un historial WebView que contiene tareas creadas después.
+ var candidates=[
+  {model:nsReadNativeSnapshot(),source:'Android'},
+  {model:nsReadModel(localStorage.getItem(key+'_anterior')),source:'historial local'},
+  {model:nsReadModel(localStorage.getItem(key+'_rescate')),source:'historial local'}
+ ].filter(function(c){return !!c.model});
+ if(!candidates.length)return null;
+ candidates.sort(function(a,b){
+  return (Number(b.model._localUpdatedAt)||0)-(Number(a.model._localUpdatedAt)||0)
+ });
+ return candidates[0];
+}
 function load(){
-try{var saved=JSON.parse(localStorage.getItem(localKey()));if(saved&&Array.isArray(saved.tasks)&&Array.isArray(saved.packs)&&Array.isArray(saved.alarms))return saved;}catch(e){}
-var fresh=blank();
+ var key=localKey(),current=localStorage.getItem(key),saved=nsReadModel(current);
+ if(saved){nsSeedNativeSnapshot(saved);return saved;}
+ var recovered=nsRecoveryCandidate(key);
+ if(recovered){
+  if(current){try{localStorage.setItem(key+'_corrupto_'+Date.now(),current)}catch(e){}}
+  try{
+   localStorage.setItem(key,JSON.stringify(recovered.model));
+   if(recovered.source!=='Android')nsSeedNativeSnapshot(recovered.model);
+  }catch(e){nsStorageRecoveryBlocked=true}
+  setTimeout(function(){say('Se recuperó la última copia válida desde '+recovered.source+'. Comprueba tus tareas y alarmas.')},100);
+  return recovered.model;
+ }
+ if(current){
+  // Bloquear escrituras que podrían destruir el último archivo recuperable.
+  nsStorageRecoveryBlocked=true;
+  setTimeout(function(){say('No se pudo leer tu información. No se sobrescribirá; exporta o revisa el respaldo.')},100);
+  return blank();
+ }
+ var fresh=blank();
 if(session&&session.role==='admin'){
  try{
   var old=JSON.parse(localStorage.getItem('neuroSyncDB'));
@@ -1333,9 +1919,39 @@ if(session&&session.role==='admin'){
   }
  }catch(e){}
 }
-localStorage.setItem(localKey(),JSON.stringify(fresh));return fresh;
+try{nsLocalSave(fresh)}catch(e){nsStorageRecoveryBlocked=true}return fresh;
 }
-function save(){localStorage.setItem(localKey(),JSON.stringify(model));by('sync-status').textContent='Cambios guardados';if(nat&&(nat.syncFamilyAsync||nat.syncFamily)){setTimeout(sync,350)}}
+var nsDriveBackupTimer=null;
+function nsUploadDriveNow(){
+ if(!session||!session.google||!model||!nat||!nat.backupGoogleDrive||nsStorageRecoveryBlocked)return;
+ try{
+  nat.backupGoogleDrive(JSON.stringify({version:1,googleId:session.username.slice(7),savedAt:Date.now(),model:model}));
+ }catch(error){by('sync-status').textContent='Copia Drive pendiente'}
+}
+function nsQueueDriveBackup(){
+ if(!session||!session.google||!nat||!nat.backupGoogleDrive)return;
+ clearTimeout(nsDriveBackupTimer);
+ nsDriveBackupTimer=setTimeout(nsUploadDriveNow,15000);
+}
+var nsStorageRecoveryBlocked=false;
+function save(){
+ if(!session||!model)return false;
+ if(nsStorageRecoveryBlocked){by('sync-status').textContent='Guardado bloqueado: protege tus datos anteriores';say('No se sobrescribirá un archivo local dañado.');return false}
+ try{
+  // La fecha pertenece al contenido y permite comparar versiones entre Drive y el equipo.
+  model._localUpdatedAt=Date.now();
+  nsLocalSave(model);
+ }catch(e){
+  by('sync-status').textContent='No guardado: revisa espacio disponible';
+  say('No se pudieron guardar tus cambios en este dispositivo.');
+  return false;
+ }
+ by('sync-status').textContent=session.google?'Guardado local · Drive pendiente':'Guardado local verificado';
+ if(session.google){nsQueueDriveBackup();return true}
+ if(session.public){return true}
+ if(nat&&(nat.syncFamilyAsync||nat.syncFamily)){setTimeout(sync,350)}
+ return true;
+}
 function active(list){return list.filter(function(t){return !t.deleted})}
 function owned(t){return session.role==='admin'||t.owner===session.username||t.owner==='todos'}
 function mark(t){t.updatedAt=stamp();return t}
@@ -1461,7 +2077,23 @@ e.querySelector('.iconbtn').onclick=function(){nsConfirm('Eliminar lista','Se el
 var c=e.querySelector('.bag-checks');(b.items||[]).forEach(function(it,i){var l=document.createElement('label');l.className='check';var input=document.createElement('input');input.type='checkbox';input.checked=!!(b.checked||{})[i];input.onchange=function(){b.checked=b.checked||{};b.checked[i]=input.checked;mark(b);save()};l.append(input,document.createTextNode(it));c.append(l)});
 e.querySelector('.btn').onclick=function(){b.checked={};mark(b);save();render()};return e}
 function renderBags(){fill('bags-list',active(model.packs).filter(owned),bagItem,'Crea una lista para tu próxima salida.')}
-function alarmItem(a){var e=document.createElement('div');e.className='list-row';e.innerHTML='<div class="between"><div><b>⏰ '+esc(a.title)+'</b><div class="task-meta">'+esc(a.date)+' · '+esc(a.time)+(a.daily?' · Todos los días':'')+'</div></div><button class="iconbtn" aria-label="Eliminar alarma">×</button></div>';e.querySelector('button').onclick=function(){if(session.role!=='admin'&&a.owner==='todos'){say('Esta alarma compartida solo puede eliminarla el administrador');return}a.deleted=true;mark(a);try{nat&&nat.cancelAlarm&&nat.cancelAlarm(a.id)}catch(err){}save();render()};return e}
+function alarmItem(a){
+ var e=document.createElement('div');e.className='list-row ns-alarm-line';
+ var time=(a.time||'--:--').slice(0,5);
+ var repeat=a.repeat|| (a.daily?'daily':'none');
+ var cadence=repeat==='daily'?'Cada día':repeat==='weekly'?'Cada semana':repeat==='every2'?'Cada 2 días':repeat==='every3'?'Cada 3 días':'Una vez';
+ e.innerHTML='<div class="ns-alarm-row"><div class="ns-alarm-core"><span class="ns-alarm-hour">'+esc(time)+'</span><div class="ns-alarm-meta"><strong>'+esc(a.title||'Alarma')+'</strong><small>'+esc(a.date||'')+' · '+cadence+'</small></div></div><button class="iconbtn ns-alarm-remove" type="button" aria-label="Eliminar alarma '+esc(a.title||'')+'">×</button></div>';
+ e.querySelector('button').onclick=function(){
+  if(session.role!=='admin'&&a.owner==='todos'){say('Esta alarma compartida solo puede eliminarla el administrador');return}
+  nsConfirm('Eliminar alarma','¿Eliminar '+(a.title||'esta alarma')+'?','Eliminar').then(function(ok){
+   if(!ok)return;
+   a.deleted=true;mark(a);
+   try{nat&&nat.cancelAlarm&&nat.cancelAlarm(a.id)}catch(err){}
+   save();render();
+  });
+ };
+ return e;
+}
 function renderAlarms(){fill('alarms-list',active(model.alarms).filter(owned),alarmItem,'No hay alarmas. Crea una para recordar algo importante.')}
 function renderCalendar(){var grid=by('calendar');grid.replaceChildren();by('month-title').textContent=month.toLocaleDateString('es-CO',{month:'long',year:'numeric'});var wd=['L','M','M','J','V','S','D'];wd.forEach(function(w){var e=document.createElement('span');e.className='week-label';e.textContent=w;grid.append(e)});
 var first=new Date(month.getFullYear(),month.getMonth(),1),offset=(first.getDay()+6)%7,last=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();
@@ -1474,12 +2106,13 @@ var list=by('users-list');if(!list)return;
 if(!nat||!nat.getUsers){list.innerHTML='<p class="hint">Las cuentas familiares requieren instalar la APK Android y activar el celular principal.</p>';return}
 try{var data=JSON.parse(nat.getUsers());if(!data.ok){list.textContent=data.error||'No disponible';return}
 list.replaceChildren();data.users.forEach(function(u){var d=document.createElement('div');d.className='profile-line';d.innerHTML='<span><b>'+esc(u.username)+'</b><br><small class="muted">'+(u.role==='admin'?'Administrador':'Miembro')+'</small></span><span class="chip">'+(u.active?'Activo':'Inactivo')+'</span>';list.append(d)})}catch(e){list.textContent='No se pudo obtener la lista de miembros'}}
-function show(view){if(view==='admin'&&session.role!=='admin')return;document.querySelectorAll('.view').forEach(function(v){v.classList.toggle('active',v.id==='view-'+view)});document.querySelectorAll('[data-view]').forEach(function(b){b.classList.toggle('active',b.dataset.view===view)});by('page-title').textContent=labels[view];render();if(view==='habits'){renderStreak();nsHealthRender()}if(view==='alarms')nsWakeRender()}
+function show(view){if(view==='admin'&&session.role!=='admin')return;document.querySelectorAll('.view').forEach(function(v){v.classList.toggle('active',v.id==='view-'+view)});document.querySelectorAll('[data-view]').forEach(function(b){b.classList.toggle('active',b.dataset.view===view)});by('page-title').textContent=labels[view];render();if(view==='habits'){renderStreak();nsHealthRender();if(window.NeuroWellbeingStudio)window.NeuroWellbeingStudio.render()}if(view==='alarms'){nsWakeRender();checkAlarmPermissions();if(window.NeuroAlarmStudio)window.NeuroAlarmStudio.render()}if(window.NeuroTasksStudio&&(view==='tasks'||view==='habits'))window.NeuroTasksStudio.render(view);if(view==='bags'&&window.NeuroDepartureStudio)window.NeuroDepartureStudio.render();if(view==='finance'&&window.NeuroFinanceStudio)window.NeuroFinanceStudio.render()}
 document.querySelectorAll('[data-view]').forEach(function(b){b.addEventListener('click',function(){show(b.dataset.view)})});
 by('prev-month').onclick=function(){month=new Date(month.getFullYear(),month.getMonth()-1,1);renderCalendar()};by('next-month').onclick=function(){month=new Date(month.getFullYear(),month.getMonth()+1,1);renderCalendar()};
 document.querySelectorAll('[data-filter]').forEach(function(b){b.onclick=function(){filter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(function(x){x.classList.toggle('active',x===b)});render()}});
 function field(label,name,type,options){if(type==='select'){return '<label class="field">'+label+'<select name="'+name+'">'+options.map(function(o){return '<option value="'+esc(o[0])+'">'+esc(o[1])+'</option>'}).join('')+'</select></label>'}return '<label class="field">'+label+'<input name="'+name+'" type="'+(type||'text')+'" '+(name==='title'||name==='place'||name==='username'?'required':'')+'></label>'}
 function openModal(kind){
+if(kind==='bag'&&window.NeuroDepartureStudio){window.NeuroDepartureStudio.create();return}
 if(kind==='alarm'&&nat&&nat.requestAlarmPermissions){
  try{var perms=JSON.parse(nat.alarmPermissions());if(!perms.notifications||!perms.exact||!perms.fullScreen)nat.requestAlarmPermissions();}catch(e){}
 }
@@ -1567,7 +2200,7 @@ function editTask(t){
 }
 function closeModal(){by('modal').classList.add('hidden')}
 by('close-modal').onclick=closeModal;by('modal').onclick=function(e){if(e.target===by('modal'))closeModal()};
-document.querySelectorAll('[data-open]').forEach(function(b){b.onclick=function(){openModal(b.dataset.open)}});
+document.querySelectorAll('[data-open]').forEach(function(b){b.onclick=function(){if(b.dataset.open==='bag'&&window.NeuroDepartureStudio){window.NeuroDepartureStudio.create();return}openModal(b.dataset.open)}});
 window.neuroQrEnrollment=function(raw){
  var form=by('popup-form');
  if(!form||!form.elements.qrValue)return;
@@ -1578,18 +2211,35 @@ window.neuroQrEnrollment=function(raw){
  say('QR de referencia capturado');
 };
 function scheduleAlarm(a){
- if(!nat||!nat.scheduleAlarm)return;
- var when=new Date(a.date+'T'+a.time+':00').getTime();
+ if(a.enabled===false)return false;
+ if(!nat||(!nat.scheduleAlarm&&!nat.scheduleAlarmRepeat))return false;
+ var dateText=String(a.date||''),timeText=String(a.time||'');
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(dateText)||!/^\d{2}:\d{2}$/.test(timeText)){
+  say('La alarma tiene una fecha u hora inválida');return false
+ }
+ var pieces=dateText.split('-').map(Number),clock=timeText.split(':').map(Number);
+ if(clock[0]>23||clock[1]>59||pieces[1]<1||pieces[1]>12||pieces[2]<1||pieces[2]>31){
+  say('La alarma tiene una fecha u hora inválida');return false
+ }
+ var local=new Date(pieces[0],pieces[1]-1,pieces[2],clock[0],clock[1]);
+ if(local.getFullYear()!==pieces[0]||local.getMonth()!==pieces[1]-1||
+    local.getDate()!==pieces[2]||local.getHours()!==clock[0]||local.getMinutes()!==clock[1]){
+  say('Esa fecha u hora no existe en el calendario local');return false
+ }
+ var when=local.getTime();
  var repeat=a.repeat|| (a.daily?'daily':'none');
- if(repeat==='weekly')while(when<Date.now())when+=7*86400000;
- else if(repeat==='daily')while(when<Date.now())when+=86400000;
- else if(repeat==='every2')while(when<Date.now())when+=2*86400000;
- else if(repeat==='every3')while(when<Date.now())when+=3*86400000;
+ if(!(['none','daily','weekly','every2','every3','weekdays','weekends'].includes(repeat)||/^days:[01]{7}$/.test(repeat)&&repeat.slice(5).includes('1'))){say('Repetición no válida');return false}
+ // No sumar milisegundos para repeticiones: en cambios de zona horaria o DST
+ // esa aritmética desplaza la hora de despertar. Android usa Calendar local.
+ // El primer día/hora es la referencia y AlarmReceiver.nextRepeat calcula el siguiente.
+ if(!Number.isFinite(when)){say('La alarma tiene una fecha u hora inválida');return false}
+ if(repeat==='none'&&when<=Date.now()){say('La fecha de esta alarma ya pasó');return false}
  try{
   if(nat.setAlarmChallenge)nat.setAlarmChallenge(a.id,a.challenge||'none');
   var ok=nat.scheduleAlarmRepeat?nat.scheduleAlarmRepeat(a.id,a.title,when,repeat):nat.scheduleAlarm(a.id,a.title,when,repeat==='daily');
-  if(!ok)say('No se pudo programar la alarma: revisa la fecha y los permisos');
- }catch(e){say('Error al programar alarma')}
+  if(!ok){say('No se pudo programar la alarma: revisa la fecha y los permisos');return false}
+  return true;
+ }catch(e){say('Error al programar alarma');return false}
 }
 function checkAlarmPermissions(){
  var status=by('alarm-permission-status');
@@ -1597,12 +2247,32 @@ function checkAlarmPermissions(){
  if(!nat||!nat.alarmPermissions){status.textContent='Disponible desde la aplicación Android.';return;}
  try{
   var a=JSON.parse(nat.alarmPermissions());
-  var count=[a.notifications,a.exact,a.fullScreen].filter(Boolean).length;
-  status.textContent=count===3?'Permisos disponibles. Prueba el sonido y la pantalla bloqueada.':'Android requiere '+(3-count)+' autorización(es) para todas las funciones. Se solicitarán al crear o probar una alarma.';
+  var missing=[];
+  if(!a.notifications)missing.push('notificaciones');
+  if(!a.exact)missing.push('alarmas exactas');
+  if(!a.fullScreen)missing.push('pantalla completa');
+  if(a.channelHigh===false)missing.push('prioridad de notificaciones');
+  status.textContent=missing.length
+   ?'Revisar: '+missing.join(', ')+'. Algunas alarmas podrían retrasarse o no abrir la pantalla de bloqueo.'
+   :'Permisos principales disponibles. Prueba con la pantalla bloqueada; el resultado también depende de Android.';
   var badge=by('alarm-permission-indicator');
-  if(badge)badge.textContent=count===3?'Listo':'Permisos '+count+'/3';
+  if(badge)badge.textContent=missing.length?'Revisar '+missing.length:'Permisos listos';
+  if(nat.alarmScheduleDiagnostics){
+   try{
+    var d=JSON.parse(nat.alarmScheduleDiagnostics());
+    var details=by('ns-alarm-schedule-summary');
+    if(details){
+     details.textContent=d.count===0?'No hay registros nativos de alarma en este dispositivo':
+      d.count+' registro(s) nativo(s) de alarma'+(d.nextAt>0?' · próxima: '+new Date(d.nextAt).toLocaleString('es-CO',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):'');
+    }
+   }catch(e){}
+  }
  }catch(err){status.textContent='No se pudo verificar los permisos'}
 }
+by('alarm-permissions-open').onclick=function(){
+ if(nat&&nat.requestAlarmPermissions)nat.requestAlarmPermissions();
+ else say('Solo disponible en la APK Android');
+};
 by('alarm-test').onclick=function(){
  if(nat&&nat.testAlarm){
   if(nat.requestAlarmPermissions) {
@@ -1619,7 +2289,7 @@ by('alarm-local-sound').onclick=function(){
 };
 by('alarm-clock-music').onclick=function(){
  if(nat&&nat.openSystemClock){nat.openSystemClock()}
- else say('En Reloj de Google abre una alarma → Sonido → YouTube Music (Premium para canciones)');
+ else say('Abre Reloj para configurar el sonido.');
 };
 document.addEventListener('visibilitychange',function(){if(!document.hidden)checkAlarmPermissions()});
 checkAlarmPermissions();
@@ -1627,75 +2297,248 @@ by('set-default-home').onclick=function(){
  if(nat&&nat.requestDefaultHome)nat.requestDefaultHome();
  else say('La selección de inicio está disponible desde la APK Android');
 };
+by('ns-home-dragon-details').onclick=function(){
+ var panel=document.querySelector('#view-home .ns-dragon-more');
+ if(panel){panel.open=true;panel.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'nearest'});}
+};
+by('ns-launcher-direct').onclick=function(){
+ if(nat&&nat.openMinimalHome)nat.openMinimalHome();
+ else say('El modo minimalista está disponible en la APK Android');
+};
 by('open-minimal-home').onclick=function(){
  if(nat&&nat.openMinimalHome)nat.openMinimalHome();
  else say('Disponible cuando instales la APK Android');
 };
 by('pet-feed').onclick=function(){
- var p=nsDragonData();if(p.food<20){nsDragonMessage('Nos faltan puntos. ¿Hacemos una tarea pequeña?');return}
- p.food-=20;p.xp+=15;p.feeds++;p.energy=Math.min(100,p.energy+20);save();render();nsDragonMessage('¡Qué rico! Gracias por cuidarme. +15 XP',true);nsDragonAnimate('eat')
+ var p=nsDragonData();if(p.food<20){nsDragonMessage('Necesitas 20 puntos.');return}
+ p.food-=20;p.xp+=15;p.feeds++;p.energy=Math.min(100,p.energy+20);save();render();nsDragonMessage('Azul comió · +15 XP',true);nsDragonAnimate('eat')
 };
 var syncing=false;
+/* El servidor familiar es una fuente de cambios, nunca autorización para
+ * escribir sobre los datos privados de otra sesión ni saltarse la copia local. */
+/* Estado de envíos: historial mínimo por cuenta, sin registrar tareas privadas ajenas.
+ * El primer contacto establece una línea base para no notificar cambios antiguos.
+ */
+function nsSentStatusKey(username){return 'ns_sent_status_v1_'+username}
+function nsCheckSentStatus(items,username){
+ if(!session||session.username!==username||!Array.isArray(items))return;
+ var key=nsSentStatusKey(username),old=null;
+ try{
+  var raw=localStorage.getItem(key);
+  if(raw)old=JSON.parse(raw);
+  if(old!==null&&(!old||typeof old!=='object'||Array.isArray(old)))return;
+ }catch(e){return}
+ var next={};
+ items.slice(0,3000).forEach(function(t){
+  if(!t||typeof t.id!=='string'||!t.id.startsWith('sent_')||
+     !['pending','accepted','completed'].includes(t.deliveryStatus))return;
+  next[t.id]=t.deliveryStatus;
+ });
+ // Persistir primero para evitar avisos duplicados tras un reinicio.
+ try{
+  var json=JSON.stringify(next);localStorage.setItem(key,json);
+  if(localStorage.getItem(key)!==json)return;
+ }catch(e){return}
+ if(old===null)return;
+ for(var id of Object.keys(next)){
+  var previous=old[id],current=next[id];
+  if(previous!=='pending'&&previous!=='accepted')continue;
+  if(current===previous||current==='pending')continue;
+  if(previous==='accepted'&&current!=='completed')continue;
+  try{
+   if(nat&&nat.notifySentTaskStatus)nat.notifySentTaskStatus(id,current);
+  }catch(e){}
+  if(typeof say==='function')say(current==='accepted'?
+   'Una de tus tareas enviadas fue aceptada':'Una de tus tareas enviadas fue completada');
+ }
+}
 window.neuroSyncOnSync=function(payload,requestingUser){
- syncing=false;if(!session||!model||(requestingUser&&session.username!==requestingUser))return;
+ syncing=false;
+ if(!session||!model||(requestingUser&&session.username!==requestingUser))return;
+ if(nsStorageRecoveryBlocked){
+  by('sync-status').textContent='Sincronización detenida para proteger el respaldo local';
+  return;
+ }
  try{
   var res=typeof payload==='string'?JSON.parse(payload):payload;
-  if(!res.ok){by('sync-status').textContent=res.error||'Sin conexión · guardado local';return}
-  var remote=res.data||{};
+  if(!res||!res.ok){by('sync-status').textContent=(res&&res.error)||'Sin conexión · guardado local';return}
+  var remote=res.data||{},staged=Object.assign({},model);
+  var owner=session.username;
   ['tasks','packs','alarms'].forEach(function(k){
+   if(remote[k]!=null&&!Array.isArray(remote[k]))throw Error('Datos remotos inválidos: '+k);
    var found=new Map();
-   (model[k]||[]).concat(remote[k]||[]).forEach(function(item){
-    if(!item||!item.id)return;
+   // Nunca retirar elementos locales existentes: pueden ser datos históricos
+   // de administración que no estén incluidos en esta respuesta de servidor.
+   (model[k]||[]).forEach(function(item){if(item&&typeof item.id==='string')found.set(item.id,item)});
+   (remote[k]||[]).slice(0,5000).forEach(function(item){
+    if(!item||typeof item.id!=='string'||item.id.length>140||
+       !item.owner||typeof item.owner!=='string')return;
+    // Solo aceptar cambios remotos propios o compartidos, nunca datos privados ajenos.
+    if(item.owner!==owner&&item.owner!=='todos')return;
     var current=found.get(item.id);
-    if(!current||(+item.updatedAt||0)>(+current.updatedAt||0))found.set(item.id,item)
+    if(!current||(+item.updatedAt||0)>(+current.updatedAt||0))found.set(item.id,item);
    });
-   model[k]=Array.from(found.values());
+   staged[k]=Array.from(found.values());
   });
-  localStorage.setItem(localKey(),JSON.stringify(model));
-  if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm);
-  by('sync-status').textContent='✓ Sincronizado';render();
- }catch(e){by('sync-status').textContent='Error aplicando cambios'}
+  // Avisar solo de tareas nuevas dirigidas a esta cuenta, nunca de registros ajenos.
+  var known=new Set((model.tasks||[]).filter(function(t){return t&&typeof t.id==='string'})
+   .map(function(t){return t.id}));
+  var incoming=(staged.tasks||[]).filter(function(t){
+   return t&&!t.deleted&&t.owner===owner&&typeof t.sentBy==='string'&&
+    t.sentBy!==owner&&typeof t.id==='string'&&t.id.startsWith('sent_')&&
+    !known.has(t.id);
+  }).slice(0,10);
+  staged._localUpdatedAt=Date.now();
+  nsLocalSave(staged);
+  model=staged;
+  // La respuesta pertenece a esta cuenta y el guardado local ya fue confirmado.
+  nsCheckSentStatus(res.sentTasks,owner);
+  // Después del guardado: no notificar sobre tareas que no se pudieron conservar.
+  if(incoming.length){
+   by('sync-status').textContent='Tienes '+incoming.length+' tarea(s) nuevas en Recibidas';
+   if(typeof say==='function')say('Recibiste '+incoming.length+' tarea(s) nuevas');
+   if(nat&&nat.notifyTaskReceived)incoming.forEach(function(t){
+    try{nat.notifyTaskReceived(t.id,t.sentBy)}catch(e){}
+   });
+  }
+  if(nat&&(nat.scheduleAlarm||nat.scheduleAlarmRepeat))
+   active(model.alarms).filter(function(a){return a.owner===owner||a.owner==='todos'}).forEach(scheduleAlarm);
+  if(!incoming.length)by('sync-status').textContent='Sincronizado y guardado';
+  render();
+ }catch(e){
+  by('sync-status').textContent='No se aplicaron cambios: datos locales conservados';
+ }
 };
 function sync(){
- if(!session||!nat||syncing)return;
+ if(!session||session.google||!nat||syncing)return;
+ // Cuentas públicas: reintentar la cola, sin usar nunca /sync del servidor LAN.
+ if(session.public){nsOutboxFlush();return}
+ nsOutboxFlush();
  var content=JSON.stringify({tasks:model.tasks,packs:model.packs,alarms:model.alarms});
  if(nat.syncFamilyAsync){syncing=true;by('sync-status').textContent='Sincronizando…';try{nat.syncFamilyAsync(content,session.username)}catch(e){syncing=false;by('sync-status').textContent='Guardado local'}return}
  if(nat.syncFamily){try{window.neuroSyncOnSync(nat.syncFamily(content))}catch(e){by('sync-status').textContent='Guardado local'}}
 }
+// Consultar nuevas tareas en intervalos moderados sin sincronizar sesiones cerradas.
+setInterval(function(){
+ if(session&&model&&!session.google&&!syncing&&!nsStorageRecoveryBlocked&&
+    typeof document!=='undefined'&&!document.hidden)sync();
+},60000);
+if(typeof window!=='undefined')window.addEventListener('online',function(){
+ if(session&&!session.google)nsOutboxFlush();
+});
 by('sync-btn').onclick=sync;
 function getUsers(){if(!nat||!nat.getUsers)return [{username:session.username,role:session.role}];try{var r=JSON.parse(nat.getUsers());return r.users||[]}catch(e){return []}}
-function enter(u){session=u;model=load();nsSleepRender();nsSceneRestore();nsFocusRestore();nsLauncherFocusSync();nsFocusTasks();nsFocusStats();nsFocusRender();nsDragonData();by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=u.username.slice(0,1).toUpperCase();by('greeting').textContent='Tu día está listo para avanzar a tu ritmo.';by('ns-home-welcome').textContent='Hola, '+u.username+'. Tu día te espera.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
+function enter(u){
+ // Registrar el proveedor que la persona eligió para no abrir otra cuenta
+ // automáticamente si conviven un administrador local y un Google vinculado.
+ try{localStorage.setItem('ns_last_session_provider',u.public?'public':u.google?'google':'owner')}catch(e){}
+ nsStorageRecoveryBlocked=false;session=u;model=load();nsSleepRender();nsSceneRestore();nsFocusRestore();nsLauncherFocusSync();nsFocusTasks();nsFocusStats();nsFocusRender();nsDragonData();by('login').classList.add('hidden');by('app').classList.remove('hidden');by('avatar').textContent=(u.displayName||u.username).slice(0,1).toUpperCase();by('greeting').textContent='Tu día está listo para avanzar a tu ritmo.';by('ns-home-welcome').textContent='Hola, '+(u.displayName||u.email||u.username)+'. Tu día te espera.';document.querySelectorAll('.admin-only').forEach(function(n){n.classList.toggle('hidden',u.role!=='admin')});show('home');if(window.NeuroFinanceStudio)window.NeuroFinanceStudio.syncLauncher();if(nsPendingRoute){var route=nsPendingRoute;nsPendingRoute='';nsNavigate(route)}sync();if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===session.username||a.owner==='todos'}).forEach(scheduleAlarm)}
+by('ns-owner-access').onclick=function(){
+ var panel=by('ns-admin-login'),showing=!panel.classList.toggle('hidden');
+ by('ns-owner-access').setAttribute('aria-expanded',String(showing));
+ if(showing)by('login-user').focus();
+};
+if(nat&&nat.publicAvailable&&nat.publicAvailable()){
+ var publicLoginButton=by('ns-public-login'),legacyGoogleButton=by('ns-google-login');
+ publicLoginButton.classList.remove('hidden');
+ publicLoginButton.innerHTML='<span class="ns-google-symbol">G</span> Continuar con Google';
+ // Priorizar el acceso público sin eliminar las copias personales anteriores.
+ legacyGoogleButton.textContent='Usar modo personal con Google Drive';
+ legacyGoogleButton.parentNode.insertBefore(publicLoginButton,legacyGoogleButton);
+ var googleNote=document.querySelector('.ns-google-note');
+ if(googleNote)googleNote.textContent='Accede a tus contactos y comparte tareas. El modo personal anterior continúa disponible.';
+}
+by('ns-public-login').onclick=function(){
+ by('login-error').textContent='';
+ if(nat&&nat.publicLogin)nat.publicLogin();
+ else by('login-error').textContent='La versión pública no está configurada.';
+};
+window.neuroPublicLogin=function(raw){
+ try{
+  var result=JSON.parse(raw);
+  if(result.ok&&result.user&&result.user.public){
+   enter(result.user);
+   by('sync-status').textContent='Conectado a NeuroSync público';
+  }else{
+   by('login-error').textContent=result.error||'No se pudo iniciar sesión';
+   // La firma es pública; nunca mostrar ID tokens ni credenciales.
+   if(result.configurationRequired&&nat&&nat.googleOAuthDiagnostics){
+    try{
+     var d=JSON.parse(nat.googleOAuthDiagnostics());
+     by('ns-google-fingerprint').textContent='Paquete: '+(d.packageName||'No disponible')+
+      '\\nSHA-1: '+(d.sha1||'No disponible')+
+      '\\nRegistra un cliente Android y uno Web en el mismo proyecto Google Cloud.';
+     by('ns-google-developer-info').classList.remove('hidden');
+    }catch(ex){}
+   }
+  }
+ }catch(e){by('login-error').textContent='No se pudo abrir la cuenta pública'}
+};
+by('ns-google-login').onclick=function(){
+ by('login-error').textContent='';
+ if(nat&&nat.loginGoogle)nat.loginGoogle();
+ else by('login-error').textContent='El acceso Google requiere la APK Android.';
+};
+window.neuroGoogleLogin=function(json){
+ try{
+  var result=JSON.parse(json);
+  var info=by('ns-google-developer-info');
+  info.classList.add('hidden');
+  if(result.ok&&result.user&&result.user.google){
+   by('login-error').textContent='';
+   enter(result.user);
+   by('sync-status').textContent='Google conectado · comprobando Drive';
+  }else{
+   by('login-error').textContent=result.error||'No se pudo iniciar sesión con Google';
+   if(result.configurationRequired&&nat&&nat.googleOAuthDiagnostics){
+    try{
+     var diagnostics=JSON.parse(nat.googleOAuthDiagnostics());
+     by('ns-google-fingerprint').textContent='Identificador: '+(diagnostics.packageName||'No disponible')+'\nSHA-1: '+(diagnostics.sha1||'No disponible');
+     info.classList.remove('hidden');
+    }catch(err){}
+   }
+  }
+ }catch(e){by('login-error').textContent='No se pudo validar la identidad'}
+};
+window.neuroDriveStatus=function(message){if(by('sync-status'))by('sync-status').textContent=message};
+window.neuroGoogleBackupRestored=async function(raw){
+ if(!session||!session.google)return;
+ try{
+  var backup=JSON.parse(raw);
+  if(backup.version!==1||backup.googleId!==session.username.slice(7)||!backup.model||!Array.isArray(backup.model.tasks)||!Array.isArray(backup.model.packs)||!Array.isArray(backup.model.alarms))return;
+  var who=session.username;
+  var localTime=Number(model._localUpdatedAt)||0;
+  var cloudTime=Number(backup.model._localUpdatedAt)||Number(backup.savedAt)||0;
+  var hasData=model.tasks.length||model.alarms.length||model.packs.length;
+  // Nunca reemplazar automáticamente datos locales nuevos o de otra sesión.
+  if(hasData||cloudTime<localTime){
+   var warning=cloudTime<localTime
+    ?'Esta copia de Drive es anterior a los datos de este teléfono. Restaurarla podría borrar cambios recientes. ¿Continuar de todos modos?'
+    :'Se encontró una copia de Drive. Restaurarla sustituirá los datos locales de esta cuenta. ¿Continuar?';
+   if(!await nsConfirm('Confirmar restauración',warning,'Restaurar'))return;
+  }
+  if(!session||session.username!==who||nsStorageRecoveryBlocked)return;
+  var oldModel=model;
+  try{
+   nsLocalSave(backup.model);model=backup.model;
+   render();nsDragonRender();nsFocusTasks();nsFocusStats();
+   // Restaurar también las alarmas nativas correspondientes a esta cuenta.
+   if(nat&&nat.scheduleAlarm)active(model.alarms).filter(function(a){return a.owner===who||a.owner==='todos'}).forEach(scheduleAlarm);
+   say('Respaldo restaurado. Verifica tus alarmas.');
+  }catch(err){
+   model=oldModel;
+   by('sync-status').textContent='No se pudo aplicar la copia; datos anteriores conservados';
+  }
+ }catch(e){if(by('sync-status'))by('sync-status').textContent='Restauración Drive no disponible'}
+};
 by('login-form').onsubmit=function(e){e.preventDefault();var username=by('login-user').value.trim().toLowerCase(),password=by('login-pass').value;
 try{if(by('login-remember').checked)localStorage.setItem('ns_login_last_user',username);else localStorage.removeItem('ns_login_last_user')}catch(error){}
-if(nat&&nat.login){try{var res=JSON.parse(nat.login(username,password));if(!res.ok){by('login-error').textContent=res.error||'Usuario o contraseña incorrectos';return}enter(res.user);
+if(nat&&nat.loginOwner){try{var res=JSON.parse(nat.loginOwner(username,password));if(!res.ok){by('login-error').textContent=res.error||'Usuario o contraseña incorrectos';return}enter(res.user);
+        if(res.sessionPersistent===false)say(res.sessionWarning||'La sesión no pudo guardarse. Es posible que debas iniciar sesión de nuevo.');
         if(res.mustChangePassword){show('admin');say('Por seguridad, cambia la clave provisional antes de crear cuentas familiares.');}
         return}catch(err){by('login-error').textContent='Error de conexión con el teléfono principal';return}}
-if(username==='administrador'&&password==='admin1234'){enter({username:username,role:'admin'});say('Modo web de demostración: sin cuentas seguras ni sincronización');return}
-by('login-error').textContent='En web solo está disponible la demostración. Las cuentas familiares requieren la APK.'};
-by('setup-host').onclick=function(){if(nat&&nat.configureHost){try{var r=JSON.parse(nat.configureHost());say(r.message||'Configuración guardada')}catch(e){say('No se pudo activar el teléfono principal')}}else say('La configuración del servidor solo funciona en la APK Android')};
-by('setup-client').onclick=async function(){
- if(!nat||!nat.configureCloud){say('La sincronización por internet requiere la APK Android');return}
- var url=await nsPrompt('Servidor familiar HTTPS','',{type:'url',placeholder:'https://servidor.ejemplo.com'});
- if(!url)return;
- try{var response=JSON.parse(nat.configureCloud(url));say(response.message||response.error||'No se pudo conectar')}
- catch(e){say('Dirección no válida')}
-};
-by('setup-lan').onclick=async function(){
- if(!nat||!nat.configureRemote){say('Opción disponible solo en Android');return}
- var host=await nsPrompt('Servidor de red local','',{placeholder:'192.168.1.10'});
- if(!host)return;
- try{var result=JSON.parse(nat.configureRemote(host));say(result.message||result.error||'Error')}
- catch(e){say('No se pudo configurar la conexión')}
-};
-by('configure-network').onclick=async function(){
- if(!nat){say('Configura el servidor desde la APK Android');return}
- var choice=await nsConfirm('Sincronización por internet','Cancelar conserva la configuración anterior.','Continuar');
- if(!choice)return;
- var url=await nsPrompt('Dirección HTTPS del servidor','',{type:'url'});
- if(!url)return;
- try{var result=JSON.parse(nat.configureCloud(url));say(result.message||result.error||'Sin cambios')}
- catch(e){say('No se pudo configurar el servidor')}
-};
+
+by('login-error').textContent='El acceso de administrador requiere la APK Android.'};
 by('password-form').onsubmit=function(e){e.preventDefault();if(!nat||!nat.changePassword){say('Cambia contraseñas desde el APK Android');return}try{var r=JSON.parse(nat.changePassword(by('current-pass').value,by('new-pass').value));say(r.ok?'Contraseña actualizada. Inicia sesión de nuevo.':(r.error||'Error'));if(r.ok){by('password-form').reset();setTimeout(logout,1100)}}catch(err){say('No se pudo cambiar la contraseña')}};
 window.neuroBackupMessage=function(message){say(message)};
 window.neuroImportData=async function(raw){
@@ -1734,7 +2577,19 @@ window.neuroImportData=async function(raw){
     if(restored.pet&&typeof restored.pet==='object'&&!Array.isArray(restored.pet))model.pet=restored.pet;
     if(Array.isArray(restored.templates))nsTemplateMerge(restored.templates);
   }
-  save();render();say('Respaldo restaurado: '+imported+' registros; '+ignored+' omitidos');
+  // Una importación explícita y validada puede desbloquear la recuperación,
+  // pero antes conservamos íntegra la copia dañada para análisis.
+  var wasBlocked=nsStorageRecoveryBlocked;
+  if(wasBlocked){
+    var broken=localStorage.getItem(localKey());
+    if(broken)localStorage.setItem(localKey()+'_corrupto_importacion_'+Date.now(),broken);
+    nsStorageRecoveryBlocked=false;
+  }
+  if(!save()){
+    nsStorageRecoveryBlocked=wasBlocked;
+    throw Error('No se pudo guardar la importación; no se eliminaron los datos anteriores');
+  }
+  render();say('Respaldo restaurado: '+imported+' registros; '+ignored+' omitidos');
  }catch(e){say(e&&e.message?e.message:'No se pudo importar este respaldo')}
 };
 by('backup-export').onclick=async function(){
@@ -1806,7 +2661,134 @@ function updateInstalledBuild(){
  by('login-build').textContent=label;
  by('installed-build').textContent=label;
  by('feature-status').textContent=label;
+ if(by('ns-account-version'))by('ns-account-version').textContent=label;
 }
+
+/* Organiza los módulos una sola vez; mueve nodos, no los clona, para conservar sus listeners. */
+function nsMoveTo(id,container){
+ var source=by(id),dest=by(container);
+ if(source&&dest)dest.appendChild(source);
+}
+function nsHomeExtra(title,id){
+ var details=document.createElement('details');
+ details.className='ns-home-extra';details.id=id;
+ var label=document.createElement('summary');label.textContent=title;details.appendChild(label);
+ by('view-home').appendChild(details);
+ return details;
+}
+function nsOrganizeHome(){
+ // Reubicar el nodo ORIGINAL del dragón, sin copiar sprites, animaciones ni crear otra mascota.
+ // Se mantiene su id="dragon-scene", por lo que las evoluciones y acciones existentes continúan.
+ var originalScene=by('dragon-scene'),sceneSlot=by('ns-companion-scene-slot');
+ if(originalScene&&sceneSlot&&originalScene.parentNode!==sceneSlot)sceneSlot.appendChild(originalScene);
+ // Integrar los controles ORIGINALES, el progreso y los desplegables debajo de Azul.
+ // Evita dos tarjetas separadas y preserva los IDs y listeners existentes.
+ var carePanel=document.querySelector('#view-home .ns-dragon-copy');
+ var companion=document.querySelector('#view-home .ns-home-companion');
+ if(carePanel&&companion&&carePanel.parentNode!==companion)companion.appendChild(carePanel);
+ // Accesos al inicio, sin obligar a recorrer las secciones de Azul primero.
+ var homeIntro=document.querySelector('#view-home .ns-home-intro');
+ var navTiles=document.querySelector('#view-home .ns-feature-tiles');
+ if(homeIntro&&navTiles&&homeIntro.nextElementSibling!==navTiles)homeIntro.after(navTiles);
+ // El modo minimalista es navegación primaria, no otra tarjeta de contenido.
+ var minimalEntry=document.querySelector('#view-home .ns-minimal-entry');
+ if(homeIntro&&minimalEntry&&minimalEntry.parentNode!==homeIntro)homeIntro.appendChild(minimalEntry);
+ // Captura rápida inmediatamente después de Azul, no escondida entre tarjetas.
+ var capture=by('quick-capture-card');
+ if(companion&&capture&&companion.nextElementSibling!==capture)companion.after(capture);
+
+ var dragon=nsHomeExtra('Misiones y aventuras de Azul','ns-extra-dragon');
+ var focus=nsHomeExtra('Temporizador Pomodoro y concentración','ns-extra-focus');
+ var more=nsHomeExtra('Ver más de mi día','ns-extra-day');
+ function move(selector,dest){var item=document.querySelector(selector);if(item)dest.appendChild(item)}
+ move('#view-home .ns-dragon-quest-card',dragon);
+ move('#focus-studio',focus);
+ move('#view-home .stats',more);
+ // La captura rápida permanece junto a Azul; no volver a moverla hacia abajo.
+ // Las tareas y el dragón permanecen visibles en la portada.
+ move('#view-home .card:has(#jump-challenge)',more);
+ move('#view-home .card:has(#daily-summary)',more);
+ move('#view-home .card:has(#home-alarms)',more);
+ move('#view-home .card:has(#home-bags)',more);
+ move('#view-home .card:has(#open-minimal-home)',by('ns-user-launcher-container'));
+ move('#view-admin .card:has(#backup-export)',by('ns-user-backup-container'));
+ move('#ns-original-security-card',by('ns-account-security-container'));
+ move('#ns-alarm-tools-original',by('ns-account-alarm-tools-container'));
+ // Reutilizar los componentes existentes dentro de desplegables, sin clonarlos.
+ function nsFoldOriginal(source, title, anchor){
+  if(!source||!anchor||source.closest('.ns-inline-options'))return;
+  var fold=document.createElement('details');fold.className='ns-inline-options';
+  var summary=document.createElement('summary');summary.textContent=title;fold.appendChild(summary);
+  anchor.parentNode.insertBefore(fold,anchor.nextSibling);
+  fold.appendChild(source);
+ }
+ var taskList=by('tasks-list'),alarmList=by('alarms-list');
+ nsFoldOriginal(document.querySelector('#view-tasks .ns-task-tools'),'Buscar, filtrar y ordenar',by('task-filters'));
+ nsFoldOriginal(document.querySelector('#view-tasks .ns-plan-panels'),'Plantillas y estadísticas',taskList);
+ nsFoldOriginal(document.querySelector('#view-alarms .ns-wake-insights'),'Historial de alarmas',alarmList);
+ // No mover por error todo el diagnóstico: solo el aviso si no tiene panel propio.
+ var permissions=by('alarm-permission-status');
+ if(permissions&&!by('ns-alarm-tools-original').contains(permissions))by('ns-user-permission-container').appendChild(permissions);
+}
+function nsAccountVisible(visible){
+ var dialog=by('ns-user-popover');
+ dialog.classList.toggle('hidden',!visible);
+ by('avatar').setAttribute('aria-expanded',String(visible));
+ if(visible){
+  by('ns-account-name').textContent=session?(session.displayName||session.username):'Mi cuenta';
+  by('ns-account-email').textContent=session?(session.email||'Administrador local'):'Ajustes personales';
+  by('ns-account-security').classList.toggle('hidden',!session||session.role!=='admin');
+  checkAlarmPermissions();
+ }
+}
+function nsOpenFocusStudio(){
+ show('home');
+ nsPomodoroExpanded=true;
+ nsFocusTasks();nsFocusRender();
+}
+var nsPendingRoute='';
+function nsNavigate(route){
+ if(!session){nsPendingRoute=route;return}
+ if(['home','tasks','calendar','bags','alarms','habits','finance','admin'].includes(route))show(route);
+ else if(route==='focus')nsOpenFocusStudio();
+ else if(route==='dragon'){show('home');by('dragon-scene').scrollIntoView({behavior:'auto',block:'start'})}
+ else return;
+ nsAccountVisible(false);
+}
+window.neuroNavigateFromLauncher=function(route){if(typeof route==='string')nsNavigate(route)};
+nsOrganizeHome();
+by('avatar').onclick=function(){nsAccountVisible(by('ns-user-popover').classList.contains('hidden'))};
+by('ns-close-account').onclick=function(){nsAccountVisible(false);by('avatar').focus()};
+by('ns-account-logout').onclick=function(){nsAccountVisible(false);by('logout').click()};
+document.querySelectorAll('[data-account-go]').forEach(function(button){button.onclick=function(){nsAccountVisible(false);nsNavigate(button.dataset.accountGo)}});
+document.querySelectorAll('[data-native-permission]').forEach(function(button){button.onclick=function(){
+ if(nat&&nat.openPermissionsPanel)nat.openPermissionsPanel(button.dataset.nativePermission);
+ else say('Esta función solo está disponible en la APK Android');
+}});
+by('ns-check-local-copy').onclick=function(){
+ // Antes de comprobar, intentar escribir el último estado local pendiente.
+ nsFlushNativeSnapshot();
+ var status=by('ns-local-copy-result');
+ if(!session||!nat||!nat.recoverNativeSnapshot){
+  status.textContent='La copia protegida requiere la APK Android.';
+  return;
+ }
+ try{
+  var result=JSON.parse(nat.recoverNativeSnapshot(session.username));
+  status.textContent=result.ok
+   ?'Copia local protegida disponible'+(result.previous?' (revisión anterior)':'')+
+    '. Solo sirve para recuperar datos en esta instalación.'
+   :'No hay copia recuperable en Android. Los datos del WebView se conservan.';
+ }catch(err){status.textContent='No se pudo comprobar la copia de Android.'}
+};
+by('ns-user-alarm-permissions').onclick=function(){if(nat&&nat.requestAlarmPermissions)nat.requestAlarmPermissions()};
+document.addEventListener('click',function(e){
+ var menu=by('ns-user-popover');
+ if(!menu.classList.contains('hidden')&&!menu.contains(e.target)&&!by('avatar').contains(e.target))nsAccountVisible(false);
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')nsAccountVisible(false)});
+by('ns-tile-focus-open').onclick=nsOpenFocusStudio;
+
 by('jump-challenge').onclick=function(){show('alarms');say('Crea una alarma y elige el desafío para detenerla')};
 by('jump-progress').onclick=function(){show('habits')};
 nsFocusInit();
@@ -1976,53 +2958,92 @@ function nsDragonCheckEvolution(idx){
 function nsDragonPlay(){
  if(!session||!model)return;
  var p=nsDragonData();
- if(p.energy<15){nsDragonMessage('Tengo sueño. Primero vamos a descansar.');nsDragonAnimate('tired');return}
+ if(p.energy<15){nsDragonMessage('Azul necesita descansar.');nsDragonAnimate('tired');return}
  p.energy-=15;p.plays++;
  // El juego es una interacción afectiva, NO genera monedas ni XP: evita farmear recompensas.
- save();nsDragonAnimate('play');nsDragonMessage('¡Qué divertido! Juguemos otra vez después de descansar.',false);
+ save();nsDragonAnimate('play');nsDragonMessage('¡A jugar!',false);
  nsDragonUpdateEnergy();
 }
 function nsDragonRest(){
  if(!session||!model)return;
  var p=nsDragonData();
  p.energy=Math.min(100,p.energy+25);save();
- nsDragonAnimate('sleep');nsDragonMessage('Un descanso merecido. Mi energía se recupera sin penalizaciones.',false);
+ nsDragonAnimate('sleep');nsDragonMessage('+25 energía',false);
  nsDragonUpdateEnergy();
 }
 function nsDragonUpdateEnergy(){
  if(!session||!model)return;
  var p=nsDragonData(),element=by('ns-dragon-energy');
- if(element)element.textContent='Energía: '+Math.round(p.energy)+'/100 · Evolución '+(nsDragonStage(p.xp)+1)+'/6';
+ if(element)element.textContent='Energía '+Math.round(p.energy)+'/100 · '+Math.floor(p.food)+' puntos';
+ var feed=by('pet-feed');if(feed){
+  feed.classList.toggle('ns-care-low',p.food<20);
+  feed.setAttribute('aria-label','Comer: cuesta 20 puntos; disponibles '+Math.floor(p.food));
+ }
+}
+function nsDragonWalk(){
+ if(!session||!model)return;
+ var p=nsDragonData();
+ if(p.energy<8){nsDragonMessage('Azul necesita descansar.',false);nsDragonAnimate('tired');return}
+ p.energy-=8;p.walks=Math.max(0,Number(p.walks)||0)+1;
+ save();nsDragonAnimate('walk');nsDragonMessage('¡De paseo!',false);nsDragonUpdateEnergy();
 }
 function nsDragonInitActions(){
- var actions=by('ns-dragon-play-controls');
- if(!actions)return;
- // Evita duplicar controles si el módulo se vuelve a inicializar.
- if(actions.dataset.dragonInitialized==='true')return;
+ var actions=by('ns-dragon-play-controls'),extra=by('ns-dragon-extra-actions');
+ if(!actions||!extra||actions.dataset.dragonInitialized==='true')return;
  actions.dataset.dragonInitialized='true';
- [['walk','Caminar'],['play','Jugar'],['sleep','Dormir'],['eat','Comer'],['celebrate','Celebrar'],['idle','Despertar']].forEach(function(entry){
-  var button=document.createElement('button');
-  button.type='button';button.className='btn secondary';button.textContent=entry[1];
+ var walk=by('dragon-walk');if(walk)walk.onclick=nsDragonWalk;
+ [['play','🎾 Jugar'],['sleep','🌙 Dormir']].forEach(function(item){
+  var button=document.createElement('button');button.type='button';
+  button.className='ns-dragon-action-btn';button.textContent=item[1];
+  button.onclick=item[0]==='play'?nsDragonPlay:nsDragonRest;
+  actions.appendChild(button);
+ });
+ [['celebrate','✨ Celebrar'],['idle','☀ Despertar']].forEach(function(item){
+  var button=document.createElement('button');button.type='button';
+  button.className='ns-dragon-action-btn';button.textContent=item[1];
   button.onclick=function(){
    if(!session||!model)return;
-   if(entry[0]==='play')return nsDragonPlay();
-   if(entry[0]==='sleep')return nsDragonRest();
-   if(entry[0]==='eat'){
-    var feed=by('pet-feed');if(feed)feed.click();return;
-   }
-   nsDragonAnimate(entry[0]);
-   nsDragonMessage(entry[0]==='walk'?'¡Vamos a explorar!':entry[0]==='celebrate'?'¡Celebremos nuestros avances!':'¡Estoy contigo!',false);
+   nsDragonAnimate(item[0]);
+   nsDragonMessage(item[0]==='celebrate'?'¡Bien hecho!':'¡Hola de nuevo!',false);
   };
-  actions.append(button);
+  extra.appendChild(button);
  });
  var originalRender=nsDragonRender;
  nsDragonRender=function(){originalRender();nsDragonUpdateEnergy()};
 }
 
-function logout(){if(nsFocusState)nsFocusSaveSession(false);nsLauncherFocusSync();syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(nat&&nat.logout)nat.logout()}
-by('logout').onclick=logout;by('avatar').onclick=async function(){if(await nsConfirm('Cerrar sesión','¿Quieres cerrar esta sesión?','Cerrar sesión'))logout()};
-document.addEventListener('visibilitychange',function(){if(!document.hidden){sync();refreshFocusClock()}});setInterval(sync,60000);
-if(nat&&nat.restoreSession){
+function logout(){
+ var wasPublic=!!(session&&session.public);
+ if(window.NeuroFinanceStudio)window.NeuroFinanceStudio.hideLauncher();
+ nsFlushNativeSnapshot();
+ try{localStorage.setItem('ns_last_session_provider','signed_out')}catch(e){}
+ clearTimeout(nsDriveBackupTimer);nsUploadDriveNow();if(session&&session.google&&nat&&nat.logoutGoogle)nat.logoutGoogle();if(session&&session.public&&nat&&nat.publicLogout)nat.publicLogout();if(nsFocusState)nsFocusSaveSession(false);nsLauncherFocusSync();syncing=false;session=null;model=null;by('app').classList.add('hidden');by('login').classList.remove('hidden');by('login-pass').value='';if(!wasPublic&&nat&&nat.logout)nat.logout()}
+by('logout').onclick=async function(){if(await nsConfirm('Cerrar sesión','¿Quieres salir de tu cuenta?','Cerrar sesión'))logout()};
+document.addEventListener('visibilitychange',function(){
+ if(document.hidden){nsFlushNativeSnapshot();clearTimeout(nsDriveBackupTimer);nsUploadDriveNow()}
+ else{sync();refreshFocusClock()}
+});
+window.addEventListener('pagehide',function(){nsFlushNativeSnapshot()});setInterval(sync,60000);
+var nsGoogleRestored=false,nsPreferredProvider='';
+try{nsPreferredProvider=localStorage.getItem('ns_last_session_provider')||''}catch(e){}
+if(nsPreferredProvider==='public'&&nat&&nat.publicRestore){
+ try{
+  var publicRestored=JSON.parse(nat.publicRestore());
+  if(publicRestored.ok&&publicRestored.user&&publicRestored.user.public){
+   enter(publicRestored.user);nsGoogleRestored=true;
+  }
+ }catch(e){}
+}
+if(!nsGoogleRestored&&nsPreferredProvider!=='owner'&&nsPreferredProvider!=='signed_out'&&nsPreferredProvider!=='public'&&nat&&nat.restoreGoogleSession){
+ try{
+  var googleRestored=JSON.parse(nat.restoreGoogleSession());
+  if(googleRestored.ok&&googleRestored.user&&googleRestored.user.google){
+   enter(googleRestored.user);nsGoogleRestored=true;
+   if(nat.refreshGoogleDrive)nat.refreshGoogleDrive();
+  }
+ }catch(error){}
+}
+if(!nsGoogleRestored&&nsPreferredProvider!=='signed_out'&&nsPreferredProvider!=='google'&&nsPreferredProvider!=='public'&&nat&&nat.restoreSession){
  try{
   var restored=JSON.parse(nat.restoreSession());
   if(restored.ok&&restored.user&&restored.user.username){
@@ -2031,5 +3052,649 @@ if(nat&&nat.restoreSession){
   }
  }catch(error){by('login-error').textContent='No se pudo recuperar la sesión. Puedes iniciar sesión normalmente.'}
 }
+
+/* Alarm Studio: API estrecha para las seis vistas; conserva un único modelo de alarmas.
+ * El código visual no accede a credenciales, datos ajenos ni elementos internos.
+ */
+window.NeuroAlarmAPI={
+ ready:function(){return !!(session&&model)},
+ list:function(){return session&&model?active(model.alarms).filter(owned).map(function(a){return Object.assign({},a)}):[]},
+ account:function(){return session?session.username:''},
+ events:function(){
+  if(!session||!model||!nat||!nat.alarmEventHistory)return [];
+  try{
+   var ids=new Set(active(model.alarms).filter(owned).map(function(a){return String(a.id)}));
+   var items=JSON.parse(nat.alarmEventHistory());
+   return Array.isArray(items)?items.filter(function(e){return ids.has(String(e.id))&&Number(e.at)>0}).slice(-500):[];
+  }catch(e){return []}
+ },
+ sleep:function(){return session?nsSleepRecords():[]},
+ productivity:function(){
+  if(!session||!model)return {focusMinutes:0,tasksCompleted:0,dragonXp:0};
+  var since=Date.now()-7*86400000,focusMinutes=0,tasksCompleted=0;
+  try{
+   var sessions=nsFocusRead().sessions||[];
+   focusMinutes=Math.round(sessions.filter(function(e){return e&&(Number(e.at||e.endedAt||0)>=since||Date.parse(e.day||'')>=since)})
+    .reduce(function(n,e){return n+Math.max(0,Number(e.ms)||0)},0)/60000);
+  }catch(err){}
+  (model.tasks||[]).filter(owned).forEach(function(t){
+   if(Array.isArray(t.doneDates)&&t.doneDates.some(function(d){return Date.parse(d)>=since}))tasksCompleted++;
+  });
+  return {focusMinutes:focusMinutes,tasksCompleted:tasksCompleted,dragonXp:Number(model.pet&&model.pet.xp)||0};
+ },
+ preferences:function(){
+  var pref=model&&model.alarmPreferences?Object.assign({},model.alarmPreferences):{};
+  if(nat&&nat.getAlarmFadeSeconds)pref.fadeSeconds=nat.getAlarmFadeSeconds();
+  return pref;
+ },
+ setPreferences:function(opts){
+  if(!session||!model)return false;
+  var previous=Object.assign({},model.alarmPreferences||{});
+  var fade=[0,15,30,60].includes(Number(opts.fadeSeconds))?Number(opts.fadeSeconds):0;
+  model.alarmPreferences=Object.assign({},previous,opts,{fadeSeconds:fade});
+  if(!save()){model.alarmPreferences=previous;return false}
+  if(nat&&nat.setAlarmFadeSeconds)nat.setAlarmFadeSeconds(fade);
+  return true;
+ },
+ permissions:function(){try{return nat&&nat.alarmPermissions?JSON.parse(nat.alarmPermissions()):null}catch(e){return null}},
+ requestPermissions:function(){if(nat&&nat.requestAlarmPermissions)nat.requestAlarmPermissions()},
+ checkPermissions:function(){checkAlarmPermissions()},
+ native:function(action){
+  if(!nat)return false;
+  if(action==='test'){var button=by('alarm-test');if(button){button.click();return true}return false}
+  var commands={
+   sound:'chooseAlarmSound',clock:'openSystemClock',music:'createYouTubeMusicClockAlarm',
+   test:'testAlarm',optimization:'requestAlarmPermissions'
+  };
+  var method=commands[action];
+  if(method&&typeof nat[method]==='function'){nat[method]();return true}
+  return false;
+ },
+ confirm:function(title,message,label){return nsConfirm(title,message,label)},
+ legacyQr:function(){openModal('alarm');var f=by('popup-form');if(f&&f.elements.challenge){f.elements.challenge.value='qr';f.elements.challenge.dispatchEvent(new Event('change'))}},
+ createOrUpdate:function(data,id){
+  if(!session||!model)return {ok:false,error:'Inicia sesión para guardar una alarma'};
+  var original=id?model.alarms.find(function(a){return a.id===id&&!a.deleted}):null;
+  if(id&&(!original||original.owner!==session.username))return {ok:false,error:'No tienes permiso para editar esta alarma'};
+  var title=String(data.title||'Despertar').trim().slice(0,90);
+  var date=String(data.date||day()),time=String(data.time||'07:00');
+  var validRepeats=['none','daily','weekly','every2','every3','weekdays','weekends'];
+  if(/^days:[01]{7}$/.test(data.repeat)&&data.repeat.slice(5).includes('1'))validRepeats.push(data.repeat);
+  if(String(data.repeat||'').startsWith('days:')&&!validRepeats.includes(data.repeat))
+   return {ok:false,error:'Elige al menos un día de la semana'};
+  var allowedMissions=['none','math','math_hard','typing','memory','taps','shake','qr','routine_focus','routine_active','routine_five'];
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^\d{2}:\d{2}$/.test(time))
+   return {ok:false,error:'Fecha u hora inválida'};
+  var dateParts=date.split('-').map(Number),timeParts=time.split(':').map(Number);
+  var d=new Date(dateParts[0],dateParts[1]-1,dateParts[2],timeParts[0],timeParts[1]);
+  if(d.getFullYear()!==dateParts[0]||d.getMonth()!==dateParts[1]-1||d.getDate()!==dateParts[2]||
+   d.getHours()!==timeParts[0]||d.getMinutes()!==timeParts[1])
+   return {ok:false,error:'Fecha u hora inexistente'};
+  var repeat=validRepeats.includes(data.repeat)?data.repeat:'none';
+  var challenge=allowedMissions.includes(data.challenge)?data.challenge:'none';
+  if(repeat==='none'&&d.getTime()<=Date.now())return {ok:false,error:'Elige una hora futura'};
+  if(challenge==='qr'&&(!original||original.challenge!=='qr'))
+   return {ok:false,error:'Configura primero tu QR desde «Configurar QR físico»'};
+  var draft=Object.assign({},original||{},{
+   id:original?original.id:uid(),owner:session.username,
+   title:title,date:date,time:time,repeat:repeat,daily:repeat==='daily',
+   challenge:challenge,enabled:true,updatedAt:stamp(),
+   snoozeMinutes:[1,3,5,10,15].includes(Number(data.snoozeMinutes))?Number(data.snoozeMinutes):5,
+   snoozeLimit:[0,1,2,3,5,10].includes(Number(data.snoozeLimit))?Number(data.snoozeLimit):3
+  });
+  // Nunca guardar como programada si Android rechazó el horario.
+  if(nat&&(!scheduleAlarm(draft)))return {ok:false,error:'Android no pudo programar la alarma. Revisa permisos.'};
+  if(nat&&nat.setAlarmOptions)nat.setAlarmOptions(draft.id,draft.snoozeMinutes,draft.snoozeLimit);
+  var previous=original?Object.assign({},original):null;
+  if(original)Object.assign(original,draft);else model.alarms.push(draft);
+  if(!save()){
+   if(original)Object.assign(original,previous);
+   else model.alarms=model.alarms.filter(function(a){return a.id!==draft.id});
+   if(nat&&nat.cancelAlarm)nat.cancelAlarm(draft.id);
+   if(previous&&previous.enabled!==false)try{scheduleAlarm(previous)}catch(err){}
+   return {ok:false,error:'No se pudieron guardar los cambios'};
+  }
+  render();window.dispatchEvent(new Event('neuro-alarm-changed'));
+  return {ok:true,id:draft.id};
+ },
+ toggle:function(id,enabled){
+  if(!session||!model)return false;
+  var alarm=model.alarms.find(function(a){return a.id===id&&!a.deleted&&a.owner===session.username});
+  if(!alarm)return false;
+  if(enabled){var previous=alarm.enabled;alarm.enabled=true;if(nat&&!scheduleAlarm(alarm)){alarm.enabled=previous;return false}}
+  else{if(nat&&nat.cancelAlarm)nat.cancelAlarm(alarm.id);alarm.enabled=false}
+  var oldUpdate=alarm.updatedAt;mark(alarm);
+  if(!save()){
+   alarm.enabled=!enabled;alarm.updatedAt=oldUpdate;
+   if(nat&&nat.cancelAlarm)nat.cancelAlarm(alarm.id);
+   if(alarm.enabled)try{scheduleAlarm(alarm)}catch(err){}
+   return false;
+  }
+  render();window.dispatchEvent(new Event('neuro-alarm-changed'));return true;
+ },
+ remove:async function(id){
+  if(!session||!model)return false;
+  var a=model.alarms.find(function(x){return x.id===id&&!x.deleted&&x.owner===session.username});
+  if(!a||!await nsConfirm('Eliminar alarma','¿Eliminar '+a.title+'?','Eliminar'))return false;
+  if(nat&&nat.cancelAlarm)nat.cancelAlarm(a.id);
+  var originalUpdate=a.updatedAt;
+  a.deleted=true;mark(a);
+  if(!save()){
+   a.deleted=false;a.updatedAt=originalUpdate;
+   if(a.enabled!==false)try{scheduleAlarm(a)}catch(err){}
+   return false;
+  }
+  render();window.dispatchEvent(new Event('neuro-alarm-changed'));return true;
+ }
+};
+
+/* Puente Task Studio: reutiliza modelo, historial y controles de acceso existentes. */
+/* Bandeja de salida aislada por cuenta, persistida antes de intentar la red.
+ * Una entrega incierta conserva el mismo requestId para reintentos idempotentes.
+ */
+function nsOutboxKey(){return 'ns_task_outbox_v1_'+(session?session.username:'')}
+function nsOutboxRead(){
+ if(!session)return [];
+ try{
+  var raw=localStorage.getItem(nsOutboxKey());
+  var entries=raw?JSON.parse(raw):[];
+  if(!Array.isArray(entries))return null;
+  return entries.filter(function(e){
+   return e&&e.sender===session.username&&typeof e.id==='string'&&
+    typeof e.recipient==='string'&&e.task&&typeof e.task.title==='string';
+  }).slice(0,100);
+ }catch(e){return null}
+}
+function nsOutboxWrite(entries){
+ if(!session||!Array.isArray(entries))return false;
+ try{
+  var value=JSON.stringify(entries);
+  localStorage.setItem(nsOutboxKey(),value);
+  return localStorage.getItem(nsOutboxKey())===value;
+ }catch(e){return false}
+}
+function nsOutboxAttempt(entry){
+ if(!nat)return {ok:false,error:'Servidor no conectado'};
+ try{
+  var raw=session&&session.public&&nat.publicSendTask?
+   nat.publicSendTask(entry.recipient,entry.id,JSON.stringify(entry.task)):
+   nat.sendTaskToUser&&nat.sendTaskToUser(entry.recipient,entry.id,JSON.stringify(entry.task));
+  if(!raw)return {ok:false,error:'Transporte no disponible'};
+  var response=JSON.parse(raw);
+  return response&&response.ok===true?response:
+   {ok:false,error:response&&response.error||'No se pudo entregar',
+    permanent:!!(session&&session.public&&response&&
+      [400,401,403,404,409,422].includes(Number(response.httpStatus)))};
+ }catch(e){return {ok:false,error:'Sin conexión con el servidor'}}
+}
+function nsOutboxFlush(){
+ if(!session)return {ok:false,remaining:0};
+ var who=session.username,items=nsOutboxRead();
+ if(items===null)return {ok:false,error:'No se pudo leer la bandeja de salida',remaining:0};
+ var remaining=items.slice(),delivered=0;
+ // No reintentar automáticamente rechazos permanentes; requieren intervención.
+ var eligible=items.filter(function(e){return !e.failed});
+ // Un intento por ciclo: el puente nativo síncrono no debe bloquear la pantalla durante decenas de segundos.
+ for(var i=0;i<Math.min(1,eligible.length);i++){
+  if(!session||session.username!==who)break;
+  var result=nsOutboxAttempt(eligible[i]);
+  if(result.permanent){
+   nsOutboxWrite(remaining.map(function(e){
+    if(e.id===eligible[i].id&&e.recipient===eligible[i].recipient){
+     return Object.assign({},e,{failed:result.error});
+    }
+    return e;
+   }));
+   continue;
+  }
+  if(!result.ok)continue;
+  var updated=remaining.filter(function(e){return !(e.id===eligible[i].id&&e.recipient===eligible[i].recipient)});
+  if(nsOutboxWrite(updated)){remaining=updated;delivered++;}
+  // Si falla eliminar del almacenamiento, se mantiene para reintentar sin duplicar.
+ }
+ return {ok:true,delivered:delivered,remaining:remaining.length};
+}
+window.NeuroTasksAPI={
+ ready:function(){return !!(session&&model)},
+ list:function(){return session&&model?allTasks().map(function(t){return Object.assign({},t)}):[]},
+ templates:function(){return session?nsTemplateRead().map(function(t){return Object.assign({},t)}):[]},
+ today:function(){return day()},
+ owner:function(){return session?session.username:''},
+ contacts:function(){
+  if(!session||!nat)return [];
+  try{
+   if(session.public){
+    if(!nat.publicContacts)return [];
+    var people=JSON.parse(nat.publicContacts());
+    return people.ok&&Array.isArray(people.contacts)?people.contacts.filter(function(u){
+     return u&&typeof u.id==='string'&&typeof u.handle==='string';
+    }).map(function(u){return {id:u.id,label:(u.display_name||u.handle)+' (@'+u.handle+')'};}):[];
+   }
+   if(!nat.taskContacts)return [];
+   var response=JSON.parse(nat.taskContacts());
+   return response.ok&&Array.isArray(response.users)?response.users.filter(function(u){
+    return u&&typeof u.username==='string'&&u.username!==session.username;
+   }).map(function(u){return u.username}):[];
+  }catch(e){return []}
+ },
+ publicAccount:function(){return !!(session&&session.public)},
+ publicMe:function(){
+  if(!session||!session.public||!nat||!nat.publicMe)return {ok:false};
+  try{return JSON.parse(nat.publicMe())}catch(e){return {ok:false,error:'No se pudo consultar el perfil'}}
+ },
+ publicUpdateProfile:function(handle,displayName,discoverable){
+  if(!session||!session.public||!nat||!nat.publicUpdateProfile)return {ok:false,error:'Servicio público no disponible'};
+  try{
+   var result=JSON.parse(nat.publicUpdateProfile(handle,displayName,!!discoverable));
+   if(result.ok&&result.user){
+    session.handle=result.user.handle;
+    session.displayName=result.user.display_name||session.displayName;
+   }
+   return result;
+  }catch(e){return {ok:false,error:'No se pudo actualizar el perfil'}}
+ },
+
+ publicLookup:function(handle){
+  if(!session||!session.public||!nat||!nat.publicLookup)return {ok:false,error:'Servicio público no disponible'};
+  try{return JSON.parse(nat.publicLookup(handle))}catch(e){return {ok:false,error:'No se pudo buscar el contacto'}}
+ },
+ publicInvite:function(id){
+  if(!session||!session.public||!nat||!nat.publicInvite)return {ok:false,error:'Servicio público no disponible'};
+  try{return JSON.parse(nat.publicInvite(id))}catch(e){return {ok:false,error:'No se pudo enviar la invitación'}}
+ },
+ publicInvitations:function(){
+  if(!session||!session.public||!nat||!nat.publicInvitations)return {ok:false,invitations:[]};
+  try{return JSON.parse(nat.publicInvitations())}catch(e){return {ok:false,invitations:[]}}
+ },
+ publicAcceptInvite:function(id){
+  if(!session||!session.public||!nat||!nat.publicAcceptInvite)return {ok:false,error:'Servicio no disponible'};
+  try{return JSON.parse(nat.publicAcceptInvite(id))}catch(e){return {ok:false,error:'No se pudo aceptar'}}
+ },
+ publicDeclineInvite:function(id){
+  if(!session||!session.public||!nat||!nat.publicDeclineInvite)return {ok:false,error:'Servicio no disponible'};
+  try{return JSON.parse(nat.publicDeclineInvite(id))}catch(e){return {ok:false,error:'No se pudo rechazar la invitación'}}
+ },
+ openLegalPage:function(page){
+  if(!['privacy','delete-account'].includes(page)||!nat||!nat.openLegalPage)return false;
+  try{nat.openLegalPage(page);return true}catch(e){return false}
+ },
+ publicBlocks:function(){
+  if(!session||!session.public||!nat||!nat.publicBlocks)return {ok:false,blocked:[]};
+  try{return JSON.parse(nat.publicBlocks())}catch(e){return {ok:false,blocked:[],error:'No se pudo leer la lista de bloqueos'}}
+ },
+ publicBlock:function(id){
+  if(!session||!session.public||!nat||!nat.publicBlock)return {ok:false,error:'Servicio público no disponible'};
+  try{return JSON.parse(nat.publicBlock(id))}catch(e){return {ok:false,error:'No se pudo bloquear'}}
+ },
+ publicUnblock:function(id){
+  if(!session||!session.public||!nat||!nat.publicUnblock)return {ok:false,error:'Servicio público no disponible'};
+  try{return JSON.parse(nat.publicUnblock(id))}catch(e){return {ok:false,error:'No se pudo desbloquear'}}
+ },
+ publicDeleteAccount:function(){
+  if(!session||!session.public||!nat||!nat.publicDeleteAccount)return {ok:false,error:'No se puede eliminar la cuenta'};
+  var username=session.username;
+  var response;
+  try{response=JSON.parse(nat.publicDeleteAccount('ELIMINAR'))}
+  catch(e){return {ok:false,error:'No se pudo contactar al servidor'};}
+  if(!response.ok||!response.deleted)return response;
+  // Ya no habrá escritura de snapshots tras borrar el perfil remoto.
+  syncing=false;clearTimeout(nsDriveBackupTimer);
+  session=null;model=null;nsFocusState=null;
+  try{
+   var accountSuffix='_'+username,keys=[];
+   for(var i=0;i<localStorage.length;i++){
+    var k=localStorage.key(i);
+    if(k&&(k.endsWith(accountSuffix)||k.startsWith('ns_v2_'+username+'_')||
+       k.startsWith('ns_focus_private_v1_'+username+'_')))keys.push(k);
+   }
+   keys.forEach(function(k){localStorage.removeItem(k)});
+   localStorage.setItem('ns_last_session_provider','signed_out');
+  }catch(e){}
+  if(window.NeuroFinanceStudio)window.NeuroFinanceStudio.hideLauncher();
+  by('app').classList.add('hidden');
+  by('login').classList.remove('hidden');
+  by('login-error').textContent='Cuenta eliminada. Ya no puedes iniciar sesión con ese perfil.';
+  return response;
+ },
+ sendTo:function(recipient,task){
+  if(!session||!model)return {ok:false,error:'Inicia sesión'};
+  if(typeof recipient!=='string'||!(session.public?/^[0-9a-f-]{36}$/i.test(recipient):/^[a-z0-9_-]{3,30}$/.test(recipient))||recipient===session.username)
+   return {ok:false,error:'Selecciona una persona distinta'};
+  if(!task||!String(task.title||'').trim())return {ok:false,error:'Escribe una tarea'};
+  var entries=nsOutboxRead();
+  if(entries===null)return {ok:false,error:'No se puede leer la bandeja de salida; no se enviará para proteger tus datos'};
+  var requestId=typeof task.id==='string'&&/^[a-zA-Z0-9_-]{8,100}$/.test(task.id)?task.id:uid();
+  var payload={title:String(task.title).trim().slice(0,100),
+   date:task.date||day(),time:task.time||'',repeat:task.repeat||'none',category:task.category||'Personal',
+   steps:Array.isArray(task.steps)?task.steps:[]};
+  var entry={id:requestId,recipient:recipient,sender:session.username,task:payload,createdAt:Date.now()};
+  var existing=entries.find(function(e){return e.id===requestId&&e.recipient===recipient});
+  if(existing){
+   // La solicitud guardada es inmutable: nunca cambiar su contenido al reintentar.
+   entry=existing;
+  }else{
+   if(entries.length>=100)return {ok:false,error:'La bandeja de salida está llena. Sincroniza antes de seguir.'};
+   // Guardar primero: nunca anunciar una entrega si falló la persistencia local.
+   if(!nsOutboxWrite(entries.concat(entry)))return {ok:false,error:'No se pudo guardar el envío pendiente'};
+  }
+  var result=nsOutboxAttempt(entry);
+  if(result.ok){
+   var pending=nsOutboxRead();
+   if(pending!==null)nsOutboxWrite(pending.filter(function(e){return !(e.id===requestId&&e.recipient===recipient)}));
+   return result;
+  }
+  if(result.permanent){
+   var rejected=nsOutboxRead();
+   if(rejected!==null)nsOutboxWrite(rejected.map(function(e){
+    return e.id===requestId&&e.recipient===recipient?
+     Object.assign({},e,{failed:result.error}):e;
+   }));
+   return {ok:false,error:result.error||'El servidor rechazó la tarea'};
+  }
+  return {ok:true,queued:true,recipient:recipient,id:requestId,
+   message:'Guardada en bandeja de salida. Se enviará al recuperar la conexión.'};
+ },
+ outbox:function(){return nsOutboxRead()},
+ retryOutbox:function(){return nsOutboxFlush()},
+
+ received:function(){
+  if(session&&session.public&&nat&&nat.publicTasks){
+   try{
+    var result=JSON.parse(nat.publicTasks('inbox'));
+    return result.ok&&Array.isArray(result.tasks)?result.tasks.map(function(t){
+     var details=t.body&&typeof t.body==='object'?t.body:{};
+     return {id:t.id,title:t.title,owner:session.username,
+      sentBy:t.sender_name||t.sender_handle||t.sender_id,
+      deliveryStatus:t.status,date:details.date||day(),
+      repeat:details.repeat||'none',category:details.category||'Personal',
+      steps:Array.isArray(details.steps)?details.steps:[]};
+    }):[];
+   }catch(e){return []}
+  }
+  return session&&model?model.tasks.filter(function(t){
+   return t&&!t.deleted&&t.owner===session.username&&typeof t.sentBy==='string';
+  }).map(function(t){return Object.assign({},t)}):[];
+ },
+ sent:function(){
+  if(session&&session.public&&nat&&nat.publicTasks){
+   var queued=nsOutboxRead();
+   if(queued===null)return {ok:false,error:'No se pudo leer la bandeja',tasks:[]};
+   var offline=queued.map(function(e){return {id:e.id,title:e.task.title,recipient:e.recipient,
+     deliveryStatus:e.failed?'failed':'queued',error:e.failed||''}});
+   try{
+    var reply=JSON.parse(nat.publicTasks('sent'));
+    return {ok:true,offline:!reply.ok,tasks:offline.concat(reply.ok&&Array.isArray(reply.tasks)?reply.tasks.map(function(t){
+     return {id:t.id,title:t.title,
+      recipient:t.recipient_name||t.recipient_handle||t.recipient_id,
+      deliveryStatus:t.status};
+    }):[])};
+   }catch(e){return {ok:true,offline:true,tasks:offline}}
+  }
+  var pending=nsOutboxRead();
+  if(pending===null)return {ok:false,error:'Bandeja de salida ilegible',tasks:[]};
+  var queued=pending.map(function(e){return {id:e.id,recipient:e.recipient,title:e.task.title,
+   deliveryStatus:'queued',localOnly:true}});
+  if(!session||!nat||!nat.sentTasks)return {ok:true,offline:true,tasks:queued};
+  try{
+   var response=JSON.parse(nat.sentTasks());
+   if(response&&response.ok&&Array.isArray(response.tasks)){
+    return {ok:true,tasks:queued.concat(response.tasks)};
+   }
+   return {ok:true,offline:true,tasks:queued};
+  }catch(e){return {ok:true,offline:true,tasks:queued}}
+ },
+
+ updateReceived:function(id,status){
+  if(session&&session.public){
+   if(!nat||!nat.publicTaskAction)return {ok:false,error:'Servicio público no disponible'};
+   try{
+    var action=status==='accepted'?'accept':status==='completed'?'complete':status==='declined'?'decline':'';
+    if(!action)return {ok:false,error:'Acción inválida'};
+    var response=JSON.parse(nat.publicTaskAction(id,action));
+    return response.ok?{ok:true,status:response.task&&response.task.status}:{ok:false,error:response.error||'No se pudo actualizar'};
+   }catch(e){return {ok:false,error:'Sin conexión'}}
+  }
+  if(!session||!model||!nat||!nat.updateTaskDelivery)return {ok:false,error:'Conecta con el servidor familiar'};
+  var task=model.tasks.find(function(t){return t&&t.id===id&&t.owner===session.username&&t.sentBy&&!t.deleted});
+  if(!task)return {ok:false,error:'Tarea no encontrada'};
+  try{
+   var response=JSON.parse(nat.updateTaskDelivery(id,status));
+   if(!response||!response.ok)return {ok:false,error:(response&&response.error)||'No se pudo actualizar'};
+   task.deliveryStatus=response.status;
+   task.updatedAt=Date.now();
+   if(!save())return {ok:false,error:'El servidor guardó el estado, pero no se guardó la copia local. Sincroniza nuevamente.'};
+   render();
+   return {ok:true,status:response.status};
+  }catch(e){return {ok:false,error:'No se pudo actualizar el estado. Comprueba la conexión.'}}
+ },
+ canShare:function(){return !!(session&&session.role==='admin'&&!session.google)},
+ share:function(id){
+  if(!session||!model||session.role!=='admin'||session.google)return false;
+  var task=model.tasks.find(function(t){return t.id===id&&!t.deleted&&t.owner===session.username});
+  if(!task)return false;
+  var before=task.owner,updated=task.updatedAt;
+  task.owner='todos';task.updatedAt=stamp();
+  if(!save()){task.owner=before;task.updatedAt=updated;return false}
+  render();return true;
+ },
+
+ saveTemplate:function(item){
+  if(!session||!model)return false;
+  var steps=Array.isArray(item.steps)?item.steps.map(function(x){return String(x).trim().slice(0,140)}).filter(Boolean).slice(0,20):[];
+  var title=String(item.title||'').trim().slice(0,100);
+  if(!title||!steps.length)return false;
+  var list=nsTemplateRead();list.push({id:uid(),title:title,category:nsCleanCategory(item.category),steps:steps,tags:[],priority:'normal'});
+  try{nsTemplateWrite(list);nsPlanRender();return true}catch(e){return false}
+ },
+ useTemplate:function(id){
+  if(!session||!model)return false;
+  var t=nsTemplateRead().find(function(x){return x.id===id});if(!t)return false;
+  var count=model.tasks.length;nsTemplateCreateTask(t);
+  return model.tasks.length===count+1;
+ },
+ create:function(item){
+  if(!session||!model)return false;
+  var title=String(item.title||'').trim().slice(0,100);
+  if(!title)return false;
+  var repeat=['none','daily','weekly'].includes(item.repeat)?item.repeat:'none';
+  var steps=Array.isArray(item.steps)?item.steps.map(function(v){return String(v).trim().slice(0,140)}).filter(Boolean).slice(0,20):[];
+  var share=!!item.shared&&session.role==='admin'&&!session.google;
+  var task={id:uid(),title:title,owner:share?'todos':session.username,date:day(),time:'',repeat:repeat,
+   priority:'normal',energy:'medium',category:nsCleanCategory(item.category),
+   steps:steps,tags:[],doneDates:[],stepDates:{},updatedAt:stamp()};
+  model.tasks.push(task);
+  if(!save()){model.tasks.pop();return false}
+  render();return true;
+ },
+ toggleToday:function(id){
+  if(!session||!model)return false;
+  var t=model.tasks.find(function(x){return x.id===id&&!x.deleted&&(x.owner===session.username||x.owner==='todos')});
+  if(!t)return false;
+  // Las tareas recibidas requieren aceptación explícita antes de completarse.
+  if(t.sentBy){
+   if(t.deliveryStatus!=='accepted')return false;
+   return window.NeuroTasksAPI.updateReceived(id,'completed').ok;
+  }
+  var date=t.repeat&&t.repeat!=='none'?day():t.date;
+  var current=(t.doneDates||[]).slice(),done=current.includes(date);
+  t.doneDates=done?current.filter(function(d){return d!==date}):current.concat(date);
+  var oldMark=t.updatedAt;t.updatedAt=stamp();
+  var food=Number(model.pet.food)||0,xp=Number(model.pet.xp)||0;
+  if(!done){model.pet.food=food+10;model.pet.xp=xp+10;}
+  if(!save()){t.doneDates=current;t.updatedAt=oldMark;model.pet.food=food;model.pet.xp=xp;return false}
+  render();return true;
+ },
+ confirm:function(title,text,yes){return nsConfirm(title,text,yes)},
+ openExistingEditor:function(){openModal('task')},
+ show:function(view){show(view)},
+ focus:function(){return nsFocusRead().sessions||[]}
+};
+
+/** Lista de salida: usa los packs originales y persiste el horario en Android. */
+window.NeuroDepartureAPI={
+ ready:function(){return !!(session&&model)},
+ list:function(){
+  if(!session||!model)return [];
+  var result=active(model.packs).filter(function(p){return p.owner===session.username||p.owner==='todos'}),modified=false;
+  result.forEach(function(p){
+   if(!nat||!nat.departureListState||p.owner!==session.username)return;
+   try{
+    var native=JSON.parse(nat.departureListState(session.username,p.id));
+    if(!native||native.id!==p.id||!Array.isArray(p.items)||!native.items||
+      JSON.stringify(p.items)!==JSON.stringify(native.items))return;
+    var checked=native.checked||{};
+    if(JSON.stringify(p.checked||{})!==JSON.stringify(checked)){
+      p.checked=checked;mark(p);modified=true;
+    }
+   }catch(e){}
+  });
+  if(modified)save();
+  return result.map(function(p){return Object.assign({},p, {items:(p.items||[]).slice(),checked:Object.assign({},p.checked||{})})});
+ },
+ save:function(data,id){
+  if(!session||!model)return {ok:false,error:'Inicia sesión primero'};
+  var prior=id?model.packs.find(function(p){return p.id===id&&!p.deleted&&p.owner===session.username}):null;
+  if(id&&!prior)return {ok:false,error:'No puedes modificar esta lista'};
+  var title=String(data.place||'').trim().slice(0,90);
+  var items=(Array.isArray(data.items)?data.items:[]).map(function(v){return String(v).trim().slice(0,100)}).filter(Boolean).slice(0,80);
+  if(!title||!items.length)return {ok:false,error:'Añade nombre y al menos un objeto'};
+  var repeats=['none','daily','weekly','weekdays','weekends'],repeat=repeats.includes(data.repeat)?data.repeat:'none';
+  var date=String(data.date||day()),time=String(data.time||'');
+  var scheduled=!!time,when=0;
+  if(scheduled){
+   if(!nat)return {ok:false,error:'Para programar avisos necesitas la APK Android'};
+   if(!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(date)||!/^[0-9]{2}:[0-9]{2}$/.test(time))
+    return {ok:false,error:'Fecha u hora inválida'};
+   var parts=date.split('-').map(Number),clock=time.split(':').map(Number);
+   var d=new Date(parts[0],parts[1]-1,parts[2],clock[0],clock[1]);
+   if(d.getFullYear()!==parts[0]||d.getMonth()!==parts[1]-1||d.getDate()!==parts[2]||
+    d.getHours()!==clock[0]||d.getMinutes()!==clock[1])
+    return {ok:false,error:'La hora no existe en el calendario'};
+   when=d.getTime();
+   if(repeat==='none'&&when<=Date.now())return {ok:false,error:'La hora debe ser futura'};
+   if(nat&&!nat.scheduleDepartureList)return {ok:false,error:'Esta APK no admite avisos de salida. Actualízala primero'};
+  }
+  var idValue=prior?prior.id:uid();
+  var old=prior?Object.assign({},prior,{items:(prior.items||[]).slice(),checked:Object.assign({},prior.checked||{})}):null;
+  var same=prior&&JSON.stringify(prior.items||[])===JSON.stringify(items);
+  var draft=Object.assign({},prior||{},{
+    id:idValue,place:title,items:items,checked:same?Object.assign({},prior.checked||{}):{},
+    date:scheduled?date:'',time:scheduled?time:'',repeat:scheduled?repeat:'none',
+    owner:session.username,updatedAt:stamp()
+  });
+  if(scheduled&&nat){
+   if(!nat.scheduleDepartureList(session.username,draft.id,draft.place,JSON.stringify(draft.items),when,repeat))
+    return {ok:false,error:'Android no pudo programar el aviso. Comprueba permisos o fecha'};
+  }
+  if(prior)Object.assign(prior,draft);else model.packs.push(draft);
+  if(!save()){
+   if(prior)Object.assign(prior,old);else model.packs=model.packs.filter(function(x){return x.id!==idValue});
+   if(nat&&nat.cancelDepartureList)nat.cancelDepartureList(session.username,idValue);
+   if(old&&old.time&&nat&&nat.scheduleDepartureList)
+    nat.scheduleDepartureList(session.username,old.id,old.place,JSON.stringify(old.items),new Date(old.date+'T'+old.time).getTime(),old.repeat||'none');
+   return {ok:false,error:'No se pudieron guardar los cambios'};
+  }
+  if(!scheduled&&nat&&nat.cancelDepartureList)nat.cancelDepartureList(session.username,idValue);
+  render();return {ok:true,id:idValue};
+ },
+ check:function(id,index,value){
+  if(!session||!model)return false;
+  var p=model.packs.find(function(x){return x.id===id&&!x.deleted&&x.owner===session.username});
+  if(!p||index<0||index>=(p.items||[]).length)return false;
+  if(nat&&nat.departureListState){
+   try{
+    var previous=JSON.parse(nat.departureListState(session.username,id));
+    if(previous.id===id&&nat.markDepartureItem&&!nat.markDepartureItem(session.username,id,index,!!value))return false;
+   }catch(e){}
+  }
+  var old=Object.assign({},p.checked||{}),stampBefore=p.updatedAt;
+  p.checked=Object.assign({},old,{[index]:!!value});mark(p);
+  if(!save()){p.checked=old;p.updatedAt=stampBefore;return false}
+  return true;
+ },
+ openNative:function(id){
+  if(!session||!model)return false;
+  var p=model.packs.find(function(p){return p.id===id&&p.owner===session.username&&!p.deleted});
+  if(!p||!nat||!nat.openDepartureChecklist||!nat.departureListState)return false;
+  try{
+   var entry=JSON.parse(nat.departureListState(session.username,id));
+   if(entry.id!==id||JSON.stringify(entry.items)!==JSON.stringify(p.items))return false;
+   nat.openDepartureChecklist(session.username,id);return true;
+  }catch(e){return false}
+ },
+ requestPermissions:function(){
+  if(nat&&nat.requestAlarmPermissions)nat.requestAlarmPermissions();
+ },
+ remove:async function(id){
+  if(!session||!model)return false;
+  var p=model.packs.find(function(x){return x.id===id&&!x.deleted&&x.owner===session.username});
+  if(!p||!await nsConfirm('Eliminar lista','¿Eliminar esta lista de salida?','Eliminar'))return false;
+  p.deleted=true;mark(p);
+  if(!save()){p.deleted=false;return false}
+  if(nat&&nat.cancelDepartureList)nat.cancelDepartureList(session.username,id);
+  render();return true;
+ }
+};
+/* Puente exclusivo del estudio inmersivo, sin duplicar sesiones de Pomodoro. */
+window.NeuroFocusAPI={
+ scene:function(){return by('focus-studio').dataset.scene||'calma'},
+ setScene:function(name){nsSceneApply(name)},
+ duration:function(){return nsFocusState?nsFocusState.duration:nsFocusDuration},
+ setDuration:function(minutes){
+  if(nsFocusState||![5,15,25,45].includes(minutes))return false;
+  nsFocusDuration=minutes;nsFocusRender();return true;
+ },
+ toggle:function(){by('ns-focus-toggle').click()},
+ stop:function(){by('ns-focus-stop').click()},
+ close:function(){nsPomodoroExpanded=false;nsFocusRender()},
+ tasks:function(){
+  return session?allTasks().filter(function(t){return !t.inbox&&!taskDone(t)}).slice(0,35).map(function(t){return {id:t.id,title:t.title}}):[];
+ },
+ task:function(){return by('ns-focus-task').value},
+ setTask:function(id){if(!nsFocusState)by('ns-focus-task').value=id},
+ current:function(){return !!nsFocusState},
+ account:function(){return session?session.username:''}
+};
+
+/** Bienestar privado: datos solo locales, ajenos al modelo familiar y sin telemetría. */
+window.NeuroWellbeingAPI={
+ ready:function(){return !!session},
+ account:function(){return session?session.username:''},
+ today:function(){return day()},
+ read:function(){
+  if(!session)return null;
+  try{
+   var raw=localStorage.getItem(streakKey()),data=raw?JSON.parse(raw):null;
+   if(data&&typeof data.started==='string'&&Array.isArray(data.history))return data;
+  }catch(e){}
+  return {started:day(),history:[],checkins:[],urges:[],objective:'',plan:[]};
+ },
+ write:function(data){
+  if(!session||!data||typeof data.started!=='string'||!Array.isArray(data.history))return false;
+  try{
+   localStorage.setItem(streakKey(),JSON.stringify(data));
+   if(localStorage.getItem(streakKey())!==JSON.stringify(data))return false;
+   renderStreak();return true;
+  }catch(e){return false}
+ },
+ erase:function(){
+  if(!session)return false;
+  try{localStorage.removeItem(streakKey());renderStreak();return true}catch(e){return false}
+ }
+};
+/* Finance studio usa la identidad autenticada sin acceder al modelo familiar. */
+window.NeuroFinanceAPI={
+ account:function(){return session?session.username:null},
+ updateLauncher:function(show,balance,income,expense){
+  if(!session||!nat||!nat.updateFinanceLauncherSummary)return false;
+  return !!nat.updateFinanceLauncherSummary(session.username,!!show,balance,income,expense);
+ }
+};
 })();
-</script></body></html>
+</script>
+<script src="./modules/wellbeing_studio.js"></script>
+<script src="./modules/finance_studio.js"></script>
+<script src="./modules/pomodoro_studio.js"></script>
+<script src="./modules/departure_studio.js"></script>
+<script src="./modules/alarm_studio.js"></script>
+<script src="./modules/task_studio.js"></script></body></html>

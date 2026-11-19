@@ -29,6 +29,135 @@ public final class SyncStore {
     String owner=row.optString("owner","");
     return "admin".equals(actor.optString("role")) || actor.optString("username").equals(owner) || "todos".equals(owner);
   }
+  /** Entrega una copia a un destinatario, con identidad del remitente verificada.
+   * La clave idempotente evita duplicados si la red reintenta la misma solicitud.
+   */
+  public static JSONObject sendTask(Context c,JSONObject request,JSONObject actor){
+    if(actor==null)return AccountStore.fail("Inicia sesión");
+    String from=actor.optString("username",""),to=request.optString("recipient","").trim().toLowerCase(java.util.Locale.ROOT);
+    String key=request.optString("requestId","");
+    JSONObject input=request.optJSONObject("task");
+    if(!to.matches("[a-z0-9_\\-]{3,30}")||to.equals(from)||
+       !AccountStore.isActive(c,to))return AccountStore.fail("Destinatario no disponible");
+    if(!key.matches("[a-zA-Z0-9_\\-]{8,100}")||input==null)
+      return AccountStore.fail("Solicitud de tarea inválida");
+    String title=input.optString("title","").trim();
+    if(title.isEmpty()||title.length()>100)return AccountStore.fail("Título inválido");
+    try{
+      synchronized(LOCK){
+        JSONObject database=read(c);
+        Map<String,JSONObject> tasks=map(database.optJSONArray("tasks"));
+        String basis="neurosync-task-v1:"+from+":"+to+":"+key;
+        String id="sent_"+java.util.UUID.nameUUIDFromBytes(basis.getBytes(java.nio.charset.StandardCharsets.UTF_8)).toString();
+        if(tasks.containsKey(id)){
+          JSONObject existing=tasks.get(id);
+          if(to.equals(existing.optString("owner"))&&from.equals(existing.optString("sentBy")))
+            return new JSONObject().put("ok",true).put("id",id).put("duplicate",true);
+          return AccountStore.fail("Conflicto de identificador");
+        }
+        if(tasks.size()>=2900)return AccountStore.fail("Límite de tareas alcanzado");
+        JSONArray steps=new JSONArray(),source=input.optJSONArray("steps");
+        if(source!=null){
+          for(int i=0;i<Math.min(20,source.length());i++){
+            String step=source.optString(i,"").trim();
+            if(!step.isEmpty())steps.put(step.substring(0,Math.min(140,step.length())));
+          }
+        }
+        String repeat=input.optString("repeat","none");
+        if(!("none".equals(repeat)||"daily".equals(repeat)||"weekly".equals(repeat)))repeat="none";
+        String date=input.optString("date","");
+        if(!date.matches("\\d{4}-\\d{2}-\\d{2}"))date=
+          new java.text.SimpleDateFormat("yyyy-MM-dd",java.util.Locale.ROOT).format(new java.util.Date());
+        JSONObject task=new JSONObject().put("id",id).put("owner",to)
+          .put("sentBy",from).put("title",title).put("date",date)
+          .put("repeat",repeat).put("category",input.optString("category","Personal").substring(0,
+             Math.min(50,input.optString("category","Personal").length())))
+          .put("steps",steps).put("doneDates",new JSONArray()).put("stepDates",new JSONObject())
+          .put("priority","normal").put("deliveryStatus","pending")
+          .put("updatedAt",System.currentTimeMillis());
+        tasks.put(id,task);
+        JSONArray all=new JSONArray();for(JSONObject row:tasks.values())all.put(row);
+        database.put("tasks",all);
+        if(!c.getSharedPreferences("ns_family",0).edit().putString(KEY,database.toString()).commit())
+          return AccountStore.fail("No se pudo entregar la tarea. Vuelve a intentarlo.");
+        return new JSONObject().put("ok",true).put("id",id).put("recipient",to);
+      }
+    }catch(Exception e){return AccountStore.fail("No se pudo enviar la tarea");}
+  }
+  private static JSONArray sentSummary(JSONObject database,String username)throws Exception{
+    JSONArray result=new JSONArray(),rows=database.optJSONArray("tasks");
+    if(rows!=null)for(int i=0;i<rows.length();i++){
+      JSONObject task=rows.optJSONObject(i);
+      if(task==null||!username.equals(task.optString("sentBy"))||!task.has("sentBy"))continue;
+      result.put(new JSONObject().put("id",task.optString("id"))
+        .put("recipient",task.optString("owner"))
+        .put("title",task.optString("title"))
+        .put("deliveryStatus",task.optString("deliveryStatus","pending")));
+    }
+    return result;
+  }
+  /** Bandeja de envíos: solo metadatos de tareas creadas por esta cuenta. */
+  public static JSONObject sentTasks(Context c,JSONObject actor){
+    if(actor==null)return AccountStore.fail("Inicia sesión");
+    try{
+      synchronized(LOCK){
+        return new JSONObject().put("ok",true)
+          .put("tasks",sentSummary(read(c),actor.optString("username","")));
+      }
+    }catch(Exception e){return AccountStore.fail("No se pudieron consultar envíos");}
+  }
+  /** Resumen mínimo para sondeo Android en segundo plano: nunca expone tareas ajenas. */
+  public static JSONObject notificationDigest(Context c,JSONObject actor){
+    if(actor==null)return AccountStore.fail("Inicia sesión");
+    try{
+      synchronized(LOCK){
+        String username=actor.optString("username","");
+        JSONArray received=new JSONArray(),rows=read(c).optJSONArray("tasks");
+        if(rows!=null)for(int i=0;i<rows.length();i++){
+          JSONObject task=rows.optJSONObject(i);
+          if(task==null||task.optBoolean("deleted")||
+             !username.equals(task.optString("owner"))||
+             !task.has("sentBy"))continue;
+          received.put(new JSONObject().put("id",task.optString("id"))
+            .put("sentBy",task.optString("sentBy")));
+        }
+        return new JSONObject().put("ok",true).put("received",received)
+          .put("sent",sentSummary(read(c),username));
+      }
+    }catch(Exception e){return AccountStore.fail("No se pudo consultar las novedades");}
+  }
+  /** Solo el destinatario decide aceptar o completar una tarea recibida. */
+  public static JSONObject updateDelivery(Context c,JSONObject request,JSONObject actor){
+    if(actor==null)return AccountStore.fail("Inicia sesión");
+    String id=request.optString("id",""),status=request.optString("status","");
+    if(!id.startsWith("sent_")||id.length()>100||!
+      ("accepted".equals(status)||"completed".equals(status)))
+      return AccountStore.fail("Estado o tarea inválidos");
+    try{
+      synchronized(LOCK){
+        JSONObject db=read(c);
+        Map<String,JSONObject> tasks=map(db.optJSONArray("tasks"));
+        JSONObject task=tasks.get(id);
+        if(task==null||!task.has("sentBy")||
+          !actor.optString("username").equals(task.optString("owner")))
+          return AccountStore.fail("Tarea no encontrada o sin permisos");
+        String previous=task.optString("deliveryStatus","pending");
+        if("completed".equals(previous)&&!"completed".equals(status))
+          return AccountStore.fail("Una tarea completada no vuelve a pendiente");
+        if("completed".equals(status)&&"pending".equals(previous))
+          return AccountStore.fail("Acepta la tarea antes de completarla");
+        if(!previous.equals(status)){
+          task.put("deliveryStatus",status);
+          task.put("updatedAt",System.currentTimeMillis());
+          JSONArray all=new JSONArray();for(JSONObject row:tasks.values())all.put(row);
+          db.put("tasks",all);
+          if(!c.getSharedPreferences("ns_family",0).edit().putString(KEY,db.toString()).commit())
+            return AccountStore.fail("No se guardó el estado. Inténtalo de nuevo");
+        }
+        return new JSONObject().put("ok",true).put("status",status);
+      }
+    }catch(Exception e){return AccountStore.fail("No se pudo actualizar el estado");}
+  }
   public static JSONObject merge(Context c,JSONObject incoming,JSONObject actor){
     if(actor==null)return AccountStore.fail("Inicia sesión");
     try{
@@ -50,7 +179,10 @@ public final class SyncStore {
             if(!admin&&!own&&!shared)continue;
             if(old!=null&&!visible(old,actor))continue;
             long updated=change.optLong("updatedAt",0);
-            if(updated<1)continue;
+            // Evitar timestamps futuros que impidan aceptar ediciones posteriores.
+            // Se admiten relojes ligeramente desajustados (hasta cinco minutos).
+            long now=System.currentTimeMillis();
+            if(updated<1||updated>now+300000L)continue;
             if(!admin&&shared){
               // Miembros: las tareas compartidas solo permiten confirmar pasos, no cambiar datos ni borrarlas.
               if(old==null||change.optBoolean("deleted"))continue;
@@ -60,6 +192,20 @@ public final class SyncStore {
               safe.put("updatedAt",updated);
               change=safe;
             }
+            // Los metadatos del envío solo los establece el servidor.
+            if(old==null){
+              change.remove("sentBy");
+              change.remove("deliveryStatus");
+            }else if(!old.has("sentBy")){
+              change.remove("sentBy");
+              change.remove("deliveryStatus");
+            }
+            // El receptor puede completar su tarea, pero no falsificar el remitente.
+            if(old!=null&&old.has("sentBy")){
+              change.put("sentBy",old.optString("sentBy"));
+              change.put("owner",old.optString("owner"));
+              change.put("deliveryStatus",old.optString("deliveryStatus","pending"));
+            }
             if(old==null||updated>old.optLong("updatedAt",0))rows.put(id,change);
           }
           JSONArray all=new JSONArray(),subset=new JSONArray();
@@ -68,8 +214,12 @@ public final class SyncStore {
           }
           database.put(collection,all);view.put(collection,subset);
         }
-        c.getSharedPreferences("ns_family",0).edit().putString(KEY,database.toString()).commit();
-        return reply.put("data",view);
+        // Nunca comunicar éxito si la réplica familiar no quedó persistida.
+        if(!c.getSharedPreferences("ns_family",0).edit()
+            .putString(KEY,database.toString()).commit())
+          return AccountStore.fail("No se guardaron los cambios familiares. Intenta sincronizar de nuevo.");
+        return reply.put("data",view)
+          .put("sentTasks",sentSummary(database,actor.optString("username","")));
       }
     }catch(Exception e){return AccountStore.fail("Error sincronizando datos");}
   }

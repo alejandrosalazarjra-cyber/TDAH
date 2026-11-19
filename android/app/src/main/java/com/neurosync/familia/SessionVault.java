@@ -35,17 +35,19 @@ public final class SessionVault {
   private static SharedPreferences prefs(Context ctx){
     return ctx.getSharedPreferences(PREF,Context.MODE_PRIVATE);
   }
-  public static synchronized void save(Context ctx,String token,JSONObject user,String mode,String location){
-    if(token==null||token.length()<30||user==null)return;
+  public static synchronized boolean save(Context ctx,String token,JSONObject user,String mode,String location){
+    if(token==null||token.length()<30||user==null||mode==null||location==null)return false;
     try{
       JSONObject data=new JSONObject().put("token",token).put("user",user)
         .put("mode",mode).put("location",location);
       Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");
       cipher.init(Cipher.ENCRYPT_MODE,key());
       byte[] encrypted=cipher.doFinal(data.toString().getBytes(StandardCharsets.UTF_8));
-      prefs(ctx).edit().putString("iv",Base64.encodeToString(cipher.getIV(),Base64.NO_WRAP))
+      boolean stored=prefs(ctx).edit().putString("iv",Base64.encodeToString(cipher.getIV(),Base64.NO_WRAP))
         .putString("ciphertext",Base64.encodeToString(encrypted,Base64.NO_WRAP)).commit();
-    }catch(Exception e){android.util.Log.e("NeuroSync","No se pudo proteger la sesión",e);}
+      if(!stored)android.util.Log.w("NeuroSync","El guardado de la sesión no se confirmó");
+      return stored;
+    }catch(Exception e){android.util.Log.e("NeuroSync","No se pudo proteger la sesión",e);return false;}
   }
   public static synchronized JSONObject restore(Context ctx,String mode,String location){
     try{

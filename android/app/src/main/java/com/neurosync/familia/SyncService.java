@@ -85,6 +85,11 @@ public final class SyncService extends Service {
       JSONObject actor=AccountStore.identity(this,token);
       if(actor==null){write(s,401,AccountStore.fail("Sesión caducada: inicia sesión de nuevo"));return;}
       if(route.equals("/users"))result=AccountStore.list(this,actor);
+      else if(route.equals("/contacts"))result=AccountStore.contacts(this,actor);
+      else if(route.equals("/send-task"))result=SyncStore.sendTask(this,request,actor);
+      else if(route.equals("/sent-tasks"))result=SyncStore.sentTasks(this,actor);
+      else if(route.equals("/notification-digest"))result=SyncStore.notificationDigest(this,actor);
+      else if(route.equals("/update-delivery"))result=SyncStore.updateDelivery(this,request,actor);
       else if(route.equals("/create-user"))result=AccountStore.create(this,actor,request.optString("username"),request.optString("password"));
       else if(route.equals("/change-password"))result=AccountStore.change(this,actor,request.optString("current"),request.optString("next"));
       else if(route.equals("/sync"))result=SyncStore.merge(this,request,actor);

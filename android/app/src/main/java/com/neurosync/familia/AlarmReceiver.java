@@ -34,11 +34,36 @@ public final class AlarmReceiver extends BroadcastReceiver {
  /** Avanza calendariamente conservando la hora local (incluido horario de verano). */
  static long nextRepeat(long previous,String repeat,long now){
   if(previous<=0)return -1;
+  // Máscara de domingo a sábado: days:0111110 = lunes a viernes.
+  if(repeat!=null&&repeat.matches("days:[01]{7}")&&repeat.substring(5).contains("1")){
+    java.util.Calendar selected=java.util.Calendar.getInstance();
+    selected.setTimeInMillis(previous);
+    String bits=repeat.substring(5);
+    for(int i=0;i<=3700;i++){
+      int dow=selected.get(java.util.Calendar.DAY_OF_WEEK)-1;
+      if(selected.getTimeInMillis()>now&&bits.charAt(dow)=='1')return selected.getTimeInMillis();
+      selected.add(java.util.Calendar.DAY_OF_YEAR,1);
+    }
+    return -1;
+  }
   int unit,amount;
   if("weekly".equals(repeat)){unit=java.util.Calendar.WEEK_OF_YEAR;amount=1;}
   else if("daily".equals(repeat)){unit=java.util.Calendar.DAY_OF_YEAR;amount=1;}
   else if("every2".equals(repeat)){unit=java.util.Calendar.DAY_OF_YEAR;amount=2;}
   else if("every3".equals(repeat)){unit=java.util.Calendar.DAY_OF_YEAR;amount=3;}
+  else if("weekdays".equals(repeat)||"weekends".equals(repeat)){
+    java.util.Calendar weekdays=java.util.Calendar.getInstance();
+    weekdays.setTimeInMillis(previous);
+    for(int n=0;n<3660;n++){
+      int d=weekdays.get(java.util.Calendar.DAY_OF_WEEK);
+      boolean weekend=d==java.util.Calendar.SATURDAY||d==java.util.Calendar.SUNDAY;
+      if(weekdays.getTimeInMillis()>now &&
+         (("weekdays".equals(repeat)&&!weekend)||("weekends".equals(repeat)&&weekend)))
+         return weekdays.getTimeInMillis();
+      weekdays.add(java.util.Calendar.DAY_OF_YEAR,1);
+    }
+    return -1;
+  }
   else return -1;
   java.util.Calendar calendar=java.util.Calendar.getInstance();
   calendar.setTimeInMillis(previous);
@@ -54,16 +79,35 @@ public final class AlarmReceiver extends BroadcastReceiver {
  public static boolean scheduleRepeat(Context ctx,String id,String title,long at,String repeat){
   try{
    if(id==null||id.length()<2||id.length()>100||at<=0)return false;
+   if(!("none".equals(repeat)||"daily".equals(repeat)||"weekly".equals(repeat)
+        ||"every2".equals(repeat)||"every3".equals(repeat)
+        ||"weekdays".equals(repeat)||"weekends".equals(repeat)
+        ||(repeat!=null&&repeat.matches("days:[01]{7}")&&repeat.substring(5).contains("1"))))return false;
    if(title==null||title.trim().isEmpty())title="Recordatorio";
    long when=at;
    if(!"none".equals(repeat)){
     long next=nextRepeat(when,repeat,System.currentTimeMillis());
-    if(next>0)when=next;
+    if(next<=System.currentTimeMillis())return false;
+    when=next;
    }
    if(when<=System.currentTimeMillis())return false;
    JSONObject entry=new JSONObject().put("id",id).put("title",title).put("when",when).put("repeat",repeat);
-   if(!program(ctx,id,when))return false;
-   ctx.getSharedPreferences("ns_alarms",0).edit().putString(PREFIX+id,entry.toString()).apply();
+   // Guardar primero el registro para que el receptor encuentre la alarma si se dispara
+   // inmediatamente. commit() verifica persistencia antes de anunciar programación correcta.
+   android.content.SharedPreferences prefs=ctx.getSharedPreferences("ns_alarms",0);
+   String previous=prefs.getString(PREFIX+id,null);
+   if(!prefs.edit().putString(PREFIX+id,entry.toString()).commit())return false;
+   if(!program(ctx,id,when)){
+    android.content.SharedPreferences.Editor rollback=prefs.edit();
+    if(previous==null)rollback.remove(PREFIX+id);
+    else rollback.putString(PREFIX+id,previous);
+    rollback.commit();
+    return false;
+   }
+   // La edición reemplaza el horario anterior: ninguna posposición vieja debe sonar.
+   manager(ctx).cancel(pendingSnooze(ctx,id));
+   ctx.getSharedPreferences("ns_alarm_snoozes",0).edit().remove(SNOOZE_PREFIX+id).apply();
+   AlarmOptionsStore.reset(ctx,id);
    return true;
   }catch(Exception e){return false;}
  }
@@ -94,6 +138,7 @@ public final class AlarmReceiver extends BroadcastReceiver {
   if(id==null)return;
   manager(ctx).cancel(pendingSnooze(ctx,id));
   ctx.getSharedPreferences("ns_alarm_snoozes",0).edit().remove(SNOOZE_PREFIX+id).apply();
+  AlarmOptionsStore.reset(ctx,id);
   AlarmHistory.record(ctx,id,"dismiss");
   AlarmAudioService.stop(ctx);
   ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id.hashCode());
@@ -105,20 +150,51 @@ public final class AlarmReceiver extends BroadcastReceiver {
       ctx.getSharedPreferences("ns_alarms",0).edit().remove(PREFIX+id).apply();
   }catch(Exception ignored){}
  }
- public static void snooze(Context ctx,String id,int minutes){
+ public static boolean snooze(Context ctx,String id,int minutes){
+  if(id==null||minutes<1||minutes>15||
+      AlarmOptionsStore.used(ctx,id)>=AlarmOptionsStore.max(ctx,id))return false;
   try{
-   String s=ctx.getSharedPreferences("ns_alarms",0).getString(PREFIX+id,null);if(s==null)return;
-   JSONObject a=new JSONObject(s);
-   AlarmHistory.record(ctx,id,"snooze");
+   String raw=ctx.getSharedPreferences("ns_alarms",0).getString(PREFIX+id,null);
+   if(raw==null)return false;
+   new JSONObject(raw); // Verificar que la alarma realmente exista y esté íntegra.
    AlarmManager alarm=manager(ctx);
    long when=System.currentTimeMillis()+minutes*60000L;
    if(Build.VERSION.SDK_INT<31||alarm.canScheduleExactAlarms())
      alarm.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,when,pendingSnooze(ctx,id));
    else alarm.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,when,pendingSnooze(ctx,id));
-   ctx.getSharedPreferences("ns_alarm_snoozes",0).edit().putLong(SNOOZE_PREFIX+id,when).apply();
+   // Solo después del éxito: contar, registrar y detener el sonido.
+   if(!ctx.getSharedPreferences("ns_alarm_snoozes",0).edit().putLong(SNOOZE_PREFIX+id,when).commit()){
+     alarm.cancel(pendingSnooze(ctx,id));return false;
+   }
+   AlarmOptionsStore.increment(ctx,id);
+   AlarmHistory.record(ctx,id,"snooze");
    AlarmAudioService.stop(ctx);
    ((NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id.hashCode());
-  }catch(Exception ignored){}
+   return true;
+  }catch(Exception error){
+   android.util.Log.e("NeuroSync","No se pudo posponer esta alarma",error);
+   return false;
+  }
+ }
+ /** Diagnóstico de los registros locales: no afirma una garantía de ejecución del SO. */
+ public static JSONObject diagnostics(Context ctx){
+  JSONObject result=new JSONObject();
+  int count=0,invalid=0;long next=Long.MAX_VALUE;
+  try{
+   for(Map.Entry<String,?> row:ctx.getSharedPreferences("ns_alarms",0).getAll().entrySet()){
+    if(!row.getKey().startsWith(PREFIX))continue;
+    try{
+     JSONObject alarm=new JSONObject((String)row.getValue());
+     String id=alarm.optString("id","");
+     long at=alarm.optLong("when",-1);
+     if(id.length()<2||at<=0){invalid++;continue;}
+     count++;
+     if(at>System.currentTimeMillis()&&at<next)next=at;
+    }catch(Exception malformed){invalid++;}
+   }
+   result.put("count",count).put("invalid",invalid).put("nextAt",next==Long.MAX_VALUE?0:next);
+  }catch(Exception e){android.util.Log.w("NeuroSync","No se pudieron contar alarmas locales",e);}
+  return result;
  }
  private static void restore(Context ctx){
   long now=System.currentTimeMillis();
@@ -129,12 +205,19 @@ public final class AlarmReceiver extends BroadcastReceiver {
     String id=a.getString("id");
     long when=a.getLong("when");
     String repeat=a.optString("repeat",a.optBoolean("daily")?"daily":"none");
+    if(!row.getKey().equals(PREFIX+id)||id.length()<2||id.length()>100)continue;
     if(when<=now && !"none".equals(repeat)){
-      when=nextRepeat(when,repeat,now);
-      if(when>now){
-       a.put("when",when);
-       ctx.getSharedPreferences("ns_alarms",0).edit().putString(PREFIX+id,a.toString()).apply();
+      long next=nextRepeat(when,repeat,now);
+      if(next>now && program(ctx,id,next)){
+        // Persistir solo una alarma reprogramada de verdad.
+        a.put("when",next);
+        if(!ctx.getSharedPreferences("ns_alarms",0).edit()
+          .putString(PREFIX+id,a.toString()).commit())
+          android.util.Log.w("NeuroSync","Alarma programada pero no persistida: "+id);
+      }else if(next>now){
+        android.util.Log.w("NeuroSync","No se pudo restaurar alarma repetitiva: "+id);
       }
+      continue;
     }
     if(when>now)program(ctx,id,when);
     else if("none".equals(repeat)){
@@ -191,9 +274,10 @@ public final class AlarmReceiver extends BroadcastReceiver {
     if("none".equals(AlarmChallengeStore.get(ctx,alarmId)))dismiss(ctx,alarmId);
     return;
   }
-  if(POSTPONE.equals(intent.getAction())){snooze(ctx,intent.getStringExtra("id"),5);return;}
+  if(POSTPONE.equals(intent.getAction())){String alarmId=intent.getStringExtra("id");snooze(ctx,alarmId,AlarmOptionsStore.minutes(ctx,alarmId));return;}
   if(!FIRE.equals(intent.getAction())&&!SNOOZE.equals(intent.getAction()))return;
   String id=intent.getStringExtra("id");if(id==null)return;
+  if(FIRE.equals(intent.getAction()))AlarmOptionsStore.reset(ctx,id);
   if(SNOOZE.equals(intent.getAction()))
     ctx.getSharedPreferences("ns_alarm_snoozes",0).edit().remove(SNOOZE_PREFIX+id).apply();
   String raw=ctx.getSharedPreferences("ns_alarms",0).getString(PREFIX+id,null);if(raw==null)return;
@@ -213,13 +297,15 @@ public final class AlarmReceiver extends BroadcastReceiver {
    Notification.Builder builder=new Notification.Builder(ctx,CHANNEL)
     .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
     .setContentTitle("⏰ "+title)
-    .setContentText("Pulsa para detener o posponer")
+    .setContentText("Pulsa para abrir tu alarma")
     .setCategory(Notification.CATEGORY_ALARM)
     .setPriority(Notification.PRIORITY_MAX)
     .setVisibility(Notification.VISIBILITY_PUBLIC)
     .setAutoCancel(false).setOngoing(true)
-    .addAction(android.R.drawable.ic_menu_recent_history,"Posponer",snoozePending)
     .setContentIntent(full).setFullScreenIntent(full,true);
+   if(AlarmOptionsStore.used(ctx,id)<AlarmOptionsStore.max(ctx,id)){
+     builder.addAction(android.R.drawable.ic_menu_recent_history,"Posponer",snoozePending);
+   }
    if("none".equals(AlarmChallengeStore.get(ctx,id))){
      builder.addAction(android.R.drawable.ic_media_pause,"Detener",stopPending);
    }

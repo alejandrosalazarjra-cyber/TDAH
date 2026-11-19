@@ -1,0 +1,29 @@
+# Solo entorno local de desarrollo. No publicar PostgreSQL a internet.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: neurosync
+      POSTGRES_PASSWORD: ${NEUROSYNC_DEV_DB_PASSWORD:?Define una clave local en tu .env (no la subas a Git)}
+      POSTGRES_DB: neurosync
+    volumes:
+      - neurosync_dev_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U neurosync -d neurosync"]
+      interval: 5s
+      retries: 12
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgres://neurosync:${NEUROSYNC_DEV_DB_PASSWORD}@postgres:5432/neurosync
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?Configura el OAuth Web Client ID}
+      HOST: 0.0.0.0
+      PORT: 8081
+      NODE_ENV: development
+    ports:
+      - "127.0.0.1:8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+volumes:
+  neurosync_dev_db:

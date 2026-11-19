@@ -10,7 +10,7 @@ on:
       - 'android/**'
       - 'assets/dragon/**'
   push:
-    branches: [main]
+    branches: [main, 'feature/pantallas-completas-alarma-pomodoro']
     paths:
       - '.github/workflows/android-apk.yml'
       - 'tests/test_dragon_motion.js'
@@ -36,6 +36,11 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Preparar Gradle compatible con Android API 36
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+
       # Los ejecutores Ubuntu incluyen el Android SDK.
       # Omitir setup-android@v3: era el paso donde se detenía el job.
       - name: Verificar SDK Android disponible
@@ -44,13 +49,13 @@ jobs:
           set -euo pipefail
           echo "ANDROID_HOME=$ANDROID_HOME"
           test -d "$ANDROID_HOME" || { echo "::error::SDK Android no disponible"; exit 1; }
-          if [ ! -f "$ANDROID_HOME/platforms/android-35/android.jar" ] || [ ! -x "$ANDROID_HOME/build-tools/35.0.0/aapt" ]; then
-            echo "Instalando SDK Platform y Build Tools 35"
-            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0"
+          if [ ! -f "$ANDROID_HOME/platforms/android-36/android.jar" ] || [ ! -x "$ANDROID_HOME/build-tools/36.0.0/aapt" ]; then
+            echo "Instalando SDK Platform y Build Tools 36"
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"
           fi
-          test -f "$ANDROID_HOME/platforms/android-35/android.jar"
-          test -x "$ANDROID_HOME/build-tools/35.0.0/aapt"
-          echo "SDK Android 35 y herramientas APK disponibles"
+          test -f "$ANDROID_HOME/platforms/android-36/android.jar"
+          test -x "$ANDROID_HOME/build-tools/36.0.0/aapt"
+          echo "SDK Android 36 y herramientas APK disponibles"
 
       - name: Validar ciclos y evoluciones de Azul
         shell: bash
@@ -58,7 +63,32 @@ jobs:
           set -euo pipefail
           python3 -m unittest discover -s tests -p 'test_dragon_module.py' -v
           node tests/test_dragon_motion.js
+          node tests/test_dragon_compact_ui.js
           node tests/test_dragon_poses.js
+          node tests/test_phase1_persistence.js
+          node tests/test_phase1b_alarm_schedule.js
+          node tests/test_phase1c_session_sync.js
+          node tests/test_phase1d_native_recovery.js
+          node tests/test_phase1e_snapshot_batch.js
+          node tests/test_phase1e_restart_recovery.js
+          node tests/test_alarm_studio.js
+          node tests/test_alarm_studio_days.js
+          node tests/test_task_studio.js
+          node tests/test_task_sent_notifications.js
+          node tests/test_task_background_sync.js
+          node tests/test_public_backend_contract.js
+          node --check backend/server.js
+          node tests/test_public_backend_api.js
+          node tests/test_public_launch_readiness.js
+          node tests/test_google_play_gate.js
+          node tests/test_public_oauth_wiring.js
+          node tests/test_preview_signing_contract.js
+          node tests/test_public_android_bridge.js
+          node tests/test_departure_studio.js
+          node tests/test_pomodoro_studio.js
+          node tests/test_wellbeing_studio.js
+          node tests/test_finance_studio.js
+          node tests/test_widget_side_panel.js
 
       - name: Validar interfaz antes de compilar
         shell: bash
@@ -96,7 +126,7 @@ jobs:
               "AccountStore.java", "AlarmReceiver.java", "SyncService.java",
               "AlarmRingActivity.java", "TodayWidget.java",
               "FocusLauncherActivity.java", "AlarmAudioService.java", "SessionVault.java",
-              "MainActivity.java",
+              "MainActivity.java", "FocusOverlayService.java", "BackupCrypto.java",
           ]
           errors = []
           for name in required:
@@ -204,6 +234,30 @@ jobs:
           set -euo pipefail
           cp index.html android/app/src/main/assets/index.html
           test -s android/app/src/main/assets/index.html
+          mkdir -p android/app/src/main/assets/modules
+          cp modules/alarm_studio.js modules/alarm_studio.css android/app/src/main/assets/modules/
+          cp modules/task_studio.js modules/task_studio.css android/app/src/main/assets/modules/
+          cp modules/departure_studio.js modules/departure_studio.css android/app/src/main/assets/modules/
+          cp modules/pomodoro_studio.js modules/pomodoro_studio.css android/app/src/main/assets/modules/
+          cp modules/wellbeing_studio.js modules/wellbeing_studio.css android/app/src/main/assets/modules/
+          cp modules/finance_studio.js modules/finance_studio.css android/app/src/main/assets/modules/
+          test -s android/app/src/main/assets/modules/pomodoro_studio.js
+          test -s android/app/src/main/assets/modules/pomodoro_studio.css
+          # La escena Bosque fue generada con Higgsfield. Si el origen deja de estar
+          # disponible, la APK mantiene su fondo animado CSS sin bloquear la compilación.
+          mkdir -p android/app/src/main/assets/focus
+          if curl --fail --location --silent --show-error --connect-timeout 10 --max-time 120 --retry 1 \
+            'https://d8j0ntlcm91z4.cloudfront.net/user_3MDNXswrgR6N3gVdMwDFhTyzzP4/hf_20261118_051340_5295b8d3-4aa6-475a-8b6f-7060243830c8.mp4' \
+            -o android/app/src/main/assets/focus/bosque.mp4; then
+            test "$(wc -c < android/app/src/main/assets/focus/bosque.mp4)" -gt 10000 || rm -f android/app/src/main/assets/focus/bosque.mp4
+          else
+            rm -f android/app/src/main/assets/focus/bosque.mp4
+            echo "::warning::Video Bosque temporalmente inaccesible; se utilizará ambiente animado local."
+          fi
+          test -s android/app/src/main/assets/modules/departure_studio.js
+          test -s android/app/src/main/assets/modules/departure_studio.css
+          test -s android/app/src/main/assets/modules/alarm_studio.js
+          test -s android/app/src/main/assets/modules/alarm_studio.css
           mkdir -p android/app/src/main/assets/dragon
           cp assets/dragon/etapa-{1..6}.webp android/app/src/main/assets/dragon/
           for n in {1..6}; do test -s "android/app/src/main/assets/dragon/etapa-${n}.webp"; done
@@ -211,46 +265,32 @@ jobs:
           cp assets/dragon/atlases/etapa-{1..6}.webp android/app/src/main/assets/dragon/atlases/
           for n in {1..6}; do test -s "android/app/src/main/assets/dragon/atlases/etapa-${n}.webp"; done
 
-      - name: Compilar APK de prueba independiente (no sustituye tu instalación)
-        working-directory: android
+      - name: Preparar certificado estable de APK preview para Google OAuth
+        id: preview_signing
         shell: bash
-        run: |
-          set -o pipefail
-          gradle --no-daemon --stacktrace assemblePreview 2>&1 | tee "$RUNNER_TEMP/neurosync-gradle.log"
-
-      - name: Verificar que la prueba contiene la interfaz nueva
-        shell: bash
+        env:
+          NS_PREVIEW_SIGNING_KEY_B64: ${{ secrets.NS_PREVIEW_SIGNING_KEY_B64 }}
+          NS_PREVIEW_SIGNING_PASSWORD: ${{ secrets.NS_PREVIEW_SIGNING_PASSWORD }}
+          NS_PREVIEW_SIGNING_ALIAS: ${{ secrets.NS_PREVIEW_SIGNING_ALIAS }}
         run: |
           set -euo pipefail
-          APK="android/app/build/outputs/apk/preview/app-preview.apk"
-          test -s "$APK"
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | grep "package: name='com.neurosync.familia.preview' versionCode='10'"
-          python3 - <<'PY'
-          import zipfile,hashlib
-          from pathlib import Path
-          source=Path("index.html").read_bytes()
-          with zipfile.ZipFile("android/app/build/outputs/apk/preview/app-preview.apk") as z:
-              packed=z.read("assets/index.html")
-              assert packed==source, "ERROR: La APK de prueba tiene una interfaz antigua"
-              dex=b"".join(z.read(x) for x in z.namelist()
-                            if x.startswith("classes") and x.endswith(".dex"))
-              for name in (b"AlarmChallengeStore",b"AlarmRingActivity",b"SessionVault"):
-                  assert name in dex, f"Falta clase Android: {name!r}"
-              for name in (b'view-habits',b'buildInfo',b'setAlarmChallenge',b'ns-login-form',b'ns-brand-hero'):
-                  assert name in packed, f"Falta control HTML: {name!r}"
-          print("APK preview contiene HTML y funciones actuales.")
-          print("SHA256 de HTML:",hashlib.sha256(packed).hexdigest())
-          PY
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify "$APK"
-
-      - name: Publicar APK para comprobar funciones SIN borrar datos
-        uses: actions/upload-artifact@v4
-        with:
-          name: NeuroSync-10-PRUEBA-INDEPENDIENTE
-          path: android/app/build/outputs/apk/preview/app-preview.apk
-          if-no-files-found: error
-          retention-days: 30
-
+          if [ -z "$NS_PREVIEW_SIGNING_KEY_B64" ] || [ -z "$NS_PREVIEW_SIGNING_PASSWORD" ] || [ -z "$NS_PREVIEW_SIGNING_ALIAS" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Sin firma preview estable: se compilará la APK de prueba con inicio de sesión público oculto."
+            exit 0
+          fi
+          mkdir -p "$RUNNER_TEMP/ns-preview-signing"
+          printf '%s' "$NS_PREVIEW_SIGNING_KEY_B64" | base64 -d > "$RUNNER_TEMP/ns-preview-signing/neurosync-preview.jks"
+          chmod 600 "$RUNNER_TEMP/ns-preview-signing/neurosync-preview.jks"
+          NS_PREVIEW_KEYSTORE_FILE="$RUNNER_TEMP/ns-preview-signing/neurosync-preview.jks"
+          keytool -list -v -keystore "$NS_PREVIEW_KEYSTORE_FILE" -storepass:env NS_PREVIEW_SIGNING_PASSWORD -alias "$NS_PREVIEW_SIGNING_ALIAS" > "$RUNNER_TEMP/ns-preview-signing/fingerprint.txt"
+          if ! grep -F 'SHA1: 3E:F5:74:B7:F3:8F:09:FB:B4:81:60:BC:40:57:1E:A7:D6:A4:90:63' "$RUNNER_TEMP/ns-preview-signing/fingerprint.txt" >/dev/null; then
+            echo "::error::La clave preview no coincide con la firma registrada para Google OAuth. No se utilizará."
+            exit 1
+          fi
+          echo "NS_PREVIEW_KEYSTORE_FILE=$NS_PREVIEW_KEYSTORE_FILE" >> "$GITHUB_ENV"
+          echo "configured=true" >> "$GITHUB_OUTPUT"
+          echo "Certificado preview validado; firma registrada en Google Cloud."
       - name: Preparar firma permanente de distribución
         id: signing
         shell: bash
@@ -271,6 +311,66 @@ jobs:
           echo "NS_KEYSTORE_FILE=$RUNNER_TEMP/ns-signing/neurosync-release.jks" >> "$GITHUB_ENV"
           echo "configured=true" >> "$GITHUB_OUTPUT"
           echo "Firma estable cargada desde GitHub Secrets."
+      - name: Compilar APK de prueba independiente (no sustituye tu instalación)
+        working-directory: android
+        shell: bash
+        env:
+          NS_SIGNING_PASSWORD: ${{ secrets.NS_SIGNING_PASSWORD }}
+          NS_SIGNING_ALIAS: ${{ secrets.NS_SIGNING_ALIAS }}
+          NS_PREVIEW_SIGNING_PASSWORD: ${{ secrets.NS_PREVIEW_SIGNING_PASSWORD }}
+          NS_PREVIEW_SIGNING_ALIAS: ${{ secrets.NS_PREVIEW_SIGNING_ALIAS }}
+          # URL pública de pruebas; el usuario no la introduce manualmente.
+          NEUROSYNC_API_BASE_URL: https://neurosync-public-api-staging-vz3h.onrender.com
+          # Configurar esta variable en GitHub Actions > Variables cuando exista OAuth.
+          NEUROSYNC_GOOGLE_WEB_CLIENT_ID: ${{ vars.NEUROSYNC_GOOGLE_WEB_CLIENT_ID || '1033210706025-rgmt44l71ho2cuakl1o2qfs5j6ijsjkq.apps.googleusercontent.com' }}
+        run: |
+          set -o pipefail
+          gradle --no-daemon --stacktrace assemblePreview 2>&1 | tee "$RUNNER_TEMP/neurosync-gradle.log"
+
+      - name: Verificar que la prueba contiene la interfaz nueva
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/preview/app-preview.apk"
+          test -s "$APK"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep "package: name='com.neurosync.familia.preview' versionCode='10'"
+          python3 - <<'PY'
+          import zipfile,hashlib
+          from pathlib import Path
+          source=Path("index.html").read_bytes()
+          with zipfile.ZipFile("android/app/build/outputs/apk/preview/app-preview.apk") as z:
+              packed=z.read("assets/index.html")
+              assert packed==source, "ERROR: La APK de prueba tiene una interfaz antigua"
+              dex=b"".join(z.read(x) for x in z.namelist()
+                            if x.startswith("classes") and x.endswith(".dex"))
+              for name in (b"AlarmChallengeStore",b"AlarmRingActivity",b"SessionVault"):
+                  assert name in dex, f"Falta clase Android: {name!r}"
+              for name in (b'view-habits',b'buildInfo',b'setAlarmChallenge',b'ns-login-form',b'ns-brand-hero'):
+                  assert name in packed, f"Falta control HTML: {name!r}"
+          print("APK preview contiene HTML y funciones actuales.")
+          print("SHA256 de HTML:",hashlib.sha256(packed).hexdigest())
+          PY
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify "$APK"
+          # Validar el APK generado, NO solo el certificado importado.
+          if [ "${{ steps.preview_signing.outputs.configured }}" = 'true' ]; then
+            CERT_OUTPUT=$("$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$APK")
+            ACTUAL_SHA1=$(printf '%s\n' "$CERT_OUTPUT" | sed -n 's/^Signer #1 certificate SHA-1 digest: //p' | tr -d '[:space:]:')
+            EXPECTED_SHA1='3ef574b7f38f09fbb48160bc40571ea7d6a49063'
+            if [ "${ACTUAL_SHA1,,}" != "$EXPECTED_SHA1" ]; then
+              echo "::error::La APK no tiene la firma OAuth de NeuroSync Preview."
+              exit 1
+            fi
+            echo 'Certificado real del APK coincide con Google OAuth Preview.'
+          fi
+
+      - name: Publicar APK para comprobar funciones SIN borrar datos
+        uses: actions/upload-artifact@v4
+        with:
+          name: NeuroSync-10-PRUEBA-INDEPENDIENTE
+          path: android/app/build/outputs/apk/preview/app-preview.apk
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Compilar APK instalable de distribución
         if: steps.signing.outputs.configured == 'true'
         working-directory: android
@@ -280,7 +380,7 @@ jobs:
           NS_SIGNING_ALIAS: ${{ secrets.NS_SIGNING_ALIAS }}
         run: |
           set -o pipefail
-          gradle --no-daemon --stacktrace --warning-mode all assembleRelease 2>&1 | tee "$RUNNER_TEMP/neurosync-gradle.log"
+          gradle --no-daemon --stacktrace --warning-mode all assembleRelease bundleRelease 2>&1 | tee "$RUNNER_TEMP/neurosync-gradle.log"
 
       - name: Guardar registro de errores de compilación
         if: failure()
@@ -299,7 +399,7 @@ jobs:
           APK="android/app/build/outputs/apk/release/app-release.apk"
           test -s "$APK" || { echo "::error::No se generó app-release.apk"; exit 1; }
           unzip -t "$APK" >/dev/null
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee /tmp/neurosync-apk-info.txt
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | tee /tmp/neurosync-apk-info.txt
           grep -q "package: name='com.neurosync.familia' versionCode='10' versionName='10.0.0'" /tmp/neurosync-apk-info.txt
           python3 - <<'PY'
           import hashlib,zipfile
@@ -321,8 +421,29 @@ jobs:
           print('SHA256 index.html empaquetado:',hashlib.sha256(packaged).hexdigest())
           print('Tamaño APK real:',apk.stat().st_size,'bytes')
           PY
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK" | tee /tmp/neurosync-signature.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | tee /tmp/neurosync-signature.txt
           sha256sum "$APK" | tee /tmp/neurosync-apk-sha256.txt
+
+      - name: Validar Android App Bundle para Google Play
+        if: steps.signing.outputs.configured == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          AAB="android/app/build/outputs/bundle/release/app-release.aab"
+          test -s "$AAB"
+          unzip -t "$AAB" >/dev/null
+          jarsigner -verify -certs "$AAB" > /tmp/neurosync-aab-signature.txt
+          unzip -l "$AAB" | grep -q 'base/manifest/AndroidManifest.xml'
+          echo 'AAB firmado y verificado. No se publica automáticamente en Google Play.'
+
+      - name: Publicar AAB firmado para revisión en Play Console
+        if: steps.signing.outputs.configured == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: NeuroSync-Google-Play-AAB
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Publicar solo APK con firma permanente
         if: steps.signing.outputs.configured == 'true'

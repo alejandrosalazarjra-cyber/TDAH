@@ -152,6 +152,26 @@ public final class AccountStore {
       return new JSONObject().put("ok",true).put("users",result);
     }catch(Exception e){return fail("No se pudo consultar usuarios");}
   }
+  /** Directorio mínimo de destinatarios activos. No revela claves, hashes ni tokens. */
+  public static JSONObject contacts(Context c,JSONObject actor){
+    try{
+      if(actor==null||actor.optString("username","").isEmpty())return fail("Inicia sesión");
+      JSONArray all=users(c),result=new JSONArray();
+      for(int i=0;i<all.length();i++){
+        JSONObject u=all.optJSONObject(i);
+        if(u!=null&&u.optBoolean("active",true)&&
+           !u.optString("username").equals(actor.optString("username")))
+          result.put(new JSONObject().put("username",u.optString("username")));
+      }
+      return new JSONObject().put("ok",true).put("users",result);
+    }catch(Exception e){return fail("No se pudo cargar la lista de personas");}
+  }
+  public static boolean isActive(Context c,String username){
+    try{
+      JSONObject u=find(users(c),norm(username));
+      return u!=null&&u.optBoolean("active",true);
+    }catch(Exception e){return false;}
+  }
   public static JSONObject create(Context c,JSONObject actor,String username,String password){
     try{
       synchronized(LOCK){

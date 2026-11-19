@@ -1,17 +1,40 @@
 plugins { id 'com.android.application' }
 android {
     namespace 'com.neurosync.familia'
-    compileSdk 35
+    compileSdk 36
+    buildFeatures { buildConfig true }
     defaultConfig {
+        // Configuración del desarrollador; nunca se solicita una URL al usuario.
+        def base = System.getenv('NEUROSYNC_API_BASE_URL') ?: ''
+        def oauthClient = System.getenv('NEUROSYNC_GOOGLE_WEB_CLIENT_ID') ?: ''
+        if (base && !(base ==~ /^https:\/\/[A-Za-z0-9.-]+(?::443)?\/?$/)) {
+            throw new GradleException('NEUROSYNC_API_BASE_URL debe ser una URL HTTPS sin ruta ni credenciales')
+        }
+        if (oauthClient && !(oauthClient ==~ /^[A-Za-z0-9._-]+\.apps\.googleusercontent\.com$/)) {
+            throw new GradleException('Cliente OAuth Web inválido')
+        }
+        def cleanBase = base.endsWith('/') ? base.substring(0,base.length()-1) : base
+        buildConfigField 'String', 'PUBLIC_API_BASE_URL', '"' + cleanBase + '"'
+        buildConfigField 'String', 'PUBLIC_GOOGLE_CLIENT_ID', '"' + oauthClient + '"'
         applicationId 'com.neurosync.familia'
         minSdk 26
-        targetSdk 35
+        targetSdk 36
         versionCode 10
         versionName '10.0.0'
         manifestPlaceholders = [appLabel: 'NeuroSync Familia']
     }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     signingConfigs {
+        // Clave independiente para la APK preview; nunca reutilizar Play/release.
+        if (System.getenv('NS_PREVIEW_KEYSTORE_FILE')) {
+            create('neurosyncPreview') {
+                storeFile file(System.getenv('NS_PREVIEW_KEYSTORE_FILE'))
+                storeType 'pkcs12'
+                storePassword System.getenv('NS_PREVIEW_SIGNING_PASSWORD')
+                keyAlias System.getenv('NS_PREVIEW_SIGNING_ALIAS') ?: 'neurosync_preview'
+                keyPassword System.getenv('NS_PREVIEW_SIGNING_PASSWORD')
+            }
+        }
         if (System.getenv('NS_KEYSTORE_FILE')) {
             create('neurosyncRelease') {
                 storeFile file(System.getenv('NS_KEYSTORE_FILE'))
@@ -24,6 +47,13 @@ android {
     buildTypes {
         preview {
             initWith debug
+            // Si no hay firma preview estable, ocultar login público en esta APK.
+            // Así se evita intentar Google OAuth con el certificado debug efímero del runner.
+            if (System.getenv('NS_PREVIEW_KEYSTORE_FILE')) {
+                signingConfig signingConfigs.neurosyncPreview
+            } else {
+                buildConfigField 'String', 'PUBLIC_GOOGLE_CLIENT_ID', '""'
+            }
             applicationIdSuffix '.preview'
             versionNameSuffix '-preview'
             manifestPlaceholders = [appLabel: 'NeuroSync PRUEBA 10']
@@ -39,4 +69,7 @@ android {
 }
 
 // ZXing Android Embedded: escáner QR de código abierto, sin aplicación externa.
-dependencies { implementation 'com.journeyapps:zxing-android-embedded:4.3.0' }
+dependencies {
+    implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
+    implementation 'com.google.android.gms:play-services-auth:21.5.0'
+}

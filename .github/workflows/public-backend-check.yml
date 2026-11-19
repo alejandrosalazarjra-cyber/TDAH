@@ -1,0 +1,56 @@
+name: Pruebas del servidor público NeuroSync
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'tests/test_public_backend_*.js'
+      - '.github/workflows/public-backend-check.yml'
+  push:
+    branches: ['feature/pulido-contable-estabilidad-2026-11']
+    paths:
+      - 'backend/**'
+      - 'tests/test_public_backend_*.js'
+      - '.github/workflows/public-backend-check.yml'
+permissions:
+  contents: read
+jobs:
+  public-api:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: neurosync_tests
+          POSTGRES_USER: neurosync
+          POSTGRES_PASSWORD: test_only_local_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U neurosync -d neurosync_tests"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --prefix backend --no-audit --no-fund
+      - run: node --check backend/server.js
+      - run: node tests/test_public_backend_contract.js
+      - run: node tests/test_public_backend_api.js
+      - run: node tests/test_public_launch_readiness.js
+      - run: node tests/test_google_play_gate.js
+      - run: node tests/test_public_oauth_wiring.js
+      - run: node tests/test_public_deployment_config.js
+      - name: Aplicar esquema a PostgreSQL de prueba
+        env:
+          DATABASE_URL: postgres://neurosync:test_only_local_ci@127.0.0.1:5432/neurosync_tests
+          NEUROSYNC_PUBLIC_DB_CONFIRM: 'yes'
+        run: node backend/migrate.js
+      - name: Verificar tablas y permisos mínimos
+        env:
+          DATABASE_URL: postgres://neurosync:test_only_local_ci@127.0.0.1:5432/neurosync_tests
+        run: node tests/test_public_backend_database.js

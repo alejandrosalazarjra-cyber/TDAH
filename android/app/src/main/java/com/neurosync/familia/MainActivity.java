@@ -19,7 +19,36 @@ import java.util.concurrent.Executors;
  * La interfaz principal se distribuye dentro de la APK (no depende de Netlify).
  */
 public final class MainActivity extends Activity {
+  private String pendingNavigation="";
+  private String allowedNavigation(String value){
+    if(value==null)return "";
+    switch(value){
+      case "home":case "tasks":case "calendar":case "bags":case "alarms":
+      case "habits":case "focus":case "dragon":case "admin":case "finance":return value;
+      default:return "";
+    }
+  }
+  private void deliverNavigation(){
+    if(web==null||pendingNavigation.isEmpty())return;
+    String route=pendingNavigation;
+    pendingNavigation="";
+    web.evaluateJavascript("window.neuroNavigateFromLauncher && window.neuroNavigateFromLauncher("+JSONObject.quote(route)+")",null);
+  }
+  @Override protected void onNewIntent(Intent intent){
+    super.onNewIntent(intent);
+    setIntent(intent);
+    pendingNavigation=allowedNavigation(intent==null?null:intent.getStringExtra("neurosync_view"));
+    deliverNavigation();
+  }
   private WebView web;
+  private GoogleAccountBridge googleAccounts;
+  private PublicAccountBridge publicAccounts;
+  void googleCallback(String name,String json){
+    // Los callbacks del servidor público llegan en el hilo de red.
+    runOnUiThread(()->{
+      if(web!=null)web.evaluateJavascript("window."+name+" && window."+name+"("+JSONObject.quote(json)+")",null);
+    });
+  }
   private String backupPending="";
   private boolean qrEnrollmentPending=false;
   private final ExecutorService networkWorker=Executors.newSingleThreadExecutor();
@@ -49,11 +78,18 @@ public final class MainActivity extends Activity {
   private void forgetNativeSession(){
     if(localHost()&&!sessionToken.isEmpty())AccountStore.revoke(this,sessionToken);
     SessionVault.clear(this);
+    TaskBackgroundSync.cancel(this);
     sessionUser=null;sessionToken="";
   }
   @Override public void onCreate(Bundle state){
     super.onCreate(state);
+    pendingNavigation=allowedNavigation(getIntent()==null?null:getIntent().getStringExtra("neurosync_view"));
     restoreNativeSession();
+    if(sessionUser!=null)TaskBackgroundSync.schedule(this);
+    googleAccounts=new GoogleAccountBridge(this);
+    publicAccounts=new PublicAccountBridge(this);
+    if(PublicSessionVault.restore(this,"public",BuildConfig.PUBLIC_API_BASE_URL)!=null)
+      TaskBackgroundSync.schedule(this);
     getWindow().setStatusBarColor(Color.rgb(246,248,252));
     getWindow().setNavigationBarColor(Color.rgb(255,255,255));
     getWindow().getDecorView().setSystemUiVisibility(android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
@@ -65,9 +101,52 @@ public final class MainActivity extends Activity {
     settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
     web.setWebChromeClient(new WebChromeClient());
     web.setWebViewClient(new WebViewClient(){
+      @Override public void onPageFinished(WebView view,String url){
+        super.onPageFinished(view,url);
+        deliverNavigation();
+      }
       // Solo recursos locales de la mascota; no altera la red, cuentas ni las alarmas.
       @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request){
         String path=request.getUrl().getPath();
+        // Módulos internos de alarmas: ruta exacta, sin permitir acceso a archivos arbitrarios.
+        if("appassets.androidplatform.net".equals(request.getUrl().getHost()) && path!=null){
+          String resource=null,mime=null;
+          if("/modules/alarm_studio.js".equals(path)){
+            resource="modules/alarm_studio.js";mime="text/javascript";
+          }else if("/modules/alarm_studio.css".equals(path)){
+            resource="modules/alarm_studio.css";mime="text/css";
+          }else if("/modules/task_studio.js".equals(path)){
+            resource="modules/task_studio.js";mime="text/javascript";
+          }else if("/modules/task_studio.css".equals(path)){
+            resource="modules/task_studio.css";mime="text/css";
+          }else if("/modules/departure_studio.js".equals(path)){
+            resource="modules/departure_studio.js";mime="text/javascript";
+          }else if("/modules/departure_studio.css".equals(path)){
+            resource="modules/departure_studio.css";mime="text/css";
+          }else if("/modules/pomodoro_studio.js".equals(path)){
+            resource="modules/pomodoro_studio.js";mime="text/javascript";
+          }else if("/modules/pomodoro_studio.css".equals(path)){
+            resource="modules/pomodoro_studio.css";mime="text/css";
+          }
+          else if("/modules/wellbeing_studio.js".equals(path)){
+            resource="modules/wellbeing_studio.js";mime="text/javascript";
+          }else if("/modules/wellbeing_studio.css".equals(path)){
+            resource="modules/wellbeing_studio.css";mime="text/css";
+          }
+          else if("/modules/finance_studio.js".equals(path)){
+            resource="modules/finance_studio.js";mime="text/javascript";
+          }else if("/modules/finance_studio.css".equals(path)){
+            resource="modules/finance_studio.css";mime="text/css";
+          }else if("/assets/focus/bosque.mp4".equals(path)){
+            resource="focus/bosque.mp4";mime="video/mp4";
+          }
+          if(resource!=null)try{
+            return new WebResourceResponse(mime,"UTF-8",getAssets().open(resource));
+          }catch(IOException error){
+            android.util.Log.w("NeuroSync","No se pudo cargar módulo interno de alarmas",error);
+            return null;
+          }
+        }
         if("appassets.androidplatform.net".equals(request.getUrl().getHost())
             && path!=null && path.matches("/assets/dragon/(?:etapa-[1-6]|atlases/etapa-[1-6])\\.webp")){
           try{
@@ -92,6 +171,12 @@ public final class MainActivity extends Activity {
   }
   @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
     super.onActivityResult(requestCode,resultCode,data);
+    if(requestCode==GoogleAccountBridge.REQUEST_SIGNIN){
+      googleAccounts.onResult(data);return;
+    }
+    if(requestCode==PublicAccountBridge.SIGNIN_REQUEST){
+      publicAccounts.onResult(data);return;
+    }
     // Registro de referencia QR iniciado desde el formulario web.
     if(qrEnrollmentPending){
       com.google.zxing.integration.android.IntentResult scan=
@@ -230,6 +315,11 @@ public final class MainActivity extends Activity {
     if(AccountStore.identity(this,sessionToken)==null)return AccountStore.fail("Sesión caducada. Inicia sesión de nuevo.");
     switch(path){
       case "/users":return AccountStore.list(this,sessionUser);
+      case "/contacts":return AccountStore.contacts(this,sessionUser);
+      case "/send-task":return SyncStore.sendTask(this,args,sessionUser);
+      case "/sent-tasks":return SyncStore.sentTasks(this,sessionUser);
+      case "/notification-digest":return SyncStore.notificationDigest(this,sessionUser);
+      case "/update-delivery":return SyncStore.updateDelivery(this,args,sessionUser);
       case "/create-user":return AccountStore.create(this,sessionUser,args.optString("username"),args.optString("password"));
       case "/change-password":return AccountStore.change(this,sessionUser,args.optString("current"),args.optString("next"));
       case "/sync":return SyncStore.merge(this,args,sessionUser);
@@ -300,11 +390,105 @@ public final class MainActivity extends Activity {
       if(result.optBoolean("ok")){
         sessionToken=result.optString("token","");
         sessionUser=result.optJSONObject("user");
-        SessionVault.save(MainActivity.this,sessionToken,sessionUser,currentMode(),currentEndpoint());
+        boolean persisted=SessionVault.save(MainActivity.this,sessionToken,sessionUser,currentMode(),currentEndpoint());
+        if(persisted)TaskBackgroundSync.schedule(MainActivity.this);
+        try{
+          result.put("sessionPersistent",persisted);
+          if(!persisted)result.put("sessionWarning",
+            "No se pudo conservar la sesión en este dispositivo. Puede ser necesario iniciar sesión otra vez.");
+        }catch(Exception ignored){}
         // El aviso de contraseña inicial se gestiona en la interfaz.
         result.remove("token"); // El secreto de sesión permanece exclusivamente en Java.
       }
       return result.toString();
+    }
+    /** Diagnóstico público: paquete y huella del certificado, nunca claves privadas. */
+    @JavascriptInterface public String googleOAuthDiagnostics(){
+      JSONObject info=new JSONObject();
+      try{
+        java.security.MessageDigest digest=java.security.MessageDigest.getInstance("SHA-1");
+        byte[] cert=null;
+        if(Build.VERSION.SDK_INT>=28){
+          android.content.pm.PackageInfo pkg=getPackageManager().getPackageInfo(getPackageName(),PackageManager.GET_SIGNING_CERTIFICATES);
+          android.content.pm.SigningInfo signing=pkg.signingInfo;
+          android.content.pm.Signature[] signatures=signing.hasMultipleSigners()?signing.getApkContentsSigners():signing.getSigningCertificateHistory();
+          if(signatures!=null&&signatures.length>0)cert=signatures[0].toByteArray();
+        }else{
+          android.content.pm.PackageInfo pkg=getPackageManager().getPackageInfo(getPackageName(),PackageManager.GET_SIGNATURES);
+          if(pkg.signatures!=null&&pkg.signatures.length>0)cert=pkg.signatures[0].toByteArray();
+        }
+        StringBuilder hash=new StringBuilder();
+        if(cert!=null){for(byte value:digest.digest(cert)){if(hash.length()>0)hash.append(':');hash.append(String.format(java.util.Locale.US,"%02X",value&255));}}
+        info.put("packageName",getPackageName()).put("sha1",hash.toString())
+          .put("note","Registra este paquete y SHA-1 en un cliente OAuth de Android en Google Cloud. Play App Signing usa otro certificado.");
+      }catch(Exception ex){android.util.Log.w("NeuroSync","Error consultando certificado",ex);}
+      return info.toString();
+    }
+    @JavascriptInterface public void loginGoogle(){
+      runOnUiThread(()->googleAccounts.login());
+    }
+    @JavascriptInterface public String restoreGoogleSession(){
+      return googleAccounts.restored().toString();
+    }
+    @JavascriptInterface public void backupGoogleDrive(String json){
+      googleAccounts.backup(json);
+    }
+    @JavascriptInterface public void refreshGoogleDrive(){
+      googleAccounts.restoreDrive();
+    }
+    @JavascriptInterface public void logoutGoogle(){
+      googleAccounts.logout();
+    }
+    @JavascriptInterface public boolean adminModeEnabled(){
+      return localHost() || currentMode().isEmpty();
+    }
+    @JavascriptInterface public String loginOwner(String username,String password){
+      if(currentMode().isEmpty()){
+        getPreferences(0).edit().putString("mode","host").apply();
+        runOnUiThread(()->startServer());
+      }
+      if(!localHost())return AccountStore.fail("El acceso de administrador solo es local").toString();
+      JSONObject result=AccountStore.authenticate(MainActivity.this,username,password);
+      if(!result.optBoolean("ok"))return result.toString();
+      JSONObject user=result.optJSONObject("user");
+      if(user==null||!"admin".equals(user.optString("role"))){
+        AccountStore.revoke(MainActivity.this,result.optString("token"));
+        return AccountStore.fail("Esta opción es exclusiva del administrador").toString();
+      }
+      sessionToken=result.optString("token","");
+      sessionUser=user;
+      boolean persisted=SessionVault.save(MainActivity.this,sessionToken,sessionUser,currentMode(),currentEndpoint());
+        if(persisted)TaskBackgroundSync.schedule(MainActivity.this);
+        try{
+          result.put("sessionPersistent",persisted);
+          if(!persisted)result.put("sessionWarning",
+            "No se pudo conservar la sesión en este dispositivo. Puede ser necesario iniciar sesión otra vez.");
+        }catch(Exception ignored){}
+      result.remove("token");
+      return result.toString();
+    }
+    /** Las copias nativas se limitan a la identidad autenticada en Android.
+     * El identificador recibido del WebView NO concede acceso a otras cuentas.
+     */
+    private boolean canAccessSnapshot(String username){
+      if(username==null||username.isEmpty())return false;
+      if(sessionUser!=null&&username.equals(sessionUser.optString("username"))&&
+          !sessionToken.isEmpty()&&
+          (!localHost()||AccountStore.identity(MainActivity.this,sessionToken)!=null))return true;
+      try{
+        JSONObject google=googleAccounts.restored();
+        JSONObject account=google.optJSONObject("user");
+        return google.optBoolean("ok")&&account!=null&&
+          username.equals(account.optString("username"));
+      }catch(Exception ignored){return false;}
+    }
+    @JavascriptInterface public boolean saveNativeSnapshot(String username,String json){
+      if(!canAccessSnapshot(username))return false;
+      return NativeSnapshotStore.get(MainActivity.this).save(username,json);
+    }
+    @JavascriptInterface public String recoverNativeSnapshot(String username){
+      if(!canAccessSnapshot(username))return "{\"ok\":false,\"reason\":\"unauthorized\"}";
+      return NativeSnapshotStore.get(MainActivity.this).recover(username);
     }
     @JavascriptInterface public String restoreSession(){
       try{
@@ -316,6 +500,237 @@ public final class MainActivity extends Activity {
       }catch(Exception e){return AccountStore.fail("No se pudo restaurar la sesión").toString();}
     }
     @JavascriptInterface public String getUsers(){return call("/users",new JSONObject()).toString();}
+    /** Aviso local únicamente para una tarea nueva de la cuenta autenticada.
+     * La pantalla bloqueada no expone el título de la tarea.
+     */
+    @JavascriptInterface public boolean notifyTaskReceived(String taskId,String sender){
+      JSONObject user=sessionUser;
+      if(user==null||sessionToken.isEmpty()||taskId==null||taskId.length()<5||taskId.length()>100||
+          sender==null||!sender.matches("[a-z0-9_\\-]{3,30}"))return false;
+      if(localHost()&&AccountStore.identity(MainActivity.this,sessionToken)==null)return false;
+      if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+          !=PackageManager.PERMISSION_GRANTED)return false;
+      String username=user.optString("username","");
+      if(username.isEmpty())return false;
+      String seenKey=Integer.toHexString((username+":"+taskId).hashCode())+"_"+taskId;
+      android.content.SharedPreferences seen=getSharedPreferences("ns_received_task_notices",MODE_PRIVATE);
+      if(seen.getBoolean(seenKey,false))return true;
+      try{
+        NotificationManager manager=getSystemService(NotificationManager.class);
+        if(manager==null||!manager.areNotificationsEnabled())return false;
+        final String channel="ns_family_tasks_v1";
+        manager.createNotificationChannel(new NotificationChannel(channel,"Tareas familiares",
+          NotificationManager.IMPORTANCE_DEFAULT));
+        Intent open=new Intent(MainActivity.this,MainActivity.class)
+          .putExtra("neurosync_view","tasks")
+          .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        int identifier=(username+":"+taskId).hashCode()&0x7fffffff;
+        PendingIntent action=PendingIntent.getActivity(MainActivity.this,identifier,open,
+          PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+        Notification notification=new Notification.Builder(MainActivity.this,channel)
+          .setSmallIcon(android.R.drawable.stat_notify_more)
+          .setContentTitle("Nueva tarea recibida")
+          .setContentText("Tienes una tarea nueva en tu bandeja de NeuroSync")
+          .setContentIntent(action).setAutoCancel(true)
+          .setVisibility(Notification.VISIBILITY_PRIVATE).build();
+        manager.notify("ns_task_"+username,identifier,notification);
+        return seen.edit().putBoolean(seenKey,true).commit();
+      }catch(Exception e){
+        android.util.Log.w("NeuroSync","No se pudo mostrar notificación de tarea",e);
+        return false;
+      }
+    }
+    /** Aviso de estado de tareas enviadas; únicamente metadatos ya filtrados por servidor. */
+    @JavascriptInterface public boolean notifySentTaskStatus(String taskId,String status){
+      JSONObject user=sessionUser;
+      if(user==null||sessionToken.isEmpty()||taskId==null||
+         !taskId.matches("sent_[a-zA-Z0-9-]{8,90}")||
+         !("accepted".equals(status)||"completed".equals(status)))return false;
+      if(localHost()&&AccountStore.identity(MainActivity.this,sessionToken)==null)return false;
+      if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+          !=PackageManager.PERMISSION_GRANTED)return false;
+      String username=user.optString("username","");
+      if(username.isEmpty())return false;
+      try{
+        NotificationManager manager=getSystemService(NotificationManager.class);
+        if(manager==null||!manager.areNotificationsEnabled())return false;
+        String channel="ns_family_tasks_v1";
+        manager.createNotificationChannel(new NotificationChannel(channel,"Tareas familiares",
+          NotificationManager.IMPORTANCE_DEFAULT));
+        String identity=username+":"+taskId+":"+status;
+        int notificationId=identity.hashCode()&0x7fffffff;
+        Intent open=new Intent(MainActivity.this,MainActivity.class)
+          .putExtra("neurosync_view","tasks")
+          .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        PendingIntent tap=PendingIntent.getActivity(MainActivity.this,notificationId,open,
+          PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+        Notification notice=new Notification.Builder(MainActivity.this,channel)
+          .setSmallIcon(android.R.drawable.stat_notify_more)
+          .setContentTitle("accepted".equals(status)?"Tarea aceptada":"Tarea completada")
+          .setContentText("Revisa el estado de una tarea que enviaste")
+          .setContentIntent(tap).setAutoCancel(true)
+          .setVisibility(Notification.VISIBILITY_PRIVATE).build();
+        manager.notify("ns_task_status_"+username,notificationId,notice);
+        return true;
+      }catch(Exception e){
+        android.util.Log.w("NeuroSync","No se pudo avisar del estado de tarea",e);
+        return false;
+      }
+    }
+    // Acceso público opcional; el WebView nunca recibe tokens OAuth ni bearer.
+    @JavascriptInterface public boolean publicAvailable(){
+      return publicAccounts!=null&&publicAccounts.available();
+    }
+    @JavascriptInterface public void publicLogin(){
+      runOnUiThread(()->{if(publicAccounts!=null)publicAccounts.login();});
+    }
+    @JavascriptInterface public String publicRestore(){
+      return publicAccounts==null?"{}":publicAccounts.restored().toString();
+    }
+    @JavascriptInterface public String publicLogout(){
+      return publicAccounts==null?"{}":publicAccounts.logout().toString();
+    }
+    @JavascriptInterface public String publicMe(){
+      return publicAccounts.call("GET","/v1/me",null,"").toString();
+    }
+    @JavascriptInterface public String publicUpdateProfile(String handle,String displayName,boolean discoverable){
+      String normalized=handle==null?"":handle.trim().toLowerCase(java.util.Locale.ROOT).replaceFirst("^@","");
+      String name=displayName==null?"":displayName.trim();
+      if(!normalized.matches("[a-z0-9_]{3,30}")||name.isEmpty()||name.length()>100)
+        return AccountStore.fail("Perfil inválido").toString();
+      try{
+        JSONObject body=new JSONObject().put("handle",normalized).put("displayName",name)
+          .put("discoverable",discoverable);
+        return publicAccounts.call("POST","/v1/me",body,"").toString();
+      }catch(Exception e){return AccountStore.fail("No se pudo modificar el perfil").toString();}
+    }
+    @JavascriptInterface public String publicContacts(){
+      return publicAccounts.call("GET","/v1/contacts",null,"").toString();
+    }
+    @JavascriptInterface public void openLegalPage(String page){
+      if(!("privacy".equals(page)||"delete-account".equals(page)))return;
+      final String url="https://neurosync-public-api-staging-vz3h.onrender.com/"+page;
+      runOnUiThread(()->{
+        try{
+          Intent browser=new Intent(Intent.ACTION_VIEW,android.net.Uri.parse(url));
+          browser.addCategory(Intent.CATEGORY_BROWSABLE);
+          startActivity(browser);
+        }catch(Exception e){
+          android.util.Log.w("NeuroSync","No hay navegador para abrir políticas",e);
+        }
+      });
+    }
+    @JavascriptInterface public String publicBlocks(){
+      return publicAccounts.call("GET","/v1/contacts/blocks",null,"").toString();
+    }
+    @JavascriptInterface public String publicBlock(String recipientId){
+      if(recipientId==null||!recipientId.matches("[0-9a-fA-F-]{36}"))
+        return AccountStore.fail("Usuario inválido").toString();
+      return publicAccounts.call("POST","/v1/contacts/block",
+        payload("recipientId",recipientId),"").toString();
+    }
+    @JavascriptInterface public String publicUnblock(String recipientId){
+      if(recipientId==null||!recipientId.matches("[0-9a-fA-F-]{36}"))
+        return AccountStore.fail("Usuario inválido").toString();
+      return publicAccounts.call("POST","/v1/contacts/unblock",
+        payload("recipientId",recipientId),"").toString();
+    }
+    @JavascriptInterface public String publicDeleteAccount(String confirmation){
+      if(!"ELIMINAR".equals(confirmation))
+        return AccountStore.fail("Confirmación inválida").toString();
+      JSONObject previous=publicAccounts.restored();
+      JSONObject currentUser=previous.optJSONObject("user");
+      String account=currentUser==null?"":currentUser.optString("username","");
+      JSONObject reply=publicAccounts.deleteAccount();
+      if(reply.optBoolean("ok")&&reply.optBoolean("deleted")&&!account.isEmpty()){
+        // El borrado remoto ya fue confirmado: limpiar también la copia cifrada local.
+        if(!NativeSnapshotStore.get(MainActivity.this).erase(account))
+          android.util.Log.w("NeuroSync","Borrado remoto completo, copia local pendiente");
+      }
+      return reply.toString();
+    }
+    @JavascriptInterface public String publicInvitations(){
+      return publicAccounts.call("GET","/v1/contacts/invitations",null,"").toString();
+    }
+    @JavascriptInterface public String publicLookup(String handle){
+      if(handle==null||!handle.replace("@","").matches("[a-zA-Z0-9_]{3,30}"))
+        return AccountStore.fail("Identificador inválido").toString();
+      return publicAccounts.call("GET","/v1/users/lookup?handle="+handle.toLowerCase(java.util.Locale.ROOT).replace("@",""),null,"").toString();
+    }
+    @JavascriptInterface public String publicInvite(String recipientId){
+      if(recipientId==null||!recipientId.matches("[0-9a-fA-F-]{36}"))
+        return AccountStore.fail("Destinatario inválido").toString();
+      return publicAccounts.call("POST","/v1/contacts/invitations",
+        payload("recipientId",recipientId),"").toString();
+    }
+    @JavascriptInterface public String publicAcceptInvite(String id){
+      if(id==null||!id.matches("[0-9a-fA-F-]{36}"))
+        return AccountStore.fail("Invitación inválida").toString();
+      return publicAccounts.call("POST","/v1/contacts/invitations/"+id+"/accept",new JSONObject(),"").toString();
+    }
+    @JavascriptInterface public String publicDeclineInvite(String id){
+      if(id==null||!id.matches("[0-9a-fA-F-]{36}"))
+        return AccountStore.fail("Invitación inválida").toString();
+      return publicAccounts.call("POST","/v1/contacts/invitations/"+id+"/decline",new JSONObject(),"").toString();
+    }
+    @JavascriptInterface public String publicSendTask(String recipientId,String requestKey,String taskJson){
+      if(recipientId==null||!recipientId.matches("[0-9a-fA-F-]{36}")||
+         requestKey==null||!requestKey.matches("[A-Za-z0-9_-]{8,100}")||
+         taskJson==null||taskJson.length()>8000)
+        return AccountStore.fail("Tarea inválida").toString();
+      try{
+        JSONObject task=new JSONObject(taskJson);
+        String title=task.optString("title","").trim();
+        String repeat=task.optString("repeat","none");
+        String category=task.optString("category","Personal").trim();
+        String date=task.optString("date","");
+        String time=task.optString("time","");
+        org.json.JSONArray steps=task.optJSONArray("steps");
+        if(steps==null)steps=new org.json.JSONArray();
+        if(title.isEmpty()||title.length()>100||
+           !("none".equals(repeat)||"daily".equals(repeat)||"weekly".equals(repeat))||
+           category.isEmpty()||category.length()>60||steps.length()>20)
+          return AccountStore.fail("Tarea inválida").toString();
+        for(int i=0;i<steps.length();i++){
+          Object step=steps.opt(i);
+          if(!(step instanceof String)||((String)step).trim().isEmpty()||
+             ((String)step).length()>140)
+            return AccountStore.fail("Subtarea inválida").toString();
+        }
+        JSONObject body=new JSONObject()
+          .put("recipientId",recipientId).put("title",title)
+          .put("repeat",repeat).put("steps",steps)
+          .put("category",category).put("date",date).put("time",time);
+        return publicAccounts.call("POST","/v1/tasks",body,requestKey).toString();
+      }catch(Exception e){return AccountStore.fail("No se pudo preparar el envío").toString();}
+    }
+    @JavascriptInterface public String publicTasks(String box){
+      if(!"sent".equals(box)&&!"inbox".equals(box))return AccountStore.fail("Bandeja inválida").toString();
+      return publicAccounts.call("GET","/v1/tasks?box="+box,null,"").toString();
+    }
+    @JavascriptInterface public String publicTaskAction(String taskId,String action){
+      if(taskId==null||!taskId.matches("[0-9a-fA-F-]{36}")||
+         !("accept".equals(action)||"decline".equals(action)||"complete".equals(action)))
+        return AccountStore.fail("Acción inválida").toString();
+      return publicAccounts.call("POST","/v1/tasks/"+taskId+"/"+action,new JSONObject(),"").toString();
+    }
+    @JavascriptInterface public String sentTasks(){
+      return call("/sent-tasks",new JSONObject()).toString();
+    }
+    @JavascriptInterface public String updateTaskDelivery(String id,String status){
+      return call("/update-delivery",payload("id",id,"status",status)).toString();
+    }
+    @JavascriptInterface public String taskContacts(){
+      return call("/contacts",new JSONObject()).toString();
+    }
+    @JavascriptInterface public String sendTaskToUser(String recipient,String requestId,String taskJson){
+      try{
+        if(taskJson==null||taskJson.length()>10000)return AccountStore.fail("Tarea demasiado grande").toString();
+        JSONObject data=new JSONObject().put("recipient",recipient).put("requestId",requestId)
+          .put("task",new JSONObject(taskJson));
+        return call("/send-task",data).toString();
+      }catch(Exception e){return AccountStore.fail("Solicitud inválida").toString();}
+    }
     @JavascriptInterface public String createAccount(String username,String password){
       return call("/create-user",payload("username",username,"password",password)).toString();
     }
@@ -343,6 +758,31 @@ public final class MainActivity extends Activity {
         });
       });
     }
+    @JavascriptInterface public void openPermissionsPanel(String target){
+      runOnUiThread(()->{
+        try{
+          Intent settings;
+          switch(target==null?"":target){
+            case "overlay":
+              settings=new Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                android.net.Uri.parse("package:"+getPackageName()));break;
+            case "usage":
+              settings=new Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS);break;
+            case "notifications":
+              settings=new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE,getPackageName());break;
+            case "app":
+              openAppSettings();return;
+            default:return;
+          }
+          startActivity(settings);
+        }catch(Exception ignored){openAppSettings();}
+      });
+    }
+    @JavascriptInterface public String alarmScheduleDiagnostics(){
+      try{return AlarmReceiver.diagnostics(MainActivity.this).toString();}
+      catch(Exception e){return "{}";}
+    }
     @JavascriptInterface public String alarmPermissions(){
       try{
         JSONObject j=new JSONObject();
@@ -350,7 +790,10 @@ public final class MainActivity extends Activity {
         boolean notifications=Build.VERSION.SDK_INT<33 || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED;
         boolean exact=Build.VERSION.SDK_INT<31 || ((AlarmManager)getSystemService(ALARM_SERVICE)).canScheduleExactAlarms();
         boolean full=Build.VERSION.SDK_INT<34 || n.canUseFullScreenIntent();
-        return j.put("notifications",notifications).put("exact",exact).put("fullScreen",full).toString();
+        boolean allowed=n.areNotificationsEnabled();
+        android.app.NotificationChannel alarmChannel=Build.VERSION.SDK_INT>=26?n.getNotificationChannel("neurosync_alarms_v4_visual"):null;
+        boolean high=alarmChannel==null||alarmChannel.getImportance()>=NotificationManager.IMPORTANCE_HIGH;
+        return j.put("notifications",notifications&&allowed).put("exact",exact).put("fullScreen",full).put("channelHigh",high).toString();
       }catch(Exception e){return "{}";}
     }
     @JavascriptInterface public void requestAlarmPermissions(){
@@ -375,6 +818,33 @@ public final class MainActivity extends Activity {
           .put("Bandeja de ideas").put("Launcher minimalista"));
         return result.toString();
       }catch(Exception ex){return "{}";}
+    }
+    /** Configura la hora mediante API oficial; selección musical queda en la app Reloj. */
+    @JavascriptInterface public void createYouTubeMusicClockAlarm(){
+      runOnUiThread(()->{
+        java.util.Calendar now=java.util.Calendar.getInstance();
+        new android.app.TimePickerDialog(MainActivity.this,(picker,hour,minute)->{
+          new AlertDialog.Builder(MainActivity.this)
+           .setTitle("Canción de YouTube Music")
+           .setMessage("Se abrirá Reloj de Android con la hora elegida. Dentro de esa alarma, toca Sonido → YouTube Music y elige tu canción con Premium. La música sonará desde Reloj; los retos de NeuroSync no controlan esa alarma.")
+           .setNegativeButton("Cancelar",null)
+           .setPositiveButton("Abrir Reloj",(dialog,which)->{
+             Intent intent=new Intent(android.provider.AlarmClock.ACTION_SET_ALARM)
+               .putExtra(android.provider.AlarmClock.EXTRA_HOUR,hour)
+               .putExtra(android.provider.AlarmClock.EXTRA_MINUTES,minute)
+               .putExtra(android.provider.AlarmClock.EXTRA_MESSAGE,"NeuroSync · Música")
+               .putExtra(android.provider.AlarmClock.EXTRA_SKIP_UI,false);
+             try{startActivity(intent);}
+             catch(Exception ex){
+               android.util.Log.w("NeuroSync","Reloj no disponible",ex);
+               new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Reloj no disponible")
+                .setMessage("Instala o abre Reloj de Google y elige Sonido → YouTube Music.")
+                .setPositiveButton("Entendido",null).show();
+             }
+           }).show();
+        },now.get(java.util.Calendar.HOUR_OF_DAY),now.get(java.util.Calendar.MINUTE),true).show();
+      });
     }
     @JavascriptInterface public void openSystemClock(){
       runOnUiThread(()->{
@@ -416,6 +886,17 @@ public final class MainActivity extends Activity {
     @JavascriptInterface public void setAlarmQrCode(String id,String value){
       AlarmChallengeStore.setQr(MainActivity.this,id,value);
     }
+    @JavascriptInterface public void setAlarmFadeSeconds(int seconds){
+      if(seconds!=0&&seconds!=15&&seconds!=30&&seconds!=60)return;
+      getSharedPreferences("ns_alarm_audio_settings",MODE_PRIVATE).edit()
+        .putInt("fadeSeconds",seconds).apply();
+    }
+    @JavascriptInterface public int getAlarmFadeSeconds(){
+      return getSharedPreferences("ns_alarm_audio_settings",MODE_PRIVATE).getInt("fadeSeconds",0);
+    }
+    @JavascriptInterface public void setAlarmOptions(String id,int snoozeMinutes,int snoozeLimit){
+      AlarmOptionsStore.set(MainActivity.this,id,snoozeMinutes,snoozeLimit);
+    }
     @JavascriptInterface public void setAlarmChallenge(String id,String challenge){
       AlarmChallengeStore.set(MainActivity.this,id,challenge);
     }
@@ -447,6 +928,17 @@ public final class MainActivity extends Activity {
     }
     @JavascriptInterface public String alarmEventHistory(){
       return AlarmHistory.read(MainActivity.this);
+    }
+    @JavascriptInterface public boolean updateFinanceLauncherSummary(
+        String username,boolean visible,long balance,long income,long expense){
+      if(!canAccessSnapshot(username))return false;
+      // Opt-in explícito. Un saldo persistido en pantalla HOME se considera sensible.
+      // No almacenar el nombre de usuario ni IDs financieros en las preferencias del launcher.
+      android.content.SharedPreferences prefs=getSharedPreferences("ns_finance_launcher",MODE_PRIVATE);
+      prefs.edit().putBoolean("enabled",visible)
+        .putLong("balance",visible?balance:0).putLong("income",visible?income:0)
+        .putLong("expense",visible?expense:0).apply();
+      return true;
     }
     @JavascriptInterface public void updateWidgetNextAlarm(String when){
       TodayWidget.setNextAlarm(MainActivity.this,when);
@@ -499,6 +991,37 @@ public final class MainActivity extends Activity {
     @JavascriptInterface public boolean testAlarm(){
       return AlarmReceiver.schedule(MainActivity.this,"test_neurosync","Prueba de alarma",System.currentTimeMillis()+60000L,false);
     }
+    /** Los identificadores nativos de salida llevan una cuenta verificada. */
+    private String departureKey(String username,String id){
+      if(!canAccessSnapshot(username)||id==null||id.length()<2||id.length()>90)return null;
+      return username+"::"+id;
+    }
+    @JavascriptInterface public boolean scheduleDepartureList(String username,String id,String title,String itemsJson,long when,String repeat){
+      String key=departureKey(username,id);
+      return key!=null&&DepartureReminderReceiver.schedule(MainActivity.this,key,title,itemsJson,when,repeat);
+    }
+    @JavascriptInterface public void cancelDepartureList(String username,String id){
+      String key=departureKey(username,id);
+      if(key!=null)DepartureReminderReceiver.cancel(MainActivity.this,key);
+    }
+    @JavascriptInterface public String departureListState(String username,String id){
+      String key=departureKey(username,id);
+      if(key==null)return "{}";
+      try{
+        JSONObject data=DepartureReminderReceiver.get(MainActivity.this,key);
+        if(key.equals(data.optString("id")))data.put("id",id);
+        return data.toString();
+      }catch(Exception ignored){return "{}";}
+    }
+    @JavascriptInterface public boolean markDepartureItem(String username,String id,int index,boolean checked){
+      String key=departureKey(username,id);
+      return key!=null&&DepartureReminderReceiver.mark(MainActivity.this,key,index,checked);
+    }
+    @JavascriptInterface public void openDepartureChecklist(String username,String id){
+      String key=departureKey(username,id);
+      if(key==null||DepartureReminderReceiver.get(MainActivity.this,key).optJSONArray("items")==null)return;
+      runOnUiThread(()->startActivity(new Intent(MainActivity.this,DepartureChecklistActivity.class).putExtra("id",key)));
+    }
     @JavascriptInterface public boolean scheduleAlarmRepeat(String id,String title,long when,String repeat){
       try{return AlarmReceiver.scheduleRepeat(MainActivity.this,id,title,when,repeat);}
       catch(Exception e){return false;}
@@ -514,5 +1037,5 @@ public final class MainActivity extends Activity {
     if(web.canGoBack())web.goBack();else new AlertDialog.Builder(this).setMessage("¿Cerrar NeuroSync?")
       .setNegativeButton("Cancelar",null).setPositiveButton("Salir",(d,w)->finish()).show();
   }
-  @Override public void onDestroy(){networkWorker.shutdownNow();if(web!=null)web.destroy();super.onDestroy();}
+  @Override public void onDestroy(){if(googleAccounts!=null)googleAccounts.shutdown();if(publicAccounts!=null)publicAccounts.shutdown();networkWorker.shutdownNow();if(web!=null)web.destroy();super.onDestroy();}
 }
