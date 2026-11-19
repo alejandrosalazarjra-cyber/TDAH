@@ -150,10 +150,11 @@ function render(){
     '<section class="ns-fi-panel"><h3>Límite mensual</h3><p>Presupuesto '+cop(book.budgets[state.selected]||0)+
     ' · Gastado '+cop(p.expense)+'</p><div class="ns-fi-track"><i style="width:'+Math.min(100,(book.budgets[state.selected]?p.expense/book.budgets[state.selected]*100:0))+'%"></i></div>'+
     '<form id="ns-fi-budget"><label>Presupuesto de '+esc(state.selected)+' (COP)<input name="amount" type="number" min="0" step="1" required value="'+(book.budgets[state.selected]||0)+'"></label><button>Guardar límite</button></form></section>')+
+  '<details class="ns-fi-advanced"><summary>Privacidad y respaldo de Finanzas</summary>'+ 
   '<label class="ns-fi-privacy"><input id="ns-fi-launcher" type="checkbox" '+(book.launcher?'checked':'')+'>'+
   '<span>Mostrar resumen financiero en el inicio minimalista</span></label>'+
   '<p class="ns-fi-hint">Desactivado de forma predeterminada por privacidad. Las cifras podrían verse al desbloquear el teléfono. No se comparten con los miembros de la familia.</p>'+
-  '<div class="ns-fi-tools"><button type="button" data-finance="export">Exportar respaldo JSON</button></div>'+
+  '<div class="ns-fi-tools"><button type="button" data-finance="export">Exportar finanzas (JSON)</button></div></details>'+
   '<p class="ns-fi-hint" role="status">'+esc(state.notice)+'</p>'+
   '<div id="ns-fi-modal"></div>';
 }
