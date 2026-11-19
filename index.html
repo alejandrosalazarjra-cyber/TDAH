@@ -527,6 +527,17 @@ html,body{background:#f8fbff;color:var(--ink)}
  #app .view .btn{transition:none!important}
 }
 
+
+/* Azul: una sola sección de mascota. Los controles originales se reubican bajo la escena. */
+#view-home .ns-home-companion>.ns-dragon-copy{padding:1px 0 4px!important;margin:0!important;width:100%!important;min-width:0!important}
+#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-profile{display:none!important}
+#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-xp{margin:4px 0 12px!important}
+#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-interactions{margin-bottom:2px}
+#view-home .ns-dragon-hero:empty{display:none!important}
+#view-home .ns-dragon-hero{display:none!important}
+#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-more{border-top:1px solid #d8e9f7!important}
+@media(max-width:390px){#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-interactions{display:grid!important;grid-template-columns:1fr!important}#view-home .ns-home-companion>.ns-dragon-copy .ns-dragon-pet-btn{width:100%!important}}
+
 /* Azul: controles prioritarios encima de la mascota, una sola acción por función. */
 #view-home .ns-home-companion{padding:15px 16px 13px!important;border-radius:22px;
  background:linear-gradient(165deg,#f4faff 0%,#e5f2ff 68%,#e9f7ff 100%);border:1px solid #c9e2f6;
@@ -2210,8 +2221,8 @@ by('set-default-home').onclick=function(){
  else say('La selección de inicio está disponible desde la APK Android');
 };
 by('ns-home-dragon-details').onclick=function(){
- var copy=document.querySelector('#view-home .ns-dragon-copy');
- if(copy)copy.scrollIntoView({behavior:'smooth',block:'start'});
+ var panel=document.querySelector('#view-home .ns-dragon-more');
+ if(panel){panel.open=true;panel.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'nearest'});}
 };
 by('ns-launcher-direct').onclick=function(){
  if(nat&&nat.openMinimalHome)nat.openMinimalHome();
@@ -2592,6 +2603,11 @@ function nsOrganizeHome(){
  // Se mantiene su id="dragon-scene", por lo que las evoluciones y acciones existentes continúan.
  var originalScene=by('dragon-scene'),sceneSlot=by('ns-companion-scene-slot');
  if(originalScene&&sceneSlot&&originalScene.parentNode!==sceneSlot)sceneSlot.appendChild(originalScene);
+ // Integrar los controles ORIGINALES, el progreso y los desplegables debajo de Azul.
+ // Evita dos tarjetas separadas y preserva los IDs y listeners existentes.
+ var carePanel=document.querySelector('#view-home .ns-dragon-copy');
+ var companion=document.querySelector('#view-home .ns-home-companion');
+ if(carePanel&&companion&&carePanel.parentNode!==companion)companion.appendChild(carePanel);
 
  var dragon=nsHomeExtra('Misiones y aventuras de Azul','ns-extra-dragon');
  var focus=nsHomeExtra('Temporizador Pomodoro y concentración','ns-extra-focus');
