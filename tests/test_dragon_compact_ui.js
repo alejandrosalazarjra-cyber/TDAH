@@ -40,7 +40,7 @@ const end=html.indexOf('\nfunction nsDragonInitActions(){',start);
 assert(start>0&&end>start,'El paseo debe tener una implementación explícita');
 const actions=[],messages=[];let saves=0,updates=0;
 const state={session:{username:'prueba'},model:{pet:{energy:100,walks:0,food:30,xp:80}},
- nsDragonData(){return this.model.pet},
+ nsDragonData(){return state.model.pet},
  nsDragonAnimate:x=>actions.push(x),nsDragonMessage:t=>messages.push(t),
  nsDragonUpdateEnergy:()=>updates++,save:()=>saves++};
 vm.createContext(state);
