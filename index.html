@@ -678,6 +678,15 @@ html,body{background:#f8fbff;color:var(--ink)}
 #ns-account-backup #ns-user-backup-container .card{border:0!important;box-shadow:none!important;padding:7px 0!important;margin:0!important}
 #ns-account-backup #ns-user-backup-container h2{display:none!important}
 #ns-account-about #ns-account-version{overflow-wrap:anywhere}
+
+/* Opciones avanzadas conservadas, pero fuera de la vista principal hasta abrirlas. */
+#app .view .ns-inline-options{padding:8px 0!important;border-top:1px solid #dce7f1!important;margin:7px 0!important}
+#app .view .ns-inline-options>summary{cursor:pointer;min-height:43px;display:flex;align-items:center;font-size:13px;font-weight:700;color:#1b5c93}
+#ns-account-alarm-tools-container{padding:5px 9px}
+#ns-account-alarm-tools-container #ns-alarm-tools-original{margin:0!important;padding:6px 0!important;border:0!important;background:transparent!important}
+#ns-account-alarm-tools-container #ns-alarm-tools-original .row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+#ns-account-alarm-tools-container #ns-alarm-tools-original button{font-size:12px!important;min-height:43px!important;white-space:normal}
+#ns-account-alarm-tools-container #ns-alarm-tools-original .hint{font-size:12px;overflow-wrap:anywhere}
 </style><style id="ns-local-recovery-menu">
 #ns-check-local-copy{display:block;width:100%;text-align:left;padding:10px 12px;
  border:0;background:transparent;color:#0876ba;min-height:43px;font-weight:650}
@@ -751,6 +760,7 @@ html,body{background:#f8fbff;color:var(--ink)}
     <div class="ns-user-menu-actions"><button type="button" id="ns-user-alarm-permissions">Permisos de alarmas</button><button type="button" data-native-permission="notifications">Notificaciones</button><button type="button" data-native-permission="overlay">Ventanas flotantes</button><button type="button" data-native-permission="usage">Acceso de uso (opcional)</button><button type="button" data-native-permission="app">Ajustes de Android</button></div>
     <div id="ns-user-permission-container"></div>
    </details>
+   <details class="ns-user-section" id="ns-account-alarm-tools"><summary>◷ Diagnóstico de alarmas</summary><div id="ns-account-alarm-tools-container"></div></details>
    <details class="ns-user-section" id="ns-account-launcher"><summary>⌂ Inicio minimalista</summary><div id="ns-user-launcher-container"></div></details>
    <details class="ns-user-section" id="ns-account-backup"><summary>☁ Respaldo y datos</summary><div id="ns-user-backup-container"></div><button type="button" class="ns-backup-check" id="ns-check-local-copy">Comprobar copia en este teléfono</button><p class="hint" id="ns-local-copy-result" aria-live="polite"></p></details>
    <details class="ns-user-section" id="ns-account-legal"><summary>ⓘ Políticas y términos</summary>
@@ -916,7 +926,7 @@ html,body{background:#f8fbff;color:var(--ink)}
     <div class="ns-wake-grid"><div><strong id="ns-wake-fired">0</strong><span>Sonaron · 7 días</span></div><div><strong id="ns-wake-dismissed">0</strong><span>Detenidas</span></div><div><strong id="ns-wake-snoozed">0</strong><span>Pospuestas</span></div></div>
     <div id="ns-wake-list" class="ns-wake-list"></div>
    </div>
-   <div class="card"><div class="between"><h2>Alarmas y recordatorios</h2><button class="btn" data-open="alarm">+ Crear alarma</button></div><div style="margin:14px 0 17px;border:1px solid var(--border);border-radius:16px;padding:14px;background:#fafbfe">
+   <div class="card"><div class="between"><h2>Alarmas y recordatorios</h2><button class="btn" data-open="alarm">+ Crear alarma</button></div><div id="ns-alarm-tools-original" style="margin:14px 0 17px;border:1px solid var(--border);border-radius:16px;padding:14px;background:#fafbfe">
 <div class="between" style="margin-bottom:9px"><b style="font-size:14px">Sonido y pantalla de alarma</b><span class="chip" id="alarm-permission-indicator">Android</span></div>
 <p class="hint" id="alarm-permission-status"></p>
 <p class="hint" id="ns-alarm-schedule-summary" aria-live="polite">Comprobando registros de alarmas…</p>
@@ -2703,8 +2713,22 @@ function nsOrganizeHome(){
  move('#view-home .card:has(#open-minimal-home)',by('ns-user-launcher-container'));
  move('#view-admin .card:has(#backup-export)',by('ns-user-backup-container'));
  move('#ns-original-security-card',by('ns-account-security-container'));
+ move('#ns-alarm-tools-original',by('ns-account-alarm-tools-container'));
+ // Reutilizar los componentes existentes dentro de desplegables, sin clonarlos.
+ function nsFoldOriginal(source, title, anchor){
+  if(!source||!anchor||source.closest('.ns-inline-options'))return;
+  var fold=document.createElement('details');fold.className='ns-inline-options';
+  var summary=document.createElement('summary');summary.textContent=title;fold.appendChild(summary);
+  anchor.parentNode.insertBefore(fold,anchor.nextSibling);
+  fold.appendChild(source);
+ }
+ var taskList=by('tasks-list'),alarmList=by('alarms-list');
+ nsFoldOriginal(document.querySelector('#view-tasks .ns-task-tools'),'Buscar, filtrar y ordenar',by('task-filters'));
+ nsFoldOriginal(document.querySelector('#view-tasks .ns-plan-panels'),'Plantillas y estadísticas',taskList);
+ nsFoldOriginal(document.querySelector('#view-alarms .ns-wake-insights'),'Historial de alarmas',alarmList);
+ // No mover por error todo el diagnóstico: solo el aviso si no tiene panel propio.
  var permissions=by('alarm-permission-status');
- if(permissions&&permissions.parentElement)by('ns-user-permission-container').appendChild(permissions.parentElement);
+ if(permissions&&!by('ns-alarm-tools-original').contains(permissions))by('ns-user-permission-container').appendChild(permissions);
 }
 function nsAccountVisible(visible){
  var dialog=by('ns-user-popover');
