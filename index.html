@@ -665,6 +665,19 @@ html,body{background:#f8fbff;color:var(--ink)}
 #ns-account-legal .ns-legal-section>summary{cursor:pointer;min-height:42px;padding:12px 7px;font-size:13px;color:#244e74}
 #ns-account-legal .ns-legal-section>p{font-size:12px;line-height:1.55;color:#536d83;padding:4px 9px 12px;margin:0}
 #ns-user-popover .ns-legal-note{font-size:12px;line-height:1.5;color:#647b8e;padding:7px 12px;margin:0}
+
+/* Cuenta: destino único de seguridad, respaldos y permisos, sin duplicaciones. */
+#ns-user-popover #ns-account-security.hidden{display:none!important}
+#ns-account-security-container .card{margin:0!important;padding:8px 10px!important;background:transparent!important;border:0!important;box-shadow:none!important}
+#ns-account-security-container h2{display:none!important}
+#ns-account-security-container p{font-size:12px!important;line-height:1.5}
+#ns-account-security-container form{padding:5px 0!important}
+#ns-account-security-container label{font-size:13px!important}
+#ns-account-security-container input{width:100%;max-width:100%;min-height:43px;border:1px solid #d6e4ef;border-radius:9px;padding:9px;background:#fff;color:#183c59}
+#ns-account-security-container button[type=submit]{background:#0878d4!important;color:#fff!important;border:0!important;border-radius:10px!important;padding:11px 13px!important;min-height:43px}
+#ns-account-backup #ns-user-backup-container .card{border:0!important;box-shadow:none!important;padding:7px 0!important;margin:0!important}
+#ns-account-backup #ns-user-backup-container h2{display:none!important}
+#ns-account-about #ns-account-version{overflow-wrap:anywhere}
 </style><style id="ns-local-recovery-menu">
 #ns-check-local-copy{display:block;width:100%;text-align:left;padding:10px 12px;
  border:0;background:transparent;color:#0876ba;min-height:43px;font-weight:650}
@@ -733,12 +746,7 @@ html,body{background:#f8fbff;color:var(--ink)}
    <div class="top-right"><span class="sync-state" id="sync-status">Guardado local</span><button id="sync-btn" class="btn secondary" aria-label="Sincronizar">↻</button><button class="avatar" id="avatar" type="button" aria-label="Abrir menú de mi cuenta" aria-controls="ns-user-popover" aria-expanded="false" title="Mi cuenta">A</button></div></header>
   <aside id="ns-user-popover" class="hidden" role="dialog" aria-label="Cuenta y configuración">
    <div class="ns-user-menu-header"><div class="ns-user-avatar">◉</div><div><strong id="ns-account-name">Mi cuenta</strong><small id="ns-account-email">Ajustes personales</small></div><button type="button" id="ns-close-account" aria-label="Cerrar menú">×</button></div>
-   <div class="ns-user-menu-actions">
-    <button type="button" data-account-go="tasks">☑ Mis tareas</button>
-    <button type="button" data-account-go="calendar">▦ Mi agenda</button>
-    <button type="button" data-account-go="habits">◉ Mi progreso</button>
-    <button type="button" data-account-go="alarms">◷ Mis alarmas</button>
-   </div>
+   <details class="ns-user-section hidden" id="ns-account-security"><summary>♙ Seguridad de la cuenta</summary><div id="ns-account-security-container"></div></details>
    <details class="ns-user-section" id="ns-account-permissions"><summary>⚙ Permisos y configuración</summary>
     <div class="ns-user-menu-actions"><button type="button" id="ns-user-alarm-permissions">Permisos de alarmas</button><button type="button" data-native-permission="notifications">Notificaciones</button><button type="button" data-native-permission="overlay">Ventanas flotantes</button><button type="button" data-native-permission="usage">Acceso de uso (opcional)</button><button type="button" data-native-permission="app">Ajustes de Android</button></div>
     <div id="ns-user-permission-container"></div>
@@ -751,7 +759,7 @@ html,body{background:#f8fbff;color:var(--ink)}
     <details class="ns-legal-section"><summary>Uso de permisos</summary><p>Las alarmas, notificaciones y ventanas flotantes requieren las autorizaciones correspondientes de Android. El acceso de uso es opcional. Puedes revisar y revocar estos permisos en los ajustes de Android.</p></details>
     <p class="ns-legal-note">Información preliminar: no sustituye los documentos legales oficiales revisados.</p>
    </details>
-   <details class="ns-user-section" id="ns-account-about"><summary>ⓘ Acerca de NeuroSync</summary><p class="ns-legal-note">Consulta la versión instalada en la parte superior de la aplicación.</p></details>
+   <details class="ns-user-section" id="ns-account-about"><summary>ⓘ Acerca de NeuroSync</summary><p class="ns-legal-note" id="ns-account-version">Versión no identificada</p></details>
    <div class="ns-user-menu-actions"><button type="button" class="admin-only" data-account-go="admin">Administrar usuarios</button></div>
    <div class="ns-user-menu-actions"><button type="button" id="ns-account-logout">Cerrar sesión</button></div>
   </aside>
@@ -970,7 +978,7 @@ html,body{background:#f8fbff;color:var(--ink)}
   </section>
   <section class="view" id="view-admin"><div class="grid"><div class="stack"><div class="card"><div class="between"><h2>Miembros de la familia</h2></div><p class="muted small">Cada integrante utiliza su propia cuenta de Google. Los datos personales se guardan por separado. Compartir tareas entre cuentas requiere una sincronización familiar adicional.</p><div id="users-list" class="hidden"></div></div><div class="card"><h2>Flujos de trabajo</h2><p class="small muted">Crea una tarea recurrente y asígnala a un miembro. Puedes añadir subtareas, horario y fecha.</p><button class="btn secondary" data-open="task">+ Crear flujo / tarea</button></div></div><div class="stack"><div class="card"><h2>Respaldo personal</h2>
 
-<div class="row"><button class="btn secondary" type="button" id="backup-export">Exportar respaldo</button><button class="btn ghost" type="button" id="backup-import">Importar respaldo</button></div></div><div class="card"><h2>Seguridad</h2><p class="muted small">Cambia la contraseña inicial del administrador. Usa una diferente para cada persona.</p><form id="password-form" class="stack" style="gap:10px"><label class="field">Contraseña actual<input id="current-pass" type="password" required></label><label class="field">Contraseña nueva (mín. 10 caracteres)<input id="new-pass" type="password" minlength="10" required></label><button class="btn" type="submit">Cambiar contraseña</button></form></div></div></div></section>
+<div class="row"><button class="btn secondary" type="button" id="backup-export">Exportar respaldo</button><button class="btn ghost" type="button" id="backup-import">Importar respaldo</button></div></div><div class="card" id="ns-original-security-card"><h2>Seguridad</h2><p class="muted small">Cambia la contraseña inicial del administrador. Usa una diferente para cada persona.</p><form id="password-form" class="stack" style="gap:10px"><label class="field">Contraseña actual<input id="current-pass" type="password" required></label><label class="field">Contraseña nueva (mín. 10 caracteres)<input id="new-pass" type="password" minlength="10" required></label><button class="btn" type="submit">Cambiar contraseña</button></form></div></div></div></section>
  </main>
  <nav class="nav-mobile" aria-label="Navegación principal">
   <button class="active" data-view="home"><span>⌂</span>Hoy</button><button data-view="tasks"><span>☑</span>Tareas</button><button data-view="calendar"><span>▦</span>Agenda</button><button data-view="bags"><span>▣</span>Listas</button><button data-view="alarms"><span>◷</span>Alarmas</button><button data-view="habits"><span>◉</span>Progreso</button><button class="admin-only" data-view="admin"><span>♙</span>Admin</button>
@@ -2643,6 +2651,7 @@ function updateInstalledBuild(){
  by('login-build').textContent=label;
  by('installed-build').textContent=label;
  by('feature-status').textContent=label;
+ if(by('ns-account-version'))by('ns-account-version').textContent=label;
 }
 
 /* Organiza los módulos una sola vez; mueve nodos, no los clona, para conservar sus listeners. */
@@ -2693,6 +2702,7 @@ function nsOrganizeHome(){
  move('#view-home .card:has(#home-bags)',more);
  move('#view-home .card:has(#open-minimal-home)',by('ns-user-launcher-container'));
  move('#view-admin .card:has(#backup-export)',by('ns-user-backup-container'));
+ move('#ns-original-security-card',by('ns-account-security-container'));
  var permissions=by('alarm-permission-status');
  if(permissions&&permissions.parentElement)by('ns-user-permission-container').appendChild(permissions.parentElement);
 }
@@ -2703,6 +2713,7 @@ function nsAccountVisible(visible){
  if(visible){
   by('ns-account-name').textContent=session?(session.displayName||session.username):'Mi cuenta';
   by('ns-account-email').textContent=session?(session.email||'Administrador local'):'Ajustes personales';
+  by('ns-account-security').classList.toggle('hidden',!session||session.role!=='admin');
   checkAlarmPermissions();
  }
 }
