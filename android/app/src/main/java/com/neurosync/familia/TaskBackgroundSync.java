@@ -195,7 +195,7 @@ public final class TaskBackgroundSync extends JobService {
 
   private void poll()throws Exception {
     if(pollPublic())return;
-    // Activity.getPreferences(0) utiliza el nombre local de MainActivity.
+    // El servicio comparte las preferencias privadas de MainActivity por su nombre explícito.
     android.content.SharedPreferences settings=getSharedPreferences("MainActivity",MODE_PRIVATE);
     String mode=settings.getString("mode","");
     String location="host";
