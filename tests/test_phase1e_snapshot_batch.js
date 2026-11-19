@@ -59,7 +59,9 @@ assert(html.includes("window.addEventListener('pagehide',function(){nsFlushNativ
  'Descargar el último lote al cerrar WebView');
 assert(html.includes("if(document.hidden){nsFlushNativeSnapshot()"),
  'Descargar al enviar la app a segundo plano');
-assert(html.includes("function logout(){\n nsFlushNativeSnapshot();"),
+const logoutBody=html.slice(html.indexOf('function logout(){'),
+ html.indexOf("document.addEventListener('visibilitychange'",html.indexOf('function logout(){')));
+assert(logoutBody.includes('nsFlushNativeSnapshot();'),
  'Descargar al cerrar sesión');
 /* Una copia antigua de SQLite no debe ganarle al historial local más reciente. */
 account.username='user_b';
