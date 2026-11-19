@@ -7,6 +7,7 @@ import android.app.usage.UsageStatsManager;
 import android.content.*;
 import android.content.pm.*;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.graphics.Typeface;
 import android.os.*;
 import android.provider.Settings;
@@ -237,10 +238,9 @@ public final class FocusLauncherActivity extends Activity {
     TextView session=action(focus>0?
        "◷  Concentración: "+((focus+59999)/60000)+" min":"◷  Iniciar concentración",()->openNeuroSync("focus"));
     body.addView(session);
-    body.addView(gap(8));
-    body.addView(gap(13));
+    body.addView(gap(12));
     TextView favoriteTitle=text("Favoritas",12,MUTED,true);
-    body.addView(favoriteTitle);body.addView(gap(7));
+    body.addView(favoriteTitle);body.addView(gap(5));
     int count=0;
     for(AppEntry app:apps){
       if(favorites.contains(app.packageName)){
@@ -252,33 +252,53 @@ public final class FocusLauncherActivity extends Activity {
       TextView tip=text("Elige tus aplicaciones favoritas desde la lista.",12,MUTED,false);
       pad(tip,0,5);tip.setMaxLines(2);body.addView(tip);
     }
-    body.addView(gap(10));body.addView(line());body.addView(gap(9));
-    body.addView(action("⌕  Buscar aplicaciones",this::showDrawer));
-    body.addView(gap(8));
-    body.addView(action("✓  Agenda y tareas",()->openNeuroSync("calendar")));
-    body.addView(gap(8));
-    body.addView(action("＄  Mis finanzas",()->openNeuroSync("finance")));
-    body.addView(gap(8));
-    LinearLayout sections=horizontal();
-    sections.addView(action("◷  Alarmas",()->openNeuroSync("alarms")),new LinearLayout.LayoutParams(0,dp(48),1));
-    sections.addView(new View(this),new LinearLayout.LayoutParams(dp(8),1));
-    sections.addView(action("☷  Listas",()->openNeuroSync("bags")),new LinearLayout.LayoutParams(0,dp(48),1));
-    sections.addView(new View(this),new LinearLayout.LayoutParams(dp(8),1));
-    sections.addView(action("◉  Progreso",()->openNeuroSync("habits")),new LinearLayout.LayoutParams(0,dp(48),1));
-    body.addView(sections);
-    body.addView(gap(16));
-    LinearLayout shortcuts=horizontal();
-    shortcuts.setGravity(Gravity.CENTER);
-    TextView phone=action("☎  Teléfono",()->launchIntent(new Intent(Intent.ACTION_DIAL)));
-    shortcuts.addView(phone,new LinearLayout.LayoutParams(0,dp(48),1));
-    shortcuts.addView(new View(this),new LinearLayout.LayoutParams(dp(10),1));
-    TextView camera=action("◎  Cámara",()->launchIntent(new Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA)));
-    shortcuts.addView(camera,new LinearLayout.LayoutParams(0,dp(48),1));
-    body.addView(shortcuts);
-    body.addView(gap(16));
-    TextView footer=text("← Pomodoro    ·    Widgets →    ·    ↑ Aplicaciones",11,MUTED,false);
-    footer.setGravity(Gravity.CENTER);body.addView(footer);
+    body.addView(gap(10));body.addView(line());body.addView(gap(5));
+    body.addView(action("⌕  Aplicaciones",this::showDrawer));
+    // Herramientas secundarias agrupadas en un acceso, sin duplicar botones en portada.
+    body.addView(action("⋯  Más funciones",this::showHomeMore));
+    // El dock no pertenece al ScrollView: siempre queda en las esquinas inferiores.
     showContent(body);
+    addHomeDock();
+  }
+  /** Acciones de uso ocasional: mantienen sus rutas originales y reducen el ruido del inicio. */
+  private void showHomeMore(){
+    final String[] options={"Agenda","Finanzas","Alarmas","Listas","Progreso"};
+    final String[] routes={"calendar","finance","alarms","bags","habits"};
+    new AlertDialog.Builder(this).setTitle("Más funciones")
+      .setItems(options,(dialog,index)->openNeuroSync(routes[index]))
+      .setNegativeButton("Cerrar",null).show();
+  }
+  /** Dock permanente, fuera del contenido desplazable; blancos sobre el tema oscuro. */
+  private ImageButton dockIcon(int resource,String label,Runnable click){
+    ImageButton button=new ImageButton(this);
+    button.setImageResource(resource);
+    button.setColorFilter(Color.WHITE);
+    button.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+    button.setPadding(dp(16),dp(16),dp(16),dp(16));
+    button.setContentDescription(label);
+    button.setFocusable(true);
+    button.setClickable(true);
+    GradientDrawable background=new GradientDrawable();
+    background.setColor(0x662B313A);
+    background.setCornerRadius(dp(28));
+    background.setStroke(dp(1),0x33FFFFFF);
+    button.setBackground(background);
+    button.setOnClickListener(view->click.run());
+    return button;
+  }
+  private void addHomeDock(){
+    LinearLayout dock=horizontal();
+    dock.setGravity(Gravity.CENTER_VERTICAL);
+    // Android ajusta el área de contenido con las barras del sistema, sin cubrir gestos.
+    dock.setPadding(dp(18),dp(6),dp(18),dp(18));
+    ImageButton phone=dockIcon(android.R.drawable.ic_menu_call,"Teléfono",()->
+      launchIntent(new Intent(Intent.ACTION_DIAL)));
+    dock.addView(phone,new LinearLayout.LayoutParams(dp(56),dp(56)));
+    dock.addView(new View(this),new LinearLayout.LayoutParams(0,dp(1),1));
+    ImageButton camera=dockIcon(android.R.drawable.ic_menu_camera,"Cámara",()->
+      launchIntent(new Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA)));
+    dock.addView(camera,new LinearLayout.LayoutParams(dp(56),dp(56)));
+    root.addView(dock,new LinearLayout.LayoutParams(-1,dp(82)));
   }
   private void addHomeApp(LinearLayout container,AppEntry entry){
     TextView item=text("•  "+entry.title,18,WHITE,false);pad(item,8,10);
