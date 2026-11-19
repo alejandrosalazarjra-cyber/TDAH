@@ -2208,9 +2208,8 @@ by('set-default-home').onclick=function(){
  else say('La selección de inicio está disponible desde la APK Android');
 };
 by('ns-home-dragon-details').onclick=function(){
- var details=by('ns-extra-dragon');
- if(details){details.open=true;details.scrollIntoView({behavior:'smooth',block:'start'});}
- else {var copy=document.querySelector('#view-home .ns-dragon-copy');if(copy)copy.scrollIntoView({behavior:'smooth',block:'start'});}
+ var copy=document.querySelector('#view-home .ns-dragon-copy');
+ if(copy)copy.scrollIntoView({behavior:'smooth',block:'start'});
 };
 by('ns-launcher-direct').onclick=function(){
  if(nat&&nat.openMinimalHome)nat.openMinimalHome();
