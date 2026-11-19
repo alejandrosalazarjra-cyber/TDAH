@@ -19,7 +19,7 @@ assert(care>0&&scene>care,'Comer y Caminar deben aparecer arriba de Azul');
 const top=html.slice(care,scene);
 assert(top.includes('id="dragon-walk"')&&top.includes('id="pet-feed"'),
  'Botones principales visibles, sin desplegar secciones');
-assert(html.includes('<summary>Más acciones</summary>'));
+assert(html.includes('<summary>Personalizar y otras acciones</summary>'));
 assert(html.includes('<summary>Misiones y concentración</summary>'));
 assert(!html.includes('id="pet-detail"'),'No dejar explicación decorativa de evolución');
 assert(!html.includes('YouTube Music'),'No reintroducir secciones musicales obsoletas');
