@@ -88,7 +88,8 @@ class DragonContract(unittest.TestCase):
     def test_exactly_one_initializer_and_script(self):
         self.assertEqual(HTML.count("nsDragonInitActions();"), 1)
         # Only one inline initializer; standalone modules are loaded externally.
-        inline_scripts = re.findall(r'<script(?![^>]*\\bsrc=)[^>]*>', HTML)
+        inline_scripts = [tag for tag in re.findall(r'<script(?:\\s[^>]*)?>', HTML)
+                          if not re.search(r'\\bsrc\\s*=', tag)]
         self.assertEqual(len(inline_scripts), 1)
         total_scripts = len(re.findall(r"<script(?:\\s|>)", HTML))
         self.assertEqual(HTML.count("</script>"), total_scripts)
