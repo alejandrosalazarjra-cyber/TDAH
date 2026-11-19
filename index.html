@@ -658,7 +658,7 @@ html,body{background:#f8fbff;color:var(--ink)}
 #app .top-right #avatar{display:grid!important;place-items:center!important;width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;border:2px solid #fff!important;border-radius:50%!important;background:linear-gradient(140deg,#1663bc,#0a94dd)!important;color:white!important;font-size:16px!important;font-weight:750!important;box-shadow:0 2px 8px #0b52972a!important}
 #app .top-right #avatar[aria-expanded="true"]{outline:2px solid #53adf4;outline-offset:2px}
 #app .sidebar-bottom #logout{display:none!important}
-#app .sidebar .nav.admin-only{display:none!important}
+#app .sidebar .nav.admin-only,#app .nav-mobile .admin-only{display:none!important}
 #ns-user-popover{overscroll-behavior:contain;scrollbar-width:thin}
 #ns-user-popover .admin-only.hidden{display:none!important}
 #ns-account-legal .ns-legal-section{margin:3px 8px;border-bottom:1px solid #e2edf5}
@@ -2723,9 +2723,9 @@ function nsNavigate(route){
 window.neuroNavigateFromLauncher=function(route){if(typeof route==='string')nsNavigate(route)};
 nsOrganizeHome();
 by('avatar').onclick=function(){nsAccountVisible(by('ns-user-popover').classList.contains('hidden'))};
-by('ns-close-account').onclick=function(){nsAccountVisible(false)};
+by('ns-close-account').onclick=function(){nsAccountVisible(false);by('avatar').focus()};
 by('ns-account-logout').onclick=function(){nsAccountVisible(false);by('logout').click()};
-document.querySelectorAll('[data-account-go]').forEach(function(button){button.onclick=function(){nsNavigate(button.dataset.accountGo)}});
+document.querySelectorAll('[data-account-go]').forEach(function(button){button.onclick=function(){nsAccountVisible(false);nsNavigate(button.dataset.accountGo)}});
 document.querySelectorAll('[data-native-permission]').forEach(function(button){button.onclick=function(){
  if(nat&&nat.openPermissionsPanel)nat.openPermissionsPanel(button.dataset.nativePermission);
  else say('Esta función solo está disponible en la APK Android');
