@@ -794,12 +794,12 @@ html,body{background:#f8fbff;color:var(--ink)}
         <button type="button" class="btn secondary" id="ns-focus-stop">Terminar sesión</button>
        </div>
        <div class="ns-focus-metrics"><div><strong id="ns-focus-today">0 min</strong><span>Hoy</span></div><div><strong id="ns-focus-sessions">0</strong><span>Sesiones terminadas</span></div><div><strong id="ns-focus-week">0 min</strong><span>Últimos 7 días</span></div></div>
-       <p class="hint" id="ns-focus-hint">Puedes pausar y continuar sin perder tu tiempo.</p>
+       <p class="hint" id="ns-focus-hint"></p>
       </div>
       <div class="card"><div class="between"><h2>Mis 3 prioridades</h2><button class="btn secondary" data-open="task">+ Nueva tarea</button></div><div id="home-tasks"></div></div>
     </div>
     <div class="stack">
-     <div class="card"><div class="between"><h2>Inicio minimalista de Android</h2><span class="chip">Nuevo</span></div><p class="hint">Sustituye voluntariamente la pantalla de inicio de tu celular. Incluye aplicaciones, favoritos, reloj y acceso a tareas. Puedes volver al inicio original cuando quieras.</p><div class="row"><button type="button" class="btn" id="open-minimal-home">Vista previa del inicio</button><button type="button" class="btn secondary" id="set-default-home">Usar como inicio predeterminado</button></div><p class="hint" style="margin-top:10px">Podrás volver a tu pantalla anterior desde Ajustes → Aplicaciones predeterminadas → Inicio.</p></div>
+     <div class="card"><div class="between"><h2>Inicio minimalista de Android</h2><span class="chip">Nuevo</span></div><p class="hint">Activa NeuroSync como pantalla de inicio.</p><div class="row"><button type="button" class="btn" id="open-minimal-home">Vista previa del inicio</button><button type="button" class="btn secondary" id="set-default-home">Usar como inicio predeterminado</button></div><p class="hint" style="margin-top:10px">Para volver: Ajustes → Inicio predeterminado.</p></div>
      <div class="card"><h2>Hoy, paso a paso</h2><div id="daily-summary" class="muted small"></div><div class="progress" style="margin:13px 0"><div id="daily-bar" style="width:0%"></div></div></div>
      <div class="card"><div class="between"><h2>Próximas alarmas</h2><button class="btn secondary" data-view="alarms">Ver</button></div><div id="home-alarms"></div></div>
      <div class="card"><h2>Recordatorio antes de salir</h2><div id="home-bags"></div><button class="btn secondary" data-view="bags">Ver mis listas</button></div>
@@ -820,7 +820,7 @@ html,body{background:#f8fbff;color:var(--ink)}
 <div id="ns-category-summary" class="ns-category-summary"></div><div id="tasks-list"></div>
 <div class="ns-plan-panels">
  <div class="ns-plan-panel"><div class="between"><h3>Mis plantillas</h3><button type="button" class="btn secondary" id="ns-template-create">Guardar plantilla</button></div>
- <p class="hint">Reutiliza listas de pasos sin volver a escribirlas. Se guardan en tu cuenta de este dispositivo.</p><div id="ns-templates-list"></div></div>
+ <div id="ns-templates-list"></div></div>
  <div class="ns-plan-panel"><h3>Progreso por categoría</h3><div id="ns-category-stats"></div></div>
 </div></div></section>
   <section class="view" id="view-calendar">
@@ -838,19 +838,14 @@ html,body{background:#f8fbff;color:var(--ink)}
    </div>
    <div class="card"><div class="between"><h2>Alarmas y recordatorios</h2><button class="btn" data-open="alarm">+ Crear alarma</button></div><div style="margin:14px 0 17px;border:1px solid var(--border);border-radius:16px;padding:14px;background:#fafbfe">
 <div class="between" style="margin-bottom:9px"><b style="font-size:14px">Sonido y pantalla de alarma</b><span class="chip" id="alarm-permission-indicator">Android</span></div>
-<p class="hint" id="alarm-permission-status">Los permisos se solicitan cuando programas una alarma.</p>
+<p class="hint" id="alarm-permission-status"></p>
 <p class="hint" id="ns-alarm-schedule-summary" aria-live="polite">Comprobando registros de alarmas…</p>
 <div class="row" style="margin-top:12px">
 <button type="button" class="btn secondary" id="alarm-permissions-open">Permitir pantalla completa</button>
 <button type="button" class="btn secondary" id="alarm-test">Probar en 1 min</button>
 <button type="button" class="btn ghost" id="alarm-local-sound">Elegir sonido</button>
 <button type="button" class="btn ghost" id="alarm-clock-music">Abrir Reloj</button></div>
-</div><p class="hint" style="margin-top:10px">Para usar canciones de YouTube Music, configura una alarma en Reloj de Google. Las alarmas propias de NeuroSync tienen desafíos y tonos locales, pero no pueden reproducir directamente YouTube Music.</p><div class="card ns-music-clock-card">
-  <h3>Despertar con YouTube Music</h3>
-  <p class="hint">Configura la canción desde Reloj de Google con YouTube Music Premium. Esta alarma sonará en Reloj y no utilizará los desafíos de NeuroSync.</p>
-  <button type="button" class="btn secondary" id="ns-create-music-alarm">Crear alarma musical en Reloj</button>
-  
- </div><div id="alarms-list"></div></div></section>
+</div><div id="alarms-list"></div></div></section>
   <section class="view" id="view-habits">
    <div class="card ns-health-summary">
     <div class="between"><h2>Mi panorama semanal</h2><span class="chip">Solo en mi cuenta</span></div>
@@ -862,11 +857,11 @@ html,body{background:#f8fbff;color:var(--ink)}
     </div>
     <h3>Minutos de concentración por día</h3>
     <div id="ns-health-chart" class="ns-health-chart" aria-label="Gráfico semanal de concentración"></div>
-    <p id="ns-health-note" class="hint">El gráfico se actualiza con tus sesiones guardadas.</p>
+    <p id="ns-health-note" class="hint"></p>
    </div>
    <div class="card ns-sleep-diary">
      <div class="between"><h2>Mi diario del sueño</h2><span class="chip">Privado</span></div>
-     <p class="hint">Registra tu descanso de forma voluntaria. No se comparte con tu familia y no sustituye una evaluación médica.</p>
+     <p class="hint">Registro privado; no sustituye una consulta médica.</p>
      <form id="ns-sleep-form" class="form-grid">
        <label class="field">Fecha del despertar<input id="ns-sleep-day" type="date" required></label>
        <label class="field">Hora de acostarte<input id="ns-sleep-bed" type="time" required></label>
@@ -887,7 +882,7 @@ html,body{background:#f8fbff;color:var(--ink)}
     <span class="chip">Solo en este teléfono</span>
     <h2 style="margin-top:14px">Mi contador NoFap</h2>
     <div id="ns-private-wellbeing"></div>
-    <p class="hint">Un objetivo elegido por ti, sin juicios ni castigos. Este registro no se comparte con tu familia ni afecta a la mascota.</p>
+    <p class="hint">Registro privado, sin efectos sobre Azul.</p>
     <div style="text-align:center;padding:22px 8px">
      <strong id="streak-days" style="font-size:clamp(52px,12vw,84px);color:var(--ink)">0</strong>
      <p style="font-weight:600">días desde tu fecha registrada</p>
@@ -897,12 +892,12 @@ html,body{background:#f8fbff;color:var(--ink)}
       <button class="btn secondary" type="button" id="streak-start">Elegir fecha de inicio</button>
       <button class="btn ghost" type="button" id="streak-reset">Registrar un nuevo comienzo</button>
     </div>
-    <p class="hint" style="margin-top:20px">Puedes empezar otra vez sin perder el historial. Un tropiezo no define tu valor.</p>
+    
     <h2>Historial privado</h2><div id="streak-history"></div>
    </div>
   </section>
   <section class="view" id="view-admin"><div class="grid"><div class="stack"><div class="card"><div class="between"><h2>Miembros de la familia</h2></div><p class="muted small">Cada integrante utiliza su propia cuenta de Google. Los datos personales se guardan por separado. Compartir tareas entre cuentas requiere una sincronización familiar adicional.</p><div id="users-list" class="hidden"></div></div><div class="card"><h2>Flujos de trabajo</h2><p class="small muted">Crea una tarea recurrente y asígnala a un miembro. Puedes añadir subtareas, horario y fecha.</p><button class="btn secondary" data-open="task">+ Crear flujo / tarea</button></div></div><div class="stack"><div class="card"><h2>Respaldo personal</h2>
-<p class="hint">Guarda y recupera tus tareas, listas, alarmas y progreso de mascota antes de reinstalar una APK.</p>
+
 <div class="row"><button class="btn secondary" type="button" id="backup-export">Exportar respaldo</button><button class="btn ghost" type="button" id="backup-import">Importar respaldo</button></div></div><div class="card"><h2>Seguridad</h2><p class="muted small">Cambia la contraseña inicial del administrador. Usa una diferente para cada persona.</p><form id="password-form" class="stack" style="gap:10px"><label class="field">Contraseña actual<input id="current-pass" type="password" required></label><label class="field">Contraseña nueva (mín. 10 caracteres)<input id="new-pass" type="password" minlength="10" required></label><button class="btn" type="submit">Cambiar contraseña</button></form></div></div></div></section>
  </main>
  <nav class="nav-mobile" aria-label="Navegación principal">
@@ -1511,13 +1506,13 @@ function nsDragonInit(){
  by('dragon-scene').onclick=function(){nsDragonMessage('¡Qué gusto verte! Sigamos a nuestro ritmo.',true);nsDragonAnimate('play')};
  by('dragon-pet').onclick=function(){
   var p=nsDragonData(),today=day(),n=Number(p.pets[today])||0;
-  if(n>=3){nsDragonMessage('Ya recibí mis caricias de hoy. ¡Sigamos con una tarea pequeña!',true);return}
+  if(n>=3){nsDragonMessage('Caricias de hoy agotadas.',true);return}
   p.pets[today]=n+1;
   var keys=Object.keys(p.pets).sort();if(keys.length>45)keys.slice(0,keys.length-45).forEach(function(k){delete p.pets[k]});
-  save();nsDragonMessage('¡Gracias por la caricia! Me encanta acompañarte. ♡',true)
+  save();nsDragonMessage('♡ Acariciado',true)
  };
  by('dragon-next').onclick=function(){
-  var t=nsDragonSuggestedTasks()[0];if(!t){nsDragonMessage('Estás al día. Puedes descansar o planificar algo nuevo.',true);return}
+  var t=nsDragonSuggestedTasks()[0];if(!t){nsDragonMessage('Sin tareas pendientes.',true);return}
   model.focusId=t.id;save();renderFocus();nsDragonCoachRender();nsDragonMessage('Empecemos con: '+nextStep(t).label,true)
  };
  by('dragon-start-focus').onclick=nsDragonBeginFocus;
@@ -1677,7 +1672,7 @@ function nsFocusRender(){
  by('ns-focus-time').textContent=nsFocusFormat(remaining);
  by('ns-focus-phase').textContent=!state?'Listo para comenzar':state.running?'Concentrándote':'En pausa';
  by('ns-focus-toggle').textContent=state?(state.running?'Pausar':'Continuar'):'Iniciar enfoque';
- by('ns-focus-hint').textContent=state?'Tiempo registrado: '+Math.floor(nsFocusElapsed()/60000)+' minutos · Puedes pausar cuando lo necesites.':'Selecciona una duración y una tarea.';
+ by('ns-focus-hint').textContent=state?Math.floor(nsFocusElapsed()/60000)+' min registrados':'';
  var ring=by('focus-studio').querySelector('.ns-focus-ring');ring.style.setProperty('--ns-progress',(100*nsFocusElapsed()/total).toFixed(1)+'%');
  document.querySelectorAll('[data-focus-minutes]').forEach(function(b){b.classList.toggle('selected',Number(b.dataset.focusMinutes)===(state?state.duration:nsFocusDuration));b.disabled=!!state});
  nsDragonSyncActivity();nsDragonCoachRender();nsDragonDayRender();
@@ -2202,13 +2197,9 @@ by('alarm-local-sound').onclick=function(){
  if(nat&&nat.chooseAlarmSound)nat.chooseAlarmSound();
  else say('La selección de audio necesita la APK Android');
 };
-by('ns-create-music-alarm').onclick=function(){
- if(nat&&nat.createYouTubeMusicClockAlarm)nat.createYouTubeMusicClockAlarm();
- else say('Abre Reloj de Android → Alarma → Sonido → YouTube Music');
-};
 by('alarm-clock-music').onclick=function(){
  if(nat&&nat.openSystemClock){nat.openSystemClock()}
- else say('En Reloj de Google abre una alarma → Sonido → YouTube Music (Premium para canciones)');
+ else say('Abre Reloj para configurar el sonido.');
 };
 document.addEventListener('visibilitychange',function(){if(!document.hidden)checkAlarmPermissions()});
 checkAlarmPermissions();
@@ -2230,8 +2221,8 @@ by('open-minimal-home').onclick=function(){
  else say('Disponible cuando instales la APK Android');
 };
 by('pet-feed').onclick=function(){
- var p=nsDragonData();if(p.food<20){nsDragonMessage('Nos faltan puntos. ¿Hacemos una tarea pequeña?');return}
- p.food-=20;p.xp+=15;p.feeds++;p.energy=Math.min(100,p.energy+20);save();render();nsDragonMessage('¡Qué rico! Gracias por cuidarme. +15 XP',true);nsDragonAnimate('eat')
+ var p=nsDragonData();if(p.food<20){nsDragonMessage('Necesitas 20 puntos.');return}
+ p.food-=20;p.xp+=15;p.feeds++;p.energy=Math.min(100,p.energy+20);save();render();nsDragonMessage('Azul comió · +15 XP',true);nsDragonAnimate('eat')
 };
 var syncing=false;
 /* El servidor familiar es una fuente de cambios, nunca autorización para
@@ -2846,23 +2837,23 @@ function nsDragonCheckEvolution(idx){
 function nsDragonPlay(){
  if(!session||!model)return;
  var p=nsDragonData();
- if(p.energy<15){nsDragonMessage('Tengo sueño. Primero vamos a descansar.');nsDragonAnimate('tired');return}
+ if(p.energy<15){nsDragonMessage('Azul necesita descansar.');nsDragonAnimate('tired');return}
  p.energy-=15;p.plays++;
  // El juego es una interacción afectiva, NO genera monedas ni XP: evita farmear recompensas.
- save();nsDragonAnimate('play');nsDragonMessage('¡Qué divertido! Juguemos otra vez después de descansar.',false);
+ save();nsDragonAnimate('play');nsDragonMessage('¡A jugar!',false);
  nsDragonUpdateEnergy();
 }
 function nsDragonRest(){
  if(!session||!model)return;
  var p=nsDragonData();
  p.energy=Math.min(100,p.energy+25);save();
- nsDragonAnimate('sleep');nsDragonMessage('Un descanso merecido. Mi energía se recupera sin penalizaciones.',false);
+ nsDragonAnimate('sleep');nsDragonMessage('+25 energía',false);
  nsDragonUpdateEnergy();
 }
 function nsDragonUpdateEnergy(){
  if(!session||!model)return;
  var p=nsDragonData(),element=by('ns-dragon-energy');
- if(element)element.textContent='⚡ '+Math.round(p.energy)+'/100  ·  🍎 '+Math.floor(p.food)+' puntos';
+ if(element)element.textContent='Energía '+Math.round(p.energy)+'/100 · '+Math.floor(p.food)+' puntos';
  var feed=by('pet-feed');if(feed){
   feed.classList.toggle('ns-care-low',p.food<20);
   feed.setAttribute('aria-label','Comer: cuesta 20 puntos; disponibles '+Math.floor(p.food));
